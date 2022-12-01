@@ -1,14 +1,18 @@
+use rocket_dyn_templates::Template;
+
+use gavel3::{api, db, util};
 use dotenv::dotenv;
 
-use gavel3::api;
-use gavel3::db;
-
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
 #[launch]
 async fn rocket() -> _ {
-    // Load the .env file
+    // Load environmental variables from .env file
     dotenv().ok();
+
+    // Check to make sure all env vars are there
+    util::check_env::check();
 
     // Initialize database
     let init_result = db::init::init_db();
@@ -22,5 +26,7 @@ async fn rocket() -> _ {
     }
 
     // Start server
-    rocket::build().mount("/", routes![api::server::home])
+    rocket::build()
+        .mount("/", routes![api::client::home])
+        .attach(Template::fairing())
 }
