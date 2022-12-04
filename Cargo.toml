@@ -14,7 +14,10 @@ tokio = "1"
 chrono = "0.4" # Used for setting DateTimes
 serde = {version = "1", features = ["derive"] } # Used in the Map Data into Structs section
 dotenv = "0.15.0"
-rocket = "0.5.0-rc.2"
+
+[dependencies.rocket]
+version = "0.5.0-rc.2"
+features = ["json"]
 
 [dependencies.rocket_dyn_templates]
 version = "0.1.0-rc.2"

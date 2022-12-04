@@ -1,7 +1,8 @@
 use rocket_dyn_templates::Template;
 
-use gavel3::{api, db, util};
 use dotenv::dotenv;
+use gavel3::api::{client, server};
+use gavel3::{db, util};
 
 #[macro_use]
 extern crate rocket;
@@ -27,6 +28,17 @@ async fn rocket() -> _ {
 
     // Start server
     rocket::build()
-        .mount("/", routes![api::client::home])
+        .mount(
+            "/",
+            routes![
+                client::home,
+                client::judge_login,
+                client::judge,
+                client::judge_welcome,
+                client::admin_login,
+                client::admin,
+                server::judge_login
+            ],
+        )
         .attach(Template::fairing())
 }
