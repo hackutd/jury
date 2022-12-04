@@ -1,7 +1,7 @@
+use dotenv::dotenv;
 use rocket_dyn_templates::Template;
 
-use dotenv::dotenv;
-use gavel3::api::{client, server};
+use gavel3::api::{client, judge};
 use gavel3::{db, util};
 
 #[macro_use]
@@ -17,17 +17,11 @@ async fn rocket() -> _ {
 
     // Initialize database
     let init_result = db::init::init_db();
-    match init_result.await {
-        Ok(_) => {
-            println!("Connected to MongoDB successfully!")
-        }
-        Err(e) => {
-            println!("Error connecting to MongoDB {e}")
-        }
-    }
+    let db = init_result.await.expect("Could not connect to MongoDB!");
 
     // Start server
     rocket::build()
+        .manage(db)
         .mount(
             "/",
             routes![
@@ -37,7 +31,8 @@ async fn rocket() -> _ {
                 client::judge_welcome,
                 client::admin_login,
                 client::admin,
-                server::judge_login
+                judge::login,
+                judge::new_judge
             ],
         )
         .attach(Template::fairing())

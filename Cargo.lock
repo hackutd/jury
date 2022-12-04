@@ -670,6 +670,7 @@ dependencies = [
  "chrono",
  "dotenv",
  "mongodb",
+ "rand",
  "rocket",
  "rocket_dyn_templates",
  "serde",
