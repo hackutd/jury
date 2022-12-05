@@ -73,7 +73,7 @@ impl<'r> FromRequest<'r> for AdminPassword {
         request: &'r rocket::Request<'_>,
     ) -> rocket::request::Outcome<Self, Self::Error> {
         // Pull password from cookies
-        let cookie_password = match request.cookies().get("adminpass") {
+        let cookie_password = match request.cookies().get("admin-pass") {
             Some(c) => c.value(),
             None => {
                 return Outcome::Failure((Status::Unauthorized, AdminPasswordError::Missing));
@@ -84,7 +84,7 @@ impl<'r> FromRequest<'r> for AdminPassword {
         let correct = env::var("GAVEL_ADMIN_PASSWORD").expect("GAVEL_ADMIN_PASSWORD not defined");
 
         // Compare
-        if (cookie_password == correct) {
+        if cookie_password == correct {
             Outcome::Success(AdminPassword(cookie_password.to_string()))
         } else {
             Outcome::Failure((Status::Unauthorized, AdminPasswordError::Invalid))

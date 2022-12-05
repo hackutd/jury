@@ -2,7 +2,7 @@ use dotenv::dotenv;
 use rocket::fs::{relative, FileServer};
 use rocket_dyn_templates::Template;
 
-use gavel3::api::{client, judge, catchers};
+use gavel3::api::{client, judge, admin, catchers};
 use gavel3::{db, util};
 
 #[macro_use]
@@ -33,7 +33,8 @@ async fn rocket() -> _ {
                 client::admin_login,
                 client::admin,
                 judge::login,
-                judge::new_judge
+                judge::new_judge,
+                admin::login
             ],
         )
         .register("/", catchers![catchers::unauthorized])
