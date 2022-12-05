@@ -1,0 +1,23 @@
+function getCookies() {
+    const cookieList = document.cookie.split(';');
+    const splitCookies = cookieList.reduce((acc, curr) => {
+        const cs = curr.split('=');
+        acc[cs[0]] = cs[1];
+        return acc;
+    }, {});
+    return splitCookies;
+}
+
+function getCookie(key) {
+    return getCookies()[key];
+}
+
+// Tokens should get 60*60*24 = 1 day
+function setCookie(key, value, maxAge = null) {
+    const maxAgeString = maxAge ? `maxage=${maxAge}; ` : '';
+    document.cookie = `${key}=${value}; ${maxAgeString}path=/; samesite=strict; secure;`;
+}
+
+function deleteCookie(key) {
+    document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; samesite=strict; secure;`;
+}

@@ -4,6 +4,8 @@
         <meta http-equiv='X-UA-Compatible' content='IE=edge' />
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
         <title>{{title}}</title>
+        <script src='/static/util.js' async defer></script>
+        <script src='/static/judge-login.js' async defer></script>
     </head>
     <body>
         <div class='gavel-header'>
@@ -11,10 +13,12 @@
             <div class='gavel-header-title'>{{title}}</div>
         </div>
         <div class='center'>
-            <input type='text' id='login-code-input' class='text-field' />
-            <label for='login-code-input' class='text-field-label'>Enter your judging code</label>
+            <input type='text' maxlength='6' id='login-code-input' class='text-field' />
+            <label for='login-code-input' id='login-code-input-label' class='text-field-label'>
+                Enter your judging code
+            </label>
             <p>If you did not get a code, check your email or contact an organizer.</p>
-            <button class='primary-button'>Submit</button>
+            <button class='primary-button' id='submit-button' onclick='login()'>Submit</button>
         </div>
     </body>
 </html>
