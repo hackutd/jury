@@ -1,29 +1,13 @@
 use async_trait::async_trait;
-use bson::doc;
 use mongodb::Database;
 use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::FromRequest;
 use std::env;
 
-use crate::db::models::Judge;
+use crate::db::judge::find_judge_by_token;
 
-pub struct Token(String);
-
-#[derive(Debug)]
-pub enum TokenError {
-    Invalid,
-    Missing,
-    InternalServerError,
-}
-
-pub struct AdminPassword(String);
-
-#[derive(Debug)]
-pub enum AdminPasswordError {
-    Invalid,
-    Missing,
-}
+use super::util::{get_cookie, AdminPassword, AdminPasswordError, Token, TokenError};
 
 // Route guard for judge
 #[async_trait]
@@ -32,13 +16,15 @@ impl<'r> FromRequest<'r> for Token {
     async fn from_request(
         request: &'r rocket::Request<'_>,
     ) -> rocket::request::Outcome<Self, Self::Error> {
-        let cookie_token = match request.cookies().get("token") {
+        // Retrieve token cookie
+        let cookie_token = match get_cookie(request, "token") {
             Some(c) => c.value(),
             None => {
                 return Outcome::Failure((Status::Unauthorized, TokenError::Missing));
             }
         };
 
+        // Get database from saved state
         let db = match request.rocket().state::<Database>() {
             Some(d) => d,
             None => {
@@ -49,18 +35,10 @@ impl<'r> FromRequest<'r> for Token {
             }
         };
 
-        let doc: Result<Option<Judge>, _> = db
-            .collection("judges")
-            .find_one(Some(doc! { "token": cookie_token }), None)
-            .await;
-        match doc {
-            Ok(content) => match content {
-                Some(_) => Outcome::Success(Token(cookie_token.to_string())),
-                None => Outcome::Failure((Status::Unauthorized, TokenError::Invalid)),
-            },
-            Err(_) => {
-                Outcome::Failure((Status::InternalServerError, TokenError::InternalServerError))
-            }
+        // Find judge and return success or error
+        match find_judge_by_token(db, cookie_token).await {
+            Ok(_) => Outcome::Success(Token(cookie_token.to_string())),
+            Err(status) => Outcome::Failure((status, TokenError::InternalServerError)),
         }
     }
 }

@@ -1,21 +1,35 @@
-use rocket::response::Redirect;
+use mongodb::Database;
+use rocket::{http::CookieJar, response::Redirect, State};
 use rocket_dyn_templates::{context, Template};
 
 use std::env;
 
-use super::guards::{AdminPassword, Token};
+use crate::db::judge::find_judge_by_token;
+
+use super::util::{AdminPassword, Token};
 
 #[rocket::get("/")]
 pub fn home() -> Template {
     Template::render("index", context! { title: get_title() })
 }
 
+// Will redirect to judge page if already logged in
 #[rocket::get("/judge/login")]
-pub fn judge_login() -> Result<Template, Redirect> {
-    Ok(Template::render(
-        "judge-login",
-        context! { title: get_title() },
-    ))
+pub async fn judge_login(db: &State<Database>, cookies: &CookieJar<'_>) -> Result<Redirect, Template> {
+    // Create login template
+    let template = Template::render("judge-login", context! { title: get_title() });
+
+    // Get token from cookies
+    let token = match cookies.get("token") {
+        Some(t) => t,
+        None => return Err(template),
+    };
+
+    // Find judge and return success or error
+    match find_judge_by_token(db, token.value()).await {
+        Ok(_) => return Ok(Redirect::to("/judge")),
+        Err(_) => Err(template),
+    }
 }
 
 #[rocket::get("/judge")]

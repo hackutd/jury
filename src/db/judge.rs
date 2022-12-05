@@ -53,6 +53,22 @@ pub async fn find_judge_by_code(db: &Database, code: &str) -> Result<Judge, Stat
     }
 }
 
+pub async fn find_judge_by_token(db: &Database, token: &str) -> Result<Judge, Status> {
+    // Check in DB for correct code
+    let collection: Collection<Judge> = db.collection("judges");
+    let doc: Result<Option<Judge>, _> =
+        collection.find_one(Some(doc! { "token": token }), None).await;
+
+    // If code is invalid or DB access fails, return error
+    match doc {
+        Ok(content) => match content {
+            Some(x) => Ok(x),
+            None => Err(Status::Unauthorized),
+        },
+        Err(_) => Err(Status::InternalServerError),
+    }
+}
+
 pub async fn update_judge_token(db: &Database, code: &str, token: &str) -> Result<(), Box<dyn Error>> {
     let collection: Collection<Judge> = db.collection("judges");
     collection
