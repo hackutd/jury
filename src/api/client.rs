@@ -2,7 +2,7 @@ use rocket_dyn_templates::{context, Template};
 
 use std::env;
 
-use super::guards::Token;
+use super::guards::{Token, AdminPassword};
 
 #[rocket::get("/")]
 pub fn home() -> Template {
@@ -15,12 +15,12 @@ pub fn judge_login() -> Template {
 }
 
 #[rocket::get("/judge")]
-pub fn judge(_code: Token) -> Template {
+pub fn judge(_token: Token) -> Template {
     Template::render("judge", context! { title: get_title() })
 }
 
 #[rocket::get("/judge/welcome")]
-pub fn judge_welcome() -> Template {
+pub fn judge_welcome(_token: Token) -> Template {
     Template::render("judge-welcome", context! { title: get_title() })
 }
 
@@ -30,7 +30,7 @@ pub fn admin_login() -> Template {
 }
 
 #[rocket::get("/admin")]
-pub fn admin() -> Template {
+pub fn admin(_password: AdminPassword) -> Template {
     Template::render("admin", context! { title: get_title() })
 }
 

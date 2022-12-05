@@ -18,4 +18,8 @@ pub async fn init_db() -> Result<Database, Box<dyn Error>> {
     Ok(db)
 }
 
-// https://www.mongodb.com/developer/languages/rust/rust-mongodb-crud-tutorial
+// Initialize admin collection in MongoDB with one document lol
+// This will represent all the admin settings
+pub async fn admin_settings() {
+
+}

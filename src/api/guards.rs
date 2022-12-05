@@ -4,6 +4,7 @@ use mongodb::Database;
 use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::FromRequest;
+use std::env;
 
 use crate::db::models::Judge;
 
@@ -14,6 +15,14 @@ pub enum TokenError {
     Invalid,
     Missing,
     InternalServerError,
+}
+
+pub struct AdminPassword(String);
+
+#[derive(Debug)]
+pub enum AdminPasswordError {
+    Invalid,
+    Missing,
 }
 
 // Route guard for judge
@@ -52,6 +61,33 @@ impl<'r> FromRequest<'r> for Token {
             Err(_) => {
                 Outcome::Failure((Status::InternalServerError, TokenError::InternalServerError))
             }
+        }
+    }
+}
+
+// Route guard for admin
+#[async_trait]
+impl<'r> FromRequest<'r> for AdminPassword {
+    type Error = AdminPasswordError;
+    async fn from_request(
+        request: &'r rocket::Request<'_>,
+    ) -> rocket::request::Outcome<Self, Self::Error> {
+        // Pull password from cookies
+        let cookie_password = match request.cookies().get("adminpass") {
+            Some(c) => c.value(),
+            None => {
+                return Outcome::Failure((Status::Unauthorized, AdminPasswordError::Missing));
+            }
+        };
+
+        // Get correct passsword from environmental variables
+        let correct = env::var("GAVEL_ADMIN_PASSWORD").expect("GAVEL_ADMIN_PASSWORD not defined");
+
+        // Compare
+        if (cookie_password == correct) {
+            Outcome::Success(AdminPassword(cookie_password.to_string()))
+        } else {
+            Outcome::Failure((Status::Unauthorized, AdminPasswordError::Invalid))
         }
     }
 }
