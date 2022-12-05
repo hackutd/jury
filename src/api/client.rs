@@ -1,8 +1,9 @@
+use rocket::response::Redirect;
 use rocket_dyn_templates::{context, Template};
 
 use std::env;
 
-use super::guards::{Token, AdminPassword};
+use super::guards::{AdminPassword, Token};
 
 #[rocket::get("/")]
 pub fn home() -> Template {
@@ -10,8 +11,11 @@ pub fn home() -> Template {
 }
 
 #[rocket::get("/judge/login")]
-pub fn judge_login() -> Template {
-    Template::render("judge-login", context! { title: get_title() })
+pub fn judge_login() -> Result<Template, Redirect> {
+    Ok(Template::render(
+        "judge-login",
+        context! { title: get_title() },
+    ))
 }
 
 #[rocket::get("/judge")]

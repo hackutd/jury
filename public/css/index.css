@@ -10,9 +10,3 @@
     font-weight: bold;
     margin-bottom: 5rem;
 }
-
-@media (min-width: 800px) {
-    a {
-        width: 50% !important;
-    }
-}

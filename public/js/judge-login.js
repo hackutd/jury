@@ -7,7 +7,13 @@ window.onload = () => {
         }
         hideError();
     });
-    getCookies();
+    document.getElementById('login-code-input').addEventListener('input', (v) => {
+        if (document.getElementById('login-code-input').value.length < 6) {
+            document.getElementById('submit-button').disabled = true;
+        } else {
+            document.getElementById('submit-button').disabled = false;
+        }
+    });
 };
 
 async function login() {
