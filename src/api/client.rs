@@ -2,6 +2,8 @@ use rocket_dyn_templates::{context, Template};
 
 use std::env;
 
+use super::guards::Token;
+
 #[rocket::get("/")]
 pub fn home() -> Template {
     Template::render("index", context! { title: get_title() })
@@ -13,7 +15,7 @@ pub fn judge_login() -> Template {
 }
 
 #[rocket::get("/judge")]
-pub fn judge() -> Template {
+pub fn judge(_code: Token) -> Template {
     Template::render("judge", context! { title: get_title() })
 }
 

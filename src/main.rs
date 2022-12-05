@@ -2,7 +2,7 @@ use dotenv::dotenv;
 use rocket::fs::{relative, FileServer};
 use rocket_dyn_templates::Template;
 
-use gavel3::api::{client, judge};
+use gavel3::api::{client, judge, catchers};
 use gavel3::{db, util};
 
 #[macro_use]
@@ -36,6 +36,7 @@ async fn rocket() -> _ {
                 judge::new_judge
             ],
         )
+        .register("/", catchers![catchers::unauthorized])
         .mount("/static", FileServer::from(relative!("public")))
         .attach(Template::fairing())
 }
