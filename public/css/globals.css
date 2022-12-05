@@ -1,0 +1,11 @@
+:root {
+    --background-color: #ECF7FC;
+}
+
+:root, html, body {
+    background-color: var(--background-color);
+}
+
+.container {
+    padding: 0 20%;
+}
