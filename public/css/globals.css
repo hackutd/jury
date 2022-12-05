@@ -1,11 +1,132 @@
 :root {
     --background-color: #ECF7FC;
+    --primary: #00ACE6;
+    --text-dark: #000000;
+    --text-light: #657985;
+    --text-lighter: #C7CFD3;
+    --text-white: #FFFFFF;
+    --text-font: Rubik, 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    --mono-font: 'Roboto Mono', 'Courier New', Courier, monospace;
 }
 
-:root, html, body {
+:root,
+html,
+body {
     background-color: var(--background-color);
+    font-family: var(--text-font);
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .container {
-    padding: 0 20%;
+    padding: 0 5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
+/* HEADER */
+
+.gavel-header {
+    padding: 5%;
+}
+
+.gavel-header-gavel {
+    font-weight: bold;
+    font-size: 2rem;
+    color: var(--text-dark);
+}
+
+.gavel-header-title {
+    font-weight: bold;
+    font-size: 1rem;
+    color: var(--primary);
+}
+
+/* BUTTONS */
+
+.primary-button {
+    border-radius: 1000px;
+    background-color: var(--primary);
+    color: var(--text-white);
+    padding: 1rem 0;
+    width: 70%;
+    text-align: center;
+    font-size: 1.5rem;
+    text-decoration: none;
+    outline: none;
+    border: none;
+    transition: 0.2s;
+}
+
+.primary-button:hover,
+.primary-button:focus {
+    transform: scale(1.1);
+}
+
+.text-button {
+    border-radius: 1000px;
+    background-color: transparent;
+    color: var(--primary);
+    padding: 1rem 0;
+    width: 70%;
+    text-align: center;
+    font-size: 1.5rem;
+    text-decoration: none;
+    outline: none;
+    border: none;
+    transition: 0.2s;
+}
+
+.text-button:hover,
+.text-button:focus {
+    transform: scale(1.1);
+}
+
+/* TEXT INPUT */
+.text-field {
+    display: block;
+    font-size: 2rem;
+    font-family: var(--mono-font);
+    color: var(--text-dark);
+    background-color: transparent;
+    outline: none;
+    border: none;
+    border-bottom: 3px solid var(--text-dark);
+    width: 80%;
+    padding: 0;
+    transition: 0.2s;
+}
+
+.text-field:focus {
+    border-color: var(--primary);
+}
+
+.text-field-label {
+    margin-top: 1rem;
+    font-size: 1.5rem;
+    transition: 0.2s;
+}
+
+.text-field:focus + .text-field-label {
+    color: var(--primary);
+}
+
+::placeholder {
+    color: var(--text-lighter);
+}
+
+@media (min-width: 800px) {
+    .gavel-header {
+        padding: 2rem 33%;
+    }
+
+    .container {
+        padding: 0 33%;
+    }
 }

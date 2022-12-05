@@ -1,0 +1,15 @@
+.text-field {
+    font-size: 4.75rem;
+    text-align: center;
+}
+
+p {
+    font-size: 1.5rem;
+    color: var(--text-light);
+    text-align: center;
+    margin: 3rem 1rem;
+}
+
+#submit-button {
+    margin-bottom: 3rem;
+}
