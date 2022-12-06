@@ -15,7 +15,10 @@ pub fn home() -> Template {
 
 // Will redirect to judge page if already logged in
 #[rocket::get("/judge/login")]
-pub async fn judge_login(db: &State<Database>, cookies: &CookieJar<'_>) -> Result<Redirect, Template> {
+pub async fn judge_login(
+    db: &State<Database>,
+    cookies: &CookieJar<'_>,
+) -> Result<Redirect, Template> {
     // Create login template
     let template = Template::render("judge-login", context! { title: get_title() });
 
@@ -27,7 +30,7 @@ pub async fn judge_login(db: &State<Database>, cookies: &CookieJar<'_>) -> Resul
 
     // Find judge and return success or error
     match find_judge_by_token(db, token.value()).await {
-        Ok(_) => return Ok(Redirect::to("/judge")),
+        Ok(_) => Ok(Redirect::to("/judge")),
         Err(_) => Err(template),
     }
 }
@@ -43,8 +46,22 @@ pub fn judge_welcome(_token: Token) -> Template {
 }
 
 #[rocket::get("/admin/login")]
-pub fn admin_login() -> Template {
-    Template::render("admin-login", context! { title: get_title() })
+pub fn admin_login(cookies: &CookieJar<'_>) -> Result<Redirect, Template> {
+    // Create login template
+    let template = Template::render("admin-login", context! { title: get_title() });
+
+    // Get token from cookies
+    let pass = match cookies.get("admin-pass") {
+        Some(t) => t,
+        None => return Err(template),
+    };
+
+    // Find judge and return success or error
+    if pass.value() == env::var("GAVEL_ADMIN_PASSWORD").expect("GAVEL_ADMIN_PASSWORD not defined") {
+        Ok(Redirect::to("/admin"))
+    } else {
+        Err(template)
+    }
 }
 
 #[rocket::get("/admin")]
