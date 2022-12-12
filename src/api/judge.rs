@@ -7,7 +7,10 @@ use rocket::State;
 
 use crate::db::judge::{find_judge_by_code, insert_judge, update_judge_token};
 
-use super::request_types::{Login, NewJudge};
+use super::{
+    request_types::{Login, NewJudge},
+    util::AdminPassword,
+};
 
 #[rocket::post("/judge/login", data = "<body>")]
 pub async fn login(db: &State<Database>, body: Json<Login<'_>>) -> (Status, String) {
@@ -37,7 +40,11 @@ pub async fn login(db: &State<Database>, body: Json<Login<'_>>) -> (Status, Stri
 }
 
 #[rocket::post("/judge/new", data = "<body>")]
-pub async fn new_judge(db: &State<Database>, body: Json<NewJudge<'_>>) -> (Status, String) {
+pub async fn new_judge(
+    db: &State<Database>,
+    body: Json<NewJudge<'_>>,
+    _password: AdminPassword,
+) -> (Status, String) {
     match insert_judge(db, body.0).await {
         Ok(_) => (Status::Accepted, "{}".to_string()),
         Err(status) => (status, "Invalid code".to_string()),
