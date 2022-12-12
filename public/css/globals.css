@@ -1,14 +1,15 @@
 :root {
-    --background-color: #ECF7FC;
-    --primary: #00ACE6;
+    --background-color: #ecf7fc;
+    --primary: #00ace6;
     --text-dark: #000000;
     --text-light: #657985;
-    --text-lighter: #C7CFD3;
-    --text-white: #FFFFFF;
-    --text-font: Rubik, 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    --mono-font: 'Roboto Mono', 'Courier New', Courier, monospace;
-    --warning: #FFC14E;
-    --error: #EA609C;
+    --text-lighter: #c7cfd3;
+    --text-white: #ffffff;
+    --text-font: Rubik, "Franklin Gothic Medium", "Arial Narrow", Arial,
+        sans-serif;
+    --mono-font: "Roboto Mono", "Courier New", Courier, monospace;
+    --warning: #ffc14e;
+    --error: #ea609c;
 }
 
 :root,
@@ -103,6 +104,7 @@ body {
 }
 
 /* TEXT INPUT */
+
 .text-field {
     display: block;
     font-size: 2rem;
@@ -127,7 +129,7 @@ body {
     transition: 0.2s;
 }
 
-.text-field:focus+.text-field-label {
+.text-field:focus + .text-field-label {
     color: var(--primary);
 }
 
@@ -141,6 +143,38 @@ label.error {
 
 ::placeholder {
     color: var(--text-lighter);
+}
+
+/* Login Block */
+
+.login-block {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #00000077;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.loader {
+    border: 1rem solid transparent;
+    border-top: 1rem solid var(--primary);
+    border-radius: 50%;
+    width: 10rem;
+    height: 10rem;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @media (min-width: 800px) {

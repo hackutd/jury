@@ -16,7 +16,7 @@ window.onload = () => {
 async function login() {
     // Prevent spamming of login while waiting for fetch
     if (loginLock) return;
-    loginLock = true;
+    showLoginBlock();
 
     // Get code from input
     const password = document.getElementById('login-code-input').value;
@@ -31,7 +31,7 @@ async function login() {
     // Invalid code
     if (res.status === 400) {
         showError();
-        loginLock = false;
+        hideLoginBlock();
         return;
     }
 
@@ -49,7 +49,7 @@ async function login() {
     // Redirect
     window.location.href = window.origin + '/admin';
 
-    loginLock = false;
+    hideLoginBlock();
 }
 
 function showError() {

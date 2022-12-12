@@ -21,3 +21,13 @@ function setCookie(key, value, maxAge = null) {
 function deleteCookie(key) {
     document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; samesite=strict; secure;`;
 }
+
+function showLoginBlock() {
+    document.getElementsByClassName('login-block')[0].style.display = 'flex';
+    loginLock = true;
+}
+
+function hideLoginBlock() {
+    document.getElementsByClassName('login-block')[0].style.display = 'none';
+    loginLock = false;
+}
