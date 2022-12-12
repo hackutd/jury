@@ -1,12 +1,18 @@
 let loginLock = false;
 
 window.onload = () => {
+    // Clear the judge login cookie if invalid
+    deleteCookie('token');
+
+    // Add event listener to keydown for login input
     document.getElementById('login-code-input').addEventListener('keydown', (key) => {
         if (key.key == 'Enter') {
             login();
         }
         hideError();
     });
+    
+    // Only enable submit button if 6 digits entered
     document.getElementById('login-code-input').addEventListener('input', (v) => {
         if (document.getElementById('login-code-input').value.length < 6) {
             document.getElementById('submit-button').disabled = true;

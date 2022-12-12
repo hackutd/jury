@@ -8,5 +8,10 @@ pub fn unauthorized(req: &Request) -> Redirect {
             return Redirect::to("/");
         }
     };
-    Redirect::to(format!("{}/login", route.uri.path()))
+    let path = route.uri.path();
+    if path.contains("judge") {
+        Redirect::to("/judge/login")
+    } else {
+        Redirect::to("/admin/login")
+    }
 }

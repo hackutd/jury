@@ -1,13 +1,16 @@
 let loginLock = false;
 
 window.onload = () => {
+    // Clear the admin login cookie if invalid
+    deleteCookie('admin-pass');
+
+    // Add listener for password input box
     document.getElementById('login-code-input').addEventListener('keydown', (key) => {
         if (key.key == 'Enter') {
             login();
         }
         hideError();
     });
-    getCookies();
 };
 
 async function login() {

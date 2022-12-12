@@ -1,36 +1,42 @@
-<html lang='en'>
+<html lang="en">
     <head>
-        <meta charset='UTF-8' />
-        <meta http-equiv='X-UA-Compatible' content='IE=edge' />
-        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{{title}}</title>
-        <link rel='preconnect' href='https://fonts.googleapis.com' />
-        <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href='https://fonts.googleapis.com/css2?family=Roboto+Mono&family=Rubik:wght@400;700&display=swap'
-            rel='stylesheet'
+            href="https://fonts.googleapis.com/css2?family=Roboto+Mono&family=Rubik:wght@400;700&display=swap"
+            rel="stylesheet"
         />
-        <script src='/static/js/util.js' async defer></script>
-        <script src='/static/js/admin-login.js' async defer></script>
-        <link rel='stylesheet' href='/static/css/globals.css' />
-        <link rel='stylesheet' href='/static/css/admin-login.css' />
+        <script src="/static/js/util.js" async defer></script>
+        <script src="/static/js/admin-login.js" async defer></script>
+        <link rel="stylesheet" href="/static/css/globals.css" />
+        <link rel="stylesheet" href="/static/css/admin-login.css" />
     </head>
     <body>
-        <div class='gavel-header'>
-            <div class='gavel-header-gavel'>Gavel</div>
-            <div class='gavel-header-title'>{{title}}</div>
+        <div class="gavel-header">
+            <div class="gavel-header-gavel">Gavel</div>
+            <div class="gavel-header-title">{{title}}</div>
         </div>
-        <div class='container'>
-            <input type='password' id='login-code-input' class='text-field' />
+        <div class="container">
+            <input
+                type="password"
+                id="login-code-input"
+                class="text-field"
+                placeholder="Type the admin password..."
+            />
             <label
-                for='login-code-input'
-                id='login-code-input-label'
-                class='text-field-label'
-                placeholder='Type the admin password...'
+                for="login-code-input"
+                id="login-code-input-label"
+                class="text-field-label"
             >
                 Admin Password
             </label>
-            <button class='primary-button' id='submit-button' onclick='login()'>Log In</button>
+            <button class="primary-button" id="submit-button" onclick="login()">
+                Log In
+            </button>
         </div>
     </body>
 </html>
