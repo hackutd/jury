@@ -34,6 +34,7 @@ async fn rocket() -> _ {
                 client::admin,
                 judge::login,
                 judge::new_judge,
+                judge::judge_read_welcome,
                 admin::login
             ],
         )

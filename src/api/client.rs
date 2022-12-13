@@ -51,8 +51,20 @@ pub async fn judge(db: &State<Database>, token: Token) -> Result<Template, Redir
 }
 
 #[rocket::get("/judge/welcome")]
-pub fn judge_welcome(_token: Token) -> Template {
-    Template::render("judge-welcome", context! { title: get_title() })
+pub async fn judge_welcome(db: &State<Database>, token: Token) -> Result<Template, Redirect> {
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(_) => return Err(Redirect::to("/judge/login")),
+    };
+
+    if judge.read_welcome {
+        Err(Redirect::to("/judge"))
+    } else {
+        Ok(Template::render(
+            "judge-welcome",
+            context! { title: get_title(), name: judge.name, email: judge.email },
+        ))
+    }
 }
 
 #[rocket::get("/admin/login")]

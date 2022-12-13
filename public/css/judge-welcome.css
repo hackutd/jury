@@ -1,0 +1,11 @@
+.hello-p {
+    font-size: 1.5rem;
+}
+
+.container {
+    justify-content: start;
+}
+
+#continue-button {
+    margin-top: 2rem;
+}

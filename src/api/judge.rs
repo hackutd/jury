@@ -5,11 +5,11 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 
-use crate::db::judge::{find_judge_by_code, insert_judge, update_judge_token};
+use crate::db::judge::{find_judge_by_code, insert_judge, update_judge_token, read_welcome};
 
 use super::{
     request_types::{Login, NewJudge},
-    util::AdminPassword,
+    util::{AdminPassword, Token},
 };
 
 #[rocket::post("/judge/login", data = "<body>")]
@@ -48,5 +48,13 @@ pub async fn new_judge(
     match insert_judge(db, body.0).await {
         Ok(_) => (Status::Accepted, "{}".to_string()),
         Err(status) => (status, "Invalid code".to_string()),
+    }
+}
+
+#[rocket::post("/judge/welcome")]
+pub async fn judge_read_welcome(db: &State<Database>, token: Token) -> (Status, String) {
+    match read_welcome(db, &token.0).await {
+        Ok(_) => (Status::Accepted, "{}".to_string()),
+        Err(_) => (Status::InternalServerError, "Internal Server Error".to_string()),
     }
 }

@@ -145,6 +145,23 @@ label.error {
     color: var(--text-lighter);
 }
 
+/* Checkbox */
+
+.checkbox-wrapper {
+    padding: 0 1rem;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.checkbox-wrapper > label {
+    cursor: pointer;
+}
+
+.checkbox {
+    display: inline;
+    cursor: pointer;
+}
+
 /* Login Block */
 
 .login-block {
@@ -175,6 +192,13 @@ label.error {
     100% {
         transform: rotate(360deg);
     }
+}
+
+/* Underline */
+
+.underline {
+    color: var(--primary);
+    text-decoration: underline;
 }
 
 @media (min-width: 800px) {

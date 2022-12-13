@@ -57,7 +57,9 @@ async function login() {
 
     // Internal server error
     if (res.status !== 200) {
-        console.error(await res.text());
+        const err = await res.text();
+        console.error(err);
+        alert(err);
         showError();
         hideLoginBlock();
         return;

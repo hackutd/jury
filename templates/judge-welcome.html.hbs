@@ -10,37 +10,80 @@
             href="https://fonts.googleapis.com/css2?family=Roboto+Mono&family=Rubik:wght@400;700&display=swap"
             rel="stylesheet"
         />
+        <script src="/static/js/util.js" async defer></script>
+        <script src="/static/js/judge-welcome.js" async defer></script>
+        <link rel="stylesheet" href="/static/css/globals.css" />
+        <link rel="stylesheet" href="/static/css/judge-welcome.css" />
         <title>{{title}}</title>
     </head>
     <body>
-        <div class="gavel-header">
-            <div class="gavel-header-gavel">Gavel</div>
-            <div class="gavel-header-title">{{title}}</div>
+        <div class="container">
+            <div class="gavel-header">
+                <div class="gavel-header-gavel">Gavel</div>
+                <div class="gavel-header-title">{{title}}</div>
+            </div>
+            <div class="welcome-section">
+                <p class="hello-p">Hello, {{name}}!</p>
+                <p><b>PLEASE READ THE FOLLOWING:</b></p>
+                <p>
+                    Welcome to Gavel, an innovative judging system that utilizes
+                    pairwise comparisons for hackathon judging.
+                </p>
+                <p>
+                    Once you get started, you will be presented with a project
+                    and its location. After you complete the first project, you
+                    will be presented with a second.
+                </p>
+                <p>
+                    Once completing the second project, you will be asked to
+                    compare the current project and the previous project you
+                    viewed. This same process will continue for all projects
+                    afterwards until all projects have been viewed.
+                </p>
+                <p>
+                    If a team is absent or is busy being judged, click the
+                    &lsquo;skip&rsquo; button. This will NOT impact their
+                    rating!
+                </p>
+                <p>
+                    If you suspect a team may be cheating, please report it to
+                    the organizers with the &lsquo;flag&rsquo; button.
+                </p>
+                <div class="checkbox-wrapper">
+                    <input
+                        class="checkbox"
+                        type="checkbox"
+                        id="agreement-0"
+                        name="agreement-0"
+                    />
+                    <label for="agreement-0">
+                        Before you continue, please awknoledge that you have
+                        read and understand the above instructions.
+                    </label>
+                </div>
+                <div class="checkbox-wrapper">
+                    <input
+                        type="checkbox"
+                        id="agreement-1"
+                        name="agreement-0"
+                    />
+                    <label for="agreement-1">I certify that my email is
+                        <span class="underline">{{email}}</span>. If this is not
+                        your email, contact an organizer immediately.
+                    </label>
+                </div>
+            </div>
+            <button
+                class="primary-button"
+                id="continue-button"
+                disabled="true"
+                onclick="login()"
+            >
+                Continue
+            </button>
         </div>
-        <h1>Hello, {{username}}</h1>
-        <p>PLEASE READ THE FOLLOWING</p>
-        <p>
-            Welcome to Gavel, an innovative judging system that utilizes
-            pairwise comparisons for hackathon judging.
-        </p>
-        <p>
-            Once you get started, you will be presented with a project and its
-            location. After you complete the first project, you will be
-            presented with a second.
-        </p>
-        <p>
-            Once completing the second project, you will be asked to compare the
-            current project and the previous project you viewed. This same
-            process will continue for all projects afterwards until all projects
-            have been viewed.
-        </p>
-        <p>
-            If a team is absent or is busy being judged, click the
-            &lsquo;skip&rsquo; button. This will NOT impact their rating!
-        </p>
-        <p>
-            If you suspect a team may be cheating, please report it to the
-            organizers with the &lsquo;flag&rsquo; button.
-        </p>
+        <div class="login-block">
+            <div class="loader"></div>
+        </div>
     </body>
 </html>
