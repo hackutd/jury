@@ -1,7 +1,7 @@
 function getCookies() {
-    const cookieList = document.cookie.split(';');
+    const cookieList = document.cookie.split(";");
     const splitCookies = cookieList.reduce((acc, curr) => {
-        const cs = curr.split('=');
+        const cs = curr.split("=");
         acc[cs[0]] = cs[1];
         return acc;
     }, {});
@@ -14,7 +14,7 @@ function getCookie(key) {
 
 // Tokens should get 60*60*24 = 1 day
 function setCookie(key, value, maxAge = null) {
-    const maxAgeString = maxAge ? `maxage=${maxAge}; ` : '';
+    const maxAgeString = maxAge ? `maxage=${maxAge}; ` : "";
     document.cookie = `${key}=${value}; ${maxAgeString}path=/; samesite=strict; secure;`;
 }
 
@@ -23,11 +23,19 @@ function deleteCookie(key) {
 }
 
 function showLoginBlock() {
-    document.getElementsByClassName('login-block')[0].style.display = 'flex';
+    document.getElementsByClassName("login-block")[0].style.display = "flex";
     loginLock = true;
 }
 
 function hideLoginBlock() {
-    document.getElementsByClassName('login-block')[0].style.display = 'none';
+    document.getElementsByClassName("login-block")[0].style.display = "none";
     loginLock = false;
+}
+
+function logoutJudge() {
+    deleteCookie("token");
+}
+
+function logoutAdmiin() {
+    deleteCookie("admin-pass");
 }
