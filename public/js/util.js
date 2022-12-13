@@ -34,8 +34,10 @@ function hideLoginBlock() {
 
 function logoutJudge() {
     deleteCookie("token");
+    window.location.href = window.origin + '/judge/login';
 }
 
 function logoutAdmiin() {
     deleteCookie("admin-pass");
+    window.location.href = window.origin + '/admin/login';
 }
