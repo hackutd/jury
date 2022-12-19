@@ -1,5 +1,6 @@
 .hello-p {
     font-size: 1.5rem;
+    margin: 0.5rem 0;
 }
 
 .container {
@@ -8,4 +9,5 @@
 
 #continue-button {
     margin-top: 2rem;
+    margin-bottom: 2rem;
 }

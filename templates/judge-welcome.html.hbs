@@ -17,15 +17,19 @@
         <title>{{title}}</title>
     </head>
     <body>
-        <div class="container">
-            <div class="gavel-header">
-                <div class="gavel-header-gavel">Gavel+</div>
-                <div class="gavel-header-title">{{title}}</div>
-                <div class="logout" onclick="logoutJudge()">
-                    <div class="logout-text">Logout</div>
-                    <img class="logout-icon" src="/static/logout.svg" alt="logout icon" />
-                </div>
+        <div class="gavel-header">
+            <div class="gavel-header-gavel">Gavel+</div>
+            <div class="gavel-header-title">{{title}}</div>
+            <div class="logout" onclick="logoutJudge()">
+                <div class="logout-text">Logout</div>
+                <img
+                    class="logout-icon"
+                    src="/static/logout.svg"
+                    alt="logout icon"
+                />
             </div>
+        </div>
+        <div class="container">
             <div class="welcome-section">
                 <p class="hello-p">Hello, {{name}}!</p>
                 <p><b>PLEASE READ THE FOLLOWING:</b></p>
