@@ -17,14 +17,23 @@ window.onload = () => {
     // Only enable submit button if 6 digits entered
     document
         .getElementById("login-code-input")
-        .addEventListener("input", (v) => {
-            if (document.getElementById("login-code-input").value.length < 6) {
-                document.getElementById("submit-button").disabled = true;
-            } else {
-                document.getElementById("submit-button").disabled = false;
-            }
-        });
+        .addEventListener("input", loginButtonCheck);
+
+    // If judging code in querystring, automatically load it
+    const params = getQueryParams();
+    if (params.code && params.code.length === 6) {
+        document.getElementById("login-code-input").value = params.code;
+        loginButtonCheck();
+    }
 };
+
+function loginButtonCheck() {
+    if (document.getElementById("login-code-input").value.length < 6) {
+        document.getElementById("submit-button").disabled = true;
+    } else {
+        document.getElementById("submit-button").disabled = false;
+    }
+}
 
 async function login() {
     // Prevent spamming of login while waiting for fetch

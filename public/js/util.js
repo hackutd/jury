@@ -41,3 +41,10 @@ function logoutAdmiin() {
     deleteCookie("admin-pass");
     window.location.href = window.origin + '/admin/login';
 }
+
+function getQueryParams() {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+    return params;
+}
