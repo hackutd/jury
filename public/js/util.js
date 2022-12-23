@@ -34,12 +34,12 @@ function hideLoginBlock() {
 
 function logoutJudge() {
     deleteCookie("token");
-    window.location.href = window.origin + '/judge/login';
+    window.location.href = window.origin;
 }
 
-function logoutAdmiin() {
+function logoutAdmin() {
     deleteCookie("admin-pass");
-    window.location.href = window.origin + '/admin/login';
+    window.location.href = window.origin;
 }
 
 function getQueryParams() {
