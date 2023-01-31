@@ -2,8 +2,8 @@ use dotenv::dotenv;
 use rocket::fs::{relative, FileServer};
 use rocket_dyn_templates::Template;
 
-use gavel_plus::api::{client, judge, admin, catchers};
-use gavel_plus::{db, util};
+use jury::api::{client, judge, admin, catchers};
+use jury::{db, util};
 
 #[macro_use]
 extern crate rocket;

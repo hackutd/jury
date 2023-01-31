@@ -1,4 +1,4 @@
-use gavel_plus::util::crowd_bt;
+use jury::util::crowd_bt;
 
 #[test]
 fn math_test() {
