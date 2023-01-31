@@ -662,24 +662,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gavel_plus"
-version = "0.1.0"
-dependencies = [
- "GSL",
- "async-trait",
- "bson",
- "chrono",
- "dotenv",
- "mongodb",
- "rand",
- "rocket",
- "rocket_dyn_templates",
- "serde",
- "statrs",
- "tokio",
-]
-
-[[package]]
 name = "generator"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1022,6 +1004,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49409df3e3bf0856b916e2ceaca09ee28e6871cf7d9ce97a692cacfdb2a25a47"
 dependencies = [
  "wasm-bindgen",
+]
+
+[[package]]
+name = "jury"
+version = "0.1.0"
+dependencies = [
+ "GSL",
+ "async-trait",
+ "bson",
+ "chrono",
+ "dotenv",
+ "mongodb",
+ "rand",
+ "rocket",
+ "rocket_dyn_templates",
+ "serde",
+ "statrs",
+ "tokio",
 ]
 
 [[package]]
