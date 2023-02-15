@@ -1,5 +1,10 @@
 use mongodb::Database;
-use rocket::{http::CookieJar, response::Redirect, State};
+use rocket::{
+    fairing::{Fairing, Info, Kind},
+    http::{CookieJar, Header},
+    response::Redirect,
+    Request, Response, State,
+};
 use rocket_dyn_templates::{context, Template};
 
 use std::env;
@@ -7,6 +12,34 @@ use std::env;
 use crate::db::judge::find_judge_by_token;
 
 use super::util::{AdminPassword, Token};
+
+pub struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response,
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        response.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET, PATCH, OPTIONS",
+        ));
+        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+    }
+}
+
+/// Catches all OPTION requests in order to get the CORS related Fairing triggered.
+#[rocket::options("/<_..>")]
+pub fn all_options() {
+    /* Intentionally left empty */
+}
 
 #[rocket::get("/")]
 pub fn home() -> Template {
