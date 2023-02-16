@@ -1,7 +1,6 @@
 use dotenv::dotenv;
 use jury::api::client::CORS;
 use rocket::fs::{relative, FileServer};
-use rocket_dyn_templates::Template;
 
 use jury::api::{admin, catchers, client, judge};
 use jury::{db, util};
@@ -28,11 +27,6 @@ async fn rocket() -> _ {
             "/",
             routes![
                 client::home,
-                client::judge_login,
-                client::judge,
-                client::judge_welcome,
-                client::admin_login,
-                client::admin,
                 judge::login,
                 judge::new_judge,
                 judge::judge_read_welcome,
@@ -41,7 +35,6 @@ async fn rocket() -> _ {
             ],
         )
         .register("/", catchers![catchers::unauthorized])
-        .mount("/static", FileServer::from(relative!("public")))
-        .attach(Template::fairing())
+        .mount("/", FileServer::from(relative!("public")))
         .attach(CORS)
 }

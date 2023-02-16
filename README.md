@@ -7,3 +7,26 @@
 > Note: This might be mitigated with the use of a dockerized development environment (WIP)
 
 * [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl/)
+
+# Developing
+
+Requirements:
+
+* [yarn](https://yarnpkg.com/)
+* [cargo](https://doc.rust-lang.org/cargo/)
+
+**THIS PROCESS WILL BE DOCKERIZED _VERY_ SOON**
+
+Client dev server:
+
+```
+cd client
+yarn install
+yarn start
+```
+
+Backend dev server:
+
+```
+cargo run
+```

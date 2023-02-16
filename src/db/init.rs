@@ -13,7 +13,7 @@ pub async fn init_db() -> Result<Database, Box<dyn Error>> {
         ClientOptions::parse_with_resolver_config(&client_uri, ResolverConfig::cloudflare())
             .await?;
     let client = Client::with_options(options)?;
-    let db = client.database("gavel");
+    let db = client.database("jury");
 
     Ok(db)
 }
