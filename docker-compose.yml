@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+    mongodb:
+        image: mongo:latest
+        restart: always
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=michael
+            - MONGO_INITDB_ROOT_PASSWORD=password
+        ports:
+            - 27107:27017
+        volumes:
+            - type: bind
+              source: ./data
+              target: /data/db 
+
+    rust:
+        depends_on:
+            - 'mongodb'
+        environment:
+            - MONGODB_URI=mongodb://mongo:27017/jury
+            - JURY_NAME=${JURY_NAME}
+            - JURY_URL=${JURY_URL}
+            - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
+            - PORT=8000
+        build:
+            context: './'
+            dockerfile: Dockerfile
+        ports:
+            - 8000:8000

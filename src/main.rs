@@ -1,6 +1,7 @@
 use dotenv::dotenv;
 use jury::api::client::CORS;
 use rocket::fs::{relative, FileServer};
+use std::env;
 
 use jury::api::{admin, catchers, client, judge};
 use jury::{db, util};
@@ -20,6 +21,14 @@ async fn rocket() -> _ {
     let init_result = db::init::init_db();
     let db = init_result.await.expect("Could not connect to MongoDB!");
 
+    // Select FileServer
+    let fileserver_path = env::var("FILESERVER").unwrap_or_else(|_| "".to_string());
+    let files = if fileserver_path.starts_with("/") {
+        FileServer::from(fileserver_path)
+    } else {
+        FileServer::from(relative!("public"))
+    };
+
     // Start server
     rocket::build()
         .manage(db)
@@ -35,6 +44,6 @@ async fn rocket() -> _ {
             ],
         )
         .register("/", catchers![catchers::unauthorized])
-        .mount("/", FileServer::from(relative!("public")))
+        .mount("/", files)
         .attach(CORS)
 }
