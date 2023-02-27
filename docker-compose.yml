@@ -1,23 +1,24 @@
 version: "3.9"
 services:
-    mongodb:
+    mongo:
         image: mongo:latest
         restart: always
         environment:
-            - MONGO_INITDB_ROOT_USERNAME=michael
-            - MONGO_INITDB_ROOT_PASSWORD=password
+            - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+            - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
         ports:
-            - 27107:27017
+            - 127.0.0.1:27107:27017
         volumes:
-            - type: bind
-              source: ./data
-              target: /data/db 
+            - './data:/data/db'
+        networks:
+            - jury-network
 
     rust:
         depends_on:
-            - 'mongodb'
+            - 'mongo'
+        container_name: jury-main
         environment:
-            - MONGODB_URI=mongodb://mongo:27017/jury
+            - MONGODB_URI=mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongo:27017/
             - JURY_NAME=${JURY_NAME}
             - JURY_URL=${JURY_URL}
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
@@ -27,3 +28,9 @@ services:
             dockerfile: Dockerfile
         ports:
             - 8000:8000
+        networks:
+            - jury-network
+
+networks:
+    jury-network:
+        driver: bridge

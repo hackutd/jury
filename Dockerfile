@@ -16,7 +16,6 @@ WORKDIR /usr/src/jury
 
 RUN apt update
 RUN apt install libgsl-dev -y
-RUN cargo install cargo-watch
 
 COPY src src
 COPY --from=client-builder /client/build public
