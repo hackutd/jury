@@ -33,16 +33,15 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(db)
         .mount(
-            "/",
+            "/api",
             routes![
-                client::home,
                 judge::login,
                 judge::new_judge,
                 judge::judge_read_welcome,
                 admin::login,
-                client::all_options
             ],
         )
+        .mount("/", routes![client::home, client::all_options])
         .register("/", catchers![catchers::unauthorized])
         .mount("/", files)
         .attach(CORS)
