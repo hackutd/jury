@@ -4,8 +4,8 @@ services:
         image: mongo:latest
         restart: always
         environment:
-            - MONGO_INITDB_ROOT_USERNAME=michael
-            - MONGO_INITDB_ROOT_PASSWORD=password
+            - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+            - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
             - MONGO_INITDB_DATABASE=jury
         ports:
             - 127.0.0.1:27107:27017
@@ -29,6 +29,7 @@ services:
             - 8000:8000
         volumes:
             - .:/jury
+            - ./target:/target
         networks:
             - jury-dev-network
 

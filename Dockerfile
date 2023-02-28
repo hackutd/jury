@@ -1,3 +1,4 @@
+# STEP 0: Statically build node client
 FROM node as client-builder
 WORKDIR /client
 COPY client/public public
@@ -11,16 +12,23 @@ ARG REACT_APP_JURY_URL
 RUN yarn install --frozen-lockfile
 RUN yarn build
 
+# STEP 1: Compile backend
 FROM rust as builder
 WORKDIR /usr/src/jury
 
 RUN apt update
 RUN apt install libgsl-dev -y
 
+# Jank way to cache built rust dependencies
+RUN mkdir src
+RUN echo "fn main() {}" > ./src/main.rs
+COPY ["Cargo.toml", "Cargo.lock",  "./"]
+RUN cargo build --locked --release
+
+# Then actually copy over the app and build it
 COPY src src
 COPY --from=client-builder /client/build public
-COPY *.toml .
-COPY Cargo.lock .
+COPY Rocket.toml .
 
 ARG MONGODB_URI=$MONGODB_URI
 ARG JURY_ADMIN_PASSWORD=$JURY_ADMIN_PASSWORD
@@ -28,6 +36,7 @@ ARG FILESERVER="/public"
 
 RUN cargo install --locked --path .
 
+# STEP 2: Main running container
 FROM debian:bullseye-slim
 
 ENV FILESERVER="/public"
