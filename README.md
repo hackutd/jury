@@ -27,7 +27,7 @@ Requirements:
 
 Copy `.env.template` into `.env` and fill in the environmental variables
 
-Simply run `docker compose compose-dev.yml` and open the page at `localhost:<PORT>`
+Simply run `docker compose -f docker-compose.dev.yml up` and open the page at `localhost:<PORT>`
 
 ## Manual Installation
 
