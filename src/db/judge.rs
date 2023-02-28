@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use bson::doc;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use mongodb::{Collection, Database};
 use rand::Rng;
 use rocket::http::Status;
@@ -19,7 +19,7 @@ pub async fn insert_judge(db: &Database, body: NewJudge<'_>) -> Result<(), Statu
         name: body.name.to_string(),
         email: body.email.to_string(),
         active: true,
-        last_activity: Utc::now(),
+        last_activity: DateTime::<Utc>::MIN_UTC,
         read_welcome: false,
         notes: body.notes.to_string(),
         next: None,

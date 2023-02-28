@@ -59,7 +59,7 @@ impl<'r> FromRequest<'r> for AdminPassword {
         };
 
         // Get correct passsword from environmental variables
-        let correct = env::var("GAVEL_ADMIN_PASSWORD").expect("GAVEL_ADMIN_PASSWORD not defined");
+        let correct = env::var("JURY_ADMIN_PASSWORD").expect("JURY_ADMIN_PASSWORD not defined");
 
         // Compare
         if cookie_password == correct {

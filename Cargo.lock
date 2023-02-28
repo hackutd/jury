@@ -581,6 +581,7 @@ checksum = "38390104763dc37a5145a53c29c63c1290b5d316d6086ec32c293f6736051bb0"
 dependencies = [
  "futures-channel",
  "futures-core",
+ "futures-executor",
  "futures-io",
  "futures-sink",
  "futures-task",
@@ -1015,6 +1016,7 @@ dependencies = [
  "bson",
  "chrono",
  "dotenv",
+ "futures",
  "mongodb",
  "rand",
  "rocket",

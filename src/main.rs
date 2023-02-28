@@ -1,8 +1,9 @@
 use dotenv::dotenv;
+use jury::api::client::CORS;
 use rocket::fs::{relative, FileServer};
-use rocket_dyn_templates::Template;
+use std::env;
 
-use jury::api::{client, judge, admin, catchers};
+use jury::api::{admin, catchers, client, judge};
 use jury::{db, util};
 
 #[macro_use]
@@ -20,25 +21,28 @@ async fn rocket() -> _ {
     let init_result = db::init::init_db();
     let db = init_result.await.expect("Could not connect to MongoDB!");
 
+    // Select FileServer
+    let fileserver_path = env::var("FILESERVER").unwrap_or_else(|_| "".to_string());
+    let files = if fileserver_path.starts_with("/") {
+        FileServer::from(fileserver_path)
+    } else {
+        FileServer::from(relative!("public"))
+    };
+
     // Start server
     rocket::build()
         .manage(db)
         .mount(
-            "/",
+            "/api",
             routes![
-                client::home,
-                client::judge_login,
-                client::judge,
-                client::judge_welcome,
-                client::admin_login,
-                client::admin,
                 judge::login,
                 judge::new_judge,
                 judge::judge_read_welcome,
-                admin::login
+                admin::login,
             ],
         )
+        .mount("/", routes![client::home, client::all_options])
         .register("/", catchers![catchers::unauthorized])
-        .mount("/static", FileServer::from(relative!("public")))
-        .attach(Template::fairing())
+        .mount("/", files)
+        .attach(CORS)
 }

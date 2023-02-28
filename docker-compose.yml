@@ -1,0 +1,39 @@
+version: "3.9"
+services:
+    mongo:
+        image: mongo:latest
+        restart: always
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+            - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
+            - MONGO_INITDB_DATABASE=jury
+        ports:
+            - 127.0.0.1:27107:27017
+        volumes:
+            - './data:/data/db'
+            - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+        networks:
+            - jury-network
+
+    rust:
+        depends_on:
+            - 'mongo'
+        container_name: jury-main
+        environment:
+            - MONGODB_URI=mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongo:27017/
+            - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
+            - PORT=8000
+        build:
+            context: './'
+            dockerfile: Dockerfile
+            args:
+                - REACT_APP_JURY_NAME=${JURY_NAME}
+                - REACT_APP_JURY_URL=/api
+        ports:
+            - 8000:8000
+        networks:
+            - jury-network
+
+networks:
+    jury-network:
+        driver: bridge

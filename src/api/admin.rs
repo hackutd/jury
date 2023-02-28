@@ -13,7 +13,7 @@ pub struct AdminLogin<'r> {
 #[rocket::post("/admin/login", data = "<body>")]
 pub async fn login(body: Json<AdminLogin<'_>>) -> (Status, String) {
     // Get correct passsword from environmental variables
-    let correct = env::var("GAVEL_ADMIN_PASSWORD").expect("GAVEL_ADMIN_PASSWORD not defined");
+    let correct = env::var("JURY_ADMIN_PASSWORD").expect("JURY_ADMIN_PASSWORD not defined");
 
     // Return status based on if the password is correct or not
     if correct == body.password.to_string() {
