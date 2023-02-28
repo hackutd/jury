@@ -28,7 +28,7 @@ services:
             dockerfile: Dockerfile
             args:
                 - REACT_APP_JURY_NAME=${JURY_NAME}
-                - REACT_APP_JURY_URL=${JURY_URL}
+                - REACT_APP_JURY_URL=/api
         ports:
             - 8000:8000
         networks:
