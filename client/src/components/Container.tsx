@@ -6,7 +6,7 @@ import React from 'react';
  */
 const Container = (props: { children: React.ReactNode }) => {
     return (
-        <div className="flex flex-col justify-center items-center grow shrink-0 my-0 mx-auto md:w-[30rem]">
+        <div className="flex flex-col justify-center items-center grow shrink-0 my-0 mx-auto md:w-[30rem] h-full">
             {props.children}
         </div>
     );

@@ -29,6 +29,7 @@ services:
             args:
                 - REACT_APP_JURY_NAME=${JURY_NAME}
                 - REACT_APP_JURY_URL=/api
+                - REACT_APP_HUB=${HEHE:-}
         ports:
             - 8000:8000
         networks:

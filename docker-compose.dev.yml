@@ -14,6 +14,7 @@ services:
             - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
         networks:
             - jury-dev-network
+
     rust-dev:
         depends_on:
             - 'mongo'
@@ -42,6 +43,7 @@ services:
         environment:
             - REACT_APP_JURY_NAME=${JURY_NAME}
             - REACT_APP_JURY_URL=http://localhost:8000/api
+            - REACT_APP_HUB=${HEHE:-}
         build:
             context: './'
             dockerfile: client/dev.Dockerfile
