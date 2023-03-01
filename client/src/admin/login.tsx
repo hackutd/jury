@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'universal-cookie';
 import Button from '../components/Button';
@@ -13,6 +13,19 @@ const AdminLogin = () => {
     const [error, setError] = useState(false);
     const cookies = new Cookies();
     const navigate = useNavigate();
+
+    // If token cookie is already defined and valid, redirect to admin page
+    useEffect(() => {
+        const cookies = new Cookies();
+        // TODO: Check if the cookie is valid lmao
+        if (cookies.get('admin-pass')) {
+            navigate('/admin')
+            return;
+        }
+
+        // If invalid, delete the token
+        cookies.remove('admin-pass');
+    }, [navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPassword(e.target.value);

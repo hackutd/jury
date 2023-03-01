@@ -1,3 +1,5 @@
-/target
+target
+.target
 .env
-/data
+data
+.cargo
