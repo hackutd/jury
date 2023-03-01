@@ -1,14 +1,13 @@
-use rocket::{
-    http::Status,
-    serde::{json::Json, Deserialize},
-};
+use mongodb::Database;
+use rocket::{http::Status, serde::json::Json, State};
 use std::env;
 
-#[derive(Deserialize)]
-#[serde()]
-pub struct AdminLogin<'r> {
-    password: &'r str,
-}
+use crate::{
+    db::admin::aggregate_stats,
+    util::types::{AdminLogin, Stats},
+};
+
+use super::util::AdminPassword;
 
 #[rocket::post("/admin/login", data = "<body>")]
 pub async fn login(body: Json<AdminLogin<'_>>) -> (Status, String) {
@@ -23,5 +22,24 @@ pub async fn login(body: Json<AdminLogin<'_>>) -> (Status, String) {
             Status::BadRequest,
             "Invalid or missing password field".to_string(),
         )
+    }
+}
+
+#[rocket::get("/admin/stats")]
+pub async fn get_stats(_password: AdminPassword, db: &State<Database>) -> (Status, Json<Stats>) {
+    match aggregate_stats(&db).await {
+        Ok(stats) => (Status::Ok, Json(stats)),
+        Err(_) => (
+            Status::InternalServerError,
+            Json(Stats {
+                projects: 0,
+                seen: 0,
+                votes: 0,
+                time: 0,
+                avg_mu: 0.0,
+                avg_sigma: 0.0,
+                judges: 0,
+            }),
+        ),
     }
 }

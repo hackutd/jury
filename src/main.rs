@@ -3,7 +3,7 @@ use jury::api::client::CORS;
 use rocket::fs::{relative, FileServer};
 use std::env;
 
-use jury::api::{admin, catchers, client, judge};
+use jury::api::{admin, client, judge};
 use jury::{db, util};
 
 #[macro_use]
@@ -39,10 +39,10 @@ async fn rocket() -> _ {
                 judge::new_judge,
                 judge::judge_read_welcome,
                 admin::login,
+                admin::get_stats,
             ],
         )
         .mount("/", routes![client::home, client::all_options])
-        .register("/", catchers![catchers::unauthorized])
         .mount("/", files)
         .attach(CORS)
 }

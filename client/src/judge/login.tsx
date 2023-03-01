@@ -18,7 +18,10 @@ const JudgeLogin = () => {
     useEffect(() => {
         const cookies = new Cookies();
         // TODO: Check if the cookie is valid lmao
-        if (cookies.get('token')) navigate('/judge');
+        if (cookies.get('token')) {
+            navigate('/judge');
+            return;
+        }
 
         // If invalid, delete the token
         cookies.remove('token');

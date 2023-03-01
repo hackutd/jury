@@ -9,6 +9,8 @@ pub struct Project {
     pub name: String,
     pub location: String,
     pub description: String,
+    pub seen: u64,
+    pub votes: u64,
     pub mu: f64,
     pub sigma_sq: f64,
     pub active: bool,
