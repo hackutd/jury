@@ -22,6 +22,7 @@ services:
             - MONGODB_URI=mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongo:27017/
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
             - PORT=8000
+            - CARGO_TARGET_DIR=/root/target
         build:
             context: './'
             dockerfile: dev.Dockerfile
@@ -29,6 +30,8 @@ services:
             - 8000:8000
         volumes:
             - .:/jury
+            - ./.cargo/registry:/usr/local/cargo/registry
+            - ./.target:/root/target
         networks:
             - jury-dev-network
 

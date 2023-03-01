@@ -29,6 +29,8 @@ async fn rocket() -> _ {
         FileServer::from(relative!("public"))
     };
 
+    println!("ur mum");
+
     // Start server
     rocket::build()
         .manage(db)
