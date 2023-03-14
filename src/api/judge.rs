@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bson::doc;
 use mongodb::Database;
 use rand::{distributions::Alphanumeric, Rng};
@@ -13,7 +15,7 @@ use super::{
 };
 
 #[rocket::post("/judge/login", data = "<body>")]
-pub async fn login(db: &State<Database>, body: Json<Login<'_>>) -> (Status, String) {
+pub async fn login(db: &State<Arc<Database>>, body: Json<Login<'_>>) -> (Status, String) {
     // Find judge from db using code
     let judge = match find_judge_by_code(db, body.code).await {
         Ok(j) => j,
@@ -41,7 +43,7 @@ pub async fn login(db: &State<Database>, body: Json<Login<'_>>) -> (Status, Stri
 
 #[rocket::post("/judge/new", data = "<body>")]
 pub async fn new_judge(
-    db: &State<Database>,
+    db: &State<Arc<Database>>,
     body: Json<NewJudge<'_>>,
     _password: AdminPassword,
 ) -> (Status, String) {
@@ -52,7 +54,7 @@ pub async fn new_judge(
 }
 
 #[rocket::post("/judge/welcome")]
-pub async fn judge_read_welcome(db: &State<Database>, token: Token) -> (Status, String) {
+pub async fn judge_read_welcome(db: &State<Arc<Database>>, token: Token) -> (Status, String) {
     match read_welcome(db, &token.0).await {
         Ok(_) => (Status::Accepted, "{}".to_string()),
         Err(_) => (Status::InternalServerError, "Internal Server Error".to_string()),

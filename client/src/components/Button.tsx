@@ -16,6 +16,9 @@ interface ButtonProps {
     /* If true, sets button as a disabled button */
     disabled?: boolean;
 
+    /* Square button */
+    square?: boolean;
+
     /* Classname styling */
     className?: string;
 }
@@ -36,7 +39,7 @@ const Button = (props: ButtonProps) => {
         : 'cursor-auto text-lighter bg-backgroundDark';
     const formatting = defaultFormat + ' ' + varFormat;
 
-    // Return a disabled button or link if not disabled
+    // Disable button bc links cannot be disabled
     return props.disabled ? (
         <button disabled className={formatting}>
             {props.children}

@@ -26,7 +26,10 @@ pub async fn aggregate_stats(db: &Database) -> Result<Stats, Error> {
     let mut seen_cursor = projects_col.aggregate(seen_pipeline, None).await?;
     let mut seen = 0;
     if seen_cursor.advance().await? {
-        seen = seen_cursor.current().get_i32("total_seen").unwrap_or_else(|_| 0);
+        seen = seen_cursor
+            .current()
+            .get_i32("total_seen")
+            .unwrap_or_else(|_| 0);
     }
 
     // Aggregation for total votes
@@ -41,7 +44,10 @@ pub async fn aggregate_stats(db: &Database) -> Result<Stats, Error> {
     let mut votes_cursor = projects_col.aggregate(seen_pipeline, None).await?;
     let mut votes = 0;
     if votes_cursor.advance().await? {
-        votes = votes_cursor.current().get_i32("total_seen").unwrap_or_else(|_| 0);
+        votes = votes_cursor
+            .current()
+            .get_i32("total_seen")
+            .unwrap_or_else(|_| 0);
     }
 
     // Aggregation for average mu
@@ -56,7 +62,10 @@ pub async fn aggregate_stats(db: &Database) -> Result<Stats, Error> {
     let mut mu_cursor = projects_col.aggregate(seen_pipeline, None).await?;
     let mut avg_mu = 0.0;
     if mu_cursor.advance().await? {
-        avg_mu = mu_cursor.current().get_f64("avg_mu").unwrap_or_else(|_| 0.0);
+        avg_mu = mu_cursor
+            .current()
+            .get_f64("avg_mu")
+            .unwrap_or_else(|_| 0.0);
     }
 
     // Aggregation for average sigma squared
@@ -71,7 +80,10 @@ pub async fn aggregate_stats(db: &Database) -> Result<Stats, Error> {
     let mut mu_cursor = projects_col.aggregate(seen_pipeline, None).await?;
     let mut avg_sigma = 0.0;
     if mu_cursor.advance().await? {
-        avg_sigma = mu_cursor.current().get_f64("avg_sigma").unwrap_or_else(|_| 0.0);
+        avg_sigma = mu_cursor
+            .current()
+            .get_f64("avg_sigma")
+            .unwrap_or_else(|_| 0.0);
     }
 
     Ok(Stats {
