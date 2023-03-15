@@ -1,11 +1,11 @@
 use std::error::Error;
 use std::sync::Arc;
-// use std::time::Duration;
-// use tokio::time;
 
+use chrono::{DateTime, Utc};
 use mongodb::Database;
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::sync::Mutex;
+use tokio::time::{sleep, Duration};
 
 pub struct NewSender {
     /// True if connecting, false if disconnecting
@@ -70,21 +70,68 @@ async fn new_sender_listen(
     }
 }
 
-/// Creates the MongoDB listener and listens for changes to the database
+/// Thread that creates the MongoDB listener and listens for changes to the database
 async fn mongo_listen(
     sender_list: Arc<Mutex<Vec<Sender<String>>>>,
     db: Arc<Database>,
 ) -> Result<(), Box<dyn Error>> {
+    // Instantiate variables for tracking debounce time
+    let mut last_update = DateTime::<Utc>::MIN_UTC.timestamp_millis();
+    let mut debounced = false;
+
+    // Create and listen to change stream
     let mut change_stream = db.watch(None, None).await?;
     while change_stream.is_alive() {
-        // TODO: simply continue if change stream is invalid and show error
         if let Some(_) = change_stream.next_if_any().await? {
-            let editable_sender_list = sender_list.lock().await;
-            for s in editable_sender_list.iter() {
-                s.send("update".to_string()).await?;
-            }
+            let now = Utc::now().timestamp_millis();
+            if now - last_update > 10000 {
+                // If last update was more than 10 seconds ago, send update
+                // and reset debounce flag
+                last_update = now;
+                debounced = false;
+                update_senders(sender_list.clone()).await;
+            } else if !debounced {
+                // If not yet debounced an update, run the debounce task
+                let debounce_sender_list = sender_list.clone();
+                let diff = now - last_update;
+                debounced = true;
+                tokio::spawn(async move {
+                    debounce_task(debounce_sender_list, diff).await;
+                });
+            };
         }
     }
 
     Ok(())
+}
+
+/// Thread that debounces the change_stream.
+/// This will basically wait for 11 seconds before sending an update
+/// so too many updates don't get sent at once
+async fn debounce_task(sender_list: Arc<Mutex<Vec<Sender<String>>>>, diff: i64) {
+    // Sleep for 11 seconds to catch all events that happen
+    // Extra second is allocated for overlap with next debounce cycle
+    sleep(Duration::from_millis((11000 - diff).try_into().unwrap_or_else(|_| 0))).await;
+    update_senders(sender_list).await;
+}
+
+/// Sends the update message to all message channels
+async fn update_senders(sender_list: Arc<Mutex<Vec<Sender<String>>>>) {
+    let mut invalid = Vec::new();
+    let mut editable_sender_list = sender_list.lock().await;
+    for (i, s) in editable_sender_list.iter().enumerate() {
+        match s.send("update".to_string()).await {
+            Ok(()) => (),
+            Err(_) => {
+                // Insert invalid senders in reverse order
+                invalid.insert(0, i);
+            }
+        };
+    }
+    // Remove invalid senders from the sender vector
+    if !invalid.is_empty() {
+        for i in invalid.iter() {
+            editable_sender_list.remove(*i);
+        }
+    }
 }

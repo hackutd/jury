@@ -64,8 +64,6 @@ pub async fn req_sync(
         }
     };
 
-    // TODO: Figure out when message sender disconnects
-
     // If successfully sent message sender, listen for messages on that channel
     (
         Status::Ok,
