@@ -1,22 +1,42 @@
 version: '3.9'
 services:
     mongo:
-        image: mongo:latest
+        build:
+            context: './'
+            dockerfile: mongo.Dockerfile
         restart: always
         environment:
             - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
             - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
             - MONGO_INITDB_DATABASE=jury
+            - MONGO_REPLICA_SET_NAME=rs0
         ports:
             - 127.0.0.1:27107:27017
         volumes:
             - './data:/data/db'
             - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+            - ./init-mongo-dummy.js:/docker-entrypoint-initdb.d/init-mongo-dummy.js
         networks:
             - jury-dev-network
+
+    mongorssetup:
+        depends_on:
+            - 'mongo'
+        image: mongo:latest
+        environment:
+            - MONGODB_USER=${MONGODB_USER}
+            - MONGODB_PASS=${MONGODB_PASS}
+        volumes:
+            - .:/scripts
+        restart: "no"
+        entrypoint: [ 'bash', '/scripts/init-mongo-rs.sh' ]
+        networks:
+            - jury-dev-network
+
     rust-dev:
         depends_on:
             - 'mongo'
+            - 'mongorssetup'
         container_name: jury-dev-backend
         environment:
             - MONGODB_URI=mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongo:27017/
@@ -42,6 +62,7 @@ services:
         environment:
             - REACT_APP_JURY_NAME=${JURY_NAME}
             - REACT_APP_JURY_URL=http://localhost:8000/api
+            - REACT_APP_HUB=${HEHE:-}
         build:
             context: './'
             dockerfile: client/dev.Dockerfile
@@ -51,7 +72,6 @@ services:
             - ./client:/client
         networks:
             - jury-dev-network
-            
 
 networks:
     jury-dev-network:

@@ -1,7 +1,9 @@
 use dotenv::dotenv;
 use jury::api::client::CORS;
+use jury::api::tasks::init_threads;
 use rocket::fs::{relative, FileServer};
 use std::env;
+use std::sync::Arc;
 
 use jury::api::{admin, client, judge};
 use jury::{db, util};
@@ -19,7 +21,7 @@ async fn rocket() -> _ {
 
     // Initialize database
     let init_result = db::init::init_db();
-    let db = init_result.await.expect("Could not connect to MongoDB!");
+    let db = Arc::new(init_result.await.expect("Could not connect to MongoDB!"));
 
     // Select FileServer
     let fileserver_path = env::var("FILESERVER").unwrap_or_else(|_| "".to_string());
@@ -29,11 +31,15 @@ async fn rocket() -> _ {
         FileServer::from(relative!("public"))
     };
 
-    println!("ur mum");
+    // Initialize all threads
+    // and get sender for sending new message senders
+    // See https://cdn.michaelzhao.xyz/archive/jury-network.png
+    let vector_tx = init_threads(db.clone()).await;
 
     // Start server
     rocket::build()
-        .manage(db)
+        .manage(db.clone())
+        .manage(vector_tx)
         .mount(
             "/api",
             routes![
@@ -42,6 +48,7 @@ async fn rocket() -> _ {
                 judge::judge_read_welcome,
                 admin::login,
                 admin::get_stats,
+                admin::req_sync,
             ],
         )
         .mount("/", routes![client::home, client::all_options])

@@ -8,6 +8,7 @@ COPY ["client/package.json", "client/yarn.lock", "client/tailwind.config.js", "c
 ARG NODE_ENV=production
 ARG REACT_APP_JURY_NAME
 ARG REACT_APP_JURY_URL
+ARG REACT_APP_HUB
 
 RUN yarn install --frozen-lockfile
 RUN yarn build
