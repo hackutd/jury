@@ -21,6 +21,7 @@
         "tailwindcss": "^3.2.6"
     },
     "scripts": {
+        "docker": "yarn install && yarn start",
         "start": "react-scripts start",
         "build": "react-scripts build",
         "test": "react-scripts test",
