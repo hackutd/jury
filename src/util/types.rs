@@ -17,3 +17,17 @@ pub struct Stats {
     pub avg_sigma: f64,
     pub judges: u64,
 }
+
+impl Default for Stats {
+    fn default() -> Self {
+        Self {
+            projects: 0,
+            seen: 0,
+            votes: 0,
+            time: 0,
+            avg_mu: 0.0,
+            avg_sigma: 0.0,
+            judges: 0,
+        }
+    }
+}

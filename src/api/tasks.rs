@@ -111,7 +111,10 @@ async fn mongo_listen(
 async fn debounce_task(sender_list: Arc<Mutex<Vec<Sender<String>>>>, diff: i64) {
     // Sleep for 11 seconds to catch all events that happen
     // Extra second is allocated for overlap with next debounce cycle
-    sleep(Duration::from_millis((11000 - diff).try_into().unwrap_or_else(|_| 0))).await;
+    sleep(Duration::from_millis(
+        (11000 - diff).try_into().unwrap_or_else(|_| 0),
+    ))
+    .await;
     update_senders(sender_list).await;
 }
 
