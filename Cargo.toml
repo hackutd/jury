@@ -17,6 +17,7 @@ dotenv = "0.15.0"
 rand = "0.8.5"
 async-trait = "0.1.59"
 futures = "0.3"
+csv = "1.2.1"
 
 [dependencies.rocket]
 version = "0.5.0-rc.2"

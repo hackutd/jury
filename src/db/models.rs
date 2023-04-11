@@ -1,14 +1,22 @@
+use chrono::{DateTime, Utc};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use chrono::{Utc, DateTime};
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Options {
+    pub next_table_num: u32,
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Project {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
     pub name: String,
-    pub location: String,
+    pub location: u64,
     pub description: String,
+    pub try_link: Option<String>,
+    pub video_link: Option<String>,
+    pub challenge_list: Vec<String>,
     pub seen: u64,
     pub votes: u64,
     pub mu: f64,

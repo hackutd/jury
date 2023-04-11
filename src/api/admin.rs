@@ -1,10 +1,13 @@
 use mongodb::Database;
+use rocket::data::{Data, ToByteUnit};
 use rocket::response::stream::{Event, EventStream};
 use rocket::{http::Status, serde::json::Json, State};
 use std::env;
 use std::sync::Arc;
 use tokio::sync::mpsc::{channel, Sender};
 
+use crate::db::admin::insert_projects;
+use crate::util::parse_csv::devpost_integration;
 use crate::{
     db::admin::aggregate_stats,
     util::types::{AdminLogin, Stats},
@@ -29,21 +32,13 @@ pub async fn login(body: Json<AdminLogin<'_>>) -> (Status, String) {
 }
 
 #[rocket::get("/admin/stats")]
-pub async fn get_stats(_password: AdminPassword, db: &State<Arc<Database>>) -> (Status, Json<Stats>) {
+pub async fn get_stats(
+    _password: AdminPassword,
+    db: &State<Arc<Database>>,
+) -> (Status, Json<Stats>) {
     match aggregate_stats(&db).await {
         Ok(stats) => (Status::Ok, Json(stats)),
-        Err(_) => (
-            Status::InternalServerError,
-            Json(Stats {
-                projects: 0,
-                seen: 0,
-                votes: 0,
-                time: 0,
-                avg_mu: 0.0,
-                avg_sigma: 0.0,
-                judges: 0,
-            }),
-        ),
+        Err(_) => (Status::InternalServerError, Json(Stats::default())),
     }
 }
 
@@ -78,4 +73,48 @@ pub async fn req_sync(
             }
         }),
     )
+}
+
+const CSV_HEADER: &str = "Content-Type: text/csv\r\n\r\n";
+const CSV_FOOTER: &str = "\r\n----------------------------";
+
+#[rocket::post("/admin/csv", data = "<csv>")]
+pub async fn add_projects_csv(csv: Data<'_>, db: &State<Arc<Database>>) -> (Status, String) {
+    // TODO: Add admin token check
+
+    // Extract all data and store into a string
+    // TODO: No unwrap
+    let str = csv.open(16.mebibytes()).into_string().await.unwrap();
+
+    // Find the start and end of the CSV data
+    // and cut out the CSV data from the raw string
+    let start = str.find(CSV_HEADER).unwrap() + CSV_HEADER.len();
+    let end = str[start..].find(CSV_FOOTER).unwrap();
+    let cut_str = &str[start..(start + end)];
+
+    // Parse the CSV data
+    let parsed_csv = match devpost_integration(cut_str, db).await {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("Unable to parse CSV: {e}",);
+            return (
+                Status::InternalServerError,
+                format!("Unable to parse CSV: {e}").to_string(),
+            );
+        }
+    };
+
+    // Save the parsed CSV data to the database
+    match insert_projects(&db, parsed_csv).await {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Unable to insert projects into database: {e}",);
+            return (
+                Status::InternalServerError,
+                format!("Unable to insert projects into database: {e}").to_string(),
+            );
+        }
+    };
+
+    (Status::Ok, "".to_string())
 }
