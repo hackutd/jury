@@ -20,6 +20,12 @@ Copy `.env.template` into `.env` and fill in the environmental variables
 
 Simply run `docker compose -f docker-compose.dev.yml up` and open the page at `localhost:3000`
 
+### Connecting to the MongoDB Container
+
+Use `mongodb://{MONGODB_USER}:{MONGODB_PASS}@0.0.0.0:27107/?directConnection=true` as the connection string. This works with both MongoDB Compass and through `mongosh`.
+
+To reset the database and reload the sample data, completely remove the `data` folder that the Docker compose creates.
+
 ## Manual Installation
 
 Requirements:
