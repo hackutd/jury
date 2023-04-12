@@ -3,5 +3,4 @@ pub mod client;
 pub mod guards;
 pub mod judge;
 pub mod request_types;
-pub mod tasks;
 pub mod util;

@@ -3,3 +3,4 @@ target
 .env
 data
 .cargo
+.vscode
