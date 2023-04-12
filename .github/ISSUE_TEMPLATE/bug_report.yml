@@ -1,0 +1,65 @@
+name: Bug Report
+description: Report a bug or something that is wrong
+title: "[Bug] "
+labels: ["bug"]
+assignees:
+  - MichaelZhao21
+body:
+  - type: markdown
+    attributes: Thank uuuu for filling out dis bug report <33
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen if the bug was not there
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Behavior
+      description: What is happening right now
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: Use this area to describe the bug more in depth, if needed
+      placeholder: ex. When the button gets clicked, nothing happens
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Give clear steps on how to reproduce the bug you found
+      placeholder: 1. \n 2. \n 3. \n 4. \n
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: What device are you seeing this issue on?
+      multiple: true
+      options:
+        - Linux Computer
+        - Windows Computer
+        - Mac Computer
+        - Android Mobile Device
+        - iOS Mobile Device
+  - type: dropdown
+    id: browser
+    attributes:
+      label: What browser are you seeing this issue on?
+      multiple: true
+      options:
+        - Firefox
+        - Chromium (Chrome, Brave, Edge, Arc, Opera)
+        - Safari
+        - Firefox Mobile
+        - Chromium Mobile
+        - Safari Mobile
+  - type: textarea
+    id: solutions
+    attributes:
+      label: Possible Solutions
+      description: List possible solutions to the bug, if any

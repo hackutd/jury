@@ -1,0 +1,27 @@
+name: Bug Report
+description: Report a bug or something that is wrong
+title: "[Bug] "
+labels: ["bug"]
+assignees:
+  - MichaelZhao21
+body:
+  - type: markdown
+    attributes: Thanks for helping out and suggesting a new feature!!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem? Please describe.
+      description: A clear and concise description of what the problem is. 
+      placeholder: ex. I'm always frustrated when [...]
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen or the feature you want.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Put additional context for your feature request here. This can be screenshots, code, or anything else!
