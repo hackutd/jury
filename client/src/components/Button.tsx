@@ -1,4 +1,5 @@
 import React from 'react';
+import { twMerge } from 'tailwind-merge';
 
 interface ButtonProps {
     /* Button internal content */
@@ -31,13 +32,14 @@ interface ButtonProps {
 const Button = (props: ButtonProps) => {
     // Define formatting
     const defaultFormat =
-        'rounded-full py-4 w-3/4 text-center text-2xl no-underline outline-none border-none md:w-2/3 ';
+        'py-4 w-3/4 text-center text-2xl no-underline outline-none border-none md:w-2/3 ';
     const typeFormat =
         props.type === 'primary' ? 'bg-primary text-background' : 'bg-transparent text-primary';
+    const squareFormat = props.square ? 'rounded-lg' : 'rounded-full';
     const varFormat = !props.disabled
         ? typeFormat + ' cursor-pointer duration-200 hover:scale-110 focus:scale-110'
         : 'cursor-auto text-lighter bg-backgroundDark';
-    const formatting = defaultFormat + ' ' + varFormat;
+    const formatting = twMerge(defaultFormat, varFormat, squareFormat, props.className);
 
     // Disable button bc links cannot be disabled
     return props.disabled ? (
