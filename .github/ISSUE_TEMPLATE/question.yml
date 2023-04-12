@@ -1,7 +1,7 @@
-name: Bug Report
-description: Report a bug or something that is wrong
-title: "[Bug] "
-labels: ["bug"]
+name: Question
+description: Ask a question or open discussion on a topic
+title: ""
+labels: ["question"]
 assignees:
   - MichaelZhao21
 body:
