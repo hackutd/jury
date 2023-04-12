@@ -6,7 +6,8 @@ assignees:
   - MichaelZhao21
 body:
   - type: markdown
-    attributes: Thank uuuu for filling out dis bug report <33
+    attributes: 
+      value: Thank uuuu for filling out dis bug report <33
   - type: textarea
     id: expected
     attributes:

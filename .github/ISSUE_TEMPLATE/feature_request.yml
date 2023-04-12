@@ -6,7 +6,8 @@ assignees:
   - MichaelZhao21
 body:
   - type: markdown
-    attributes: Thanks for helping out and suggesting a new feature!!
+    attributes:
+      value: Thanks for helping out and suggesting a new feature!!
   - type: textarea
     id: problem
     attributes:

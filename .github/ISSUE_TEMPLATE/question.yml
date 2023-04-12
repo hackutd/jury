@@ -6,7 +6,8 @@ assignees:
   - MichaelZhao21
 body:
   - type: markdown
-    attributes: Questionzzzz ask away OwO
+    attributes:
+      value: Questionzzzz ask away OwO
   - type: textarea
     id: question
     attributes:
