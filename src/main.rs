@@ -50,6 +50,7 @@ async fn rocket() -> _ {
                 admin::get_stats,
                 admin::req_sync,
                 admin::add_projects_csv,
+                admin::get_projects,
             ],
         )
         .mount("/", routes![client::home, client::all_options])

@@ -6,7 +6,8 @@ use std::env;
 use std::sync::Arc;
 use tokio::sync::mpsc::{channel, Sender};
 
-use crate::db::admin::insert_projects;
+use crate::db::admin::{find_all_projects, insert_projects};
+use crate::db::models::Project;
 use crate::util::parse_csv::devpost_integration;
 use crate::util::tasks::NewSender;
 use crate::{
@@ -118,4 +119,17 @@ pub async fn add_projects_csv(csv: Data<'_>, db: &State<Arc<Database>>) -> (Stat
     };
 
     (Status::Ok, "".to_string())
+}
+
+#[rocket::get("/admin/projects")]
+pub async fn get_projects(db: &State<Arc<Database>>) -> (Status, Json<Vec<Project>>) {
+    let project_list = match find_all_projects(db).await {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("Unable to get all projects: {e}",);
+            return (Status::InternalServerError, Json(Vec::new()));
+        }
+    };
+
+    (Status::Ok, Json(project_list))
 }
