@@ -2,8 +2,6 @@ name: Bug Report
 description: Report a bug or something that is wrong
 title: "[Bug] "
 labels: ["bug"]
-assignees:
-  - MichaelZhao21
 body:
   - type: markdown
     attributes: 

@@ -1,8 +1,6 @@
 name: Feature Request
 description: Suggest an idea or a feature
 labels: ["new feature"]
-assignees:
-  - MichaelZhao21
 body:
   - type: markdown
     attributes:

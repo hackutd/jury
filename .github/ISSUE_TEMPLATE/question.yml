@@ -1,8 +1,6 @@
 name: Question
 description: Ask a question or open discussion on a topic
 labels: ["question"]
-assignees:
-  - MichaelZhao21
 body:
   - type: markdown
     attributes:
