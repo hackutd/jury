@@ -8,12 +8,13 @@ use tokio::sync::mpsc::{channel, Sender};
 
 use crate::db::admin::insert_projects;
 use crate::util::parse_csv::devpost_integration;
+use crate::util::tasks::NewSender;
 use crate::{
     db::admin::aggregate_stats,
     util::types::{AdminLogin, Stats},
 };
 
-use super::{tasks::NewSender, util::AdminPassword};
+use super::util::AdminPassword;
 
 #[rocket::post("/admin/login", data = "<body>")]
 pub async fn login(body: Json<AdminLogin<'_>>) -> (Status, String) {

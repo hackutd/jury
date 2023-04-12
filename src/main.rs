@@ -1,6 +1,6 @@
 use dotenv::dotenv;
 use jury::api::client::CORS;
-use jury::api::tasks::init_threads;
+use jury::util::tasks::init_threads;
 use rocket::fs::{relative, FileServer};
 use std::env;
 use std::sync::Arc;
