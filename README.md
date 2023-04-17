@@ -1,47 +1,53 @@
 # Jury
 
-A project designed to create a new pairwise judging system using modern technologies aimed at optimizing the user experience of judges and admin users. See the inspiration for this project: [Gavel by anishathalye](https://github.com/anishathalye/gavel). Refer to [this excellent article](https://www.anishathalye.com/2015/03/07/designing-a-better-judging-system/) for more details on the underlying formulas of Gavel! The majority of our algorithm will be based off of research done in the field of [pairwise comparison](https://en.wikipedia.org/wiki/Pairwise_comparison). 
+A project designed to create a new pairwise judging system using modern technologies aimed at optimizing the user experience of judges and admin users. See the inspiration for this project: Gavel by anishathalye. Refer to this excellent article for more details on the underlying formulas of Gavel! The majority of our algorithm will be based off of research done in the field of pairwise comparison.
 
-# Deployment
+# Getting Started
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-## With Docker
+# Prerequisites
+1)Docker
 
-Run `docker compose up`
+2)yarn
 
-# Developing
+3)cargo
 
-## With Docker (Recommended!)
+4)GNU Scientific Library (GSL)
 
-Requirements:
+# Installing
+1)Clone the repository and navigate to the project directory.
 
-* [Docker](https://www.docker.com/)
+2)Copy the ```.env.template file``` to ```.env``` and fill in the environmental variables. You will also need a MONGODB_URI field. 
 
-Copy `.env.template` into `.env` and fill in the environmental variables
+3)Additionally, ```copy client/.env.template``` into ```client/.env``` and copy over the relevant environmental variables from ```.env```.
 
-Simply run `docker compose -f docker-compose.dev.yml up` and open the page at `localhost:3000`
-
-## Manual Installation
-
-Requirements:
-
-* [yarn](https://yarnpkg.com/)
-* [cargo](https://doc.rust-lang.org/cargo/)
-* [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl/)
-
-Copy `.env.template` into `.env` and fill in the environmental variables. You will also need a `MONGODB_URI` field.
-Additionally, copy `client/.env.template` into `client/.env` and copy over the relavent environmental variables from `.env`.
-This is used to expose the correct environmental variables to the running instance of CRA.
-
-Client dev server (PORT 3000):
+4)Run the following command to start the development environment with Dock.
 
 ```
-cd client
+docker-compose -f docker-compose.dev.yml up
+```
+5)Access the web application at localhost:3000.
+
+## Alternatively, you can manually install the application by following these steps:
+
+1)Clone the repository and navigate to the project directory.
+
+2)Copy the ```.env.template file``` to ```.env``` and fill in the environmental variables. You will also need a ```MONGODB_URI``` field. Additionally, copy ```client/.env.template``` into ```client/.env``` and copy over the relevant environmental variables from ```.env```.
+
+3)To start the client development server, navigate to the client directory and run the following commands:
+```
 yarn install
 yarn start
 ```
-
-Backend dev server (PORT 8000):
-
+4)To start the backend development server, navigate to the project directory and run the following command:
 ```
 cargo run
 ```
+5)Access the web application at ```localhost:3000```.
+
+# Design
+The design of the project can be found on Figma at this link: 
+
+```https://www.figma.com/file/qwBWs4i7pJMpFbcjMffDZU/Jury-(Gavel-Plus)?node-id=8%3A100&t=egLV7iVmwvNRXef5-1```
+
+
