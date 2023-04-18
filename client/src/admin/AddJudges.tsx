@@ -1,5 +1,5 @@
 import JuryHeader from '../components/JuryHeader';
-import AddJudgesPanel from '../components/admin/addJudge/AddJudgesPanel';
+import AddJudgesPanel from '../components/admin/add-judges/AddJudgesPanel';
 
 const AddJudges = () => {
     return (
