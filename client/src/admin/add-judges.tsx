@@ -1,8 +1,12 @@
+import JuryHeader from '../components/JuryHeader';
+import AddJudgesPanel from '../components/admin/addJudge/AddJudgesPanel';
+
 const AddJudges = () => {
     return (
-        <div>
-            <h1>Add Judges</h1>
-        </div>
+        <>
+            <JuryHeader withLogout isAdmin />
+            <AddJudgesPanel />
+        </>
     );
 };
 
