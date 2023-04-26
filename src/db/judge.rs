@@ -1,32 +1,20 @@
 use std::error::Error;
 
 use bson::doc;
-use chrono::{DateTime, Utc};
 use mongodb::{Collection, Database};
-use rand::Rng;
 use rocket::http::Status;
 
-use crate::{api::request_types::NewJudge, util::crowd_bt};
+use crate::api::request_types::NewJudge;
 
 use super::models::Judge;
 
 pub async fn insert_judge(db: &Database, body: NewJudge<'_>) -> Result<(), Status> {
     // Create the new judge
-    let judge = Judge {
-        id: None,
-        code: rand::thread_rng().gen_range(100000..999999).to_string(),
-        token: "".to_string(),
-        name: body.name.to_string(),
-        email: body.email.to_string(),
-        active: true,
-        last_activity: DateTime::<Utc>::MIN_UTC,
-        read_welcome: false,
-        notes: body.notes.to_string(),
-        next: None,
-        prev: None,
-        alpha: crowd_bt::ALPHA_PRIOR,
-        beta: crowd_bt::BETA_PRIOR,
-    };
+    let judge = Judge::new(
+        body.name.to_string(),
+        body.email.to_string(),
+        body.notes.to_string(),
+    );
 
     // Insert into database
     let collection: Collection<Judge> = db.collection("judges");
@@ -35,6 +23,12 @@ pub async fn insert_judge(db: &Database, body: NewJudge<'_>) -> Result<(), Statu
         Ok(_) => Ok(()),
         Err(_) => Err(Status::InternalServerError),
     }
+}
+
+pub async fn insert_judges(db: &Database, judges: Vec<Judge>) -> Result<(), Box<dyn Error>> {
+    let collection = db.collection::<Judge>("judges");
+    collection.insert_many(judges, None).await?;
+    Ok(())
 }
 
 pub async fn find_judge_by_code(db: &Database, code: &str) -> Result<Judge, Status> {

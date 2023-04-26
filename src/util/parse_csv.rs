@@ -3,7 +3,10 @@ use mongodb::Database;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-use crate::db::{models::Project, options::get_options};
+use crate::db::{
+    models::{Judge, Project},
+    options::get_options,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DevpostProject {
@@ -47,7 +50,7 @@ macro_rules! str_opt {
 ///     13. Additional Team Member Count - ignore
 ///     14+. Custom questions - custom_questions
 pub async fn devpost_integration(
-    data: &str,
+    data: String,
     db: &Database,
 ) -> Result<Vec<Project>, Box<dyn Error>> {
     // Create a CSV reader
@@ -132,4 +135,45 @@ pub async fn devpost_integration(
     }
 
     Ok(project_list)
+}
+
+pub async fn parse_judge_csv(data: String) -> Result<Vec<Judge>, Box<dyn Error>> {
+    // Create a CSV reader
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .from_reader(data.as_bytes());
+    let mut err_vec = Vec::new();
+    let mut judge_list = Vec::new();
+
+    // Iterate through all records
+    for result in reader.records() {
+        // Unwrap the record
+        let record = result?;
+
+        // Add to error vector if the record is not the correct length
+        if record.len() != 3 {
+            err_vec.push(
+                record
+                    .iter()
+                    .map(|x| x.to_string())
+                    .collect::<Vec<String>>()
+                    .join(","),
+            );
+            continue;
+        }
+
+        // Create a new Judge
+        // TODO: Check if email field is valid (maybe?)
+        judge_list.push(Judge::new(
+            record[0].to_string(),
+            record[1].to_string(),
+            record[2].to_string(),
+        ));
+    }
+
+    if err_vec.len() > 0 {
+        eprintln!("Errors: {:?}", err_vec);
+    }
+
+    Ok(judge_list)
 }

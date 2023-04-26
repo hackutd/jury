@@ -96,9 +96,3 @@ pub async fn aggregate_stats(db: &Database) -> Result<Stats, Error> {
         judges,
     })
 }
-
-pub async fn insert_projects(db: &Database, projects: Vec<Project>) -> Result<(), Error> {
-    let collection = db.collection::<Project>("projects");
-    collection.insert_many(projects, None).await?;
-    Ok(())
-}
