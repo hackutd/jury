@@ -1,45 +1,9 @@
 version: '3.9'
 services:
-    mongo:
-        build:
-            context: './'
-            dockerfile: mongo.Dockerfile
-        restart: always
-        environment:
-            - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
-            - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
-            - MONGO_INITDB_DATABASE=jury
-            - MONGO_REPLICA_SET_NAME=rs0
-        ports:
-            - 127.0.0.1:27107:27017
-        volumes:
-            - './data:/data/db'
-            - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
-            - ./init-mongo-dummy.js:/docker-entrypoint-initdb.d/init-mongo-dummy.js
-        networks:
-            - jury-dev-network
-
-    mongorssetup:
-        depends_on:
-            - 'mongo'
-        image: mongo:latest
-        environment:
-            - MONGODB_USER=${MONGODB_USER}
-            - MONGODB_PASS=${MONGODB_PASS}
-        volumes:
-            - .:/scripts
-        restart: "no"
-        entrypoint: [ 'bash', '/scripts/init-mongo-rs.sh' ]
-        networks:
-            - jury-dev-network
-
     rust-dev:
-        depends_on:
-            - 'mongo'
-            - 'mongorssetup'
         container_name: jury-dev-backend
         environment:
-            - MONGODB_URI=mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongo:27017/
+            - MONGODB_URI=${MONGODB_URI}
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
             - PORT=8000
             - CARGO_TARGET_DIR=/root/target
@@ -52,8 +16,6 @@ services:
             - .:/jury
             - ./.cargo/registry:/usr/local/cargo/registry
             - ./.target:/root/target
-        networks:
-            - jury-dev-network
 
     node-dev:
         depends_on:
@@ -70,9 +32,3 @@ services:
             - 3000:3000
         volumes:
             - ./client:/client
-        networks:
-            - jury-dev-network
-
-networks:
-    jury-dev-network:
-        driver: bridge
