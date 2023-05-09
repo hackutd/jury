@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use bson::doc;
-use chrono::{DateTime, Utc};
+use chrono::{Utc, TimeZone};
 use mongodb::{Collection, Database};
 use rand::Rng;
 use rocket::http::Status;
@@ -19,7 +19,8 @@ pub async fn insert_judge(db: &Database, body: NewJudge<'_>) -> Result<(), Statu
         name: body.name.to_string(),
         email: body.email.to_string(),
         active: true,
-        last_activity: DateTime::<Utc>::MIN_UTC,
+        // TODO: This should be fine but if for some reason utc 0 is invalid, this should be changed lmao
+        last_activity: Utc.timestamp_opt(0, 0).unwrap(),
         read_welcome: false,
         notes: body.notes.to_string(),
         next: None,
