@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use rocket::data::{Data, ToByteUnit};
 use rocket::http::Cookie;
 
@@ -21,20 +23,55 @@ pub enum AdminPasswordError {
     Missing,
 }
 
+/// Macro to convert String to Option<String>.
+/// If the string is empty, return None.
+/// Otherwise, return Some(string).
+#[macro_export]
+macro_rules! str_opt {
+    ($x:expr) => {
+        if $x.is_empty() {
+            None
+        } else {
+            Some($x.to_string())
+        }
+    };
+}
+
+/// Macro that parses a result returns a 500 error if it fails.
+/// Otherwise, return the result of the function.
+#[macro_export]
+macro_rules! try_500 {
+    ($x:expr, $y:literal) => {
+        match $x {
+            Ok(x) => x,
+            Err(e) => {
+                eprintln!("{}: {}", $y, e);
+                return (Status::InternalServerError, format!("{}: {}", $y, e));
+            }
+        }
+    };
+}
+
 pub fn get_cookie<'r>(request: &'r rocket::Request<'_>, name: &str) -> Option<&'r Cookie<'static>> {
     request.cookies().get(name)
 }
 
-pub async fn parse_csv_from_data(csv: Data<'_>) -> String {
+pub async fn parse_csv_from_data(csv: Data<'_>) -> Result<String, Box<dyn Error>> {
     // Extract all data and store into a string
-    // TODO: No unwrap
-    let str = csv.open(16.mebibytes()).into_string().await.unwrap();
+    let str = csv.open(16.mebibytes()).into_string().await?;
+
+    println!("str: {}", str.to_string());
 
     // Find the start and end of the CSV data
     // and cut out the CSV data from the raw string
-    let start = str.find(CSV_HEADER).unwrap() + CSV_HEADER.len();
-    let end = str[start..].find(CSV_FOOTER).unwrap();
+    let start = str
+        .find(CSV_HEADER)
+        .ok_or("Unable to find CSV header with correct content-type")?
+        + CSV_HEADER.len();
+    let end = str[start..]
+        .find(CSV_FOOTER)
+        .ok_or("Unable to find CSV footer")?;
     let cut_str = &str[start..(start + end)];
 
-    return cut_str.to_string();
+    return Ok(cut_str.to_string());
 }

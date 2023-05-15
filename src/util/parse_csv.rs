@@ -3,9 +3,12 @@ use mongodb::Database;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-use crate::db::{
-    models::{Judge, Project},
-    options::get_options,
+use crate::{
+    db::{
+        models::{Judge, Project},
+        options::get_options,
+    },
+    str_opt,
 };
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -17,19 +20,6 @@ pub struct DevpostProject {
     pub video_link: Option<String>,
     pub challenge_list: Vec<String>,   // List of "Opt-in Prizes"
     pub custom_questions: Vec<String>, // All custom questions
-}
-
-/// Macro to convert String to Option<String>.
-/// If the string is empty, return None.
-/// Otherwise, return Some(string).
-macro_rules! str_opt {
-    ($x:expr) => {
-        if $x.is_empty() {
-            None
-        } else {
-            Some($x.to_string())
-        }
-    };
 }
 
 /// Generate a workable CSV for Jury based on the output CSV from Devpost
@@ -120,16 +110,6 @@ pub async fn devpost_integration(
     // Save options
     options.save(db).await?;
 
-    // // Write data to vector using csv serializer
-    // let mut output = Vec::new();
-    // {
-    //     let mut writer = csv::Writer::from_writer(&mut output);
-    //     for project in &project_list {
-    //         writer.serialize(project)?;
-    //     }
-    // }
-    // println!("{:?}", output);
-
     if err_vec.len() > 0 {
         eprintln!("Errors: {:?}", err_vec);
     }
@@ -137,10 +117,10 @@ pub async fn devpost_integration(
     Ok(project_list)
 }
 
-pub async fn parse_judge_csv(data: String) -> Result<Vec<Judge>, Box<dyn Error>> {
+pub async fn parse_judge_csv(data: String, has_header: bool) -> Result<Vec<Judge>, Box<dyn Error>> {
     // Create a CSV reader
     let mut reader = csv::ReaderBuilder::new()
-        .has_headers(true)
+        .has_headers(has_header)
         .from_reader(data.as_bytes());
     let mut err_vec = Vec::new();
     let mut judge_list = Vec::new();
@@ -165,14 +145,15 @@ pub async fn parse_judge_csv(data: String) -> Result<Vec<Judge>, Box<dyn Error>>
         // Create a new Judge
         // TODO: Check if email field is valid (maybe?)
         judge_list.push(Judge::new(
-            record[0].to_string(),
-            record[1].to_string(),
-            record[2].to_string(),
+            record[0].trim().to_string(),
+            record[1].trim().to_string(),
+            record[2].trim().to_string(),
         ));
     }
 
     if err_vec.len() > 0 {
         eprintln!("Errors: {:?}", err_vec);
+        return Err(format!("Unable to parse CSV, first error on line: {}", err_vec[0]).into());
     }
 
     Ok(judge_list)

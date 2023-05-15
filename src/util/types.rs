@@ -1,3 +1,4 @@
+use rocket::FromForm;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -30,4 +31,10 @@ impl Default for Stats {
             judges: 0,
         }
     }
+}
+
+#[derive(FromForm)]
+pub struct CsvUpload {
+    pub csv: String,
+    pub has_header: bool,
 }

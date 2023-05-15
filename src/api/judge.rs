@@ -3,12 +3,19 @@ use std::sync::Arc;
 use bson::doc;
 use mongodb::Database;
 use rand::{distributions::Alphanumeric, Rng};
-use rocket::data::Data;
+use rocket::form::Form;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 
-use crate::{db::judge::{find_judge_by_code, insert_judge, read_welcome, update_judge_token, insert_judges}, util::parse_csv::parse_judge_csv};
+use crate::util::types::CsvUpload;
+use crate::{
+    db::judge::{
+        find_judge_by_code, insert_judge, insert_judges, read_welcome, update_judge_token,
+    },
+    try_500,
+    util::parse_csv::parse_judge_csv,
+};
 
 use super::{
     request_types::{Login, NewJudge},
@@ -18,12 +25,10 @@ use super::{
 #[rocket::post("/judge/login", data = "<body>")]
 pub async fn login(db: &State<Arc<Database>>, body: Json<Login<'_>>) -> (Status, String) {
     // Find judge from db using code
-    let judge = match find_judge_by_code(db, body.code).await {
-        Ok(j) => j,
-        Err(status) => {
-            return (status, "Unable to process or find code".to_string());
-        }
-    };
+    let judge = try_500!(
+        find_judge_by_code(db, body.code).await,
+        "Unable to process or find code"
+    );
 
     // Generate random 16-character token
     let token: String = rand::thread_rng()
@@ -54,36 +59,36 @@ pub async fn new_judge(
     }
 }
 
-#[rocket::post("/judge/csv", data="<csv>")]
-pub async fn add_judges_csv(csv: Data<'_>, db: &State<Arc<Database>>) -> (Status, String) {
-    // TODO: Add admin token check
-    let cut_str = parse_csv_from_data(csv).await;
-
+#[rocket::post("/judge/csv", data = "<upload>")]
+pub async fn add_judges_csv(
+    upload: Form<CsvUpload>,
+    db: &State<Arc<Database>>,
+    _password: AdminPassword,
+) -> (Status, String) {
     // Parse the CSV data
-    let judges = match parse_judge_csv(cut_str).await {
-        Ok(p) => p,
-        Err(e) => {
-            eprintln!("Unable to parse CSV: {e}",);
-            return (
-                Status::InternalServerError,
-                format!("Unable to parse CSV: {e}").to_string(),
-            );
-        }
-    };
+    let judges = try_500!(
+        parse_judge_csv(upload.csv.clone(), upload.has_header).await,
+        "Unable to parse CSV"
+    );
+
+    // If there are no judges, return Ok
+    let num_judges = judges.len();
+    if num_judges == 0 {
+        return (Status::Ok, "0 judges added".to_string());
+    }
 
     // Save the parsed CSV data to the database
-    match insert_judges(db, judges).await {
-        Ok(_) => (),
-        Err(e) => {
-            eprintln!("Unable to insert judges into database: {e}",);
-            return (
-                Status::InternalServerError,
-                format!("Unable to insert judges into database: {e}").to_string(),
-            );
-        }
-    };
+    try_500!(
+        insert_judges(db, judges).await,
+        "Unable to insert judges into database"
+    );
 
-    (Status::Ok, "".to_string())
+    println!("judges: {:?}", judges);
+
+    (
+        Status::Ok,
+        format!("{} judges added", num_judges).to_string(),
+    )
 }
 
 #[rocket::post("/judge/welcome")]
