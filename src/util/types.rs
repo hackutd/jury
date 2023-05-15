@@ -54,5 +54,7 @@ impl Default for JudgeStats {
 #[derive(FromForm)]
 pub struct CsvUpload {
     pub csv: String,
+
+    #[field(name = uncased("hasHeader"), default = false)]
     pub has_header: bool,
 }

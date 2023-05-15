@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::db::project::insert_projects;
-use crate::try_500;
+use crate::try_status;
 use crate::util::parse_csv::devpost_integration;
 use mongodb::Database;
 use rocket::data::Data;
@@ -16,21 +16,24 @@ pub async fn add_devpost_csv(
     db: &State<Arc<Database>>,
     _password: AdminPassword,
 ) -> (Status, String) {
-    let cut_str = try_500!(
+    let cut_str = try_status!(
         parse_csv_from_data(csv).await,
-        "Unable to parse CSV from data"
+        "Unable to parse CSV from data",
+        Status::BadRequest
     );
 
     // Parse the CSV data
-    let parsed_csv = try_500!(
+    let parsed_csv = try_status!(
         devpost_integration(cut_str, db).await,
-        "Unable to parse CSV"
+        "Unable to parse CSV",
+        Status::BadRequest
     );
 
     // Save the parsed CSV data to the database
-    try_500!(
+    try_status!(
         insert_projects(&db, parsed_csv).await,
-        "Unable to insert projects into database"
+        "Unable to insert projects into database",
+        Status::InternalServerError
     );
 
     (Status::Ok, "".to_string())

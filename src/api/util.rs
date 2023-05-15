@@ -40,13 +40,13 @@ macro_rules! str_opt {
 /// Macro that parses a result returns a 500 error if it fails.
 /// Otherwise, return the result of the function.
 #[macro_export]
-macro_rules! try_500 {
-    ($x:expr, $y:literal) => {
+macro_rules! try_status {
+    ($x:expr, $msg:literal, $status:expr) => {
         match $x {
             Ok(x) => x,
             Err(e) => {
-                eprintln!("{}: {}", $y, e);
-                return (Status::InternalServerError, format!("{}: {}", $y, e));
+                eprintln!("{}: {}", $msg, e);
+                return ($status, format!("{}: {}", $msg, e));
             }
         }
     };
