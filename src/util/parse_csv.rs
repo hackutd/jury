@@ -88,6 +88,8 @@ pub async fn devpost_integration(
         //     custom_questions.push(record[i].to_string());
         // }
 
+        // TODO: Remove all projects that are still in "Draft"
+
         // Create a new Project
         project_list.push(Project {
             id: None,

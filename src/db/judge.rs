@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use bson::doc;
+use chrono::{Utc, TimeZone};
 use mongodb::{Collection, Database};
 use rocket::http::Status;
 
@@ -10,11 +11,22 @@ use super::models::Judge;
 
 pub async fn insert_judge(db: &Database, body: NewJudge<'_>) -> Result<(), Status> {
     // Create the new judge
-    let judge = Judge::new(
-        body.name.to_string(),
-        body.email.to_string(),
-        body.notes.to_string(),
-    );
+    let judge = Judge {
+        id: None,
+        code: rand::thread_rng().gen_range(100000..999999).to_string(),
+        token: "".to_string(),
+        name: body.name.to_string(),
+        email: body.email.to_string(),
+        active: true,
+        // TODO: This should be fine but if for some reason utc 0 is invalid, this should be changed lmao
+        last_activity: Utc.timestamp_opt(0, 0).unwrap(),
+        read_welcome: false,
+        notes: body.notes.to_string(),
+        next: None,
+        prev: None,
+        alpha: crowd_bt::ALPHA_PRIOR,
+        beta: crowd_bt::BETA_PRIOR,
+    };
 
     // Insert into database
     let collection: Collection<Judge> = db.collection("judges");
