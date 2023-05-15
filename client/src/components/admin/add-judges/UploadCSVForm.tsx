@@ -31,7 +31,6 @@ const UploadCSVForm = () => {
             formData.append('headerRow', headerRow.toString());
             await fetch(`${process.env.REACT_APP_JURY_URL}/judge/csv`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'multipart/form-data' },
                 body: formData,
                 credentials: 'include',
             });
