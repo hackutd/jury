@@ -47,6 +47,7 @@ async fn rocket() -> _ {
                 judge::new_judge,
                 judge::judge_read_welcome,
                 judge::add_judges_csv,
+                judge::judge_stats,
                 project::add_devpost_csv,
                 admin::login,
                 admin::get_stats,

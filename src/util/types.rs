@@ -33,6 +33,24 @@ impl Default for Stats {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde()]
+pub struct JudgeStats {
+    pub num: u64,
+    pub alpha: f64,
+    pub beta: f64,
+}
+
+impl Default for JudgeStats {
+    fn default() -> Self {
+        Self {
+            num: 0,
+            alpha: 0.0,
+            beta: 0.0,
+        }
+    }
+}
+
 #[derive(FromForm)]
 pub struct CsvUpload {
     pub csv: String,

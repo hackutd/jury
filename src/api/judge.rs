@@ -8,7 +8,8 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::State;
 
-use crate::util::types::CsvUpload;
+use crate::db::judge::aggregate_judge_stats;
+use crate::util::types::{CsvUpload, JudgeStats};
 use crate::{
     db::judge::{
         find_judge_by_code, insert_judge, insert_judges, read_welcome, update_judge_token,
@@ -19,7 +20,7 @@ use crate::{
 
 use super::{
     request_types::{Login, NewJudge},
-    util::{parse_csv_from_data, AdminPassword, Token},
+    util::{AdminPassword, Token},
 };
 
 #[rocket::post("/judge/login", data = "<body>")]
@@ -97,5 +98,16 @@ pub async fn judge_read_welcome(db: &State<Arc<Database>>, token: Token) -> (Sta
             Status::InternalServerError,
             "Internal Server Error".to_string(),
         ),
+    }
+}
+
+#[rocket::get("/judge/stats")]
+pub async fn judge_stats(
+    db: &State<Arc<Database>>,
+    _password: AdminPassword,
+) -> (Status, Json<JudgeStats>) {
+    match aggregate_judge_stats(db).await {
+        Ok(stats) => (Status::Ok, Json(stats)),
+        Err(_) => (Status::InternalServerError, Json(JudgeStats::default())),
     }
 }
