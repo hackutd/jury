@@ -44,7 +44,7 @@ const UploadCSVForm = () => {
             setFileName('No file chosen');
         } catch (err) {
             console.log(err);
-            setError(`Error Uploading CSV: ${err}`);
+            setError(err as string);
         } finally {
             setIsUploading(false);
         }
