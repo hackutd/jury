@@ -83,8 +83,6 @@ pub async fn add_judges_csv(
         "Unable to insert judges into database"
     );
 
-    println!("judges: {:?}", judges);
-
     (
         Status::Ok,
         format!("{} judges added", num_judges).to_string(),
