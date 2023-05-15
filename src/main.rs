@@ -5,7 +5,7 @@ use rocket::fs::{relative, FileServer};
 use std::env;
 use std::sync::Arc;
 
-use jury::api::{admin, client, judge};
+use jury::api::{admin, client, judge, project};
 use jury::{db, util};
 
 #[macro_use]
@@ -46,6 +46,10 @@ async fn rocket() -> _ {
                 judge::login,
                 judge::new_judge,
                 judge::judge_read_welcome,
+                judge::preview_judges_csv,
+                judge::add_judges_csv,
+                judge::judge_stats,
+                project::add_devpost_csv,
                 admin::login,
                 admin::get_stats,
                 admin::req_sync,

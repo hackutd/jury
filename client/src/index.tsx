@@ -8,8 +8,8 @@ import JudgeLogin from './judge/login';
 import Judge from './judge';
 import AdminLogin from './admin/login';
 import Admin from './admin';
-import AddProjects from './admin/add-projects';
-import AddJudges from './admin/add-judges';
+import AddProjects from './admin/AddProjects';
+import AddJudges from './admin/AddJudges';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 

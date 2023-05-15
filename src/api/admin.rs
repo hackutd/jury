@@ -1,6 +1,6 @@
 use mongodb::Database;
-use rocket::data::{Data, ToByteUnit};
 use rocket::response::stream::{Event, EventStream};
+use rocket::data::{Data, ToByteUnit};
 use rocket::{http::Status, serde::json::Json, State};
 use std::env;
 use std::sync::Arc;
@@ -95,7 +95,7 @@ pub async fn add_projects_csv(csv: Data<'_>, db: &State<Arc<Database>>) -> (Stat
     let cut_str = &str[start..(start + end)];
 
     // Parse the CSV data
-    let parsed_csv = match devpost_integration(cut_str, db).await {
+    let parsed_csv = match devpost_integration(cut_str.to_string(), db).await {
         Ok(p) => p,
         Err(e) => {
             eprintln!("Unable to parse CSV: {e}",);

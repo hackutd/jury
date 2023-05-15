@@ -76,3 +76,6 @@ cargo run
 ## Design File
 
 Here is the Figma design file: https://www.figma.com/file/qwBWs4i7pJMpFbcjMffDZU/Jury-(Gavel-Plus)?node-id=8%3A100&t=xYwfPwRAUeJw9jNr-1
+
+## Backend Routes
+

@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 use mongodb::bson::oid::ObjectId;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
+
+use crate::util::crowd_bt;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Options {
@@ -44,6 +47,26 @@ pub struct Judge {
     pub prev: Option<ObjectId>,
     pub alpha: f64,
     pub beta: f64,
+}
+
+impl Judge {
+    pub fn new(name: String, email: String, notes: String) -> Self {
+        Self {
+            id: None,
+            token: "".to_string(),
+            code: rand::thread_rng().gen_range(100000..999999).to_string(),
+            name,
+            email,
+            active: true,
+            last_activity: DateTime::<Utc>::MIN_UTC,
+            read_welcome: false,
+            notes,
+            next: None,
+            prev: None,
+            alpha: crowd_bt::ALPHA_PRIOR,
+            beta: crowd_bt::BETA_PRIOR,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
