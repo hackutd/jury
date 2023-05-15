@@ -29,7 +29,7 @@ const UploadCSVForm = () => {
             const formData = new FormData();
             formData.append('csv', file as Blob);
             formData.append('headerRow', headerRow.toString());
-            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/csv`, {
+            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/csv/upload`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
