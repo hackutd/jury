@@ -4,7 +4,7 @@ const UploadCSVForm = () => {
     const [file, setFile] = useState<File | null>(null);
     const [fileName, setFileName] = useState<string>('No file chosen');
     const [headerRow, setHeaderRow] = useState<boolean>(false);
-    const [error, setError] = useState<string>('');
+    const [error, setError] = useState<string | null>(null);
 
 
     const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -23,17 +23,21 @@ const UploadCSVForm = () => {
     const UploadCSV = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsUploading(true);
+        setError(null);
 
         try {
-
             const formData = new FormData();
             formData.append('csv', file as Blob);
             formData.append('headerRow', headerRow.toString());
-            await fetch(`${process.env.REACT_APP_JURY_URL}/judge/csv`, {
+            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/csv`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
 
             alert('CSV Uploaded');
             setFile(null);
@@ -45,6 +49,7 @@ const UploadCSVForm = () => {
             setIsUploading(false);
         }
     };
+
 
     return (
         <>
@@ -109,7 +114,11 @@ const UploadCSVForm = () => {
                                 </div>
                             </label>
                         </div>
-                        {error && <div className="text-base text-center text-error">{error}</div>}
+                        {error && (
+                            <div className="text-base text-center text-error">
+                                Error Uploading CSV: {error}
+                            </div>
+                        )}
                         {file && (
                             <div className="flex w-full h-11 px-4 text-2xl border-2 border-lightest rounded-md text-start items-center">
                                 File Chosen: {fileName}
