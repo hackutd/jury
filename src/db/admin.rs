@@ -1,6 +1,7 @@
 use bson::doc;
 use mongodb::error::Error;
 use mongodb::Database;
+use futures::stream::{TryStreamExt};
 
 use super::models::{Judge, Project};
 use crate::util::types::Stats;
@@ -101,4 +102,11 @@ pub async fn insert_projects(db: &Database, projects: Vec<Project>) -> Result<()
     let collection = db.collection::<Project>("projects");
     collection.insert_many(projects, None).await?;
     Ok(())
+}
+
+pub async fn find_all_projects(db: &Database) -> Result<Vec<Project>, Error> {
+    let collection = db.collection::<Project>("projects");
+    let cursor = collection.find(None, None).await?;
+    let projects = cursor.try_collect().await?;
+    Ok(projects)
 }
