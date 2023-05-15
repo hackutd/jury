@@ -3,9 +3,10 @@ use std::error::Error;
 use bson::doc;
 use chrono::{Utc, TimeZone};
 use mongodb::{Collection, Database};
+use rand::Rng;
 use rocket::http::Status;
 
-use crate::{api::request_types::NewJudge, util::types::JudgeStats};
+use crate::{api::request_types::NewJudge, util::{types::JudgeStats, crowd_bt}};
 
 use super::models::Judge;
 
