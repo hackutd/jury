@@ -10,7 +10,7 @@ use rocket::State;
 
 use super::util::{parse_csv_from_data, AdminPassword};
 
-#[rocket::post("/project/csv", data = "<csv>")]
+#[rocket::post("/project/devpost", data = "<csv>")]
 pub async fn add_devpost_csv(
     csv: Data<'_>,
     db: &State<Arc<Database>>,

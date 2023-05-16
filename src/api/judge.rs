@@ -122,16 +122,13 @@ pub async fn add_judges_csv(
         Status::InternalServerError
     );
 
-    (
-        Status::Ok,
-        format!("{} judges added", num_judges).to_string(),
-    )
+    (Status::Ok, format!("{}", num_judges).to_string())
 }
 
 #[rocket::post("/judge/welcome")]
 pub async fn judge_read_welcome(db: &State<Arc<Database>>, token: Token) -> (Status, String) {
     match read_welcome(db, &token.0).await {
-        Ok(_) => (Status::Accepted, "{}".to_string()),
+        Ok(_) => (Status::Accepted, "".to_string()),
         Err(_) => (
             Status::InternalServerError,
             "Internal Server Error".to_string(),

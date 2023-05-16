@@ -81,6 +81,11 @@ const CSV_HEADER: &str = "Content-Type: text/csv\r\n\r\n";
 const CSV_FOOTER: &str = "\r\n----------------------------";
 
 #[rocket::post("/admin/csv", data = "<csv>")]
+pub async fn preview_projects_csv(csv: Data<'_>, db: &State<Arc<Database>>) -> (Status, String) {
+    unimplemented!();
+}
+
+#[rocket::post("/admin/csv/upload", data = "<csv>")]
 pub async fn add_projects_csv(csv: Data<'_>, db: &State<Arc<Database>>) -> (Status, String) {
     // TODO: Add admin token check
 
