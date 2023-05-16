@@ -3,14 +3,14 @@ FROM node as client-builder
 WORKDIR /client
 COPY client/public public
 COPY client/src src
-COPY ["client/package.json", "client/yarn.lock", "client/tailwind.config.js", "client/tsconfig.json", "./"]
+COPY ["client/package.json", "client/tailwind.config.js", "client/tsconfig.json", "./"]
 
 ARG NODE_ENV=production
 ARG REACT_APP_JURY_NAME
 ARG REACT_APP_JURY_URL
 ARG REACT_APP_HUB
 
-RUN yarn install --frozen-lockfile
+RUN yarn install
 RUN yarn build
 
 # STEP 1: Compile backend
@@ -23,8 +23,8 @@ RUN apt install libgsl-dev -y
 # Jank way to cache built rust dependencies
 RUN mkdir src
 RUN echo "fn main() {}" > ./src/main.rs
-COPY ["Cargo.toml", "Cargo.lock",  "./"]
-RUN cargo build --locked --release
+COPY ["Cargo.toml", "./"]
+RUN cargo build --release
 
 # Then actually copy over the app and build it
 COPY src src
