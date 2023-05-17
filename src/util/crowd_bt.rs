@@ -82,7 +82,6 @@ pub fn expected_information_gain(
 }
 
 // https://en.wikipedia.org/wiki/Normal_distribution (See Kullback-Leibler divergence)
-// TODO: Remove pub; just here for testing rn
 fn divergence_gaussian(mu1: f64, sigma_sq1: f64, mu2: f64, sigma_sq2: f64) -> f64 {
     let sigma_ratio = sigma_sq1 / sigma_sq2;
     let left_term = f64::powi(mu1 - mu2, 2) / (2.0 * sigma_sq2);
