@@ -1,4 +1,5 @@
 use bson::doc;
+use futures::stream::TryStreamExt;
 use mongodb::{error::Error, Collection, Database};
 use rocket::http::Status;
 
@@ -106,4 +107,11 @@ pub async fn aggregate_judge_stats(db: &Database) -> Result<JudgeStats, mongodb:
     }
 
     Ok(JudgeStats { num, alpha, beta })
+}
+
+pub async fn find_all_judges(db: &Database) -> Result<Vec<Judge>, Error> {
+    let collection = db.collection::<Judge>("judges");
+    let cursor = collection.find(None, None).await?;
+    let judges = cursor.try_collect().await?;
+    Ok(judges)
 }
