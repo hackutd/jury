@@ -9,7 +9,8 @@ use rocket::serde::json::Json;
 use rocket::State;
 use serde::Serialize;
 
-use crate::db::judge::aggregate_judge_stats;
+use crate::db::judge::{aggregate_judge_stats, find_all_judges};
+use crate::db::models::Judge;
 use crate::util::types::{CsvUpload, JudgeStats};
 use crate::{
     db::judge::{
@@ -53,12 +54,12 @@ pub async fn login(db: &State<Arc<Database>>, body: Json<Login<'_>>) -> (Status,
 #[rocket::post("/judge/new", data = "<body>")]
 pub async fn new_judge(
     db: &State<Arc<Database>>,
-    body: Json<NewJudge<'_>>,
+    body: Json<NewJudge>,
     _password: AdminPassword,
 ) -> (Status, String) {
     match insert_judge(db, body.0).await {
         Ok(_) => (Status::Accepted, "{}".to_string()),
-        Err(status) => (status, "Invalid code".to_string()),
+        Err(e) => (Status::InternalServerError, format!("Unable to insert judge: {}", e)),
     }
 }
 
@@ -112,7 +113,7 @@ pub async fn add_judges_csv(
     // If there are no judges, return Ok
     let num_judges = judges.len();
     if num_judges == 0 {
-        return (Status::Ok, "0 judges added".to_string());
+        return (Status::Ok, "0".to_string());
     }
 
     // Save the parsed CSV data to the database
@@ -145,4 +146,17 @@ pub async fn judge_stats(
         Ok(stats) => (Status::Ok, Json(stats)),
         Err(_) => (Status::InternalServerError, Json(JudgeStats::default())),
     }
+}
+
+#[rocket::get("/judge/list")]
+pub async fn get_judges(db: &State<Arc<Database>>) -> (Status, Json<Vec<Judge>>) {
+    let judge_list = match find_all_judges(db).await {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("Unable to get all judges: {e}",);
+            return (Status::InternalServerError, Json(Vec::new()));
+        }
+    };
+
+    (Status::Ok, Json(judge_list))
 }

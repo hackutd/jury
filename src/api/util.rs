@@ -1,10 +1,4 @@
-use std::error::Error;
-
-use rocket::data::{Data, ToByteUnit};
 use rocket::http::Cookie;
-
-const CSV_HEADER: &str = "Content-Type: text/csv\r\n\r\n";
-const CSV_FOOTER: &str = "\r\n----------------------------";
 
 pub struct Token(pub String);
 
@@ -54,24 +48,4 @@ macro_rules! try_status {
 
 pub fn get_cookie<'r>(request: &'r rocket::Request<'_>, name: &str) -> Option<&'r Cookie<'static>> {
     request.cookies().get(name)
-}
-
-pub async fn parse_csv_from_data(csv: Data<'_>) -> Result<String, Box<dyn Error>> {
-    // Extract all data and store into a string
-    let str = csv.open(16.mebibytes()).into_string().await?;
-
-    println!("str: {}", str.to_string());
-
-    // Find the start and end of the CSV data
-    // and cut out the CSV data from the raw string
-    let start = str
-        .find(CSV_HEADER)
-        .ok_or("Unable to find CSV header with correct content-type")?
-        + CSV_HEADER.len();
-    let end = str[start..]
-        .find(CSV_FOOTER)
-        .ok_or("Unable to find CSV footer")?;
-    let cut_str = &str[start..(start + end)];
-
-    return Ok(cut_str.to_string());
 }

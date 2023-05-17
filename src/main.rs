@@ -43,18 +43,21 @@ async fn rocket() -> _ {
         .mount(
             "/api",
             routes![
+                judge::get_judges,
                 judge::login,
                 judge::new_judge,
                 judge::judge_read_welcome,
                 judge::preview_judges_csv,
                 judge::add_judges_csv,
                 judge::judge_stats,
+                project::get_projects,
+                project::new_project,
+                project::preview_projects_csv,
+                project::add_projects_csv,
                 project::add_devpost_csv,
                 admin::login,
                 admin::get_stats,
                 admin::req_sync,
-                admin::add_projects_csv,
-                admin::get_projects,
             ],
         )
         .mount("/", routes![client::home, client::all_options])

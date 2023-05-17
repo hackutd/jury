@@ -81,26 +81,65 @@ Here is the Figma design file: https://www.figma.com/file/qwBWs4i7pJMpFbcjMffDZU
 
 All routes are found at the `http://localhost:8000/api` endpoint, which can be accessed on the frontend through the `REACT_APP_JURY_URL` environmental variable.
 
-### POST /judge/login
+An example fetch request (The `credentials: include` allow for authentication cookies to be sent over):
 
-Login request for a judge
-
-**Request Body**
-
-```json
-{
-    "code": "String (6-digit login code for judge)"
-}
+```js
+const fetchedProjects = await fetch(`${process.env.REACT_APP_JURY_URL}/project/list`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+}).then((data) => data.json());
 ```
+
+| Path                | Method | Auth  | Description                             |
+| ------------------- | ------ | ----- | --------------------------------------- |
+| /judge/list         | GET    | admin | get list of all judges                  |
+| /judge/new          | POST   | admin | Add a new judge                         |
+| /judge/csv          | POST   | admin | Preview a judges csv                    |
+| /judge/csv/upload   | POST   | admin | Upload judges using csv                 |
+| /judge/stats        | GET    | admin | Get the stats for the add judges page   |
+| /judge/login        | POST   |       | Login request for a judge               |
+| /judge/welcome      | PUT    | token | Set `read_welcome` to true for a judge  |
+| /project/list       | GET    | admin | get list of all projects                |
+| /project/new        | POST   | admin | Add a new project                       |
+| /project/csv        | POST   | admin | Preview a projects csv                  |
+| /project/csv/upload | POST   | admin | Upload projects using csv               |
+| /project/stats      | GET    | admin | Get the stats for the add projects page |
+| /project/devpost    | POST   | admin | Upload a Devpost CSV                    |
+| /admin/login        | POST   |       | Log into the admin dashboard            |
+| /admin/stats        | GET    | admin | Get all stats                           |
+| /admin/sync         | GET    | admin | Establish event stream with server      |
+
+### GET /judge/list
+
+Get a list of all judges
 
 **Response**
 
-* `200 Ok` + Token as String
-* Error + String
+```json
+[
+    {
+        "id": "ObjectId",
+        "token": "String",
+        "code": "String",
+        "name": "String",
+        "email": "String",
+        "active": "bool",
+        "last_activity": "DateTime",
+        "read_welcome": "bool",
+        "notes": "String",
+        "next": "ObjectId",
+        "prev": "ObjectId",
+        "alpha": "f64",
+        "beta": "f64"
+    }
+    // ...
+]
+```
 
 ### POST /judge/new
 
-*Requires admin password* | Add a singular new judge
+_Requires admin password_ | Add a singular new judge
 
 **Request Body**
 
@@ -114,12 +153,12 @@ Login request for a judge
 
 **Response**
 
-* `200 Ok`
-* Error + String
+-   `200 Ok`
+-   Error + String
 
 ### POST /judge/csv
 
-*Requires admin password* | PREVIEW judge CSV file (does not upload)
+_Requires admin password_ | PREVIEW judge CSV file (does not upload)
 
 **Request Body**
 
@@ -139,7 +178,7 @@ Fields:
         "name": "String",
         "email": "String",
         "notes": "String"
-    },
+    }
     // ...
 ]
 ```
@@ -148,7 +187,7 @@ or Error + String
 
 ### POST /judge/csv/upload
 
-*Requires admin password* | **Upload** judge CSV file
+_Requires admin password_ | **Upload** judge CSV file
 
 **Request Body**
 
@@ -162,21 +201,12 @@ Fields:
 
 **Response**
 
-* `200 Ok` + Number of added judges as String
-* Error + String
-
-### POST /judge/welcome
-
-*Requires judge token* | Set the `read_welcome` field for a judge to true
-
-**Response**
-
-* `202 Accepted`
-* Error + String
+-   `200 Ok` + Number of added judges as String
+-   Error + String
 
 ### GET /judge/stats
 
-*Requires admin password* | Get the stats to display on the add judges page
+_Requires admin password_ | Get the stats to display on the add judges page
 
 **Response**
 
@@ -190,78 +220,84 @@ Fields:
 
 or Error + String
 
-### POST /project/devpost
+### POST /judge/login
 
-*Requires admin password* | Upload CSV from devpost
-
-**Request Body**
-
-```
-Content-Type: multipart/form-data
-
-Fields:
-- csv: CSV file upload
-```
-
-**Response**
-
-* Ok 200
-* Error + String
-
-### POST /admin/login
-
-Login request for admins
+Login request for a judge
 
 **Request Body**
 
 ```json
 {
-    "password": "String (admin password)"
+    "code": "String (6-digit login code for judge)"
 }
 ```
 
 **Response**
 
-* `200 Ok` + Password as String
-* Error + String
+-   `200 Ok` + Token as String
+-   Error + String
 
-### GET /admin/stats
+### POST /judge/welcome
 
-*Requires admin password* | Get the stats to display on the admin dashboard
+_Requires judge token_ | Set the `read_welcome` field for a judge to true
+
+**Response**
+
+-   `202 Accepted`
+-   Error + String
+
+### GET /project/list
+
+Get a list of all projects
 
 **Response**
 
 ```json
-{
-    "projects": 0, // u64 - Total # of projects
-    "seen": 0.0, // f64 - Average seen # of projects
-    "votes": 0.0, // f64 - Average votes of projects
-    "time": 0, // u64 - Current judging time in milliseconds
-    "avg_mu": 0.0, // f64 - Average mu value of projects
-    "avg_sigma": 0.0, // f64 - Average sigma^2 value of projects
-    "judges": 0 // u64 - Total # of judges
-},
+[
+    {
+        "id": "ObjectId",
+        "name": "String",
+        "location": "u64",
+        "description": "String",
+        "try_link": "String",
+        "video_link": "String",
+        "challenge_list": ["String"],
+        "seen": "u64",
+        "votes": "u64",
+        "mu": "f64",
+        "sigma_sq": "f64",
+        "active": "bool",
+        "prioritized": "bool",
+        "last_activity": "DateTime"
+    }
+    // ...
+]
 ```
 
-or Error + String
+### POST /project/new
 
-### GET /admin/sync
+_Requires admin password_ | Add a singular new project
 
-*Requires admin password* | Establish event stream with server
+**Request Body**
 
-**Request**
-
-* [EventStream](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
+```json
+{
+    "name": "String",
+    "description": "String",
+    "try_link": "String (Optional)",
+    "video_link": "String (Optional)",
+    "challenge_list": "String (Optional)"
+}
+```
 
 **Response**
 
-```
-Content-Type: text/event-stream
-```
+-   `200 Ok`
+-   Error + String
 
-### POST /admin/csv
+### POST /project/csv
 
-*Requires admin password* | PREVIEW admin CSV file (does not upload)
+_Requires admin password_ | PREVIEW project CSV file (does not upload)
 
 **Request Body**
 
@@ -281,16 +317,16 @@ Fields:
         "name": "String",
         "location": "String",
         "description": "String"
-    },
+    }
     // ...
 ]
 ```
 
 or Error + String
 
-### POST /admin/csv/upload
+### POST /project/csv/upload
 
-*Requires admin password* | **Upload** admin CSV file
+_Requires admin password_ | **Upload** project CSV file
 
 **Request Body**
 
@@ -304,5 +340,74 @@ Fields:
 
 **Response**
 
-* `200 Ok` + Number of added judges as String
-* Error + String
+-   `200 Ok` + Number of added judges as String
+-   Error + String
+
+### POST /project/devpost
+
+_Requires admin password_ | Upload CSV from devpost
+
+**Request Body**
+
+```
+Content-Type: multipart/form-data
+
+Fields:
+- csv: CSV file upload
+```
+
+**Response**
+
+-   Ok 200
+-   Error + String
+
+### POST /admin/login
+
+Login request for admins
+
+**Request Body**
+
+```json
+{
+    "password": "String (admin password)"
+}
+```
+
+**Response**
+
+-   `200 Ok` + Password as String
+-   Error + String
+
+### GET /admin/stats
+
+_Requires admin password_ | Get the stats to display on the admin dashboard
+
+**Response**
+
+```json
+{
+    "projects": 0, // u64 - Total # of projects
+    "seen": 0.0, // f64 - Average seen # of projects
+    "votes": 0.0, // f64 - Average votes of projects
+    "time": 0, // u64 - Current judging time in milliseconds
+    "avg_mu": 0.0, // f64 - Average mu value of projects
+    "avg_sigma": 0.0, // f64 - Average sigma^2 value of projects
+    "judges": 0 // u64 - Total # of judges
+},
+```
+
+or Error + String
+
+### GET /admin/sync
+
+_Requires admin password_ | Establish event stream with server
+
+**Request**
+
+-   [EventStream](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
+
+**Response**
+
+```
+Content-Type: text/event-stream
+```

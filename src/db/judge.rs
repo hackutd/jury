@@ -1,44 +1,23 @@
-use std::error::Error;
-
 use bson::doc;
-use chrono::{Utc, TimeZone};
-use mongodb::{Collection, Database};
-use rand::Rng;
+use futures::stream::TryStreamExt;
+use mongodb::{error::Error, Collection, Database};
 use rocket::http::Status;
 
-use crate::{api::request_types::NewJudge, util::{types::JudgeStats, crowd_bt}};
+use crate::{api::request_types::NewJudge, util::types::JudgeStats};
 
 use super::models::Judge;
 
-pub async fn insert_judge(db: &Database, body: NewJudge<'_>) -> Result<(), Status> {
-    // Create the new judge
-    let judge = Judge {
-        id: None,
-        code: rand::thread_rng().gen_range(100000..999999).to_string(),
-        token: "".to_string(),
-        name: body.name.to_string(),
-        email: body.email.to_string(),
-        active: true,
-        // TODO: This should be fine but if for some reason utc 0 is invalid, this should be changed lmao
-        last_activity: Utc.timestamp_opt(0, 0).unwrap(),
-        read_welcome: false,
-        notes: body.notes.to_string(),
-        next: None,
-        prev: None,
-        alpha: crowd_bt::ALPHA_PRIOR,
-        beta: crowd_bt::BETA_PRIOR,
-    };
+pub async fn insert_judge(db: &Database, judge: NewJudge) -> Result<(), Error> {
+    // Create the judge
+    let judge: Judge = judge.into();
 
     // Insert into database
     let collection: Collection<Judge> = db.collection("judges");
-    let result: Result<_, _> = collection.insert_one(judge, None).await;
-    match result {
-        Ok(_) => Ok(()),
-        Err(_) => Err(Status::InternalServerError),
-    }
+    collection.insert_one(judge, None).await?;
+    Ok(())
 }
 
-pub async fn insert_judges(db: &Database, judges: Vec<Judge>) -> Result<(), Box<dyn Error>> {
+pub async fn insert_judges(db: &Database, judges: Vec<Judge>) -> Result<(), Error> {
     let collection = db.collection::<Judge>("judges");
     collection.insert_many(judges, None).await?;
     Ok(())
@@ -77,11 +56,7 @@ pub async fn find_judge_by_token(db: &Database, token: &str) -> Result<Judge, St
     }
 }
 
-pub async fn update_judge_token(
-    db: &Database,
-    code: &str,
-    token: &str,
-) -> Result<(), Box<dyn Error>> {
+pub async fn update_judge_token(db: &Database, code: &str, token: &str) -> Result<(), Error> {
     let collection: Collection<Judge> = db.collection("judges");
     collection
         .update_one(
@@ -94,7 +69,7 @@ pub async fn update_judge_token(
     Ok(())
 }
 
-pub async fn read_welcome(db: &Database, token: &str) -> Result<(), Box<dyn Error>> {
+pub async fn read_welcome(db: &Database, token: &str) -> Result<(), Error> {
     let collection: Collection<Judge> = db.collection("judges");
     collection
         .update_one(
@@ -132,4 +107,11 @@ pub async fn aggregate_judge_stats(db: &Database) -> Result<JudgeStats, mongodb:
     }
 
     Ok(JudgeStats { num, alpha, beta })
+}
+
+pub async fn find_all_judges(db: &Database) -> Result<Vec<Judge>, Error> {
+    let collection = db.collection::<Judge>("judges");
+    let cursor = collection.find(None, None).await?;
+    let judges = cursor.try_collect().await?;
+    Ok(judges)
 }
