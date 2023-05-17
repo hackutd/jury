@@ -49,12 +49,12 @@ async fn rocket() -> _ {
                 judge::preview_judges_csv,
                 judge::add_judges_csv,
                 judge::judge_stats,
+                project::preview_projects_csv,
+                project::add_projects_csv,
                 project::add_devpost_csv,
                 admin::login,
                 admin::get_stats,
                 admin::req_sync,
-                admin::add_projects_csv,
-                admin::get_projects,
             ],
         )
         .mount("/", routes![client::home, client::all_options])

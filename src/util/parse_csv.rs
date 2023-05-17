@@ -160,3 +160,71 @@ pub async fn parse_judge_csv(data: String, has_header: bool) -> Result<Vec<Judge
 
     Ok(judge_list)
 }
+
+pub async fn parse_projects_csv(
+    data: String,
+    has_header: bool,
+) -> Result<Vec<Project>, Box<dyn Error>> {
+    // Create a CSV reader
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(has_header)
+        .from_reader(data.as_bytes());
+    let mut err_vec = Vec::new();
+    let mut project_list = Vec::new();
+
+    // Iterate through all records
+    for result in reader.records() {
+        // Unwrap the record
+        let record = result?;
+
+        // Add to error vector if the record is not the correct length
+        if record.len() < 2 {
+            err_vec.push(
+                record
+                    .iter()
+                    .map(|x| x.to_string())
+                    .collect::<Vec<String>>()
+                    .join(","),
+            );
+            continue;
+        }
+
+        // Extract optional fields
+        let try_link = if record.len() > 2 {
+            str_opt!(record[2])
+        } else {
+            None
+        };
+
+        let video_link = if record.len() > 3 {
+            str_opt!(record[3])
+        } else {
+            None
+        };
+
+        let challenge_list = if record.len() > 4 {
+            record[4]
+                .split(',')
+                .map(|x| x.trim().to_string())
+                .collect::<Vec<String>>()
+        } else {
+            Vec::new()
+        };
+
+        // Create a new Project
+        project_list.push(Project::new(
+            record[0].trim().to_string(),
+            record[1].trim().to_string(),
+            try_link,
+            video_link,
+            challenge_list,
+        ));
+    }
+
+    if err_vec.len() > 0 {
+        eprintln!("Errors: {:?}", err_vec);
+        return Err(format!("Unable to parse CSV, first error on line: {}", err_vec[0]).into());
+    }
+
+    Ok(project_list)
+}

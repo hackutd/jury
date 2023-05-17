@@ -5,12 +5,12 @@ const ProjectsTable = () => {
 
     // Fetch projects list
     const fetchProjects = async () => {
-        const fetchedProjects = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/projects`, {
+        const fetchedProjects = await fetch(`${process.env.REACT_APP_JURY_URL}/project/list`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
         }).then((data) => data.json());
-        console.log(fetchedProjects);
+        // TODO: Add error handling
         setProjects(fetchedProjects);
     };
 

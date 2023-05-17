@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{TimeZone, Utc, DateTime};
 use mongodb::bson::oid::ObjectId;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -30,6 +30,33 @@ pub struct Project {
     pub last_activity: DateTime<Utc>,
 }
 
+impl Project {
+    pub fn new(
+        name: String,
+        description: String,
+        try_link: Option<String>,
+        video_link: Option<String>,
+        challenge_list: Vec<String>,
+    ) -> Self {
+        Self {
+            id: None,
+            name,
+            location: 0,
+            description,
+            try_link,
+            video_link,
+            challenge_list,
+            seen: 0,
+            votes: 0,
+            mu: 0f64,
+            sigma_sq: 1f64,
+            active: true,
+            prioritized: false,
+            last_activity: Utc.timestamp_opt(0, 0).unwrap(),
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Judge {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -58,13 +85,13 @@ impl Judge {
             name,
             email,
             active: true,
-            last_activity: DateTime::<Utc>::MIN_UTC,
             read_welcome: false,
             notes,
             next: None,
             prev: None,
             alpha: crowd_bt::ALPHA_PRIOR,
             beta: crowd_bt::BETA_PRIOR,
+            last_activity: Utc.timestamp_opt(0, 0).unwrap(),
         }
     }
 }
