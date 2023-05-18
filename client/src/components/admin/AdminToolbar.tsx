@@ -7,6 +7,7 @@ const AdminToolbar = (props: { showProjects: boolean }) => {
                 <Button
                     type="outline"
                     square
+                    bold
                     className="py-2 px-4"
                     href={props.showProjects ? '/admin/add-projects' : '/admin/add-judges'}
                 >

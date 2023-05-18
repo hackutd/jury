@@ -20,6 +20,9 @@ interface ButtonProps {
     /* Square button */
     square?: boolean;
 
+    /* Bold button */
+    bold?: boolean;
+
     /* Classname styling */
     className?: string;
 }
@@ -40,7 +43,8 @@ const Button = (props: ButtonProps) => {
     const varFormat = !props.disabled
         ? typeFormat + ' cursor-pointer duration-200 hover:scale-110 focus:scale-110'
         : 'cursor-auto text-lighter bg-backgroundDark';
-    const formatting = twMerge(defaultFormat, borderFormat, varFormat, squareFormat, props.className);
+    const boldFormat = props.bold ? 'font-bold' : 'font-normal';
+    const formatting = twMerge(defaultFormat, borderFormat, varFormat, squareFormat, boldFormat, props.className);
 
     // Disable button bc links cannot be disabled
     return props.disabled ? (
