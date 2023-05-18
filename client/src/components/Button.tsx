@@ -12,13 +12,16 @@ interface ButtonProps {
     onClick?: (e: React.MouseEvent<any>) => void;
 
     /* Type of the button */
-    type: 'primary' | 'text';
+    type: 'primary' | 'outline' | 'text';
 
     /* If true, sets button as a disabled button */
     disabled?: boolean;
 
     /* Square button */
     square?: boolean;
+
+    /* Bold button */
+    bold?: boolean;
 
     /* Classname styling */
     className?: string;
@@ -32,14 +35,16 @@ interface ButtonProps {
 const Button = (props: ButtonProps) => {
     // Define formatting
     const defaultFormat =
-        'py-4 w-3/4 text-center text-2xl no-underline outline-none border-none md:w-2/3 ';
+        'py-4 w-3/4 text-center text-2xl no-underline outline-none md:w-2/3 ';
+    const borderFormat = props.type === 'outline' ? 'border-lightest border-[3px]' : 'border-none';
     const typeFormat =
         props.type === 'primary' ? 'bg-primary text-background' : 'bg-transparent text-primary';
     const squareFormat = props.square ? 'rounded-lg' : 'rounded-full';
     const varFormat = !props.disabled
         ? typeFormat + ' cursor-pointer duration-200 hover:scale-110 focus:scale-110'
         : 'cursor-auto text-lighter bg-backgroundDark';
-    const formatting = twMerge(defaultFormat, varFormat, squareFormat, props.className);
+    const boldFormat = props.bold ? 'font-bold' : 'font-normal';
+    const formatting = twMerge(defaultFormat, borderFormat, varFormat, squareFormat, boldFormat, props.className);
 
     // Disable button bc links cannot be disabled
     return props.disabled ? (

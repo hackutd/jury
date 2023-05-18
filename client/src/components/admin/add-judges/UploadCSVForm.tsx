@@ -1,55 +1,65 @@
 import { useState } from 'react';
 
 const UploadCSVForm = () => {
-    const [file, setFile] = useState<File | null>(null);
-    const [fileName, setFileName] = useState<string>('No file chosen');
-    const [headerRow, setHeaderRow] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-
-
+    const [file, setFile] = useState<File | null>();
+    const [fileName, setFileName] = useState('No file chosen');
+    const [headerRow, setHeaderRow] = useState(false);
+    const [error, setError] = useState<string | null>();
+    const [msg, setMsg] = useState<string | null>();
     const [isUploading, setIsUploading] = useState<boolean>(false);
 
+    // Handle file drag and drop
     const handleDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
         e.preventDefault();
+
+        // Make sure that the drag event has a file
         if (e.dataTransfer.items) {
+            // Use the first file
             const file = e.dataTransfer.items[0].getAsFile();
             if (file) {
                 setFile(file);
                 setFileName(file.name);
+                setError(null);
+                setMsg(null);
             }
         }
     };
 
+    // Handle file upload
     const UploadCSV = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsUploading(true);
         setError(null);
 
+        // Create the form data object
+        const formData = new FormData();
+        formData.append('csv', file as Blob);
+        formData.append('headerRow', headerRow.toString());
+
+        // Upload the file by calling the upload endpoint
         try {
-            const formData = new FormData();
-            formData.append('csv', file as Blob);
-            formData.append('headerRow', headerRow.toString());
             const response = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/csv/upload`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
             });
 
+            // Throw error if response is not ok
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
-            alert('CSV Uploaded');
+            // Reset the form and show success message
             setFile(null);
             setFileName('No file chosen');
+            setMsg(`Added ${await response.text()} judge(s) successfully!`);
         } catch (err) {
-            console.log(err);
+            console.error(err);
             setError(err as string);
-        } finally {
-            setIsUploading(false);
         }
-    };
 
+        setIsUploading(false);
+    };
 
     return (
         <>
@@ -58,7 +68,7 @@ const UploadCSVForm = () => {
                     <h1 className="text-3xl">Upload CSV</h1>
                     <p className="text-lg text-light">
                         CSV should be formatted in the order of name, email, and notes separated by
-                        commas and then data on newlines
+                        commas; each entry should be on a new line.
                     </p>
                     <form className="flex flex-col w-full space-y-4 mt-4" onSubmit={UploadCSV}>
                         <div
@@ -69,13 +79,11 @@ const UploadCSVForm = () => {
                             <label
                                 htmlFor="dropzone-file"
                                 className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-sm cursor-pointer 
-                                
                                 ${
                                     error
                                         ? 'border-error bg-error/20'
                                         : 'border-primary bg-primary/20'
                                 }
-                                
                                 `}
                             >
                                 <div
@@ -96,6 +104,8 @@ const UploadCSVForm = () => {
                                         if (e.target.files) {
                                             setFile(e.target.files[0]);
                                             setFileName(e.target.files[0].name);
+                                            setError(null);
+                                            setMsg(null);
                                         }
                                     }}
                                 />
@@ -119,6 +129,7 @@ const UploadCSVForm = () => {
                                 Error Uploading CSV: {error}
                             </div>
                         )}
+                        {msg && <div className="text-base text-center text-primary">{msg}</div>}
                         {file && (
                             <div className="flex w-full h-11 px-4 text-2xl border-2 border-lightest rounded-md text-start items-center">
                                 File Chosen: {fileName}

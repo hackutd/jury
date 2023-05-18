@@ -37,16 +37,16 @@ impl Default for Stats {
 #[serde()]
 pub struct JudgeStats {
     pub num: u64,
-    pub alpha: f64,
-    pub beta: f64,
+    pub avg_votes: f64,
+    pub num_active: u64,
 }
 
 impl Default for JudgeStats {
     fn default() -> Self {
         Self {
             num: 0,
-            alpha: 0.0,
-            beta: 0.0,
+            avg_votes: 0.0,
+            num_active: 0,
         }
     }
 }
