@@ -86,27 +86,39 @@ pub async fn aggregate_judge_stats(db: &Database) -> Result<JudgeStats, mongodb:
     let judges_col = db.collection::<Judge>("judges");
     let num = judges_col.estimated_document_count(None).await?;
 
-    // Aggregation for average alpha and beta
-    let alpha_pipeline = vec![doc! {
-        "$group": {
-            "_id": null,
-            "alpha": {
-                "$avg": "$alpha"
-            },
-            "beta": {
-                "$avg": "$beta"
+    // Aggregation for count of active judges and the average views among them
+    let pipeline = vec![
+        doc! {
+            "$match": {
+                "active": true
             }
-        }
-    }];
-    let mut cursor = judges_col.aggregate(alpha_pipeline, None).await?;
-    let mut alpha = 0.0;
-    let mut beta = 0.0;
+        },
+        doc! {
+            "$group": {
+                "_id": null,
+                "count": {
+                    "$sum": 1
+                },
+                "votes": {
+                    "$avg": "$votes"
+                }
+            }
+        },
+    ];
+    let mut cursor = judges_col.aggregate(pipeline, None).await?;
+    let mut count = 0;
+    let mut votes = 0.0;
     if cursor.advance().await? {
-        alpha = cursor.current().get_f64("alpha").unwrap_or_else(|_| 0.0);
-        beta = cursor.current().get_f64("beta").unwrap_or_else(|_| 0.0);
+        count = cursor.current().get_i32("count").unwrap_or_else(|_| 0);
+        // votes = cursor.current().get_f64("votes").unwrap_or_else(|_| 0.0);
+        votes = cursor.current().get_f64("votes").unwrap();
     }
 
-    Ok(JudgeStats { num, alpha, beta })
+    Ok(JudgeStats {
+        num,
+        avg_votes: votes,
+        num_active: count.try_into().unwrap_or(0),
+    })
 }
 
 pub async fn find_all_judges(db: &Database) -> Result<Vec<Judge>, Error> {
