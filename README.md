@@ -21,25 +21,21 @@ MONGODB_PASS="Password for local mongo container [ONLY use if running local mong
 
 I suggest you run the app with MongoDB Atlas! Create a free account and database [here](https://www.mongodb.com/atlas/database). It should provide you a URI string to fill into the `.env` file.
 
-If you would rather use a local instance deployed with docker-compose, you can simply fill in the username and password you want to use with that database.
+> If you would rather use a local instance deployed with docker-compose, you can simply fill in the username and password you want to use with that database. You will use the files `docker-compose-mongo.yml` for production and `docker-compose-mongo.dev.yml` for development. This is **not recommended** as atlas provides a much easier interface!!
 
 ## With Docker
 
-Run `docker compose up` after configuring the `.env` file. If you want to run mongo locally, run `docker compose -f docker-compose-mongo.yml`.
+Run `docker compose up` after configuring the `.env` file.
 
-# Developing
+# Contributing
+
+To run the dev environment:
 
 ## With Docker (Recommended!)
-
-Requirements:
-
--   [Docker](https://www.docker.com/)
 
 Copy `.env.template` into `.env` and fill in the environmental variables (see above).
 
 Simply run `docker compose -f docker-compose.dev.yml up` and open the page at `localhost:3000`.
-
-If you want to run mongo locally, run `docker compose -f docker-compose-mongo.dev.yml`.
 
 ### Connecting to the MongoDB Container
 
