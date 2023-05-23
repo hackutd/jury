@@ -54,35 +54,37 @@ const ProjectsTable = () => {
     return (
         <div className="w-full px-8">
             <table className="table-auto w-full text-lg">
-                <tr>
-                    <th></th>
-                    <th className="text-left py-1">Name</th>
-                    <th className="text-center">Table Number</th>
-                    <th className="text-center">Mu</th>
-                    <th className="text-center">Sigma^2</th>
-                    <th className="text-center">Votes</th>
-                    <th className="text-center">Seen</th>
-                    <th className="text-center">Updated</th>
-                    <th className="text-right">Actions</th>
-                </tr>
-                {projects.map((project: any, idx) => (
-                    <tr key={idx} className="border-t-2 border-backgroundDark">
-                        <td>
-                            <input type="checkbox"></input>
-                        </td>
-                        <td>{project.name}</td>
-                        <td className="text-center py-1">Table {project.location}</td>
-                        <td className="text-center">{project.mu}</td>
-                        <td className="text-center">{project.sigma_sq}</td>
-                        <td className="text-center">{project.votes}</td>
-                        <td className="text-center">{project.seen}</td>
-                        {/* TODO: What the fuck is this; just change the datatype to a long pls */}
-                        <td className="text-center">
-                            {timeSince(project.last_activity.$date.$numberLong)}
-                        </td>
-                        <td className="text-right">:</td>
+                <tbody>
+                    <tr>
+                        <th></th>
+                        <th className="text-left py-1">Name</th>
+                        <th className="text-center">Table Number</th>
+                        <th className="text-center">Mu</th>
+                        <th className="text-center">Sigma^2</th>
+                        <th className="text-center">Votes</th>
+                        <th className="text-center">Seen</th>
+                        <th className="text-center">Updated</th>
+                        <th className="text-right">Actions</th>
                     </tr>
-                ))}
+                    {projects.map((project: any, idx) => (
+                        <tr key={idx} className="border-t-2 border-backgroundDark">
+                            <td>
+                                <input type="checkbox"></input>
+                            </td>
+                            <td>{project.name}</td>
+                            <td className="text-center py-1">Table {project.location}</td>
+                            <td className="text-center">{project.mu}</td>
+                            <td className="text-center">{project.sigma_sq}</td>
+                            <td className="text-center">{project.votes}</td>
+                            <td className="text-center">{project.seen}</td>
+                            {/* TODO: What the fuck is this; just change the datatype to a long pls */}
+                            <td className="text-center">
+                                {timeSince(project.last_activity.$date.$numberLong)}
+                            </td>
+                            <td className="text-right">:</td>
+                        </tr>
+                    ))}
+                </tbody>
             </table>
         </div>
     );
