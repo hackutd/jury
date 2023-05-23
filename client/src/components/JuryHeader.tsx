@@ -18,7 +18,7 @@ const JuryHeader = (props: { withLogout?: boolean; isAdmin?: boolean }) => {
     return (
         <div
             className={twMerge(
-                'md:px-2 px-4 relative mx-auto mt-2 w-full flex flex-col',
+                'md:px-2 px-4 relative mx-auto mt-6 w-full flex flex-col',
                 props.isAdmin ? 'items-center' : 'md:w-[30rem]'
             )}
         >
@@ -43,7 +43,7 @@ const JuryHeader = (props: { withLogout?: boolean; isAdmin?: boolean }) => {
             </div>
             {props.withLogout && (
                 <div
-                    className="absolute top-4 right-4 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200"
+                    className="absolute top-0 right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200"
                     onClick={logout}
                 >
                     <div className="text-light text-xl mr-2">Logout</div>
