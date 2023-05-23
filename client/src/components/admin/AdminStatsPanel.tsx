@@ -11,6 +11,10 @@ interface Stats {
     judges: number;
 }
 
+// Jank global variables for keeping track of drift in timer
+let start: number;
+let drift = 0;
+
 const AdminStatsPanel = () => {
     const [stats, setStats] = useState<Stats>({
         projects: 0,
@@ -95,7 +99,15 @@ const AdminStatsPanel = () => {
     useEffect(() => {
         // Start client timer
         const interval = setInterval(() => {
-            if (!paused) setTime(time + 1000);
+            // Don't update if paused
+            if (paused) return;
+
+            // Calculate the drift based on the time since the last update
+            if (start) drift = Date.now() - start - 1000;
+
+            // Update the time and set start to the current time
+            start = Date.now();
+            setTime(time + 1000 + drift);
         }, 1000);
 
         return () => clearInterval(interval);
