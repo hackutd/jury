@@ -7,6 +7,8 @@ use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
 
+use super::types::ClockState;
+
 pub struct NewSender {
     /// True if connecting, false if disconnecting
     pub connect: bool,
@@ -14,14 +16,20 @@ pub struct NewSender {
 }
 
 /// Initialization for threads
-pub async fn init_threads(db: Arc<Database>) -> Sender<NewSender> {
+pub async fn init_threads(db: Arc<Database>) -> (Sender<NewSender>, Sender<String>, Arc<Mutex<ClockState>>) {
     // Create a shared vector for holding senders for each client thread
     let tx_vector = Arc::new(Mutex::<Vec<Sender<String>>>::new(vec![]));
     let tx_vector_sender_listener = tx_vector.clone();
     let tx_vector_mongodb_listener = tx_vector.clone();
+    let tx_vector_clock = tx_vector.clone();
 
     // Generate channel for inter-task communication for mongodb stats listener
     let (vector_tx, vector_rx) = channel::<NewSender>(10);
+
+    // Create the clock state and sender
+    let clock_state = Arc::new(Mutex::new(ClockState::new()));
+    let clock_state_task = clock_state.clone();
+    let (clock_tx, clock_rx) = channel::<String>(10);
 
     // Thread for listening for new recievers
     tokio::spawn(async move {
@@ -33,12 +41,17 @@ pub async fn init_threads(db: Arc<Database>) -> Sender<NewSender> {
         match mongo_listen(tx_vector_mongodb_listener, db).await {
             Ok(()) => None,
             Err(err) => Some({
-                println!("ERROR in mongo_listen: {}", err);
+                eprintln!("ERROR in mongo_listen: {}", err);
             }),
         }
     });
 
-    return vector_tx;
+    // Spawn the clock thread
+    tokio::spawn(async move {
+        clock_task(clock_state_task, clock_rx, tx_vector_clock).await;
+    });
+
+    return (vector_tx, clock_tx, clock_state);
 }
 
 /// Thread to listen for new senders (new thread connections)
@@ -89,7 +102,7 @@ async fn mongo_listen(
                 // and reset debounce flag
                 last_update = now;
                 debounced = false;
-                update_senders(sender_list.clone()).await;
+                update_senders(sender_list.clone(), "stats".to_string()).await;
             } else if !debounced {
                 // If not yet debounced an update, run the debounce task
                 let debounce_sender_list = sender_list.clone();
@@ -115,15 +128,15 @@ async fn debounce_task(sender_list: Arc<Mutex<Vec<Sender<String>>>>, diff: i64) 
         (11000 - diff).try_into().unwrap_or_else(|_| 0),
     ))
     .await;
-    update_senders(sender_list).await;
+    update_senders(sender_list, "stats".to_string()).await;
 }
 
 /// Sends the update message to all message channels
-async fn update_senders(sender_list: Arc<Mutex<Vec<Sender<String>>>>) {
+async fn update_senders(sender_list: Arc<Mutex<Vec<Sender<String>>>>, msg: String) {
     let mut invalid = Vec::new();
     let mut editable_sender_list = sender_list.lock().await;
     for (i, s) in editable_sender_list.iter().enumerate() {
-        match s.send("update".to_string()).await {
+        match s.send(msg.clone()).await {
             Ok(()) => (),
             Err(_) => {
                 // Insert invalid senders in reverse order
@@ -135,6 +148,45 @@ async fn update_senders(sender_list: Arc<Mutex<Vec<Sender<String>>>>) {
     if !invalid.is_empty() {
         for i in invalid.iter() {
             editable_sender_list.remove(*i);
+        }
+    }
+}
+
+async fn clock_task(clock_state: Arc<Mutex<ClockState>>, mut rx: Receiver<String>, sender_list: Arc<Mutex<Vec<Sender<String>>>>) {
+    loop {
+        // Wait for message
+        let message = match rx.recv().await {
+            Some(x) => x,
+            None => continue,
+        };
+
+        // Get mutable clock state
+        let mut mut_clock_state = clock_state.lock().await;
+
+        // Change flag
+        let mut changed = false;
+
+        // If reset, reset the clock
+        if message == "reset" {
+            mut_clock_state.reset();
+            changed = true;
+        }
+
+        // If paused, stop the clock
+        if message == "pause" {
+            mut_clock_state.pause();
+            changed = true;
+        }
+
+        // If unpaused, start the clock
+        if message == "unpause" {
+            mut_clock_state.resume();
+            changed = true;
+        }
+
+        // If changed, send update to all clients
+        if changed {
+            update_senders(sender_list.clone(), "clock".to_string()).await;
         }
     }
 }

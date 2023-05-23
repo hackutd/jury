@@ -32,14 +32,21 @@ async fn rocket() -> _ {
     };
 
     // Initialize all threads
-    // and get sender for sending new message senders
+    // and get sender for sending new message senders (new client connections)
+    // and a sender for sending clock updates from clients
+    // This will be used for 2 purposes:
+    // 1) MongoDB ChangeStream listener
+    // 2) Synchronizing clock between clients
     // See https://cdn.michaelzhao.xyz/archive/jury-network.png
-    let vector_tx = init_threads(db.clone()).await;
+    // TODO: Do we want to save the clock state in the database?
+    let (vector_tx, clock_tx, clock_state) = init_threads(db.clone()).await;
 
     // Start server
     rocket::build()
         .manage(db.clone())
         .manage(vector_tx)
+        .manage(clock_tx)
+        .manage(clock_state)
         .mount(
             "/api",
             routes![
@@ -58,6 +65,10 @@ async fn rocket() -> _ {
                 admin::login,
                 admin::get_stats,
                 admin::req_sync,
+                admin::clock,
+                admin::pause_clock,
+                admin::unpause_clock,
+                admin::reset_clock,
             ],
         )
         .mount("/", routes![client::home, client::all_options])

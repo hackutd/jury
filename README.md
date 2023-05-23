@@ -87,24 +87,28 @@ const fetchedProjects = await fetch(`${process.env.REACT_APP_JURY_URL}/project/l
 }).then((data) => data.json());
 ```
 
-| Path                | Method | Auth  | Description                             |
-| ------------------- | ------ | ----- | --------------------------------------- |
-| /judge/list         | GET    | admin | get list of all judges                  |
-| /judge/new          | POST   | admin | Add a new judge                         |
-| /judge/csv          | POST   | admin | Preview a judges csv                    |
-| /judge/csv/upload   | POST   | admin | Upload judges using csv                 |
-| /judge/stats        | GET    | admin | Get the stats for the add judges page   |
-| /judge/login        | POST   |       | Login request for a judge               |
-| /judge/welcome      | PUT    | token | Set `read_welcome` to true for a judge  |
-| /project/list       | GET    | admin | get list of all projects                |
-| /project/new        | POST   | admin | Add a new project                       |
-| /project/csv        | POST   | admin | Preview a projects csv                  |
-| /project/csv/upload | POST   | admin | Upload projects using csv               |
-| /project/stats      | GET    | admin | Get the stats for the add projects page |
-| /project/devpost    | POST   | admin | Upload a Devpost CSV                    |
-| /admin/login        | POST   |       | Log into the admin dashboard            |
-| /admin/stats        | GET    | admin | Get all stats                           |
-| /admin/sync         | GET    | admin | Establish event stream with server      |
+| Path                 | Method | Auth  | Description                             |
+| -------------------- | ------ | ----- | --------------------------------------- |
+| /judge/list          | GET    | admin | get list of all judges                  |
+| /judge/new           | POST   | admin | Add a new judge                         |
+| /judge/csv           | POST   | admin | Preview a judges csv                    |
+| /judge/csv/upload    | POST   | admin | Upload judges using csv                 |
+| /judge/stats         | GET    | admin | Get the stats for the add judges page   |
+| /judge/login         | POST   |       | Login request for a judge               |
+| /judge/welcome       | PUT    | token | Set `read_welcome` to true for a judge  |
+| /project/list        | GET    | admin | get list of all projects                |
+| /project/new         | POST   | admin | Add a new project                       |
+| /project/csv         | POST   | admin | Preview a projects csv                  |
+| /project/csv/upload  | POST   | admin | Upload projects using csv               |
+| /project/stats       | GET    | admin | Get the stats for the add projects page |
+| /project/devpost     | POST   | admin | Upload a Devpost CSV                    |
+| /admin/login         | POST   |       | Log into the admin dashboard            |
+| /admin/stats         | GET    | admin | Get all stats                           |
+| /admin/sync          | GET    | admin | Establish event stream with server      |
+| /admin/clock         | GET    | admin | Gets the current clock state            |
+| /admin/clock/pause   | POST   | admin | Pauses the clock                        |
+| /admin/clock/unpause | POST   | admin | Resumes the clock                       |
+| /admin/clock/reset   | POST   | admin | Resets the clock                        |
 
 ### GET /judge/list
 
@@ -392,7 +396,7 @@ _Requires admin password_ | Get the stats to display on the admin dashboard
 },
 ```
 
-or Error + String
+or Error
 
 ### GET /admin/sync
 
@@ -407,3 +411,46 @@ _Requires admin password_ | Establish event stream with server
 ```
 Content-Type: text/event-stream
 ```
+
+### GET /admin/clock
+
+_Requires admin password_ | Get the current clock state
+
+**Response**
+
+```json
+{
+    "start": 0, // Start time in millis
+    "prev": 0, // Previously elapsed time, relavent if paused/previously paused
+    "paused": true // Bool, true if paused
+}
+```
+
+or Error
+
+### POST /admin/clock/pause
+
+_Requires admin password_ | Pauses the clock
+
+**Response**
+
+-   Ok 200
+-   InternalServerError 500 + String
+
+### POST /admin/clock/unpause
+
+_Requires admin password_ | Resumes the clock
+
+**Response**
+
+-   Ok 200
+-   InternalServerError 500 + String
+
+### POST /admin/clock/reset
+
+_Requires admin password_ | Resets the clock
+
+**Response**
+
+-   Ok 200
+-   InternalServerError 500 + String

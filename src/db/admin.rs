@@ -90,7 +90,6 @@ pub async fn aggregate_stats(db: &Database) -> Result<Stats, Error> {
         projects,
         seen: seen.try_into().unwrap_or_else(|_| 0),
         votes: votes.try_into().unwrap_or_else(|_| 0),
-        time: 0, // TODO: find a way to store this in rocket's managed state
         avg_mu,
         avg_sigma,
         judges,

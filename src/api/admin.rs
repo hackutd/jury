@@ -4,8 +4,10 @@ use rocket::{http::Status, serde::json::Json, State};
 use std::env;
 use std::sync::Arc;
 use tokio::sync::mpsc::{channel, Sender};
+use tokio::sync::Mutex;
 
 use crate::util::tasks::NewSender;
+use crate::util::types::ClockState;
 use crate::{
     db::admin::aggregate_stats,
     util::types::{AdminLogin, Stats},
@@ -43,13 +45,13 @@ pub async fn get_stats(
 #[rocket::get("/admin/sync")]
 pub async fn req_sync(
     _password: AdminPassword,
-    rx_new_sender: &State<Sender<NewSender>>,
+    tx_new_sender: &State<Sender<NewSender>>,
 ) -> (Status, Option<EventStream![Event + '_]>) {
     // Create new message channel for the current admin
     let (tx, mut rx) = channel::<String>(10);
 
     // Send message sender to new_sender message channel
-    match rx_new_sender.send(NewSender { connect: true, tx }).await {
+    match tx_new_sender.send(NewSender { connect: true, tx }).await {
         Ok(()) => (),
         Err(e) => {
             eprintln!("Unable to send message to new sender message channel: {e}",);
@@ -58,17 +60,64 @@ pub async fn req_sync(
     };
 
     // If successfully sent message sender, listen for messages on that channel
+    // 2 events possible: "stats" (update on stats) and "clock" (update on clock)
     (
         Status::Ok,
         Some(EventStream! {
             loop {
                 // Wait for message from channel
-                match &rx.recv().await {
-                    Some(x) => x,
+                let msg = match &rx.recv().await {
+                    Some(x) => x.clone(),
                     None => continue,
                 };
-                yield Event::data("update");
+                yield Event::data(msg);
             }
         }),
     )
+}
+
+#[rocket::get("/admin/clock")]
+pub async fn clock(
+    _password: AdminPassword,
+    clock_state: &State<Arc<Mutex<ClockState>>>,
+) -> (Status, Json<ClockState>) {
+    // Get clock state
+    let state = clock_state.lock().await;
+
+    // Return clock state
+    (Status::Ok, Json(state.get_copy()))
+}
+
+#[rocket::post("/admin/clock/pause")]
+pub async fn pause_clock(
+    _password: AdminPassword,
+    clock_tx: &State<Sender<String>>,
+) -> (Status, String) {
+    clock_message(clock_tx, "pause".to_string()).await
+}
+
+#[rocket::post("/admin/clock/unpause")]
+pub async fn unpause_clock(
+    _password: AdminPassword,
+    clock_tx: &State<Sender<String>>,
+) -> (Status, String) {
+    clock_message(clock_tx, "unpause".to_string()).await
+}
+
+#[rocket::post("/admin/clock/reset")]
+pub async fn reset_clock(
+    _password: AdminPassword,
+    clock_tx: &State<Sender<String>>,
+) -> (Status, String) {
+    clock_message(clock_tx, "reset".to_string()).await
+}
+
+async fn clock_message(clock_tx: &State<Sender<String>>, msg: String) -> (Status, String) {
+    match clock_tx.send(msg.clone()).await {
+        Ok(()) => (Status::Ok, format!("Clock {} successful", msg)),
+        Err(e) => (
+            Status::InternalServerError,
+            format!("Unable to {} clock: {}", msg, e),
+        ),
+    }
 }
