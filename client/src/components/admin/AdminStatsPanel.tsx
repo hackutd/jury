@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import AdminStat from './AdminStat';
-import PauseButton from '../../admin/PauseButton';
+import PauseButton from './PauseButton';
 import useAdminStore from '../../store';
 
 // Jank global variables for keeping track of drift in timer

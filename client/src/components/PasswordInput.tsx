@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-interface TextInputProps {
+interface PasswordInputProps {
     /* Set true if text input has errored */
     error?: boolean;
 
@@ -33,10 +33,10 @@ interface TextInputProps {
     value?: string;
 
     /* True if it's a password field */
-    isPassword?: boolean;
+    isHidden?: boolean;
 }
 
-const TextInput = (props: TextInputProps) => {
+const PasswordInput = (props: PasswordInputProps) => {
     const [focused, setFocused] = useState(false);
 
     const handleChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -47,12 +47,12 @@ const TextInput = (props: TextInputProps) => {
     return (
         <>
             <input
-                type={props.isPassword ? 'password' : 'text'}
+                type={props.isHidden ? 'password' : 'text'}
                 maxLength={props.maxLength}
                 id="text-input"
                 placeholder={props.placeholder}
                 className={twMerge(
-                    'block text-4xl font-mono font-normal text-black bg-transparent outline-none border-b-[3px] border-solid w-4/5 p-0 duration-200',
+                    'block text-4xl font-mono font-normal text-black bg-transparent outline-none border-0 border-b-[3px] border-solid p-0 duration-200',
                     props.error ? 'border-error ' : 'border-light focus:border-primary ',
                     props.className
                 )}
@@ -79,4 +79,4 @@ const TextInput = (props: TextInputProps) => {
     );
 };
 
-export default TextInput;
+export default PasswordInput;
