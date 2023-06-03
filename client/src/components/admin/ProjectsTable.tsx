@@ -61,7 +61,15 @@ const ProjectsTable = () => {
         }
     };
 
-    const sort = () => {
+    // On load, fetch projects
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
+
+    // When projects change, update projects and sort
+    useEffect(() => {
+        setChecked(Array(unsortedProjects.length).fill(false));
+
         let sortFunc = (a: Project, b: Project) => 0;
         const asc = sortState.ascending ? 1 : -1;
         switch (sortState.field) {
@@ -89,19 +97,7 @@ const ProjectsTable = () => {
                 break;
         }
         setProjects(unsortedProjects.sort(sortFunc));
-    }
-
-    // On load, fetch projects
-    useEffect(() => {
-        fetchProjects();
-    }, []);
-    
-
-    // When projects change, update projects
-    useEffect(() => {
-        setChecked(Array(unsortedProjects.length).fill(false));
-        sort();
-    }, [unsortedProjects]);
+    }, [unsortedProjects, sortState]);
 
     const arrow = () => (sortState.ascending ? '▲' : '▼');
 
