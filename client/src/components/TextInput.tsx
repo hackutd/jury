@@ -6,7 +6,7 @@ interface TextInputProps {
     error?: boolean;
 
     /* Setter for error state; will reset if no longer errored */
-    setError?: React.Dispatch<React.SetStateAction<any>>;
+    setError?: React.Dispatch<React.SetStateAction<boolean>>;
 
     /* Error message to show if text incorrect */
     errorMessage?: string;

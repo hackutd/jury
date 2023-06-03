@@ -60,7 +60,7 @@ const AdminStatsPanel = () => {
     // Add event source listener for when to sync stats (happens on DB change)
     // Also fetch stats on load
     useEffect(() => {
-        let eventSource = new EventSource(`${process.env.REACT_APP_JURY_URL}/admin/sync`, {
+        const eventSource = new EventSource(`${process.env.REACT_APP_JURY_URL}/admin/sync`, {
             withCredentials: true,
         });
         eventSource.onmessage = handleEventSourceMessage;
