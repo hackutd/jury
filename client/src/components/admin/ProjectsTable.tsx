@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import ProjectRow from './ProjectRow';
+import useAdminStore from '../../store';
 
 enum SortField {
     Name,
@@ -18,32 +19,14 @@ interface SortState {
 }
 
 const ProjectsTable = () => {
+    const unsortedProjects = useAdminStore((state) => state.projects);
+    const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const [projects, setProjects] = useState<Project[]>([]);
-    const [rawProjects, setRawProjects] = useState<Project[]>([]);
     const [checked, setChecked] = useState<boolean[]>([]);
     const [sortState, setSortState] = useState<SortState>({
         field: SortField.None,
         ascending: true,
     });
-
-    // Fetch projects list
-    const fetchProjects = async () => {
-        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/project/list`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-
-        if (!res.ok) {
-            alert('Error fetching projects');
-            return;
-        }
-
-        const fetchedProjects = await res.json();
-        setProjects(fetchedProjects);
-        setRawProjects(fetchedProjects);
-        setChecked(Array(fetchedProjects.length).fill(false));
-    };
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
         setChecked({
@@ -52,8 +35,7 @@ const ProjectsTable = () => {
         });
     };
 
-    const sort = (field: SortField) => {
-        let asc = 1;
+    const updateSort = (field: SortField) => {
         if (sortState.field === field) {
             // If sorted on same field and descending, reset sort state
             if (!sortState.ascending) {
@@ -61,7 +43,7 @@ const ProjectsTable = () => {
                     field: SortField.None,
                     ascending: true,
                 });
-                setProjects(rawProjects);
+                setProjects(unsortedProjects);
                 return;
             }
 
@@ -70,7 +52,6 @@ const ProjectsTable = () => {
                 field,
                 ascending: false,
             });
-            asc = -1;
         } else {
             // If in different sorted state, sort ascending on new field
             setSortState({
@@ -78,9 +59,12 @@ const ProjectsTable = () => {
                 ascending: true,
             });
         }
+    };
 
+    const sort = () => {
         let sortFunc = (a: Project, b: Project) => 0;
-        switch (field) {
+        const asc = sortState.ascending ? 1 : -1;
+        switch (sortState.field) {
             case SortField.Name:
                 sortFunc = (a, b) => a.name.localeCompare(b.name) * asc;
                 break;
@@ -104,13 +88,20 @@ const ProjectsTable = () => {
                     (a.last_activity.$date.$numberLong - b.last_activity.$date.$numberLong) * asc;
                 break;
         }
-        setProjects([...projects].sort(sortFunc));
-    };
+        setProjects(unsortedProjects.sort(sortFunc));
+    }
 
-    // Onload, fetch projects
+    // On load, fetch projects
     useEffect(() => {
         fetchProjects();
     }, []);
+    
+
+    // When projects change, update projects
+    useEffect(() => {
+        setChecked(Array(unsortedProjects.length).fill(false));
+        sort();
+    }, [unsortedProjects]);
 
     const arrow = () => (sortState.ascending ? '▲' : '▼');
 
@@ -127,7 +118,7 @@ const ProjectsTable = () => {
                                     ? ' text-primary'
                                     : ' text-black')
                             }
-                            onClick={() => sort(SortField.Name)}
+                            onClick={() => updateSort(SortField.Name)}
                         >
                             Name {sortState.field === SortField.Name && arrow()}
                         </th>
@@ -138,7 +129,7 @@ const ProjectsTable = () => {
                                     ? ' text-primary'
                                     : ' text-black')
                             }
-                            onClick={() => sort(SortField.TableNumber)}
+                            onClick={() => updateSort(SortField.TableNumber)}
                         >
                             Table Number {sortState.field === SortField.TableNumber && arrow()}
                         </th>
@@ -147,7 +138,7 @@ const ProjectsTable = () => {
                                 'text-center cursor-pointer hover:text-primary duration-100' +
                                 (sortState.field === SortField.Mu ? ' text-primary' : ' text-black')
                             }
-                            onClick={() => sort(SortField.Mu)}
+                            onClick={() => updateSort(SortField.Mu)}
                         >
                             Mu {sortState.field === SortField.Mu && arrow()}
                         </th>
@@ -158,7 +149,7 @@ const ProjectsTable = () => {
                                     ? ' text-primary'
                                     : ' text-black')
                             }
-                            onClick={() => sort(SortField.Sigma)}
+                            onClick={() => updateSort(SortField.Sigma)}
                         >
                             Sigma^2 {sortState.field === SortField.Sigma && arrow()}
                         </th>
@@ -169,7 +160,7 @@ const ProjectsTable = () => {
                                     ? ' text-primary'
                                     : ' text-black')
                             }
-                            onClick={() => sort(SortField.Votes)}
+                            onClick={() => updateSort(SortField.Votes)}
                         >
                             Votes {sortState.field === SortField.Votes && arrow()}
                         </th>
@@ -180,7 +171,7 @@ const ProjectsTable = () => {
                                     ? ' text-primary'
                                     : ' text-black')
                             }
-                            onClick={() => sort(SortField.Seen)}
+                            onClick={() => updateSort(SortField.Seen)}
                         >
                             Seen {sortState.field === SortField.Seen && arrow()}
                         </th>
@@ -191,7 +182,7 @@ const ProjectsTable = () => {
                                     ? ' text-primary'
                                     : ' text-black')
                             }
-                            onClick={() => sort(SortField.Updated)}
+                            onClick={() => updateSort(SortField.Updated)}
                         >
                             Updated {sortState.field === SortField.Updated && arrow()}
                         </th>

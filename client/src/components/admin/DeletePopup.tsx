@@ -1,3 +1,5 @@
+import useAdminStore from "../../store";
+
 type DeleteElement = Project | Judge;
 
 interface DeletePopupProps {
@@ -13,18 +15,24 @@ function isProject(e: DeleteElement): e is Project {
 }
 
 const DeletePopup = ({ element, close }: DeletePopupProps) => {
+    const fetchStats = useAdminStore((state) => state.fetchStats);
+    const fetchProjects = useAdminStore((state) => state.fetchProjects);
+
     const deleteElement = async () => {
-        console.log(element)
         const resource = isProject(element) ? 'project' : 'judge';
         const res = await fetch(`${process.env.REACT_APP_JURY_URL}/${resource}/${element._id.$oid}`, {
             method: 'DELETE',
             credentials: 'include',
         });
+
         if (res.ok) {
+            fetchStats();
+            fetchProjects();
             alert('Element deleted successfully!');
         } else {
             alert(`Unable to delete ${element.name}. Error ${res.status}: ${res.statusText}}`);
         }
+
         close(false);
     };
     return (

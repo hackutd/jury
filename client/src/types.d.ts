@@ -17,3 +17,12 @@ interface Judge {
     _id: { $oid: string };
     name: string;
 }
+
+interface Stats {
+    projects: number;
+    seen: number;
+    votes: number;
+    avg_mu: number;
+    avg_sigma: number;
+    judges: number;
+}
