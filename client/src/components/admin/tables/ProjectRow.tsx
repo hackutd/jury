@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { timeSince } from '../../util';
+import { timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
 

@@ -1,4 +1,4 @@
-import useAdminStore from "../../store";
+import useAdminStore from "../../../store";
 
 type DeleteElement = Project | Judge;
 
