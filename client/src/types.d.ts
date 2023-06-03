@@ -26,3 +26,25 @@ interface Stats {
     avg_sigma: number;
     judges: number;
 }
+
+enum JudgeSortField {
+
+}
+
+enum ProjectSortField {
+    Name,
+    TableNumber,
+    Mu,
+    Sigma,
+    Votes,
+    Seen,
+    Updated,
+    None,
+}
+
+type SortField = ProjectSortField | JudgeSortField;
+
+interface SortState<T extends SortField> {
+    field: T;
+    ascending: boolean;
+}

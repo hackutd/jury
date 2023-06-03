@@ -31,4 +31,6 @@ const timeSince = (date: number) => {
     return 'just now';
 };
 
-export { timeSince };
+const arrow = (asc: boolean) => (asc ? '▲' : '▼');
+
+export { timeSince, arrow };
