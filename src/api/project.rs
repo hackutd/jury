@@ -9,7 +9,7 @@ use std::sync::Arc;
 use super::request_types::NewProject;
 use super::util::AdminPassword;
 use crate::db::models::Project;
-use crate::db::project::{find_all_projects, insert_project};
+use crate::db::project::{find_all_projects, insert_project, delete_project_by_id};
 use crate::try_status;
 use crate::util::parse_csv::devpost_integration;
 use crate::util::types::CsvUpload;
@@ -65,6 +65,7 @@ pub struct ProjectCsvResponse {
 #[rocket::post("/project/csv", data = "<upload>")]
 pub async fn preview_projects_csv(
     upload: Form<CsvUpload>,
+    _password: AdminPassword,
 ) -> (Status, Json<Vec<ProjectCsvResponse>>) {
     // Parse the CSV data
     let projects = match parse_projects_csv(upload.csv.clone(), upload.has_header).await {
@@ -94,6 +95,7 @@ pub async fn preview_projects_csv(
 pub async fn add_projects_csv(
     upload: Form<CsvUpload>,
     db: &State<Arc<Database>>,
+    _password: AdminPassword,
 ) -> (Status, String) {
     // Parse the CSV data
     let projects = try_status!(
@@ -119,7 +121,10 @@ pub async fn add_projects_csv(
 }
 
 #[rocket::get("/project/list")]
-pub async fn get_projects(db: &State<Arc<Database>>) -> (Status, Json<Vec<Project>>) {
+pub async fn get_projects(
+    db: &State<Arc<Database>>,
+    _password: AdminPassword,
+) -> (Status, Json<Vec<Project>>) {
     let project_list = match find_all_projects(db).await {
         Ok(p) => p,
         Err(e) => {
@@ -129,4 +134,19 @@ pub async fn get_projects(db: &State<Arc<Database>>) -> (Status, Json<Vec<Projec
     };
 
     (Status::Ok, Json(project_list))
+}
+
+#[rocket::delete("/project/<id>")]
+pub async fn delete_project(
+    db: &State<Arc<Database>>,
+    id: &str,
+    _password: AdminPassword,
+) -> (Status, String) {
+    match delete_project_by_id(db, id).await {
+        Ok(_) => (Status::Ok, "{}".to_string()),
+        Err(e) => (
+            Status::InternalServerError,
+            format!("Unable to delete project: {}", e),
+        ),
+    }
 }

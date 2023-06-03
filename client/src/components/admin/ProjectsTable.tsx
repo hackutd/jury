@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ProjectRow from './ProjectRow';
 
 enum SortField {
     Name,
@@ -9,21 +10,6 @@ enum SortField {
     Seen,
     Updated,
     None,
-}
-
-interface Project {
-    _id: string;
-    name: string;
-    location: number;
-    mu: number;
-    sigma_sq: number;
-    votes: number;
-    seen: number;
-    last_activity: {
-        $date: {
-            $numberLong: number;
-        };
-    };
 }
 
 interface SortState {
@@ -57,39 +43,6 @@ const ProjectsTable = () => {
         setProjects(fetchedProjects);
         setRawProjects(fetchedProjects);
         setChecked(Array(fetchedProjects.length).fill(false));
-    };
-
-    // Convert millisecond time to "x secs/mins/hours ago"
-    const timeSince = (date: number) => {
-        // eslint-disable-next-line eqeqeq
-        if (date == 0) {
-            return 'never';
-        }
-        const seconds = Math.floor((new Date().getTime() - date) / 1000);
-        if (seconds < 0) {
-            return Math.abs(seconds) + ' seconds in the future?!?!';
-        }
-        let interval = seconds / 31536000;
-        if (interval > 1) {
-            return Math.floor(interval) + ' years ago';
-        }
-        interval = seconds / 2592000;
-        if (interval > 1) {
-            return Math.floor(interval) + ' months ago';
-        }
-        interval = seconds / 86400;
-        if (interval > 1) {
-            return Math.floor(interval) + ' days ago';
-        }
-        interval = seconds / 3600;
-        if (interval > 1) {
-            return Math.floor(interval) + ' hours ago';
-        }
-        interval = seconds / 60;
-        if (interval > 1) {
-            return Math.floor(interval) + ' minutes ago';
-        }
-        return 'just now';
     };
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
@@ -242,40 +195,16 @@ const ProjectsTable = () => {
                         >
                             Updated {sortState.field === SortField.Updated && arrow()}
                         </th>
-                        <th className="text-right">Actions</th>
+                        <th className="text-right w-24">Actions</th>
                     </tr>
                     {projects.map((project: Project, idx) => (
-                        <tr
+                        <ProjectRow
                             key={idx}
-                            className={
-                                'border-t-2 border-backgroundDark duration-150 ' +
-                                (checked[idx] ? 'bg-primary/20' : 'bg-background')
-                            }
-                        >
-                            <td className="px-2">
-                                <input
-                                    type="checkbox"
-                                    checked={checked[idx]}
-                                    onChange={(e) => {
-                                        handleCheckedChange(e, idx);
-                                    }}
-                                    className="cursor-pointer hover:text-primary duration-100"
-                                ></input>
-                            </td>
-                            <td>{project.name}</td>
-                            <td className="text-center py-1">
-                                Table {project.location} {checked[idx]}
-                            </td>
-                            <td className="text-center">{project.mu}</td>
-                            <td className="text-center">{project.sigma_sq}</td>
-                            <td className="text-center">{project.votes}</td>
-                            <td className="text-center">{project.seen}</td>
-                            {/* TODO: What the fuck is this; just change the datatype to a long pls */}
-                            <td className="text-center">
-                                {timeSince(project.last_activity.$date.$numberLong)}
-                            </td>
-                            <td className="text-right">:</td>
-                        </tr>
+                            idx={idx}
+                            project={project}
+                            checked={checked[idx]}
+                            handleCheckedChange={handleCheckedChange}
+                        />
                     ))}
                 </tbody>
             </table>

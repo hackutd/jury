@@ -1,3 +1,4 @@
+use bson::{doc, oid::ObjectId};
 use futures::stream::TryStreamExt;
 use mongodb::{error::Error, Database};
 
@@ -23,4 +24,19 @@ pub async fn find_all_projects(db: &Database) -> Result<Vec<Project>, Error> {
     let cursor = collection.find(None, None).await?;
     let projects = cursor.try_collect().await?;
     Ok(projects)
+}
+
+pub async fn delete_project_by_id(
+    db: &Database,
+    id: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let collection = db.collection::<Project>("projects");
+    let res = collection
+        .delete_one(doc! { "_id": ObjectId::parse_str(id)? }, None)
+        .await?;
+    println!("Deleted {} documents", res.deleted_count);
+    if res.deleted_count == 0 {
+        return Err("No documents deleted".into());
+    }
+    Ok(())
 }
