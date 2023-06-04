@@ -1,6 +1,11 @@
 import { useState } from 'react';
 
-const UploadCSVForm = () => {
+interface UploadCSVFormProps {
+    /* The format of the CSV file */
+    format: 'project' | 'judge' | 'devpost';
+}
+
+const UploadCSVForm = (props: UploadCSVFormProps) => {
     const [file, setFile] = useState<File | null>();
     const [fileName, setFileName] = useState('No file chosen');
     const [headerRow, setHeaderRow] = useState(false);
@@ -38,7 +43,16 @@ const UploadCSVForm = () => {
 
         // Upload the file by calling the upload endpoint
         try {
-            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/csv/upload`, {
+            // Determine the path based on the format
+            const path =
+                props.format === 'judge'
+                    ? '/judge/csv/upload'
+                    : props.format === 'project'
+                    ? '/project/csv/upload'
+                    : '/project/devpost';
+
+            // Make the request
+            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/${path}`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
@@ -52,7 +66,8 @@ const UploadCSVForm = () => {
             // Reset the form and show success message
             setFile(null);
             setFileName('No file chosen');
-            setMsg(`Added ${await response.text()} judge(s) successfully!`);
+            const resource = props.format === 'judge' ? 'judge' : 'project';
+            setMsg(`Added ${await response.text()} ${resource}(s) successfully!`);
         } catch (err) {
             console.error(err);
             setError(err as string);
@@ -61,14 +76,22 @@ const UploadCSVForm = () => {
         setIsUploading(false);
     };
 
+    const displayText =
+        props.format === 'project'
+            ? 'name, description, "Try It" link, video link, and a comma separated challenge list (in quotes)'
+            : 'name, email, and notes';
+
     return (
         <>
             <div className="w-full h-full border-lightest border-2 p-8 rounded-sm">
                 <div className="flex flex-col items-start h-full">
-                    <h1 className="text-3xl">Upload CSV</h1>
+                    <h1 className="text-3xl">
+                        Upload {props.format === 'devpost' ? 'Devpost CSV' : 'CSV'}
+                    </h1>
                     <p className="text-lg text-light">
-                        CSV should be formatted in the order of name, email, and notes separated by
-                        commas; each entry should be on a new line.
+                        {props.format === 'devpost'
+                            ? 'Upload a CSV file exported from Devpost. Make sure you select Projects data and "do not include personal info".'
+                            : `CSV should be formatted in the order of ${props.format} separated by commas; each entry should be on a new line.`}
                     </p>
                     <form className="flex flex-col w-full space-y-4 mt-4" onSubmit={UploadCSV}>
                         <div

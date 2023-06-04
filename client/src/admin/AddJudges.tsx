@@ -12,7 +12,7 @@ const AddJudges = () => {
                 <AddJudgeStatsPanel />
                 <div className="mt-8 flex flex-col w-full space-y-8">
                     <NewJudgeForm />
-                    <UploadCSVForm />
+                    <UploadCSVForm format="judge" />
                 </div>
             </div>
         </>

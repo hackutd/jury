@@ -63,6 +63,7 @@ async fn rocket() -> _ {
                 project::add_projects_csv,
                 project::add_devpost_csv,
                 project::delete_project,
+                project::project_stats,
                 admin::login,
                 admin::get_stats,
                 admin::req_sync,
