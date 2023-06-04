@@ -1,6 +1,7 @@
 import { SubmitHandler, useForm } from 'react-hook-form';
 import TextInput from '../../TextInput';
 import TextArea from '../../TextArea';
+import { useState } from 'react';
 
 interface NewProjectData {
     name: string;
@@ -19,6 +20,7 @@ interface ProjectUpload {
 }
 
 const NewProjectForm = () => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { register, handleSubmit, reset } = useForm<NewProjectData>();
 
     const onSubmit: SubmitHandler<NewProjectData> = async (data) => {
@@ -31,6 +33,7 @@ const NewProjectForm = () => {
         };
 
         // Upload project
+        setIsSubmitting(true);
         try {
             const response = await fetch(`${process.env.REACT_APP_JURY_URL}/project/new`, {
                 method: 'POST',
@@ -53,6 +56,7 @@ const NewProjectForm = () => {
             console.error(err);
             alert('Error adding project: ' + err);
         }
+        setIsSubmitting(false);
     };
 
     return (
@@ -83,7 +87,10 @@ const NewProjectForm = () => {
                         placeholder="Challenge List (comma separated, optional)"
                         register={register}
                     />
-                    <button className="w-full h-11 px-4 text-2xl text-white bg-primary rounded-full">
+                    <button
+                        className="w-full h-11 px-4 text-2xl text-white bg-primary rounded-full"
+                        disabled={isSubmitting}
+                    >
                         Add
                     </button>
                 </form>
