@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import ProjectRow from './ProjectRow';
 import useAdminStore from '../../../store';
 import HeaderEntry from './HeaderEntry';
+import { ProjectSortField } from '../../../enums';
 
 const ProjectsTable = () => {
     const unsortedProjects = useAdminStore((state) => state.projects);
@@ -96,6 +97,7 @@ const ProjectsTable = () => {
                             updateSort={updateSort}
                             sortField={ProjectSortField.Name}
                             sortState={sortState}
+                            align='left'
                         />
                         <HeaderEntry
                             name="Table Number"

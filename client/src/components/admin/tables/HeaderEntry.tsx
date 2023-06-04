@@ -12,6 +12,9 @@ interface HeaderEntryProps<T extends SortField> {
 
     /* Sort field to use */
     sortField: T;
+
+    /* Text alignment */
+    align?: 'left' | 'center' | 'right';
 }
 
 const HeaderEntry = <T extends SortField>(props: HeaderEntryProps<T>) => {
@@ -23,12 +26,13 @@ const HeaderEntry = <T extends SortField>(props: HeaderEntryProps<T>) => {
         <th
             className={
                 'text-left py-1 cursor-pointer hover:text-primary duration-100' +
-                (props.sortState.field === props.sortField ? ' text-primary' : ' text-black')
+                (props.sortState.field === props.sortField ? ' text-primary' : ' text-black') +
+                (props.align ? ' text-' + props.align : ' text-center')
             }
             onClick={handleClick}
         >
             {props.name}{' '}
-            {props.sortState.field === ProjectSortField.Name && arrow(props.sortState.ascending)}
+            {props.sortState.field === props.sortField && arrow(props.sortState.ascending)}
         </th>
     );
 };

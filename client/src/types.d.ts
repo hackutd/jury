@@ -27,21 +27,6 @@ interface Stats {
     judges: number;
 }
 
-enum JudgeSortField {
-
-}
-
-enum ProjectSortField {
-    Name,
-    TableNumber,
-    Mu,
-    Sigma,
-    Votes,
-    Seen,
-    Updated,
-    None,
-}
-
 type SortField = ProjectSortField | JudgeSortField;
 
 interface SortState<T extends SortField> {
