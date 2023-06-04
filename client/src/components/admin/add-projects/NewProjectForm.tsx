@@ -1,12 +1,58 @@
-import { useForm } from 'react-hook-form';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import TextInput from '../../TextInput';
 import TextArea from '../../TextArea';
 
-const NewProjectForm = () => {
-    const { register, handleSubmit } = useForm();
+interface NewProjectData {
+    name: string;
+    description: string;
+    link: string;
+    video: string;
+    challenge_list: string;
+}
 
-    const onSubmit = (data: any) => {
-        console.log(data);
+interface ProjectUpload {
+    name: string;
+    description: string;
+    link: string;
+    video: string;
+    challenge_list: string[];
+}
+
+const NewProjectForm = () => {
+    const { register, handleSubmit, reset } = useForm<NewProjectData>();
+
+    const onSubmit: SubmitHandler<NewProjectData> = async (data) => {
+        const project: ProjectUpload = {
+            name: data.name,
+            description: data.description,
+            link: data.link,
+            video: data.video,
+            challenge_list: data.challenge_list.split(',').map((x) => x.trim()),
+        };
+
+        // Upload project
+        try {
+            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/project/new`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(project),
+                credentials: 'include',
+            });
+
+            // Throw error if response is not ok
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            // Reset the form and show success message
+            reset();
+            alert(`Added project ${data.name} successfully!`);
+        } catch (err) {
+            console.error(err);
+            alert('Error adding project: ' + err);
+        }
     };
 
     return (
@@ -15,13 +61,25 @@ const NewProjectForm = () => {
                 <h1 className="text-3xl mb-4">Add Project</h1>
                 <form className="flex flex-col w-full space-y-4" onSubmit={handleSubmit(onSubmit)}>
                     <TextInput name="name" placeholder="Name" register={register} />
-                    <TextArea name="description" placeholder="Description (optional)" register={register} />
+                    <TextArea
+                        name="description"
+                        placeholder="Description (optional)"
+                        register={register}
+                    />
                     <div className="flex flex-row w-full mt-4 space-x-6">
-                        <TextInput name="link" placeholder='"Try It" Link (optional)' register={register} />
-                        <TextInput name="video" placeholder="Video Link (optional)" register={register} />
+                        <TextInput
+                            name="link"
+                            placeholder='"Try It" Link (optional)'
+                            register={register}
+                        />
+                        <TextInput
+                            name="video"
+                            placeholder="Video Link (optional)"
+                            register={register}
+                        />
                     </div>
                     <TextInput
-                        name="challenge-list"
+                        name="challenge_list"
                         placeholder="Challenge List (comma separated, optional)"
                         register={register}
                     />

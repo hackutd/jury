@@ -91,7 +91,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                     <p className="text-lg text-light">
                         {props.format === 'devpost'
                             ? 'Upload a CSV file exported from Devpost. Make sure you select Projects data and "do not include personal info".'
-                            : `CSV should be formatted in the order of ${props.format} separated by commas; each entry should be on a new line.`}
+                            : `CSV should be formatted in the order of ${displayText} separated by commas; each entry should be on a new line.`}
                     </p>
                     <form className="flex flex-col w-full space-y-4 mt-4" onSubmit={UploadCSV}>
                         <div

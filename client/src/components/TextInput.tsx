@@ -1,4 +1,4 @@
-import type { UseFormRegister, FieldValues } from 'react-hook-form';
+import type { UseFormRegister } from 'react-hook-form';
 
 interface TextInputProps {
     /* Name of the field */
@@ -8,7 +8,8 @@ interface TextInputProps {
     placeholder: string;
 
     /* Register function from react-hook-form */
-    register: UseFormRegister<FieldValues>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    register: UseFormRegister<any>;
 }
 
 const TextInput = (props: TextInputProps) => {
