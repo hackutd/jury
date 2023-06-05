@@ -4,7 +4,7 @@ import Cookies from 'universal-cookie';
 import Button from '../components/Button';
 import Container from '../components/Container';
 import JuryHeader from '../components/JuryHeader';
-import TextInput from '../components/TextInput';
+import PasswordInput from '../components/PasswordInput';
 import LoginBlock from '../components/LoginBlock';
 
 const JudgeLogin = () => {
@@ -99,7 +99,7 @@ const JudgeLogin = () => {
         <>
             <JuryHeader />
             <Container>
-                <TextInput
+                <PasswordInput
                     label="Enter your judging code"
                     maxLength={6}
                     placeholder="000000"
@@ -108,7 +108,7 @@ const JudgeLogin = () => {
                     error={error}
                     setError={setError}
                     errorMessage="Invalid judging code"
-                    className="text-8xl text-center"
+                    className="text-8xl text-center w-4/5"
                 />
                 <p className="text-2xl text-light text-center mx-4 my-12">
                     If you did not get a code, check your email or contact an organizer.

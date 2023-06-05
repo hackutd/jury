@@ -1,4 +1,4 @@
-use bson::doc;
+use bson::{doc, oid::ObjectId};
 use futures::stream::TryStreamExt;
 use mongodb::{error::Error, Collection, Database};
 use rocket::http::Status;
@@ -79,6 +79,20 @@ pub async fn read_welcome(db: &Database, token: &str) -> Result<(), Error> {
         )
         .await?;
 
+    Ok(())
+}
+
+pub async fn delete_judge_by_id(
+    db: &Database,
+    id: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let collection = db.collection::<Judge>("judges");
+    let res = collection
+        .delete_one(doc! { "_id": ObjectId::parse_str(id)? }, None)
+        .await?;
+    if res.deleted_count == 0 {
+        return Err("No documents deleted".into());
+    }
     Ok(())
 }
 

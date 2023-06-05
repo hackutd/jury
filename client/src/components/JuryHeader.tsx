@@ -3,7 +3,18 @@ import { twMerge } from 'tailwind-merge';
 import Cookies from 'universal-cookie';
 import logoutButton from '../assets/logout.svg';
 
-const JuryHeader = (props: { withLogout?: boolean; isAdmin?: boolean }) => {
+interface JuryHeaderProps {
+    /* Whether to show the back to admin button */
+    withBack?: boolean;
+
+    /* Whether to show the logout button */
+    withLogout?: boolean;
+
+    /* Whether the user is an admin */
+    isAdmin?: boolean;
+}
+
+const JuryHeader = (props: JuryHeaderProps) => {
     const navigate = useNavigate();
     const cookies = new Cookies();
 
@@ -12,6 +23,8 @@ const JuryHeader = (props: { withLogout?: boolean; isAdmin?: boolean }) => {
         cookies.remove(isJudge ? 'token' : 'admin-pass', { path: '/' });
         navigate('/');
     };
+
+    const backToAdmin = () => navigate('/admin');
 
     const adminCenter = props.isAdmin ? 'text-center' : '';
 
@@ -41,6 +54,14 @@ const JuryHeader = (props: { withLogout?: boolean; isAdmin?: boolean }) => {
             >
                 {process.env.REACT_APP_JURY_NAME}
             </div>
+            {props.withBack && (
+                <div
+                    className="absolute top-0 left-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 text-light text-xl mr-2"
+                    onClick={backToAdmin}
+                >
+                    ◂&nbsp;&nbsp;Back
+                </div>
+            )}
             {props.withLogout && (
                 <div
                     className="absolute top-0 right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200"

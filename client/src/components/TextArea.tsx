@@ -1,6 +1,6 @@
 import type { UseFormRegister } from 'react-hook-form';
 
-interface TextInputProps {
+interface TextAreaProps {
     /* Name of the field */
     name: string;
 
@@ -10,19 +10,16 @@ interface TextInputProps {
     /* Register function from react-hook-form */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     register: UseFormRegister<any>;
-
-    /* Required field */
-    required?: boolean;
 }
 
-const TextInput = (props: TextInputProps) => {
+const TextArea = (props: TextAreaProps) => {
     return (
-        <input
-            className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
+        <textarea
+            className="w-full h-36 px-4 py-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
             placeholder={props.placeholder}
-            {...props.register(props.name, { required: props.required || false })}
+            {...props.register(props.name)}
         />
     );
 };
 
-export default TextInput;
+export default TextArea;

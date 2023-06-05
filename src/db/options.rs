@@ -11,46 +11,49 @@ pub async fn get_options(db: &Database) -> Result<Options, Box<dyn Error>> {
     match content {
         Some(x) => Ok(x),
         None => {
-            let options = Options::default();
+            let options = Options::new();
             collection.insert_one(options.clone(), None).await?;
             Ok(options)
         }
     }
 }
 
-impl Options {
-    pub fn default() -> Options {
-        Options { next_table_num: 1u32 }
-    }
-
-    /// Increment next table num and return the value
-    pub fn get_next_table_num(&mut self) -> u32 {
-        self.next_table_num += 1;
-        self.next_table_num - 1
-    }
-
-    /// Saves the options to the database
-    pub async fn save(&self, db: &Database) -> Result<(), Box<dyn Error>> {
-        let collection: Collection<Options> = db.collection("options");
-        collection
-            .update_one(
-                doc! {},
-                doc! {
-                    "$set": {
-                        "next_table_num": self.next_table_num,
-                    }
-                },
-                None,
-            )
-            .await?;
-        Ok(())
-    }
+pub async fn get_next_location(db: &Database) -> Result<u64, mongodb::error::Error> {
+    let collection = db.collection::<Options>("options");
+    let res = collection.find_one(None, None).await?;
+    let options = match res {
+        Some(o) => o,
+        None => {
+            let new_options = Options::new();
+            collection.insert_one(new_options.clone(), None).await?;
+            new_options
+        }
+    };
+    Ok(options.next_table_num.into())
 }
 
-impl Clone for Options {
-    fn clone(&self) -> Self {
-        Options {
-            next_table_num: self.next_table_num,
+pub async fn increment_location(
+    db: &Database,
+    amt: Option<u32>,
+) -> Result<(), mongodb::error::Error> {
+    let collection = db.collection::<Options>("options");
+    let res = collection.find_one(None, None).await?;
+    let options = match res {
+        Some(o) => o,
+        None => {
+            let new_options = Options::new();
+            collection.insert_one(new_options.clone(), None).await?;
+            new_options
         }
-    }
+    };
+
+    let amt = amt.unwrap_or(1);
+    collection
+        .update_one(
+            doc! { "_id": options.id },
+            doc! { "$set": { "next_table_num": options.next_table_num + amt } },
+            None,
+        )
+        .await?;
+    Ok(())
 }

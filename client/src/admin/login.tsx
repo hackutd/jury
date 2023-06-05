@@ -5,7 +5,7 @@ import Button from '../components/Button';
 import Container from '../components/Container';
 import JuryHeader from '../components/JuryHeader';
 import LoginBlock from '../components/LoginBlock';
-import TextInput from '../components/TextInput';
+import PasswordInput from '../components/PasswordInput';
 
 const AdminLogin = () => {
     const [password, setPassword] = useState('');
@@ -87,7 +87,7 @@ const AdminLogin = () => {
         <>
             <JuryHeader />
             <Container>
-                <TextInput
+                <PasswordInput
                     label="Enter the admin password"
                     placeholder="Admin password..."
                     onKeyPress={handleEnter}
@@ -95,7 +95,8 @@ const AdminLogin = () => {
                     error={error}
                     setError={setError}
                     errorMessage="Invalid admin password"
-                    isPassword
+                    isHidden
+                    className='w-4/5'
                 />
                 <div className="my-12" />
                 <Button type="primary" onClick={login}>

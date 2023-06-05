@@ -1,32 +1,17 @@
 import { useEffect, useState } from 'react';
 import AdminStat from './AdminStat';
-import PauseButton from '../../admin/PauseButton';
-
-interface Stats {
-    projects: number;
-    seen: number;
-    votes: number;
-    avg_mu: number;
-    avg_sigma: number;
-    judges: number;
-}
+import PauseButton from './PauseButton';
+import useAdminStore from '../../store';
 
 // Jank global variables for keeping track of drift in timer
 let start: number;
 let drift = 0;
 
 const AdminStatsPanel = () => {
-    const [stats, setStats] = useState<Stats>({
-        projects: 0,
-        seen: 0,
-        votes: 0,
-        avg_mu: 0,
-        avg_sigma: 0,
-        judges: 0,
-    });
+    const stats = useAdminStore((state) => state.stats);
+    const fetchStats = useAdminStore((state) => state.fetchStats);
     const [time, setTime] = useState<number>(0);
     const [paused, setPaused] = useState(true);
-    const [timeInterval, setTimeInterval] = useState<NodeJS.Timeout | null>(null);
 
     const handleEventSourceMessage = (e: MessageEvent) => {
         // Get the data from the message
@@ -37,16 +22,6 @@ const AdminStatsPanel = () => {
         } else {
             fetchStats();
         }
-    };
-
-    // Fetch stats when event source happens
-    const fetchStats = async () => {
-        const fetchedStats = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/stats`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        }).then((data) => data.json());
-        setStats(fetchedStats);
     };
 
     // Fetch clock info
@@ -85,7 +60,7 @@ const AdminStatsPanel = () => {
     // Add event source listener for when to sync stats (happens on DB change)
     // Also fetch stats on load
     useEffect(() => {
-        let eventSource = new EventSource(`${process.env.REACT_APP_JURY_URL}/admin/sync`, {
+        const eventSource = new EventSource(`${process.env.REACT_APP_JURY_URL}/admin/sync`, {
             withCredentials: true,
         });
         eventSource.onmessage = handleEventSourceMessage;

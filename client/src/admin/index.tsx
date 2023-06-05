@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import AdminStatsPanel from '../components/admin/AdminStatsPanel';
-import AdminTable from '../components/admin/AdminTable';
+import AdminTable from '../components/admin/tables/AdminTable';
 import AdminToggleSwitch from '../components/admin/AdminToggleSwitch';
 import AdminToolbar from '../components/admin/AdminToolbar';
 import JuryHeader from '../components/JuryHeader';

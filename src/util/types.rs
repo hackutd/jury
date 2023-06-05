@@ -51,6 +51,24 @@ impl Default for JudgeStats {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde()]
+pub struct ProjectStats {
+    pub num: u64,
+    pub avg_votes: f64,
+    pub avg_seen: f64,
+}
+
+impl Default for ProjectStats {
+    fn default() -> Self {
+        Self {
+            num: 0,
+            avg_votes: 0.0,
+            avg_seen: 0.0,
+        }
+    }
+}
+
 #[derive(FromForm)]
 pub struct CsvUpload {
     pub csv: String,
