@@ -6,7 +6,7 @@ import UploadCSVForm from '../components/admin/add-judges/UploadCSVForm';
 const AddJudges = () => {
     return (
         <>
-            <JuryHeader withLogout isAdmin />
+            <JuryHeader withBack withLogout isAdmin />
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Add Judges</h1>
                 <AddJudgeStatsPanel />

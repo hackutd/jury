@@ -6,7 +6,7 @@ import NewProjectForm from "../components/admin/add-projects/NewProjectForm";
 const AddProjects = () => {
     return (
         <>
-            <JuryHeader withLogout isAdmin />
+            <JuryHeader withBack withLogout isAdmin />
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Add Projects</h1>
                     <AddProjectsStatsPanel />
