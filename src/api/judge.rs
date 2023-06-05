@@ -9,7 +9,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use serde::Serialize;
 
-use crate::db::judge::{aggregate_judge_stats, find_all_judges};
+use crate::db::judge::{aggregate_judge_stats, find_all_judges, delete_judge_by_id};
 use crate::db::models::Judge;
 use crate::util::types::{CsvUpload, JudgeStats};
 use crate::{
@@ -159,4 +159,19 @@ pub async fn get_judges(db: &State<Arc<Database>>) -> (Status, Json<Vec<Judge>>)
     };
 
     (Status::Ok, Json(judge_list))
+}
+
+#[rocket::delete("/judge/<id>")]
+pub async fn delete_judge(
+    db: &State<Arc<Database>>,
+    id: &str,
+    _password: AdminPassword,
+) -> (Status, String) {
+    match delete_judge_by_id(db, id).await {
+        Ok(_) => (Status::Ok, "{}".to_string()),
+        Err(e) => (
+            Status::InternalServerError,
+            format!("Unable to delete judge: {}", e),
+        ),
+    }
 }

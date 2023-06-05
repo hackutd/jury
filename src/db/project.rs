@@ -47,7 +47,6 @@ pub async fn delete_project_by_id(
     let res = collection
         .delete_one(doc! { "_id": ObjectId::parse_str(id)? }, None)
         .await?;
-    println!("Deleted {} documents", res.deleted_count);
     if res.deleted_count == 0 {
         return Err("No documents deleted".into());
     }

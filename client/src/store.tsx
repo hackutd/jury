@@ -5,6 +5,8 @@ interface AdminStore {
     fetchStats: () => Promise<void>;
     projects: Project[];
     fetchProjects: () => Promise<void>;
+    judges: Judge[];
+    fetchJudges: () => Promise<void>;
 }
 
 const useAdminStore = create<AdminStore>()((set) => ({
@@ -43,6 +45,24 @@ const useAdminStore = create<AdminStore>()((set) => ({
         const fetchedProjects = await res.json();
         set({ projects: fetchedProjects });
     },
+
+    judges: [],
+
+    fetchJudges: async () => {
+        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/list`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+
+        if (!res.ok) {
+            alert('Error fetching judges');
+            return;
+        }
+
+        const fetchedJudges = await res.json();
+        set({ judges: fetchedJudges });
+    }
 }));
 
 export default useAdminStore;

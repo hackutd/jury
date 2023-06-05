@@ -17,6 +17,7 @@ function isProject(e: DeleteElement): e is Project {
 const DeletePopup = ({ element, close }: DeletePopupProps) => {
     const fetchStats = useAdminStore((state) => state.fetchStats);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
+    const fetchJudges = useAdminStore((state) => state.fetchJudges);
 
     const deleteElement = async () => {
         const resource = isProject(element) ? 'project' : 'judge';
@@ -27,7 +28,7 @@ const DeletePopup = ({ element, close }: DeletePopupProps) => {
 
         if (res.ok) {
             fetchStats();
-            fetchProjects();
+            isProject(element) ? fetchProjects() : fetchJudges();
             alert('Element deleted successfully!');
         } else {
             alert(`Unable to delete ${element.name}. Error ${res.status}: ${res.statusText}}`);

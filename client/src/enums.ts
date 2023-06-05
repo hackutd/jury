@@ -1,5 +1,10 @@
 export enum JudgeSortField {
-
+    Name,
+    Votes,
+    Alpha,
+    Beta,
+    Updated,
+    None,
 }
 
 export enum ProjectSortField {

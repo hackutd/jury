@@ -16,6 +16,19 @@ interface Project {
 interface Judge {
     _id: { $oid: string };
     name: string;
+    email: string;
+    notes: string;
+    alpha: number;
+    votes: number;
+    beta: number;
+    last_activity: {
+        $date: {
+            $numberLong: number;
+        };
+    };
+    read_welcome: boolean;
+    next: { $oid: string };
+    prev: { $oid: string };
 }
 
 interface Stats {
