@@ -1,5 +1,5 @@
-use rgsl::psi::diagamma::psi;
 use statrs::function::beta;
+use crate::util::digamma::psi;
 
 pub const GAMMA: f64 = 0.1;
 // const LAMBDA: f64 = 1.0; // regularization parameter - not used??
