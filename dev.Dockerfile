@@ -1,8 +1,6 @@
-FROM rust
+FROM rust:1.70
 WORKDIR /jury
 
-RUN apt update
-RUN apt install libgsl-dev -y
 RUN cargo install cargo-watch
 
 COPY public /public
