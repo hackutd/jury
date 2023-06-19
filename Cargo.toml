@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-GSL = "4.0" # GNU Stats Library, for psi function
 statrs = "0.16.0" # For betaln function
 mongodb = "2.1"
 bson = { version = "2", features = ["chrono-0_4"] } # Needed for using chrono datetime in doc

@@ -1,4 +1,4 @@
-FROM node as client-builder
+FROM node:lts-hydrogen as client-builder
 WORKDIR /client
 
 ENV REACT_APP_JURY_NAME=$REACT_APP_JURY_NAME
