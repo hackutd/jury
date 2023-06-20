@@ -9,9 +9,9 @@ use rocket::serde::json::Json;
 use rocket::State;
 use serde::Serialize;
 
-use crate::db::judge::{aggregate_judge_stats, find_all_judges, delete_judge_by_id};
+use crate::db::judge::{aggregate_judge_stats, find_all_judges, delete_judge_by_id, find_judge_by_token};
 use crate::db::models::Judge;
-use crate::util::types::{CsvUpload, JudgeStats};
+use crate::util::types::{CsvUpload, JudgeStats, BooleanResponse};
 use crate::{
     db::judge::{
         find_judge_by_code, insert_judge, insert_judges, read_welcome, update_judge_token,
@@ -49,6 +49,12 @@ pub async fn login(db: &State<Arc<Database>>, body: Json<Login<'_>>) -> (Status,
             "Unable to create token".to_string(),
         ),
     }
+}
+
+#[rocket::post("/judge/auth")]
+pub async fn auth_judge(_token: Token) -> Status {
+    // Request guard will fail if token is invalid/missing
+    Status::Ok
 }
 
 #[rocket::post("/judge/new", data = "<body>")]
@@ -124,6 +130,16 @@ pub async fn add_judges_csv(
     );
 
     (Status::Ok, format!("{}", num_judges).to_string())
+}
+
+#[rocket::get("/judge/welcome")]
+pub async fn check_judge_read_welcome(db: &State<Arc<Database>>, token: Token) -> (Status, Json<BooleanResponse>) {
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(e) => {return (e, Json(BooleanResponse::new(false)))}
+    };
+
+    (Status::Ok, Json(BooleanResponse::new(judge.read_welcome)))
 }
 
 #[rocket::post("/judge/welcome")]

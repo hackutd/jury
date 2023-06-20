@@ -138,3 +138,14 @@ impl ClockState {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct BooleanResponse {
+    ok: bool,
+}
+
+impl BooleanResponse {
+    pub fn new(b: bool) -> Self {
+        BooleanResponse { ok: b }
+    }
+}

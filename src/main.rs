@@ -52,7 +52,9 @@ async fn rocket() -> _ {
             routes![
                 judge::get_judges,
                 judge::login,
+                judge::auth_judge,
                 judge::new_judge,
+                judge::check_judge_read_welcome,
                 judge::judge_read_welcome,
                 judge::preview_judges_csv,
                 judge::add_judges_csv,

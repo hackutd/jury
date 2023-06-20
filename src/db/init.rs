@@ -8,6 +8,7 @@ pub async fn init_db() -> mongodb::error::Result<Database> {
     let options = ClientOptions::parse(&client_uri).await?;
     let client = Client::with_options(options)?;
     let db = client.database("jury");
+    println!("Connecting to database...");
 
     // Ping the server to see if you can connect to the cluster
     client

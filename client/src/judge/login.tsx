@@ -16,15 +16,28 @@ const JudgeLogin = () => {
 
     // If token cookie is already defined and valid, redirect to judge page
     useEffect(() => {
-        const cookies = new Cookies();
-        // TODO: Check if the cookie is valid lmao
-        if (cookies.get('token')) {
+        async function checkCookies() {
+            const cookies = new Cookies();
+
+            // If no token cookie, just ignore
+            if (!cookies.get('token')) {
+                return;
+            }
+
+            // If invalid, delete the token
+            const res = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/auth`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+            if (!res.ok) {
+                cookies.remove('token');
+            }
+
+            // If all valid, redirect to judge page
             navigate('/judge');
-            return;
         }
 
-        // If invalid, delete the token
-        cookies.remove('token');
+        checkCookies();
     }, [navigate]);
 
     // Disable button if length of code is not 6

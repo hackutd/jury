@@ -82,10 +82,7 @@ pub async fn read_welcome(db: &Database, token: &str) -> Result<(), Error> {
     Ok(())
 }
 
-pub async fn delete_judge_by_id(
-    db: &Database,
-    id: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn delete_judge_by_id(db: &Database, id: &str) -> Result<(), Box<dyn std::error::Error>> {
     let collection = db.collection::<Judge>("judges");
     let res = collection
         .delete_one(doc! { "_id": ObjectId::parse_str(id)? }, None)
