@@ -31,6 +31,7 @@ const JudgeLogin = () => {
             });
             if (!res.ok) {
                 cookies.remove('token');
+                return;
             }
 
             // If all valid, redirect to judge page
