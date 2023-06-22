@@ -51,6 +51,7 @@ async fn rocket() -> _ {
             "/api",
             routes![
                 judge::get_judges,
+                judge::get_judge,
                 judge::login,
                 judge::auth_judge,
                 judge::new_judge,

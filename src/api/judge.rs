@@ -25,6 +25,16 @@ use super::{
     util::{AdminPassword, Token},
 };
 
+#[rocket::get("/judge")]
+pub async fn get_judge(db: &State<Arc<Database>>, token: Token) -> (Status, Json<Judge>) {
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(_) => return (Status::NotFound, Json(Judge::default())),
+    };
+
+    (Status::Ok, Json(judge))
+}
+
 #[rocket::post("/judge/login", data = "<body>")]
 pub async fn login(db: &State<Arc<Database>>, body: Json<Login<'_>>) -> (Status, String) {
     // Find judge from db using code

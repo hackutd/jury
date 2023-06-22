@@ -28,7 +28,7 @@ impl Options {
     }
 
     /// Saves the options to the database
-    pub async fn save(&self, db: &Database) -> Result<(), Box<dyn  std::error::Error>> {
+    pub async fn save(&self, db: &Database) -> Result<(), Box<dyn std::error::Error>> {
         let collection: Collection<Options> = db.collection("options");
         collection
             .update_one(
@@ -139,6 +139,10 @@ impl Judge {
             beta: crowd_bt::BETA_PRIOR,
             last_activity: Utc.timestamp_opt(0, 0).unwrap(),
         }
+    }
+
+    pub fn default() -> Self {
+        Self::new("".to_string(), "".to_string(), "".to_string())
     }
 }
 
