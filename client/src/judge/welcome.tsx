@@ -2,10 +2,15 @@ import { useEffect, useState } from 'react';
 import Container from '../components/Container';
 import JuryHeader from '../components/JuryHeader';
 import { useNavigate } from 'react-router-dom';
+import Checkbox from '../components/Checkbox';
+import Button from '../components/Button';
 
 const JudgeWelcome = () => {
     const navigate = useNavigate();
     const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [checkRead, setCheckRead] = useState(false);
+    const [checkEmail, setCheckEmail] = useState(false);
 
     // Verify user is logged in and read welcome before proceeding
     useEffect(() => {
@@ -21,7 +26,7 @@ const JudgeWelcome = () => {
                 return;
             }
 
-            // Get the name of the user from the server
+            // Get the name & email of the user from the server
             const judgeRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
@@ -35,10 +40,36 @@ const JudgeWelcome = () => {
             }
             const judge: Judge = await judgeRes.json();
             setName(judge.name);
+            setEmail(judge.email);
         }
 
         fetchData();
     }, []);
+
+    // Read the welcome message and mark that the user has read it
+    const readWelcome = async () => {
+        if (!checkRead || !checkEmail) {
+            alert(
+                'Please read the welcome message and confirm by checking the boxes below before proceeding.'
+            );
+            return;
+        }
+
+        // POST to server to mark that the user has read the welcome message
+        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/welcome`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+        if (!res.ok) {
+            alert(
+                `Error validating form: ${res.status} ${res.statusText}. Please check your connection or reload the page.`
+            );
+            return;
+        }
+
+        navigate('/judge');
+    };
 
     return (
         <>
@@ -70,6 +101,25 @@ const JudgeWelcome = () => {
                     If you suspect a team may be cheating, please report it to the organizers with
                     the &apos;flag&apos; button.
                 </p>
+                <Checkbox checked={checkRead} onChange={setCheckRead}>
+                    Before you continue, please awknoledge that you have read and understand the
+                    above instructions.
+                </Checkbox>
+                <Checkbox checked={checkEmail} onChange={setCheckEmail}>
+                    I certify that my email is{' '}
+                    <span className="text-primary">[email@email.com]</span>. If this is not your
+                    email, contact an organizer immediately.
+                </Checkbox>
+                <div className="flex justify-center py-4">
+                    <Button
+                        type="primary"
+                        disabled={!checkRead || !checkEmail}
+                        onClick={readWelcome}
+                        className="my-2"
+                    >
+                        Continue
+                    </Button>
+                </div>
             </Container>
         </>
     );
