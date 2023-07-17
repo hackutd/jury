@@ -54,7 +54,7 @@ impl Clone for Options {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Project {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
@@ -99,6 +99,10 @@ impl Project {
             last_activity: Utc.timestamp_opt(0, 0).unwrap(),
         }
     }
+
+    pub fn default () -> Self {
+        Self::new("".to_string(), "".to_string(), None, None, vec![])
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -115,7 +119,7 @@ pub struct Judge {
     pub read_welcome: bool,
     pub notes: String,
     pub votes: u64,
-    pub next: Option<ObjectId>,
+    pub next: Option<ObjectId>, // Refers to the current project being judged
     pub prev: Option<ObjectId>,
     pub alpha: f64,
     pub beta: f64,

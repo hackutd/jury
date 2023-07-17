@@ -9,9 +9,12 @@ use rocket::serde::json::Json;
 use rocket::State;
 use serde::Serialize;
 
-use crate::db::judge::{aggregate_judge_stats, find_all_judges, delete_judge_by_id, find_judge_by_token};
+use crate::db::judge::{
+    aggregate_judge_stats, delete_judge_by_id, find_all_judges, find_judge_by_token,
+};
 use crate::db::models::Judge;
-use crate::util::types::{CsvUpload, JudgeStats, BooleanResponse};
+use crate::util::judging_flow::pick_next_project;
+use crate::util::types::{BooleanResponse, CsvUpload, JudgeStats, JudgeNextProject};
 use crate::{
     db::judge::{
         find_judge_by_code, insert_judge, insert_judges, read_welcome, update_judge_token,
@@ -20,6 +23,7 @@ use crate::{
     util::parse_csv::parse_judge_csv,
 };
 
+use super::request_types::JudgeVote;
 use super::{
     request_types::{Login, NewJudge},
     util::{AdminPassword, Token},
@@ -75,7 +79,10 @@ pub async fn new_judge(
 ) -> (Status, String) {
     match insert_judge(db, body.0).await {
         Ok(_) => (Status::Accepted, "{}".to_string()),
-        Err(e) => (Status::InternalServerError, format!("Unable to insert judge: {}", e)),
+        Err(e) => (
+            Status::InternalServerError,
+            format!("Unable to insert judge: {}", e),
+        ),
     }
 }
 
@@ -143,10 +150,13 @@ pub async fn add_judges_csv(
 }
 
 #[rocket::get("/judge/welcome")]
-pub async fn check_judge_read_welcome(db: &State<Arc<Database>>, token: Token) -> (Status, Json<BooleanResponse>) {
+pub async fn check_judge_read_welcome(
+    db: &State<Arc<Database>>,
+    token: Token,
+) -> (Status, Json<BooleanResponse>) {
     let judge = match find_judge_by_token(db, &token.0).await {
         Ok(j) => j,
-        Err(e) => {return (e, Json(BooleanResponse::new(false)))}
+        Err(e) => return (e, Json(BooleanResponse::new(false))),
     };
 
     (Status::Ok, Json(BooleanResponse::new(judge.read_welcome)))
@@ -200,4 +210,25 @@ pub async fn delete_judge(
             format!("Unable to delete judge: {}", e),
         ),
     }
+}
+
+#[rocket::post("/judge/vote", data = "<body>")]
+pub async fn judge_vote(
+    db: &State<Arc<Database>>,
+    token: Token,
+    body: Json<JudgeVote>,
+) -> (Status, Json<JudgeNextProject>) {
+    // Get judge
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(e) => return (e, Json(JudgeNextProject::default())),
+    };
+
+    // If judge has no previous project, return Ok
+    if judge.prev.is_none() {
+        // Find next project
+        let next = pick_next_project(db.clone(), &judge).await;
+    }
+
+    (Status::Ok, Json(JudgeNextProject::default()))
 }

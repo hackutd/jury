@@ -43,3 +43,11 @@ impl Into<Project> for NewProject {
         )
     }
 }
+
+#[derive(Deserialize)]
+#[serde()]
+pub struct JudgeVote {
+    judge_id: String,
+    project_id: String,
+    score: i32,
+}

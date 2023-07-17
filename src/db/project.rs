@@ -4,7 +4,10 @@ use mongodb::{error::Error, Database};
 
 use crate::{api::request_types::NewProject, util::types::ProjectStats};
 
-use super::{models::Project, options::{get_next_location, increment_location}};
+use super::{
+    models::{Project, Judge},
+    options::{get_next_location, increment_location},
+};
 
 pub async fn insert_projects(db: &Database, mut projects: Vec<Project>) -> Result<(), Error> {
     let new_location = get_next_location(db).await?;
@@ -94,4 +97,35 @@ pub async fn aggregate_project_stats(db: &Database) -> Result<ProjectStats, mong
         avg_votes: votes,
         avg_seen: seen,
     })
+}
+
+pub async fn find_all_active_projects(db: &Database) -> Result<Vec<Project>, Error> {
+    let collection = db.collection::<Project>("projects");
+    let cursor = collection.find(doc! { "active": true }, None).await?;
+    let projects = cursor.try_collect().await?;
+    Ok(projects)
+}
+
+/// Find all projects that are busy.
+/// A project is considered busy if it has a next judge
+pub async fn find_all_busy_projects(db: &Database) -> Result<Vec<ObjectId>, Error> {
+    // Get list of busy project IDs
+    let judge_collection = db.collection::<Judge>("judges");
+    let cursor = judge_collection.find(doc! { "active": true, "next": { "$ne": None::<ObjectId> } }, None);
+    let judges = cursor.await?.try_collect::<Vec<Judge>>().await?;
+    let busy_projects = judges.into_iter().map(|j| j.next.unwrap_or(ObjectId::default())).collect::<Vec<ObjectId>>();
+
+    Ok(busy_projects)
+}
+
+/// Finds a project by its ID
+pub async fn find_project_by_id(db: &Database, id: ObjectId) -> Result<Project, Box<dyn std::error::Error>> {
+    let collection = db.collection::<Project>("projects");
+    let project = collection
+        .find_one(doc! { "_id": id }, None)
+        .await?;
+    match project {
+        Some(project) => Ok(project),
+        None => Err("No project found".into()),
+    }
 }

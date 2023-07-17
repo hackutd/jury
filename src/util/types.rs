@@ -149,3 +149,32 @@ impl BooleanResponse {
         BooleanResponse { ok: b }
     }
 }
+
+#[derive(Serialize)]
+pub struct JudgeNextProject {
+    judge_id: String,
+    prev_project_id: Option<String>,
+    next_project_id: Option<String>,
+}
+
+impl JudgeNextProject {
+    pub fn new(
+        judge_id: String,
+        prev_project_id: Option<String>,
+        next_project_id: Option<String>,
+    ) -> Self {
+        Self {
+            judge_id,
+            prev_project_id,
+            next_project_id,
+        }
+    }
+
+    pub fn default() -> Self {
+        Self {
+            judge_id: String::new(),
+            prev_project_id: None,
+            next_project_id: None,
+        }
+    }
+}
