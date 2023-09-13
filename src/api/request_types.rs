@@ -47,7 +47,6 @@ impl Into<Project> for NewProject {
 #[derive(Deserialize)]
 #[serde()]
 pub struct JudgeVote {
-    judge_id: String,
-    project_id: String,
-    score: i32,
+    pub judge_id: String,
+    pub curr_winner: bool, // true = current project is winner, false = prev project is winner
 }

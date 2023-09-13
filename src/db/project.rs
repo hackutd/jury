@@ -1,11 +1,12 @@
 use bson::{doc, oid::ObjectId};
+use chrono::Utc;
 use futures::stream::TryStreamExt;
 use mongodb::{error::Error, Database};
 
 use crate::{api::request_types::NewProject, util::types::ProjectStats};
 
 use super::{
-    models::{Project, Judge},
+    models::{Judge, Project},
     options::{get_next_location, increment_location},
 };
 
@@ -111,21 +112,62 @@ pub async fn find_all_active_projects(db: &Database) -> Result<Vec<Project>, Err
 pub async fn find_all_busy_projects(db: &Database) -> Result<Vec<ObjectId>, Error> {
     // Get list of busy project IDs
     let judge_collection = db.collection::<Judge>("judges");
-    let cursor = judge_collection.find(doc! { "active": true, "next": { "$ne": None::<ObjectId> } }, None);
+    let cursor = judge_collection.find(
+        doc! { "active": true, "next": { "$ne": None::<ObjectId> } },
+        None,
+    );
     let judges = cursor.await?.try_collect::<Vec<Judge>>().await?;
-    let busy_projects = judges.into_iter().map(|j| j.next.unwrap_or(ObjectId::default())).collect::<Vec<ObjectId>>();
+    let busy_projects = judges
+        .into_iter()
+        .map(|j| j.next.unwrap_or(ObjectId::default()))
+        .collect::<Vec<ObjectId>>();
 
     Ok(busy_projects)
 }
 
 /// Finds a project by its ID
-pub async fn find_project_by_id(db: &Database, id: ObjectId) -> Result<Project, Box<dyn std::error::Error>> {
+pub async fn find_project_by_id(
+    db: &Database,
+    id: ObjectId,
+) -> Result<Project, Box<dyn std::error::Error>> {
     let collection = db.collection::<Project>("projects");
-    let project = collection
-        .find_one(doc! { "_id": id }, None)
-        .await?;
+    let project = collection.find_one(doc! { "_id": id }, None).await?;
     match project {
         Some(project) => Ok(project),
         None => Err("No project found".into()),
     }
+}
+
+/// Updates a project's mu and sigma^2 values
+pub async fn update_project_after_vote(
+    db: &Database,
+    id: Option<ObjectId>,
+    new_mu: f64,
+    new_sigma_sq: f64,
+    won: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let collection = db.collection::<Project>("projects");
+
+    // Get project
+    let project = collection
+        .find_one(doc! { "_id": id }, None)
+        .await?
+        .ok_or_else(|| "Could not find project by ID when updating project")?;
+
+    // Get current time
+    let now = Utc::now();
+
+    // Add 1 to votes if won
+    let votes = project.votes + if won { 1 } else { 0 };
+
+    // Update project
+    collection
+        .update_one(
+            doc! { "_id": id },
+            doc! { "$set": { "mu": new_mu, "sigma_sq": new_sigma_sq, "votes": votes, "seen": project.seen + 1, "last_activity": now } },
+            None,
+        )
+        .await?;
+
+    Ok(())
 }

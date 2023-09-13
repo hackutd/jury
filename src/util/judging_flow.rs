@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{collections::HashSet, error::Error};
 
 use bson::oid::ObjectId;
 use mongodb::Database;
@@ -14,14 +14,18 @@ use super::{
     crowd_bt::{expected_information_gain, EPSILON},
 };
 
-pub async fn pick_next_project(db: &Database, judge: &Judge) -> Result<Option<Project>, Box<dyn Error>> {
+// TODO: Add table distance in consideration
+pub async fn pick_next_project(
+    db: &Database,
+    judge: &Judge,
+) -> Result<Option<Project>, Box<dyn Error>> {
     // Get items and shuffle them
-    let mut items = find_preferred_items(db).await?;
+    let mut items = find_preferred_items(db, judge).await?;
     items.shuffle(&mut thread_rng());
 
     // If there are no items, return an error
     if items.is_empty() {
-        return Ok(None)
+        return Ok(None);
     }
 
     // Randomly pick the first element with an EPSILON probability
@@ -47,11 +51,15 @@ pub async fn pick_next_project(db: &Database, judge: &Judge) -> Result<Option<Pr
 
 /// Find all projects that are higher priority with the following heuristic:
 ///  1. Ignore all projects that are inactive
-///  2. If there are prioritized projects, pick from that list
-///  3. If there are projects not currently being judged, pick from that list
-///  4. If there are projects that have less than MIN_VIEWS, pick from that list
-///  5. Return the remaining list, filtering at steps 2-4 if applicable
-pub async fn find_preferred_items(db: &Database) -> Result<Vec<Project>, Box<dyn Error>> {
+///  2. Filter out all projects that the judge has skipped or voted on
+///  3. If there are prioritized projects, pick from that list
+///  4. If there are projects not currently being judged, pick from that list
+///  5. If there are projects that have less than MIN_VIEWS, pick from that list
+///  6. Return the remaining list, filtering at steps 2-4 if applicable
+pub async fn find_preferred_items(
+    db: &Database,
+    judge: &Judge,
+) -> Result<Vec<Project>, Box<dyn Error>> {
     // Get the list of all active projects
     let mut projects = find_all_active_projects(db).await?;
 
@@ -59,6 +67,15 @@ pub async fn find_preferred_items(db: &Database) -> Result<Vec<Project>, Box<dyn
     if projects.is_empty() {
         return Ok(projects);
     }
+
+    // Create a set of skipped/voted projects
+    let done_set = HashSet::<ObjectId>::from_iter(judge.seen_projects.iter().cloned());
+
+    // Filter out all skipped/voted projects
+    projects = projects
+        .into_iter()
+        .filter(|p| p.id.is_some() && !done_set.contains(&p.id.unwrap()))
+        .collect();
 
     // If there are prioritized projects, filter out the non-prioritized ones
     if projects.iter().any(|p| p.prioritized) {

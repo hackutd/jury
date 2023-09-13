@@ -1,1 +1,1 @@
-pub const MIN_VIEWS: u64 = 4;
+pub const MIN_VIEWS: i64 = 4;

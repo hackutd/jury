@@ -1,11 +1,12 @@
 use bson::{doc, oid::ObjectId};
+use chrono::Utc;
 use futures::stream::TryStreamExt;
 use mongodb::{error::Error, Collection, Database};
 use rocket::http::Status;
 
 use crate::{api::request_types::NewJudge, util::types::JudgeStats};
 
-use super::models::Judge;
+use super::models::{Judge, Project};
 
 pub async fn insert_judge(db: &Database, judge: NewJudge) -> Result<(), Error> {
     // Create the judge
@@ -137,4 +138,42 @@ pub async fn find_all_judges(db: &Database) -> Result<Vec<Judge>, Error> {
     let cursor = collection.find(None, None).await?;
     let judges = cursor.try_collect().await?;
     Ok(judges)
+}
+
+/// Set judge.prev = judge.next and put next project in judge.next, as well as update alpha and beta
+/// When doing this, increment "votes" by 1 if judge has voted on the project
+pub async fn update_judge_projects(
+    db: &Database,
+    judge: &Judge,
+    next: &Option<Project>,
+    alpha: f64,
+    beta: f64,
+    voted: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let collection = db.collection::<Judge>("judges");
+
+    // Extract ID from project
+    let next_id = match next {
+        Some(n) => n.id,
+        None => None,
+    };
+
+    // Update votes if voted
+    let votes = judge.votes + if voted { 1 } else { 0 };
+
+    // Get current time
+    let now = Utc::now();
+
+    collection
+        .update_one(
+            doc! { "_id": judge.id },
+            doc! { 
+                "$set": { "prev": judge.next, "next": next_id, "alpha": alpha, "beta": beta, "votes": votes, "last_activity": now }, 
+                "$push": { "seen_projects": next_id.unwrap_or(ObjectId::new()) },
+            },
+            None,
+        )
+        .await?;
+
+    Ok(())
 }

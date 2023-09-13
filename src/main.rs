@@ -61,6 +61,7 @@ async fn rocket() -> _ {
                 judge::add_judges_csv,
                 judge::delete_judge,
                 judge::judge_stats,
+                judge::judge_vote,
                 project::get_projects,
                 project::new_project,
                 project::preview_projects_csv,
