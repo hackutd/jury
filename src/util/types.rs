@@ -178,3 +178,36 @@ impl JudgeNextProject {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct JudgeVoteProjectInfo {
+    curr_name: Option<String>,
+    curr_location: Option<u64>,
+    prev_name: Option<String>,
+    prev_location: Option<u64>,
+}
+
+impl JudgeVoteProjectInfo {
+    pub fn new(
+        curr_name: Option<String>,
+        curr_location: Option<u64>,
+        prev_name: Option<String>,
+        prev_location: Option<u64>,
+    ) -> Self {
+        Self {
+            curr_name,
+            curr_location,
+            prev_name,
+            prev_location,
+        }
+    }
+
+    pub fn default() -> Self {
+        Self {
+            curr_name: None,
+            curr_location: None,
+            prev_name: None,
+            prev_location: None,
+        }
+    }
+}

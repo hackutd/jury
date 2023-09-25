@@ -23,6 +23,9 @@ interface ButtonProps {
     /* Bold button */
     bold?: boolean;
 
+    /* Full width */
+    full?: boolean;
+
     /* Classname styling */
     className?: string;
 }
@@ -34,7 +37,7 @@ interface ButtonProps {
  */
 const Button = (props: ButtonProps) => {
     // Define formatting
-    const defaultFormat = 'py-4 w-3/4 text-center text-2xl no-underline outline-none md:w-2/3 ';
+    const defaultFormat = 'py-4 text-center text-2xl no-underline outline-none ';
     const borderFormat = props.type === 'outline' ? 'border-lightest border-[3px]' : 'border-none';
     const typeFormat =
         props.type === 'primary'
@@ -42,17 +45,19 @@ const Button = (props: ButtonProps) => {
             : props.type === 'error'
             ? 'bg-error text-background'
             : 'bg-transparent text-primary';
-    const squareFormat = props.square ? 'rounded-lg' : 'rounded-full';
+    const squareFormat = props.square ? 'rounded-2xl' : 'rounded-full';
     const varFormat = !props.disabled
-        ? typeFormat + ' cursor-pointer duration-200 hover:scale-110 focus:scale-110'
+        ? typeFormat + ' cursor-pointer duration-200 hover:scale-110'
         : 'cursor-auto text-lighter bg-backgroundDark';
     const boldFormat = props.bold ? 'font-bold' : 'font-normal';
+    const widthFormat = props.full ? 'w-full' : 'w-3/4 md:w-2/3';
     const formatting = twMerge(
         defaultFormat,
         borderFormat,
         varFormat,
         squareFormat,
         boldFormat,
+        widthFormat,
         props.className
     );
 
@@ -62,7 +67,7 @@ const Button = (props: ButtonProps) => {
             {props.children}
         </button>
     ) : props.href ? (
-        <a href={props.href || ''} className={formatting}>
+        <a href={props.href || ''} className={formatting + ' block'}>
             {props.children}
         </a>
     ) : (

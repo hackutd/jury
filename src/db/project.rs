@@ -125,6 +125,14 @@ pub async fn find_all_busy_projects(db: &Database) -> Result<Vec<ObjectId>, Erro
     Ok(busy_projects)
 }
 
+pub async fn find_project_by_id_string(
+    db: &Database,
+    id: &str,
+) -> Result<Project, Box<dyn std::error::Error>> {
+    let id = ObjectId::parse_str(id)?;
+    find_project_by_id(db, id).await
+}
+
 /// Finds a project by its ID
 pub async fn find_project_by_id(
     db: &Database,
@@ -136,6 +144,17 @@ pub async fn find_project_by_id(
         Some(project) => Ok(project),
         None => Err("No project found".into()),
     }
+}
+
+/// Finds multiple projects given a vector of IDs
+pub async fn find_projects_by_id(
+    db: &Database,
+    ids: Vec<ObjectId>,
+) -> Result<Vec<Project>, Box<dyn std::error::Error>> {
+    let collection = db.collection::<Project>("projects");
+    let cursor = collection.find(doc! { "_id": { "$in": ids }}, None).await?;
+    let projects = cursor.try_collect().await?;
+    Ok(projects)
 }
 
 /// Updates a project's mu and sigma^2 values

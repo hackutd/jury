@@ -8,7 +8,6 @@ import Button from '../components/Button';
 const JudgeWelcome = () => {
     const navigate = useNavigate();
     const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
     const [checkRead, setCheckRead] = useState(false);
     const [checkEmail, setCheckEmail] = useState(false);
 
@@ -40,7 +39,6 @@ const JudgeWelcome = () => {
             }
             const judge: Judge = await judgeRes.json();
             setName(judge.name);
-            setEmail(judge.email);
         }
 
         fetchData();

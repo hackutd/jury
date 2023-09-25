@@ -1,6 +1,6 @@
 import { twMerge } from 'tailwind-merge';
 
-const LoginBlock = (props: { disabled: boolean }) => {
+const Loading = (props: { disabled: boolean }) => {
     return (
         <div
             className={twMerge(
@@ -13,4 +13,4 @@ const LoginBlock = (props: { disabled: boolean }) => {
     );
 };
 
-export default LoginBlock;
+export default Loading;

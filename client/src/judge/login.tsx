@@ -5,7 +5,7 @@ import Button from '../components/Button';
 import Container from '../components/Container';
 import JuryHeader from '../components/JuryHeader';
 import PasswordInput from '../components/PasswordInput';
-import LoginBlock from '../components/LoginBlock';
+import Loading from '../components/Loading';
 
 const JudgeLogin = () => {
     const [disabled, setDisabled] = useState(true);
@@ -131,7 +131,7 @@ const JudgeLogin = () => {
                     Log In
                 </Button>
             </Container>
-            <LoginBlock disabled={!loginLock} />
+            <Loading disabled={!loginLock} />
         </>
     );
 };

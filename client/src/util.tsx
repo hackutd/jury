@@ -33,4 +33,15 @@ const timeSince = (date: number) => {
 
 const arrow = (asc: boolean) => (asc ? '▲' : '▼');
 
-export { timeSince, arrow };
+function fixIfFloat(n: number): string {
+    return fixIfFloatDigits(n, 3);
+}
+
+function fixIfFloatDigits(n: number, d: number): string {
+    if (Math.round(n) === n) {
+        return n.toString();
+    }
+    return n.toFixed(d);
+}
+
+export { timeSince, arrow, fixIfFloat, fixIfFloatDigits };

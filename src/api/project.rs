@@ -7,9 +7,12 @@ use serde::Serialize;
 use std::sync::Arc;
 
 use super::request_types::NewProject;
-use super::util::AdminPassword;
+use super::util::{AdminPassword, Token};
 use crate::db::models::Project;
-use crate::db::project::{find_all_projects, insert_project, delete_project_by_id, aggregate_project_stats};
+use crate::db::project::{
+    aggregate_project_stats, delete_project_by_id, find_all_projects, find_project_by_id_string,
+    insert_project,
+};
 use crate::try_status;
 use crate::util::parse_csv::devpost_integration;
 use crate::util::types::{CsvUpload, ProjectStats};
@@ -159,5 +162,17 @@ pub async fn project_stats(
     match aggregate_project_stats(db).await {
         Ok(stats) => (Status::Ok, Json(stats)),
         Err(_) => (Status::InternalServerError, Json(ProjectStats::default())),
+    }
+}
+
+#[rocket::get("/project/<id>")]
+pub async fn get_project_by_id(
+    db: &State<Arc<Database>>,
+    id: &str,
+    _token: Token,
+) -> (Status, Json<Project>) {
+    match find_project_by_id_string(db, id).await {
+        Ok(p) => (Status::Ok, Json(p)),
+        Err(_) => (Status::InternalServerError, Json(Project::default())),
     }
 }

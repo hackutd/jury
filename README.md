@@ -104,6 +104,7 @@ const fetchedProjects = await fetch(`${process.env.REACT_APP_JURY_URL}/project/l
 | /project/csv/upload  | POST   | admin | Upload projects using csv               |
 | /project/stats       | GET    | admin | Get the stats for the add projects page |
 | /project/devpost     | POST   | admin | Upload a Devpost CSV                    |
+| /project/:id         | GET    | token | Get project by ID                       |
 | /admin/login         | POST   |       | Log into the admin dashboard            |
 | /admin/stats         | GET    | admin | Get all stats                           |
 | /admin/sync          | GET    | admin | Establish event stream with server      |
@@ -386,6 +387,17 @@ Fields:
 
 -   Ok 200
 -   Error + String
+
+### GET /project/:id
+
+_Requires judge token_ | Gets a project by ID
+
+* id - ID of the project
+
+**Response**
+
+-   Ok 200 with project data as JSON
+-   Error
 
 ### POST /admin/login
 

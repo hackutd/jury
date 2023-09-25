@@ -20,7 +20,7 @@ const Container = (props: ContainerProps) => {
     return (
         <div
             className={twMerge(
-                'flex flex-col grow shrink-0 my-0 md:mx-auto md:w-[30rem] h-full',
+                'flex flex-col grow shrink-0 my-0 md:mx-auto md:w-[30rem] min-h-full',
                 props.noCenter? '' : 'justify-center items-center',
                 props.className
             )}

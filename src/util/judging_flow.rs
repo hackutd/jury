@@ -84,11 +84,17 @@ pub async fn find_preferred_items(
 
     // Get all projects that are currently being judged
     // And remove busy projects from the list of projects
+    // If all projects are busy, then just pick one
     let busy_project_ids = find_all_busy_projects(db).await?;
-    projects = projects
-        .into_iter()
-        .filter(|p| !busy_project_ids.contains(&p.id.unwrap_or(ObjectId::new())))
-        .collect();
+    if projects
+        .iter()
+        .any(|p| !busy_project_ids.contains(&p.id.unwrap_or(ObjectId::new())))
+    {
+        projects = projects
+            .into_iter()
+            .filter(|p| !busy_project_ids.contains(&p.id.unwrap_or(ObjectId::new())))
+            .collect();
+    }
 
     // If any projects have less than MIN_VIEWS, filter out all projects that have more than MIN_VIEWS
     if projects.iter().any(|p| p.seen < MIN_VIEWS) {

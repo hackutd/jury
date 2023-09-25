@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import Container from '../components/Container';
 import JuryHeader from '../components/JuryHeader';
 import { useNavigate } from 'react-router-dom';
+import Button from '../components/Button';
+import AdminStat from '../components/admin/AdminStat';
+import ProjectEntry from '../components/judge/ProjectEntry';
+import Loading from '../components/Loading';
 
 const Judge = () => {
     const navigate = useNavigate();
-    const [verified, setVerified] = useState(false);
-    const [prev, setPrev] = useState(null);
-    const [next, setNext] = useState(null);
+    const [name, setName] = useState('');
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loaded, setLoaded] = useState(false);
 
     // Verify user is logged in and read welcome before proceeding
     useEffect(() => {
@@ -40,22 +44,75 @@ const Judge = () => {
                 navigate('/judge/welcome');
             }
 
-            setVerified(true);
+            // Get the name & email of the user from the server
+            const judgeRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            });
+            if (!judgeRes.ok) {
+                alert(
+                    `Unable to connect to server: ${judgeRes.status} ${judgeRes.statusText}. Please check your connection or reload the page.`
+                );
+                return;
+            }
+            const judge: Judge = await judgeRes.json();
+
+            setName(judge.name);
         }
 
         fetchData();
     }, []);
 
     useEffect(() => {
-        if (!verified) return;
+        if (!name) return;
 
-        // Once verification finishes, get the judge's next and prev project to judge
-    }, [verified]);
+        async function getProjects() {
+            const projRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/projects`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            });
+            if (!projRes.ok) {
+                alert(
+                    `Unable to connect to server: ${projRes.status} ${projRes.statusText}. Please check your connection or reload the page.`
+                );
+            }
+            const newProjects = await projRes.json();
+            setProjects(newProjects);
+            setLoaded(true);
+        }
+
+        getProjects();
+    }, [name]);
 
     return (
         <>
             <JuryHeader withLogout />
-            <Container>Judging Page!</Container>
+            <Container noCenter className="px-2">
+                <h1 className="text-2xl my-2">Welcome, {name}!</h1>
+                <div className="w-full mb-6">
+                    <Button type="primary" full square href="/judge/live">
+                        Start Judging
+                    </Button>
+                </div>
+                <div className="flex justify-evenly">
+                    <AdminStat name="Seen" value={0} />
+                    <AdminStat name="Projects" value={0} />
+                </div>
+                <h2 className="text-primary text-xl font-bold mt-4">Viewed Projects</h2>
+                <div className="h-[1px] w-full bg-light my-2"></div>
+                {projects.map((p) => (
+                    <ProjectEntry
+                        id={p._id.$oid}
+                        name={p.name}
+                        description={p.description}
+                        stars={0}
+                        key={p._id.$oid}
+                    />
+                ))}
+                <Loading disabled={loaded} />
+            </Container>
         </>
     );
 };

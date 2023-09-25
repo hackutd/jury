@@ -11,6 +11,8 @@ import Admin from './admin';
 import AddProjects from './admin/AddProjects';
 import AddJudges from './admin/AddJudges';
 import JudgeWelcome from './judge/welcome';
+import JudgeLive from './judge/live';
+import Project from './judge/project';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -28,8 +30,16 @@ const router = createBrowserRouter([
         element: <JudgeWelcome />,
     },
     {
+        path: '/judge/live',
+        element: <JudgeLive />,
+    },
+    {
         path: '/judge',
         element: <Judge />,
+    },
+    {
+        path: '/judge/project/:id',
+        element: <Project />,
     },
     {
         path: '/admin/login',

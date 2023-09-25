@@ -4,7 +4,7 @@ import Cookies from 'universal-cookie';
 import Button from '../components/Button';
 import Container from '../components/Container';
 import JuryHeader from '../components/JuryHeader';
-import LoginBlock from '../components/LoginBlock';
+import Loading from '../components/Loading';
 import PasswordInput from '../components/PasswordInput';
 
 const AdminLogin = () => {
@@ -103,7 +103,7 @@ const AdminLogin = () => {
                     Log In
                 </Button>
             </Container>
-            <LoginBlock disabled={!loginLock} />
+            <Loading disabled={!loginLock} />
         </>
     );
 };

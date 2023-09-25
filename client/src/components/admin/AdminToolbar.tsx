@@ -8,7 +8,8 @@ const AdminToolbar = (props: { showProjects: boolean }) => {
                     type="outline"
                     square
                     bold
-                    className="py-2 px-4"
+                    full
+                    className="py-2 px-4 rounded-md"
                     href={props.showProjects ? '/admin/add-projects' : '/admin/add-judges'}
                 >
                     Add {props.showProjects ? 'Projects' : 'Judges'}
