@@ -32,11 +32,11 @@ const Project = () => {
     }, []);
 
     if (!project) return <div>Loading...</div>;
-    
+
     return (
         <>
             <JuryHeader withLogout />
-            <Container noCenter={true}>
+            <Container noCenter={true} className="px-2">
                 <Back location="/judge" />
                 <h1 className="text-3xl mb-1">{project.name}</h1>
                 <div className="flex mb-3">

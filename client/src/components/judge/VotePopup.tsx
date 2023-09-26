@@ -140,7 +140,7 @@ const VotePopup = (props: VotePopupProps) => {
                 className="fixed left-0 top-0 z-20 w-screen h-screen bg-black/30"
                 onClick={() => props.close(false)}
             ></div>
-            <div className="bg-background fixed z-30 left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] py-6 px-10 w-1/3 flex flex-col items-center">
+            <div className="bg-background fixed z-30 left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] px-6 py-6 md:px-10 md:w-1/3 w-11/12 flex flex-col items-center">
                 <h1 className={twMerge('text-3xl font-bold', titleColor)}>{title.text}</h1>
                 <h2 className="text-xl font-bold">{title.subtext}</h2>
                 <div className="flex flex-col items-center w-full my-4">

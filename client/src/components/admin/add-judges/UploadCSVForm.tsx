@@ -57,10 +57,12 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                 body: formData,
                 credentials: 'include',
             });
-
+            
             // Throw error if response is not ok
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                console.error(`HTTP error! Status: ${response.status}`);
+                setError(await response.text());
+                return;
             }
 
             // Reset the form and show success message

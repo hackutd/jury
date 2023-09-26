@@ -80,6 +80,9 @@ const JudgeLive = () => {
             const judgeVote: JudgeVoteRes = await judgeVoteRes.json();
             if (judgeVote.next_project_id) newJudge.next = { $oid: judgeVote.next_project_id };
             if (judgeVote.prev_project_id) newJudge.prev = { $oid: judgeVote.prev_project_id };
+        } else if (!newJudge.next) {
+            // If the judge only has a "prev" project, that means they've gone through all projects
+            navigate("/judge/done");
         }
 
         console.log(newJudge);

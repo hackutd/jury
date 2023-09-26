@@ -13,6 +13,7 @@ import AddJudges from './admin/AddJudges';
 import JudgeWelcome from './judge/welcome';
 import JudgeLive from './judge/live';
 import Project from './judge/project';
+import Done from './judge/done';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
     {
         path: '/judge/project/:id',
         element: <Project />,
+    },
+    {
+        path: '/judge/done',
+        element: <Done />,
     },
     {
         path: '/admin/login',
