@@ -13,6 +13,7 @@ module.exports = {
             background: '#F5F5F5',
             backgroundDark: '#D4DBDF',
             error: '#EA609C',
+            gold: '#F9BC1F',
         },
         fontFamily: {
             text: ['Rubik', 'Franklin Gothic Medium', 'Arial Narrow', 'Arial', 'sans-serif'],
@@ -34,5 +35,5 @@ module.exports = {
             },
         },
     },
-    plugins: [require('@tailwindcss/forms')],
+    plugins: [require('@tailwindcss/forms'), require('@tailwindcss/line-clamp')],
 };

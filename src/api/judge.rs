@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use bson::doc;
+use bson::oid::ObjectId;
 use mongodb::Database;
 use rand::{distributions::Alphanumeric, Rng};
 use rocket::form::Form;
@@ -9,9 +10,17 @@ use rocket::serde::json::Json;
 use rocket::State;
 use serde::Serialize;
 
-use crate::db::judge::{aggregate_judge_stats, find_all_judges, delete_judge_by_id};
-use crate::db::models::Judge;
-use crate::util::types::{CsvUpload, JudgeStats};
+use crate::db::judge::{
+    aggregate_judge_stats, delete_judge_by_id, find_all_judges, find_judge_by_token,
+    update_judge_projects,
+};
+use crate::db::models::{Judge, Project};
+use crate::db::project::{find_project_by_id, update_project_after_vote, find_projects_by_id};
+use crate::util::crowd_bt::update;
+use crate::util::judging_flow::pick_next_project;
+use crate::util::types::{
+    BooleanResponse, CsvUpload, JudgeNextProject, JudgeStats, JudgeVoteProjectInfo,
+};
 use crate::{
     db::judge::{
         find_judge_by_code, insert_judge, insert_judges, read_welcome, update_judge_token,
@@ -20,10 +29,21 @@ use crate::{
     util::parse_csv::parse_judge_csv,
 };
 
+use super::request_types::JudgeVote;
 use super::{
     request_types::{Login, NewJudge},
     util::{AdminPassword, Token},
 };
+
+#[rocket::get("/judge")]
+pub async fn get_judge(db: &State<Arc<Database>>, token: Token) -> (Status, Json<Judge>) {
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(_) => return (Status::NotFound, Json(Judge::default())),
+    };
+
+    (Status::Ok, Json(judge))
+}
 
 #[rocket::post("/judge/login", data = "<body>")]
 pub async fn login(db: &State<Arc<Database>>, body: Json<Login<'_>>) -> (Status, String) {
@@ -51,6 +71,12 @@ pub async fn login(db: &State<Arc<Database>>, body: Json<Login<'_>>) -> (Status,
     }
 }
 
+#[rocket::post("/judge/auth")]
+pub async fn auth_judge(_token: Token) -> Status {
+    // Request guard will fail if token is invalid/missing
+    Status::Ok
+}
+
 #[rocket::post("/judge/new", data = "<body>")]
 pub async fn new_judge(
     db: &State<Arc<Database>>,
@@ -59,7 +85,10 @@ pub async fn new_judge(
 ) -> (Status, String) {
     match insert_judge(db, body.0).await {
         Ok(_) => (Status::Accepted, "{}".to_string()),
-        Err(e) => (Status::InternalServerError, format!("Unable to insert judge: {}", e)),
+        Err(e) => (
+            Status::InternalServerError,
+            format!("Unable to insert judge: {}", e),
+        ),
     }
 }
 
@@ -126,6 +155,19 @@ pub async fn add_judges_csv(
     (Status::Ok, format!("{}", num_judges).to_string())
 }
 
+#[rocket::get("/judge/welcome")]
+pub async fn check_judge_read_welcome(
+    db: &State<Arc<Database>>,
+    token: Token,
+) -> (Status, Json<BooleanResponse>) {
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(e) => return (e, Json(BooleanResponse::new(false))),
+    };
+
+    (Status::Ok, Json(BooleanResponse::new(judge.read_welcome)))
+}
+
 #[rocket::post("/judge/welcome")]
 pub async fn judge_read_welcome(db: &State<Arc<Database>>, token: Token) -> (Status, String) {
     match read_welcome(db, &token.0).await {
@@ -173,5 +215,254 @@ pub async fn delete_judge(
             Status::InternalServerError,
             format!("Unable to delete judge: {}", e),
         ),
+    }
+}
+
+#[rocket::post("/judge/vote", data = "<body>")]
+pub async fn judge_vote(
+    db: &State<Arc<Database>>,
+    token: Token,
+    body: Json<JudgeVote>,
+) -> (Status, Json<JudgeNextProject>) {
+    // Get judge
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(e) => return (e, Json(JudgeNextProject::default())),
+    };
+
+    // If judge has no previous project, get the next and return ok
+    if judge.prev.is_none() {
+        // Find next project
+        let next = match pick_next_project(db, &judge).await {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("{}", e);
+                return (
+                    Status::InternalServerError,
+                    Json(JudgeNextProject::default()),
+                );
+            }
+        };
+        
+        println!("NEXT PROJECT: {:?}", next.clone().unwrap_or(Project::default()).id);
+
+        // Update judge's projects (update next/prev project) in database
+        match update_judge_projects(db, &judge, &next, judge.alpha, judge.beta, false).await {
+            Ok(()) => (),
+            Err(e) => {
+                eprintln!("{}", e);
+                return (
+                    Status::InternalServerError,
+                    Json(JudgeNextProject::default()),
+                );
+            }
+        };
+
+        // Ok
+        return (
+            Status::Ok,
+            Json(JudgeNextProject::new(
+                judge.id.unwrap_or_else(|| ObjectId::new()).to_string(),
+                judge.next.map(|p| p.to_string()),
+                next.map(|p| {
+                    p.id.map(|i| i.to_string())
+                        .unwrap_or_else(|| "".to_string())
+                }),
+            )),
+        );
+    }
+
+    // If judge DOES have previous project, we need to check their vote
+    // and update everything accordingly
+
+    // Get the two projects
+    let prev_proj =
+        match find_project_by_id(db, judge.prev.unwrap_or_else(|| ObjectId::new())).await {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("{}", e);
+                return (
+                    Status::InternalServerError,
+                    Json(JudgeNextProject::default()),
+                );
+            }
+        };
+    let next_proj =
+        match find_project_by_id(db, judge.next.unwrap_or_else(|| ObjectId::new())).await {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("{}", e);
+                return (
+                    Status::InternalServerError,
+                    Json(JudgeNextProject::default()),
+                );
+            }
+        };
+
+    // Set winner/loser based on curr_winner
+    let (winner_proj, loser_proj) = if body.0.curr_winner {
+        (next_proj, prev_proj)
+    } else {
+        (prev_proj, next_proj)
+    };
+
+    // Run the update function
+    let (n_alpha, n_beta, n_mu_winner, n_sigma_sq_winner, n_mu_loser, n_sigma_sq_loser) = update(
+        judge.alpha,
+        judge.beta,
+        winner_proj.mu,
+        winner_proj.sigma_sq,
+        loser_proj.mu,
+        loser_proj.sigma_sq,
+    );
+
+    // Update both projects
+    match update_project_after_vote(db, winner_proj.id, n_mu_winner, n_sigma_sq_winner, true).await
+    {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("{}", e);
+            return (
+                Status::InternalServerError,
+                Json(JudgeNextProject::default()),
+            );
+        }
+    }
+    match update_project_after_vote(db, loser_proj.id, n_mu_loser, n_sigma_sq_loser, false).await {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("{}", e);
+            return (
+                Status::InternalServerError,
+                Json(JudgeNextProject::default()),
+            );
+        }
+    }
+
+    // TODO: Create a table for storing votes
+
+    // Create an updated judge
+    let mut updated_judge = judge.clone();
+    updated_judge.alpha = n_alpha;
+    updated_judge.beta = n_beta;
+
+    // Pick judge's next project
+    let next = match pick_next_project(db, &judge).await {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("{}", e);
+            return (
+                Status::InternalServerError,
+                Json(JudgeNextProject::default()),
+            );
+        }
+    };
+
+    // Update the judge
+    match update_judge_projects(db, &judge, &next, n_alpha, n_beta, true).await {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("{}", e);
+            return (
+                Status::InternalServerError,
+                Json(JudgeNextProject::default()),
+            );
+        }
+    }
+
+    println!(
+        "{}, {}, {}",
+        judge.id.unwrap_or_else(|| ObjectId::new()).to_string(),
+        judge.next.map(|p| p.to_string()).unwrap_or("NULL".to_string()),
+        next.clone().map(|p| {
+            p.id.map(|i| i.to_string())
+                .unwrap_or_else(|| "".to_string())
+        }).unwrap_or("NULL".to_string()),
+    );
+
+    // Return
+    (
+        Status::Ok,
+        Json(JudgeNextProject::new(
+            judge.id.unwrap_or_else(|| ObjectId::new()).to_string(),
+            judge.next.map(|p| p.to_string()),
+            next.map(|p| {
+                p.id.map(|i| i.to_string())
+                    .unwrap_or_else(|| "".to_string())
+            }),
+        )),
+    )
+}
+
+#[rocket::get("/judge/vote/info")]
+pub async fn get_judge_voting_project_info(
+    db: &State<Arc<Database>>,
+    token: Token,
+) -> (Status, Json<JudgeVoteProjectInfo>) {
+    // Get judge by token
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(e) => return (e, Json(JudgeVoteProjectInfo::default())),
+    };
+
+    // Get the two projects
+    let curr_proj = if judge.next.is_some() {
+        match find_project_by_id(db, judge.next.unwrap()).await {
+            Ok(p) => Some(p),
+            Err(e) => {
+                eprintln!("{}", e);
+                return (
+                    Status::InternalServerError,
+                    Json(JudgeVoteProjectInfo::default()),
+                );
+            }
+        }
+    } else {
+        None
+    };
+    let prev_proj = if judge.prev.is_some() {
+        match find_project_by_id(db, judge.prev.unwrap()).await {
+            Ok(p) => Some(p),
+            Err(e) => {
+                eprintln!("{}", e);
+                return (
+                    Status::InternalServerError,
+                    Json(JudgeVoteProjectInfo::default()),
+                );
+            }
+        }
+    } else {
+        None
+    };
+
+    (
+        Status::Ok,
+        Json(JudgeVoteProjectInfo::new(
+            curr_proj.clone().map(|p| p.name),
+            curr_proj.map(|p| p.location),
+            prev_proj.clone().map(|p| p.name),
+            prev_proj.map(|p| p.location),
+        )),
+    )
+}
+
+#[rocket::get("/judge/projects")]
+pub async fn get_judge_seen_projects(
+    db: &State<Arc<Database>>,
+    token: Token,
+) -> (Status, Json<Vec<Project>>) {
+    // Get judge by token
+    let judge = match find_judge_by_token(db, &token.0).await {
+        Ok(j) => j,
+        Err(e) => return (e, Json(Vec::<Project>::new())),
+    };
+    
+    match find_projects_by_id(db, judge.seen_projects).await {
+        Ok(p) => (Status::Ok, Json(p)),
+        Err(e) => {
+            eprintln!("{}", e);
+            (Status::InternalServerError, Json(Vec::<Project>::new()))
+        }
+
     }
 }

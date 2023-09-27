@@ -87,7 +87,7 @@ const ProjectsTable = () => {
     }, [unsortedProjects, sortState]);
 
     return (
-        <div className="w-full px-8">
+        <div className="w-full px-8 pb-4">
             <table className="table-fixed w-full text-lg">
                 <tbody>
                     <tr>

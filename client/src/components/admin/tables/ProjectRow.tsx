@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { timeSince } from '../../../util';
+import { fixIfFloatDigits, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
 
@@ -75,8 +75,8 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
-                <td className="text-center">{project.mu}</td>
-                <td className="text-center">{project.sigma_sq}</td>
+                <td className="text-center">{fixIfFloatDigits(project.mu, 5)}</td>
+                <td className="text-center">{fixIfFloatDigits(project.sigma_sq, 5)}</td>
                 <td className="text-center">{project.votes}</td>
                 <td className="text-center">{project.seen}</td>
                 {/* TODO: What the fuck is this; just change the datatype to a long pls */}

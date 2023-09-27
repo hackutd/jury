@@ -16,6 +16,8 @@ db.judges.insert([
         prev: null,
         alpha: 10,
         beta: 1,
+        skipped_projects: [],
+        seen_projects: [],
     },
     {
         token: '',
@@ -35,6 +37,8 @@ db.judges.insert([
         prev: null,
         alpha: 10,
         beta: 1,
+        skipped_projects: [],
+        seen_projects: [],
     },
 ]);
 

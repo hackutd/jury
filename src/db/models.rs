@@ -28,7 +28,7 @@ impl Options {
     }
 
     /// Saves the options to the database
-    pub async fn save(&self, db: &Database) -> Result<(), Box<dyn  std::error::Error>> {
+    pub async fn save(&self, db: &Database) -> Result<(), Box<dyn std::error::Error>> {
         let collection: Collection<Options> = db.collection("options");
         collection
             .update_one(
@@ -54,7 +54,7 @@ impl Clone for Options {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Project {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
@@ -64,8 +64,8 @@ pub struct Project {
     pub try_link: Option<String>,
     pub video_link: Option<String>,
     pub challenge_list: Vec<String>,
-    pub seen: u64,
-    pub votes: u64,
+    pub seen: i64,
+    pub votes: i64,
     pub mu: f64,
     pub sigma_sq: f64,
     pub active: bool,
@@ -99,9 +99,13 @@ impl Project {
             last_activity: Utc.timestamp_opt(0, 0).unwrap(),
         }
     }
+
+    pub fn default () -> Self {
+        Self::new("".to_string(), "".to_string(), None, None, vec![])
+    }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Judge {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
@@ -114,11 +118,12 @@ pub struct Judge {
     pub last_activity: DateTime<Utc>,
     pub read_welcome: bool,
     pub notes: String,
-    pub votes: u64,
-    pub next: Option<ObjectId>,
+    pub votes: i64,
+    pub next: Option<ObjectId>, // Refers to the current project being judged
     pub prev: Option<ObjectId>,
     pub alpha: f64,
     pub beta: f64,
+    pub seen_projects: Vec<ObjectId>,
 }
 
 impl Judge {
@@ -138,7 +143,12 @@ impl Judge {
             alpha: crowd_bt::ALPHA_PRIOR,
             beta: crowd_bt::BETA_PRIOR,
             last_activity: Utc.timestamp_opt(0, 0).unwrap(),
+            seen_projects: Vec::new(),
         }
+    }
+
+    pub fn default() -> Self {
+        Self::new("".to_string(), "".to_string(), "".to_string())
     }
 }
 

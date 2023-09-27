@@ -4,6 +4,7 @@ use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::FromRequest;
 use std::env;
+use std::sync::Arc;
 
 use crate::db::judge::find_judge_by_token;
 
@@ -25,9 +26,10 @@ impl<'r> FromRequest<'r> for Token {
         };
 
         // Get database from saved state
-        let db = match request.rocket().state::<Database>() {
+        let db = match request.rocket().state::<Arc<Database>>() {
             Some(d) => d,
             None => {
+                println!("Database failure D:");
                 return Outcome::Failure((
                     Status::InternalServerError,
                     TokenError::InternalServerError,
@@ -36,9 +38,9 @@ impl<'r> FromRequest<'r> for Token {
         };
 
         // Find judge and return success or error
-        match find_judge_by_token(db, cookie_token).await {
+        match find_judge_by_token(&db.clone(), cookie_token).await {
             Ok(_) => Outcome::Success(Token(cookie_token.to_string())),
-            Err(status) => Outcome::Failure((status, TokenError::InternalServerError)),
+            Err(status) => Outcome::Failure((status, status.into())),
         }
     }
 }

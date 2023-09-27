@@ -138,3 +138,76 @@ impl ClockState {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct BooleanResponse {
+    ok: bool,
+}
+
+impl BooleanResponse {
+    pub fn new(b: bool) -> Self {
+        BooleanResponse { ok: b }
+    }
+}
+
+#[derive(Serialize)]
+pub struct JudgeNextProject {
+    judge_id: String,
+    prev_project_id: Option<String>,
+    next_project_id: Option<String>,
+}
+
+impl JudgeNextProject {
+    pub fn new(
+        judge_id: String,
+        prev_project_id: Option<String>,
+        next_project_id: Option<String>,
+    ) -> Self {
+        Self {
+            judge_id,
+            prev_project_id,
+            next_project_id,
+        }
+    }
+
+    pub fn default() -> Self {
+        Self {
+            judge_id: String::new(),
+            prev_project_id: None,
+            next_project_id: None,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct JudgeVoteProjectInfo {
+    curr_name: Option<String>,
+    curr_location: Option<u64>,
+    prev_name: Option<String>,
+    prev_location: Option<u64>,
+}
+
+impl JudgeVoteProjectInfo {
+    pub fn new(
+        curr_name: Option<String>,
+        curr_location: Option<u64>,
+        prev_name: Option<String>,
+        prev_location: Option<u64>,
+    ) -> Self {
+        Self {
+            curr_name,
+            curr_location,
+            prev_name,
+            prev_location,
+        }
+    }
+
+    pub fn default() -> Self {
+        Self {
+            curr_name: None,
+            curr_location: None,
+            prev_name: None,
+            prev_location: None,
+        }
+    }
+}

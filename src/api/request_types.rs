@@ -43,3 +43,10 @@ impl Into<Project> for NewProject {
         )
     }
 }
+
+#[derive(Deserialize)]
+#[serde()]
+pub struct JudgeVote {
+    pub judge_id: String,
+    pub curr_winner: bool, // true = current project is winner, false = prev project is winner
+}

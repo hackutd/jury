@@ -95,6 +95,8 @@ const fetchedProjects = await fetch(`${process.env.REACT_APP_JURY_URL}/project/l
 | /judge/csv/upload    | POST   | admin | Upload judges using csv                 |
 | /judge/stats         | GET    | admin | Get the stats for the add judges page   |
 | /judge/login         | POST   |       | Login request for a judge               |
+| /judge/auth          | POST   | token | Checks to see if judge is logged in     |
+| /judge/welcome       | GET    | token | Checks for `read_welcome` for a judge   |
 | /judge/welcome       | PUT    | token | Set `read_welcome` to true for a judge  |
 | /project/list        | GET    | admin | get list of all projects                |
 | /project/new         | POST   | admin | Add a new project                       |
@@ -102,6 +104,7 @@ const fetchedProjects = await fetch(`${process.env.REACT_APP_JURY_URL}/project/l
 | /project/csv/upload  | POST   | admin | Upload projects using csv               |
 | /project/stats       | GET    | admin | Get the stats for the add projects page |
 | /project/devpost     | POST   | admin | Upload a Devpost CSV                    |
+| /project/:id         | GET    | token | Get project by ID                       |
 | /admin/login         | POST   |       | Log into the admin dashboard            |
 | /admin/stats         | GET    | admin | Get all stats                           |
 | /admin/sync          | GET    | admin | Establish event stream with server      |
@@ -237,6 +240,30 @@ Login request for a judge
 -   `200 Ok` + Token as String
 -   Error + String
 
+### POST /judge/auth
+
+_Requires judge token_ | Checks to see if judge is logged in
+
+**Response**
+
+-   `200 Ok` if token is valid
+-   `401 Unauthorized` if token is invalid
+-   `500 Internal Server Error`
+
+### GET /judge/welcome
+
+_Requires judge token_ | Checks to see if a judge has read the welcome page
+
+**Response**
+
+```json
+{
+    "ok": true // Boolean, true or false
+}
+```
+
+or Error
+
 ### POST /judge/welcome
 
 _Requires judge token_ | Set the `read_welcome` field for a judge to true
@@ -360,6 +387,17 @@ Fields:
 
 -   Ok 200
 -   Error + String
+
+### GET /project/:id
+
+_Requires judge token_ | Gets a project by ID
+
+* id - ID of the project
+
+**Response**
+
+-   Ok 200 with project data as JSON
+-   Error
 
 ### POST /admin/login
 

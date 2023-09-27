@@ -52,15 +52,17 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                     : '/project/devpost';
 
             // Make the request
-            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/${path}`, {
+            const response = await fetch(`${process.env.REACT_APP_JURY_URL}${path}`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include',
             });
-
+            
             // Throw error if response is not ok
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                console.error(`HTTP error! Status: ${response.status}`);
+                setError(await response.text());
+                return;
             }
 
             // Reset the form and show success message

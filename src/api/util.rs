@@ -1,4 +1,4 @@
-use rocket::http::Cookie;
+use rocket::http::{Cookie, Status};
 
 pub struct Token(pub String);
 
@@ -7,6 +7,16 @@ pub enum TokenError {
     Invalid,
     Missing,
     InternalServerError,
+}
+
+impl From<Status> for TokenError {
+    fn from(value: rocket::http::Status) -> Self {
+        if value == Status::Unauthorized {
+            TokenError::Invalid
+        } else {
+            TokenError::InternalServerError
+        }
+    }
 }
 
 pub struct AdminPassword(pub String);
