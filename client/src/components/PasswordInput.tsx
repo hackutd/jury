@@ -47,6 +47,7 @@ const PasswordInput = (props: PasswordInputProps) => {
     return (
         <>
             <input
+                value={props.value}
                 type={props.isHidden ? 'password' : 'text'}
                 maxLength={props.maxLength}
                 id="text-input"
@@ -73,7 +74,7 @@ const PasswordInput = (props: PasswordInputProps) => {
                     props.error ? 'text-error' : focused ? 'text-primary' : ''
                 )}
             >
-                {props.error ? (props.errorMessage || props.label) : props.label}
+                {props.error ? props.errorMessage || props.label : props.label}
             </label>
         </>
     );
