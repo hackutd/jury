@@ -12,14 +12,9 @@ const AdminToggleSwitch = (props: {
                         !props.state ? 'transform translate-x-44' : ''
                     }`}
                 >
-                    <button
-                        className="block w-full h-full text-2xl rounded-full bg-primary text-white"
-                        onClick={() => {
-                            props.setState(!props.state);
-                        }}
-                    >
+                    <div className="flex flex-col items-center justify-center block w-full h-full text-2xl rounded-full bg-primary text-white">
                         {props.state ? 'Projects' : 'Judges'}
-                    </button>
+                    </div>
                 </div>
 
                 <button
