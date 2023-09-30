@@ -1,12 +1,13 @@
-FROM rust:1.70
+FROM golang:1.20
 WORKDIR /jury
 
-RUN cargo install cargo-watch
+RUN curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+
+RUN go mod download
 
 COPY public /public
 
 ENV MONGODB_URI=$MONGODB_URI
 ENV JURY_ADMIN_PASSWORD=$JURY_ADMIN_PASSWORD
-ENV FILESERVER="/public"
 
-CMD ["cargo", "watch", "-w", "src", "-w", "Cargo.toml", "-w", "Rocket.toml", "-x", "run"]
+CMD ["air"]

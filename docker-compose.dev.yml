@@ -1,25 +1,22 @@
 version: '3.9'
 services:
-    rust-dev:
+    go-dev:
         container_name: jury-dev-backend
         environment:
             - MONGODB_URI=${MONGODB_URI}
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
             - PORT=8000
-            - CARGO_TARGET_DIR=/root/target
         build:
             context: './'
             dockerfile: dev.Dockerfile
         ports:
             - 8000:8000
         volumes:
-            - .:/jury
-            - ./.cargo/registry:/usr/local/cargo/registry
-            - ./.target:/root/target
+            - ./server:/jury
 
     node-dev:
         depends_on:
-            - 'rust-dev'
+            - 'go-dev'
         container_name: jury-dev-frontend
         environment:
             - REACT_APP_JURY_NAME=${JURY_NAME}
