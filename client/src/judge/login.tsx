@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Cookies from 'universal-cookie';
 import Button from '../components/Button';
 import Container from '../components/Container';
@@ -8,6 +8,9 @@ import PasswordInput from '../components/PasswordInput';
 import Loading from '../components/Loading';
 
 const JudgeLogin = () => {
+    const [searchParams] = useSearchParams();
+    const [codeParam] = useState(searchParams.get('code') || '');
+
     const [disabled, setDisabled] = useState(true);
     const [code, setCode] = useState('');
     const [loginLock, setLoginLock] = useState(false);
@@ -16,6 +19,9 @@ const JudgeLogin = () => {
 
     // If token cookie is already defined and valid, redirect to judge page
     useEffect(() => {
+        if (codeParam.length === 6) {
+            setCode(codeParam);
+        }
         async function checkCookies() {
             const cookies = new Cookies();
 
@@ -114,6 +120,7 @@ const JudgeLogin = () => {
             <JuryHeader />
             <Container>
                 <PasswordInput
+                    value={code}
                     label="Enter your judging code"
                     maxLength={6}
                     placeholder="000000"
