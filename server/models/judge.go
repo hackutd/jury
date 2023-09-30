@@ -16,7 +16,6 @@ type Judge struct {
 	Name         string              `bson:"name" json:"name"`
 	Email        string              `bson:"email" json:"email"`
 	Active       bool                `bson:"active" json:"active"`
-	LastActivity primitive.DateTime  `bson:"last_activity" json:"last_activity"`
 	ReadWelcome  bool                `bson:"read_welcome" json:"read_welcome"`
 	Notes        string              `bson:"notes" json:"notes"`
 	Votes        int64               `bson:"votes" json:"votes"`
@@ -25,6 +24,7 @@ type Judge struct {
 	Alpha        float64             `bson:"alpha" json:"alpha"`
 	Beta         float64             `bson:"beta" json:"beta"`
 	SeenProjects []JudgedProject     `bson:"seen_projects" json:"seen_projects"`
+	LastActivity primitive.DateTime  `bson:"last_activity" json:"last_activity"`
 }
 
 type JudgedProject struct {
@@ -48,8 +48,8 @@ func NewJudge(name string, email string, notes string) *Judge {
 		Prev:         nil,
 		Alpha:        crowdbt.ALPHA_PRIOR,
 		Beta:         crowdbt.BETA_PRIOR,
-		LastActivity: primitive.DateTime(0),
 		SeenProjects: []JudgedProject{},
+		LastActivity: primitive.DateTime(0),
 	}
 }
 
