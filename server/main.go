@@ -26,5 +26,5 @@ func main() {
 	r := router.NewRouter(db)
 
 	// Start the Gin server!
-	r.Run("localhost:" + config.GetOptEnv("PORT", "8080"))
+	r.Run(":" + config.GetOptEnv("PORT", "8080"))
 }

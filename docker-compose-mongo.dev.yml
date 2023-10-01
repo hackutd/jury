@@ -46,7 +46,7 @@ services:
             context: './'
             dockerfile: dev.Dockerfile
         ports:
-            - 8000:8000
+            - ${PORT:-8000}:8000
         volumes:
             - ./server:/jury
         networks:
@@ -58,7 +58,7 @@ services:
         container_name: jury-dev-frontend
         environment:
             - REACT_APP_JURY_NAME=${JURY_NAME}
-            - REACT_APP_JURY_URL=http://localhost:8000/api
+            - REACT_APP_JURY_URL=http://localhost:${PORT:-8000}:8000/api
             - REACT_APP_HUB=${HEHE:-}
         build:
             context: './'

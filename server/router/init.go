@@ -4,15 +4,14 @@ import (
 	"log"
 	"server/database"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Creates a new Gin router with all routes defined
 func NewRouter(db *mongo.Database) *gin.Engine {
-	router := gin.New()
-	router.Use(gin.Logger())
-	router.Use(gin.Recovery())
+	router := gin.Default()
 
 	// Get the clock state from the database
 	options, err := database.GetOptions(db)
@@ -24,6 +23,16 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	// Add shared variables to router
 	router.Use(useVar("db", db))
 	router.Use(useVar("clock", &clock))
+
+	// CORS
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "DELETE", "OPTIONS", "PUT"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "Accept", "Cache-Control", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * 3600,
+	}))
 
 	// Create router groups for judge and admins
 	// This grouping allows us to add middleware to all routes in the group

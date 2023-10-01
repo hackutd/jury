@@ -78,7 +78,7 @@ func LoginJudge(ctx *gin.Context) {
 		return
 	}
 	if judge == nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "invalid code"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid code"})
 		return
 	}
 
