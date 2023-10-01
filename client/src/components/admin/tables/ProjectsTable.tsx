@@ -80,7 +80,7 @@ const ProjectsTable = () => {
                 break;
             case ProjectSortField.Updated:
                 sortFunc = (a, b) =>
-                    (a.last_activity.$date.$numberLong - b.last_activity.$date.$numberLong) * asc;
+                    (a.last_activity - b.last_activity) * asc;
                 break;
         }
         setProjects(unsortedProjects.sort(sortFunc));

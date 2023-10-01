@@ -21,7 +21,7 @@ const DeletePopup = ({ element, close }: DeletePopupProps) => {
 
     const deleteElement = async () => {
         const resource = isProject(element) ? 'project' : 'judge';
-        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/${resource}/${element._id.$oid}`, {
+        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/${resource}/${element.id}`, {
             method: 'DELETE',
             credentials: 'include',
         });

@@ -51,7 +51,7 @@ function createHeaders(auth: string): Headers {
     if (auth === 'admin') {
         const cookies = new Cookies();
         const pass = cookies.get('admin-pass');
-        const basicAuth = Buffer.from(`admin:${pass}`, 'utf-8').toString('base64');
+        const basicAuth = btoa(`admin:${pass}`);
         headers.append('Authorization', `Basic ${basicAuth}`);
     } else if (auth === 'judge') {
         const cookies = new Cookies();

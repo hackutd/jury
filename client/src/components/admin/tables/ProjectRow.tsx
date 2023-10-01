@@ -81,7 +81,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                 <td className="text-center">{project.seen}</td>
                 {/* TODO: What the fuck is this; just change the datatype to a long pls */}
                 <td className="text-center">
-                    {timeSince(project.last_activity.$date.$numberLong)}
+                    {timeSince(project.last_activity)}
                 </td>
                 <td className="text-right font-bold flex align-center justify-end">
                     {popup && (

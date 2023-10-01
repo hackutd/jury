@@ -6,6 +6,8 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import Loading from '../../components/Loading';
 import PasswordInput from '../../components/PasswordInput';
+import { postRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 const AdminLogin = () => {
     const [password, setPassword] = useState('');
@@ -16,15 +18,21 @@ const AdminLogin = () => {
 
     // If token cookie is already defined and valid, redirect to admin page
     useEffect(() => {
-        const cookies = new Cookies();
-        // TODO: Check if the cookie is valid lmao
-        if (cookies.get('admin-pass')) {
-            navigate('/admin')
-            return;
+        async function checkLoggedIn() {
+            const cookies = new Cookies();
+            if (cookies.get('admin-pass')) {
+                const res = await postRequest<OkResponse>('/admin/auth', 'admin', null);
+                if (res.status === 200 && res.data?.ok === 1) {
+                    navigate('/admin');
+                    return;
+                }
+            }
+
+            // If invalid, delete the token
+            cookies.remove('admin-pass');
         }
 
-        // If invalid, delete the token
-        cookies.remove('admin-pass');
+        checkLoggedIn();
     }, [navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,12 +51,7 @@ const AdminLogin = () => {
         setLoginLock(true);
 
         // Make async call to check code
-        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password }),
-        });
-        console.log(res);
+        const res = await postRequest<OkResponse>('/admin/login', 'admin', { password });
 
         // Invalid code
         if (res.status === 400) {
@@ -59,18 +62,22 @@ const AdminLogin = () => {
 
         // Internal server error
         if (res.status !== 200) {
-            const err = await res.text();
-            console.error(err);
-            alert(err);
+            errorAlert(res.status);
 
             setError(true);
             setLoginLock(false);
             return;
         }
+        
+        // Wrong password
+        if (res.data?.ok !== 1) {
+            setError(true);
+            setLoginLock(false);
+            return;
+        }
 
-        // Correct code; save token as cookie
-        const token = await res.text();
-        cookies.set('admin-pass', token, {
+        // Correct code; save password as cookie
+        cookies.set('admin-pass', password, {
             path: '/',
             sameSite: 'strict',
             secure: true,
@@ -96,7 +103,7 @@ const AdminLogin = () => {
                     setError={setError}
                     errorMessage="Invalid admin password"
                     isHidden
-                    className='w-4/5'
+                    className="w-4/5"
                 />
                 <div className="my-12" />
                 <Button type="primary" onClick={login}>

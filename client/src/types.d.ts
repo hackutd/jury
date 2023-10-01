@@ -1,5 +1,5 @@
 interface Project {
-    _id: { $oid: string };
+    id: string;
     name: string;
     location: number;
     mu: number;
@@ -8,30 +8,22 @@ interface Project {
     seen: number;
     description: string;
     stars: number;
-    last_activity: {
-        $date: {
-            $numberLong: number;
-        };
-    };
+    last_activity: number;
 }
 
 interface Judge {
-    _id: { $oid: string };
+    id: string;
     name: string;
     email: string;
     notes: string;
     alpha: number;
     votes: number;
     beta: number;
-    last_activity: {
-        $date: {
-            $numberLong: number;
-        };
-    };
+    last_activity: number;
     read_welcome: boolean;
-    seen_projects: { $oid: string }[];
-    next: { $oid: string };
-    prev: { $oid: string };
+    seen_projects: JudgedProject[];
+    next: string;
+    prev: string;
 }
 
 interface Stats {
@@ -78,4 +70,9 @@ interface JudgedProject {
     name: string;
     description: string;
     stars: number;
+}
+
+interface ClockState {
+    time: number;
+    running: boolean;
 }

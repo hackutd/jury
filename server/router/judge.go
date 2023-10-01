@@ -214,7 +214,7 @@ func ListJudges(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"judges": judges})
+	ctx.JSON(http.StatusOK, judges)
 }
 
 // GET /judge/stats - Endpoint to get stats about the judges
@@ -230,7 +230,7 @@ func JudgeStats(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"stats": stats})
+	ctx.JSON(http.StatusOK, stats)
 }
 
 // DELETE /judge/:id - Endpoint to delete a judge

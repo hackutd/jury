@@ -17,24 +17,26 @@ type LoginAdminRequest struct {
 // POST /admin/login - LoginAdmin authenticates an admin
 func LoginAdmin(ctx *gin.Context) {
 	// Get the password from the environmental variable
-	password := config.GetEnv("ADMIN_PASSWORD")
+	password := config.GetEnv("JURY_ADMIN_PASSWORD")
 
 	// Get password guess from request
 	var req LoginAdminRequest
 	err := ctx.BindJSON(&req)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "error parsing request: " + err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
 		return
 	}
 
+	println(req.Password + " " + password)
+
 	// Return status OK if the password matches
 	if req.Password == password {
-		ctx.JSON(200, gin.H{"ok": 1})
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 		return
 	}
 
 	// Return status Unauthorized if the password does not match
-	ctx.JSON(400, gin.H{"error": "invalid or missing password field"})
+	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid or missing password field"})
 }
 
 // GET /admin/stats - GetAdminStats returns stats about the system
@@ -50,7 +52,7 @@ func GetAdminStats(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"stats": stats})
+	ctx.JSON(http.StatusOK, stats)
 
 }
 
@@ -70,7 +72,7 @@ func GetClock(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"clock": clock})
+	ctx.JSON(http.StatusOK, gin.H{"running": clock.Running, "time": clock.GetDuration()})
 }
 
 // POST /admin/clock/pause - PauseClock pauses the clock
@@ -117,6 +119,7 @@ func UnpauseClock(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"clock": clock})
 }
 
+// POST /admin/clock/reset - ResetClock resets the clock
 func ResetClock(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -136,4 +139,12 @@ func ResetClock(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"clock": clock})
+}
+
+// POST /admin/auth - Checks if an admin is authenticated
+func AdminAuthenticated(ctx *gin.Context) {
+	// This route will run the middleware first, and if the middleware
+	// passes, then that means the admin is authenticated
+
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }

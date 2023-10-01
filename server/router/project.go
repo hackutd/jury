@@ -137,7 +137,7 @@ func ListProjects(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"projects": projects})
+	ctx.JSON(http.StatusOK, projects)
 }
 
 // POST /project/csv - Endpoint to add projects from a CSV file
@@ -226,5 +226,5 @@ func ProjectStats(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"stats": stats})
+	ctx.JSON(http.StatusOK, stats)
 }

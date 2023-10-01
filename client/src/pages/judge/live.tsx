@@ -72,14 +72,14 @@ const JudgeLive = () => {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    judge_id: newJudge._id.$oid,
+                    judge_id: newJudge.id,
                     curr_winner: true,
                 }),
             });
 
             const judgeVote: JudgeVoteRes = await judgeVoteRes.json();
-            if (judgeVote.next_project_id) newJudge.next = { $oid: judgeVote.next_project_id };
-            if (judgeVote.prev_project_id) newJudge.prev = { $oid: judgeVote.prev_project_id };
+            if (judgeVote.next_project_id) newJudge.next = judgeVote.next_project_id;
+            if (judgeVote.prev_project_id) newJudge.prev = judgeVote.prev_project_id;
         } else if (!newJudge.next) {
             // If the judge only has a "prev" project, that means they've gone through all projects
             navigate("/judge/done");
@@ -96,7 +96,7 @@ const JudgeLive = () => {
     }, [verified]);
 
     const judgeVote = async (choice: number) => {
-        const judgeId = judge?._id.$oid;
+        const judgeId = judge?.id;
         setJudge(null);
 
         // Vote for the given choice
@@ -188,12 +188,12 @@ const JudgeLive = () => {
                     </Button>
                 </div>
                 <Back location="/judge" />
-                {judge.next && <ProjectDisplay projectId={judge.next.$oid} />}
+                {judge.next && <ProjectDisplay projectId={judge.next} />}
                 {judge.prev && (
                     <>
                         <div className="my-6 h-[0.5px] shrink-0 w-full bg-light"></div>
                         <h3 className="font-bold text-light px-2 mb-1">Previous Project</h3>
-                        <ProjectDisplay projectId={judge.prev.$oid} />
+                        <ProjectDisplay projectId={judge.prev} />
                     </>
                 )}
                 <VotePopup

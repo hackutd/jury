@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { getRequest } from './api';
+import { errorAlert } from './util';
 
 interface AdminStore {
     stats: Stats;
@@ -20,48 +22,34 @@ const useAdminStore = create<AdminStore>()((set) => ({
     },
 
     fetchStats: async () => {
-        const fetchedStats = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/stats`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        }).then((data) => data.json());
-        set({ stats: fetchedStats });
+        const statsRes = await getRequest<Stats>('/admin/stats', 'admin');
+        if (statsRes.status !== 200) {
+            errorAlert(statsRes.status);
+            return;
+        }
+        set({ stats: statsRes.data as Stats });
     },
 
     projects: [],
 
     fetchProjects: async () => {
-        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/project/list`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-
-        if (!res.ok) {
-            alert('Error fetching projects');
+        const projRes = await getRequest<Project[]>('/project/list', 'admin');
+        if (projRes.status !== 200) {
+            errorAlert(projRes.status);
             return;
         }
-
-        const fetchedProjects = await res.json();
-        set({ projects: fetchedProjects });
+        set({ projects: projRes.data as Project[] });
     },
 
     judges: [],
 
     fetchJudges: async () => {
-        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/list`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-
-        if (!res.ok) {
-            alert('Error fetching judges');
+        const judgeRes = await getRequest<Judge[]>('/judge/list', 'admin');
+        if (judgeRes.status !== 200) {
+            errorAlert(judgeRes.status);
             return;
         }
-
-        const fetchedJudges = await res.json();
-        set({ judges: fetchedJudges });
+        set({ judges: judgeRes.data as Judge[] });
     }
 }));
 
