@@ -56,11 +56,26 @@ interface JudgeVoteRes {
     next_project_id: string;
 }
 
-type VotePopupState = "vote" | "skip" | "flag";
+type VotePopupState = 'vote' | 'skip' | 'flag';
 
 interface VotingProjectInfo {
     curr_name: string;
     curr_location: number;
     prev_name: string;
     prev_location: number;
+}
+
+interface OkResponse {
+    ok: number;
+}
+
+interface TokenResponse {
+    token: string;
+}
+
+interface JudgedProject {
+    project_id: string;
+    name: string;
+    description: string;
+    stars: number;
 }

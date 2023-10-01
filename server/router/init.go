@@ -43,6 +43,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	defaultRouter := router.Group("/api")
 
 	// Add routes
+	judgeRouter.GET("/judge", GetJudge)
 	adminRouter.POST("/judge/new", AddJudge)
 	defaultRouter.POST("/judge/login", LoginJudge)
 	judgeRouter.POST("/judge/auth", JudgeAuthenticated)
@@ -52,6 +53,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/judge/list", ListJudges)
 	adminRouter.GET("/judge/stats", JudgeStats)
 	adminRouter.DELETE("/judge/:id", DeleteJudge)
+	judgeRouter.GET("/judge/projects", GetJudgeProjects)
 	adminRouter.POST("/project/devpost", AddDevpostCsv)
 	adminRouter.POST("/project/new", AddProject)
 	adminRouter.GET("/project/list", ListProjects)

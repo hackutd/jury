@@ -17,6 +17,15 @@ type AddJudgeRequest struct {
 	Notes string `json:"notes"`
 }
 
+// GET /judge - Endpoint to get the judge from the token
+func GetJudge(ctx *gin.Context) {
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Send Judge
+	ctx.JSON(http.StatusOK, judge)
+}
+
 // POST /judge/new - Endpoint to add a single judge
 func AddJudge(ctx *gin.Context) {
 	// Get the database from the context
@@ -163,7 +172,11 @@ func CheckJudgeReadWelcome(ctx *gin.Context) {
 	judge := ctx.MustGet("judge").(*models.Judge)
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"readWelcome": judge.ReadWelcome})
+	if judge.ReadWelcome {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
 }
 
 // POST /judge/welcome - Endpoint to set a judge's readWelcome field to true
@@ -270,4 +283,13 @@ func GetJudgeIPO(ctx *gin.Context) {
 
 	// TODO: Finish
 
+}
+
+// GET /judge/projects - Endpoint to get a list of projects that a judge has seen
+func GetJudgeProjects(ctx *gin.Context) {
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Return the judge's seen projects list
+	ctx.JSON(http.StatusOK, judge.SeenProjects)
 }
