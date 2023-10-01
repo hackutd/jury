@@ -11,12 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type AddJudgeRequest struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Notes string `json:"notes"`
-}
-
 // GET /judge - Endpoint to get the judge from the token
 func GetJudge(ctx *gin.Context) {
 	// Get the judge from the context
@@ -24,6 +18,12 @@ func GetJudge(ctx *gin.Context) {
 
 	// Send Judge
 	ctx.JSON(http.StatusOK, judge)
+}
+
+type AddJudgeRequest struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Notes string `json:"notes"`
 }
 
 // POST /judge/new - Endpoint to add a single judge

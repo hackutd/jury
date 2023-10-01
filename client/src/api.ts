@@ -2,21 +2,21 @@ import Cookies from 'universal-cookie';
 
 const BACKEND_URL = process.env.REACT_APP_JURY_URL;
 
-interface DataFetchResponse<T> {
+interface FetchResponse<T> {
     status: number;
     error: string;
     data: T | null;
 }
 
-export async function getRequest<T>(path: string, auth: string): Promise<DataFetchResponse<T>> {
+export async function getRequest<T>(path: string, auth: string): Promise<FetchResponse<T>> {
     try {
         const options: RequestInit = {
             method: 'GET',
-            headers: createHeaders(auth),
+            headers: createHeaders(auth, true),
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
         const data = await response.json();
-        return { status: response.status, error: "", data };
+        return { status: response.status, error: data.error ? data.error : '', data };
     } catch (error: any) {
         console.error(error);
         return { status: 404, error: error, data: null };
@@ -27,26 +27,46 @@ export async function postRequest<T>(
     path: string,
     auth: string,
     body: any
-): Promise<DataFetchResponse<T>> {
+): Promise<FetchResponse<T>> {
     try {
-        console.log(path)
+        console.log(path);
         const options: RequestInit = {
             method: 'POST',
-            headers: createHeaders(auth),
+            headers: createHeaders(auth, true),
             body: body ? JSON.stringify(body) : null,
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
         const data = await response.json();
-        return { status: response.status, error: "", data };
+        return { status: response.status, error: data.error ? data.error : '', data };
     } catch (error: any) {
         console.error(error);
         return { status: 404, error: error, data: null };
     }
 }
 
-function createHeaders(auth: string): Headers {
+export async function deleteRequest(
+    path: string,
+    auth: string
+): Promise<FetchResponse<OkResponse>> {
+    try {
+        const options: RequestInit = {
+            method: 'DELETE',
+            headers: createHeaders(auth, true),
+        };
+        const response = await fetch(`${BACKEND_URL}${path}`, options);
+        const data = await response.json();
+        return { status: response.status, error: data.error ? data.error : '', data };
+    } catch (error: any) {
+        console.error(error);
+        return { status: 404, error: error, data: null };
+    }
+}
+
+export function createHeaders(auth: string, json: boolean): Headers {
     const headers = new Headers();
-    headers.append('Content-Type', 'application/json');
+    if (json) {
+        headers.append('Content-Type', 'application/json');
+    }
 
     if (auth === 'admin') {
         const cookies = new Cookies();
