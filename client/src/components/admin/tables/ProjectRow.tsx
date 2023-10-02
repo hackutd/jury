@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { fixIfFloatDigits, timeSince } from '../../../util';
+import { errorAlert, fixIfFloatDigits, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
+import useAdminStore from '../../../store';
+import { postRequest } from '../../../api';
 
 interface ProjectRowProps {
     project: Project;
@@ -15,6 +17,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const fetchProjects = useAdminStore((state) => state.fetchProjects);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -39,9 +42,11 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                 break;
             case 'prioritize':
                 // Prioritize
+                prioritizeProject();
                 break;
             case 'hide':
                 // Hide
+                hideProject();
                 break;
             case 'delete':
                 // Open delete popup
@@ -52,13 +57,45 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
         setPopup(false);
     };
 
+    const hideProject = async () => {
+        const res = await postRequest<OkResponse>(
+            project.active ? '/project/hide' : '/project/unhide',
+            'admin',
+            { id: project.id }
+        );
+        if (res.status === 200) {
+            alert(`Project ${project.active ? 'hidden' : 'un-hidden'} successfully!`);
+            fetchProjects();
+        } else {
+            errorAlert(res.status);
+        }
+    };
+
+    const prioritizeProject = async () => {
+        const res = await postRequest<OkResponse>(
+            project.prioritized ? '/project/unprioritize' : '/project/prioritize',
+            'admin',
+            {
+                id: project.id,
+            }
+        );
+        if (res.status === 200) {
+            alert(
+                `Project ${project.prioritized ? 'un-prioritized' : 'prioritized'} successfully!`
+            );
+            fetchProjects();
+        } else {
+            errorAlert(res.status);
+        }
+    };
+
     return (
         <>
             <tr
                 key={idx}
                 className={
                     'border-t-2 border-backgroundDark duration-150 ' +
-                    (checked ? 'bg-primary/20' : 'bg-background')
+                    (checked ? 'bg-primary/20' : !project.active ? 'bg-lightest' : 'bg-background')
                 }
             >
                 <td className="px-2">
@@ -80,9 +117,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                 <td className="text-center">{project.votes}</td>
                 <td className="text-center">{project.seen}</td>
                 {/* TODO: What the fuck is this; just change the datatype to a long pls */}
-                <td className="text-center">
-                    {timeSince(project.last_activity)}
-                </td>
+                <td className="text-center">{timeSince(project.last_activity)}</td>
                 <td className="text-right font-bold flex align-center justify-end">
                     {popup && (
                         <div
@@ -99,13 +134,13 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                                 className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
                                 onClick={() => doAction('prioritize')}
                             >
-                                Prioritize
+                                {project.prioritized ? 'Un-prioritize' : 'Prioritize'}
                             </div>
                             <div
                                 className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
                                 onClick={() => doAction('hide')}
                             >
-                                Hide
+                                {project.active ? 'Hide' : 'Un-hide'}
                             </div>
                             <div
                                 className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150 text-error"

@@ -56,6 +56,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.GET("/judge/projects", GetJudgeProjects)
 	judgeRouter.POST("/judge/ipo", GetJudgeIPO)
 	judgeRouter.POST("/judge/vote", JudgeVote)
+	judgeRouter.POST("/judge/skip", JudgeSkip)
+	judgeRouter.POST("/judge/flag", JudgeFlag)
 	adminRouter.POST("/project/devpost", AddDevpostCsv)
 	adminRouter.POST("/project/new", AddProject)
 	adminRouter.GET("/project/list", ListProjects)
@@ -75,6 +77,12 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/clock/reset", ResetClock)
 	adminRouter.POST("/admin/auth", AdminAuthenticated)
 	adminRouter.POST("/admin/reset", ResetDatabase)
+	adminRouter.POST("/judge/hide", HideJudge)
+	adminRouter.POST("/judge/unhide", UnhideJudge)
+	adminRouter.POST("/project/hide", HideProject)
+	adminRouter.POST("/project/unhide", UnhideProject)
+	adminRouter.POST("/project/prioritize", PrioritizeProject)
+	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
 
 	// Add no route handler
 	router.NoRoute(func(ctx *gin.Context) {

@@ -165,3 +165,9 @@ func UpdateJudgeStars(db *mongo.Database, judge *models.Judge) error {
 	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
 	return err
 }
+
+// SetJudgeHidden sets the active field of a judge
+func SetJudgeHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
+	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"active": !hidden}})
+	return err
+}

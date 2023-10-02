@@ -55,6 +55,12 @@ const JudgeLive = () => {
             return;
         }
         const newJudge = judgeRes.data as Judge;
+        
+        // If the judge is disabled, redirect to the disabled page
+        if (!newJudge.active) {
+            navigate('/judge/hidden');
+            return;
+        }
 
         // If judge has literally no projects, query for IPO (Initial Project Offering)
         if (!newJudge.prev && !newJudge.next) {
@@ -102,13 +108,37 @@ const JudgeLive = () => {
     };
 
     const flag = async (choice: number) => {
-        alert('Flagged w choice ' + choice);
-        return;
+        setJudge(null);
+
+        const options = ['Cannot Demo Project', 'Too Complex', 'Offensive'];
+
+        // Flag the current project
+        const flagRes = await postRequest<OkResponse>('/judge/flag', 'judge', {
+            reason: options[choice],
+        });
+        if (flagRes.status !== 200) {
+            errorAlert(flagRes.status);
+            return;
+        }
+
+        getJudgeData();
     };
 
     const skip = async (choice: number) => {
-        alert('Skipped w choice ' + choice);
-        return;
+        setJudge(null);
+
+        const options = ['Not Present', 'Busy (Being Judged)'];
+
+        // Skip the current project
+        const skipRes = await postRequest<OkResponse>('/judge/skip', 'judge', {
+            reason: options[choice],
+        });
+        if (skipRes.status !== 200) {
+            errorAlert(skipRes.status);
+            return;
+        }
+
+        getJudgeData();
     };
 
     // Show loading screen

@@ -7,7 +7,8 @@ interface Project {
     votes: number;
     seen: number;
     description: string;
-    stars: number;
+    active: boolean;
+    prioritized: boolean;
     last_activity: number;
 }
 
@@ -22,6 +23,7 @@ interface Judge {
     last_activity: number;
     read_welcome: boolean;
     seen_projects: JudgedProject[];
+    active: boolean;
     next: string;
     prev: string;
 }

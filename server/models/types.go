@@ -24,3 +24,7 @@ type Stats struct {
 type JudgeVote struct {
 	CurrWinner bool `json:"curr_winner"`
 }
+
+type IdRequest struct {
+	Id string `json:"id"`
+}

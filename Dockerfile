@@ -14,19 +14,12 @@ RUN yarn install
 RUN yarn build
 
 # STEP 1: Compile backend
-FROM rust:1-alpine3.18 as builder
+FROM go:1.20 AS builder
 WORKDIR /usr/src/jury
 
-# This is important, see https://github.com/rust-lang/docker-rust/issues/85
-ENV RUSTFLAGS="-C target-feature=-crt-static"
+RUN go mod download
 
-RUN apk add --no-cache musl-dev
-
-# Jank way to cache built rust dependencies
-RUN mkdir src
-RUN echo "fn main() {}" > ./src/main.rs
-COPY ["Cargo.toml", "./"]
-RUN cargo build --release
+COPY public /public
 
 # Then actually copy over the app and build it
 COPY src src

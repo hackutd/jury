@@ -174,3 +174,15 @@ func UpdateProjectSeen(db *mongo.Database, project *models.Project, judge *model
 func CountProjectDocuments(db *mongo.Database) (int64, error) {
 	return db.Collection("projects").EstimatedDocumentCount(context.Background())
 }
+
+// SetProjectHidden sets the active field of a judge
+func SetProjectHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
+	_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"active": !hidden}})
+	return err
+}
+
+// SetProjectPrioritized sets the prioritized field of a project
+func SetProjectPrioritized(db *mongo.Database, id *primitive.ObjectID, prioritized bool) error {
+	_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"prioritized": prioritized}})
+	return err
+}
