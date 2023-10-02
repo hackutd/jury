@@ -6,10 +6,11 @@ import Checkbox from '../../components/Checkbox';
 import Button from '../../components/Button';
 import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
+import Loading from '../../components/Loading';
 
 const JudgeWelcome = () => {
     const navigate = useNavigate();
-    const [name, setName] = useState('');
+    const [judge, setJudge] = useState<Judge | null>(null);
     const [checkRead, setCheckRead] = useState(false);
     const [checkEmail, setCheckEmail] = useState(false);
 
@@ -34,8 +35,7 @@ const JudgeWelcome = () => {
                 errorAlert(judgeRes.status);
                 return;
             }
-            const judge: Judge = judgeRes.data as Judge;
-            setName(judge.name);
+            setJudge(judgeRes.data as Judge);
         }
 
         fetchData();
@@ -59,14 +59,15 @@ const JudgeWelcome = () => {
 
         navigate('/judge');
     };
+    
+    if (!judge) return <Loading disabled={judge !== null} />;
 
     return (
         <>
             <JuryHeader withLogout />
             <Container noCenter className="mx-7">
                 <h1 className="text-2xl my-2">
-                    Hello{name === '' ? '' : ', '}
-                    {name}!
+                    Hello, {judge.name}!
                 </h1>
                 <h2 className="text-lg font-bold">PLEASE READ THE FOLLOWING:</h2>
                 <p className="my-2">
@@ -96,7 +97,7 @@ const JudgeWelcome = () => {
                 </Checkbox>
                 <Checkbox checked={checkEmail} onChange={setCheckEmail}>
                     I certify that my email is{' '}
-                    <span className="text-primary">[email@email.com]</span>. If this is not your
+                    <span className="text-primary">[{judge.email}]</span>. If this is not your
                     email, contact an organizer immediately.
                 </Checkbox>
                 <div className="flex justify-center py-4">

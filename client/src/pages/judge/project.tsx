@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import StarDisplay from '../../components/judge/StarDisplay';
@@ -10,7 +10,6 @@ import { errorAlert } from '../../util';
 
 const Project = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
     const [project, setProject] = useState<null | JudgedProject>(null);
 
     useEffect(() => {
@@ -36,7 +35,7 @@ const Project = () => {
                 <Back location="/judge" />
                 <h1 className="text-3xl mb-1">{project.name}</h1>
                 <div className="flex mb-3">
-                    <StarDisplay stars={project.stars} />
+                    <StarDisplay stars={project.stars} clickable id={project.project_id} />
                 </div>
                 <Paragraph text={project.description} className="text-light" />
             </Container>

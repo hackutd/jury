@@ -53,6 +53,13 @@ func AddJudge(ctx *gin.Context) {
 	// Create the judge
 	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes)
 
+	// Send email to judge
+	err = util.SendJudgeEmail(judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
+		return
+	}
+
 	// Insert the judge into the database
 	err = database.InsertJudge(db, judge)
 	if err != nil {
@@ -154,6 +161,15 @@ func AddJudgesCsv(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing CSV file: " + err.Error()})
 		return
+	}
+
+	// Send emails to all judges
+	for _, judge := range judges {
+		err = util.SendJudgeEmail(judge)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge " + judge.Name + " email: " + err.Error()})
+			return
+		}
 	}
 
 	// Insert judges into the database

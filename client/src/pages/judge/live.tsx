@@ -87,7 +87,6 @@ const JudgeLive = () => {
     }, [verified]);
 
     const judgeVote = async (choice: number) => {
-        const judgeId = judge?.id;
         setJudge(null);
 
         // Vote for the given choice
