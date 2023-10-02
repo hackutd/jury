@@ -53,8 +53,11 @@ func AddJudge(ctx *gin.Context) {
 	// Create the judge
 	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes)
 
+	// Get hostname from request
+	hostname := util.GetFullHostname(ctx)
+
 	// Send email to judge
-	err = util.SendJudgeEmail(judge)
+	err = util.SendJudgeEmail(judge, hostname)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
 		return
@@ -163,9 +166,12 @@ func AddJudgesCsv(ctx *gin.Context) {
 		return
 	}
 
+	// Get hostname from request
+	hostname := util.GetFullHostname(ctx)
+
 	// Send emails to all judges
 	for _, judge := range judges {
-		err = util.SendJudgeEmail(judge)
+		err = util.SendJudgeEmail(judge, hostname)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge " + judge.Name + " email: " + err.Error()})
 			return

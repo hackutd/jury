@@ -5,6 +5,7 @@ import (
 	"server/database"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -84,9 +85,14 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/project/prioritize", PrioritizeProject)
 	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
 
+	// Serve frontend static files
+	router.Use(static.Serve("/static", static.LocalFile("./public/static", true)))
+	router.StaticFile("/favicon.ico", "./public/favicon.ico")
+	router.LoadHTMLFiles("./public/index.html")
+
 	// Add no route handler
 	router.NoRoute(func(ctx *gin.Context) {
-		ctx.JSON(404, gin.H{"error": "Route not found"})
+		ctx.HTML(200, "index.html", nil)
 	})
 
 	return router

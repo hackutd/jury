@@ -3,6 +3,8 @@ package util
 import (
 	"crypto/rand"
 	"math/big"
+
+	"github.com/gin-gonic/gin"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -18,4 +20,13 @@ func GenerateToken() (string, error) {
 		b[i] = letters[n.Int64()]
 	}
 	return string(b), nil
+}
+
+// GetFullHostname returns the full hostname of the request, including scheme
+func GetFullHostname(ctx *gin.Context) string {
+	scheme := "http"
+	if ctx.Request.TLS != nil {
+		scheme = "https"
+	}
+	return scheme + "://" + ctx.Request.Host
 }

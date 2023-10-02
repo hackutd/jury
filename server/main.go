@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"server/config"
 	"server/database"
 	"server/router"
@@ -13,7 +13,7 @@ func main() {
 	// Load the env file
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file: %s\n", err.Error())
+		fmt.Printf("Error loading .env file (%s). This can be safely ignored in production.\n", err.Error())
 	}
 
 	// Check for all necessary env files

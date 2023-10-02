@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var requiredEnvs = [...]string{"MONGODB_URI", "JURY_ADMIN_PASSWORD", "JURY_BASE_URL", "EMAIL_HOST", "EMAIL_HOST", "EMAIL_PORT", "EMAIL_FROM"}
+var requiredEnvs = [...]string{"JURY_ADMIN_PASSWORD", "EMAIL_HOST", "EMAIL_HOST", "EMAIL_PORT", "EMAIL_FROM"}
 
 // Checks to see if all required environmental variables are defined
 func CheckEnv() {

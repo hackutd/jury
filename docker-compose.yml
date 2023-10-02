@@ -1,10 +1,15 @@
 version: "3.9"
 services:
-    rust:
+    main:
         container_name: jury-main
         environment:
             - MONGODB_URI=${MONGODB_URI}
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
+            - JURY_BASE_URL=${JURY_BASE_URL}
+            - EMAIL_HOST=${EMAIL_HOST}
+            - EMAIL_PORT=${EMAIL_PORT}
+            - EMAIL_FROM=${EMAIL_FROM}
+            - EMAIL_PASSWORD=${EMAIL_PASSWORD}
             - PORT=8000
         build:
             context: './'

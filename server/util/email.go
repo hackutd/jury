@@ -10,7 +10,7 @@ import (
 )
 
 // SendJudgeEmail sends an email to the judge with their code
-func SendJudgeEmail(judge *models.Judge) error {
+func SendJudgeEmail(judge *models.Judge, hostname string) error {
 	// Sender info
 	from := config.GetEnv("EMAIL_FROM")
 	password := config.GetEnv("EMAIL_PASSWORD")
@@ -29,25 +29,24 @@ func SendJudgeEmail(judge *models.Judge) error {
 
 	// Other info
 	appName := config.GetEnv("JURY_NAME")
-	baseUrl := config.GetEnv("JURY_BASE_URL")
 
 	// Message body
 	var body bytes.Buffer
 	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Jury Judging Platform [%s] \n%s\n\n", appName, mimeHeaders)))
+	body.Write([]byte(fmt.Sprintf("Subject: Jury [Hackathon Judging Platform] \n%s\n\n", mimeHeaders)))
 
 	// Template
 	t, _ := template.ParseFiles("email.html")
 	t.Execute(&body, struct {
 		Name    string
-		AppName string
 		BaseUrl string
 		Code    string
+		AppName string
 	}{
 		Name:    judge.Name,
-		AppName: appName,
-		BaseUrl: baseUrl,
+		BaseUrl: hostname,
 		Code:    judge.Code,
+		AppName: appName,
 	})
 
 	// Send email!

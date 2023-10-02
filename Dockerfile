@@ -14,38 +14,37 @@ RUN yarn install
 RUN yarn build
 
 # STEP 1: Compile backend
-FROM go:1.20 AS builder
+FROM golang:1.20 AS builder
 WORKDIR /usr/src/jury
 
-RUN go mod download
-
-COPY public /public
-
-# Then actually copy over the app and build it
-COPY src src
+# Copy over the app
+COPY server ./
+RUN rm -rf public
 COPY --from=client-builder /client/build public
-COPY Rocket.toml .
+
+# Install dependencies
+RUN go mod download
 
 ARG MONGODB_URI=$MONGODB_URI
 ARG JURY_ADMIN_PASSWORD=$JURY_ADMIN_PASSWORD
-ARG FILESERVER="/public"
+ARG EMAIL_HOST=$EMAIL_HOST
+ARG EMAIL_PORT=$EMAIL_PORT
+ARG EMAIL_FROM=$EMAIL_FROM
+ARG EMAIL_PASSWORD=$EMAIL_PASSWORD
 
-RUN cargo install --locked --path .
-RUN ls -la /usr/local/cargo/bin
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/jury
 
 # STEP 2: Main running container
-FROM alpine:3.18
+FROM scratch
 
 # Extra dependencies needed
-RUN apk add --no-cache ca-certificates openssl-dev bash openssl libgcc libstdc++
-
-ENV FILESERVER="/public"
-ENV ROCKET_ADDRESS=0.0.0.0
+# RUN apk add --no-cache ca-certificates openssl-dev bash openssl libgcc libstdc++
 
 EXPOSE $PORT
 
-COPY --from=builder /usr/local/cargo/bin/jury /usr/local/bin/jury
+COPY --from=builder /go/bin/jury .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=client-builder /client/build /public
+COPY ./server/email.html /email.html
 
-CMD ["jury"]
+ENTRYPOINT [ "./jury" ]
