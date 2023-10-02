@@ -4,6 +4,8 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import Checkbox from '../../components/Checkbox';
 import Button from '../../components/Button';
+import { getRequest, postRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 const JudgeWelcome = () => {
     const navigate = useNavigate();
@@ -15,29 +17,24 @@ const JudgeWelcome = () => {
     useEffect(() => {
         async function fetchData() {
             // Check to see if the user is logged in
-            const loggedIn = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/auth`, {
-                method: 'POST',
-                credentials: 'include',
-            });
-            if (!loggedIn.ok) {
-                console.error(`Judge is not logged in! ${loggedIn.status} ${loggedIn.statusText}`);
+            const loggedInRes = await postRequest<OkResponse>('/judge/auth', 'judge', null);
+            if (loggedInRes.status !== 200) {
+                errorAlert(loggedInRes.status);
+                return;
+            }
+            if (loggedInRes.data?.ok !== 1) {
+                console.error(`Judge is not logged in!`);
                 navigate('/judge/login');
                 return;
             }
-
+            
             // Get the name & email of the user from the server
-            const judgeRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-            });
-            if (!judgeRes.ok) {
-                alert(
-                    `Unable to connect to server: ${judgeRes.status} ${judgeRes.statusText}. Please check your connection or reload the page.`
-                );
+            const judgeRes = await getRequest<Judge>('/judge', 'judge');
+            if (judgeRes.status !== 200) {
+                errorAlert(judgeRes.status);
                 return;
             }
-            const judge: Judge = await judgeRes.json();
+            const judge: Judge = judgeRes.data as Judge;
             setName(judge.name);
         }
 
@@ -54,15 +51,9 @@ const JudgeWelcome = () => {
         }
 
         // POST to server to mark that the user has read the welcome message
-        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/welcome`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-        if (!res.ok) {
-            alert(
-                `Error validating form: ${res.status} ${res.statusText}. Please check your connection or reload the page.`
-            );
+        const readWelcomeRes = await postRequest<OkResponse>('/judge/welcome', 'judge', null);
+        if (readWelcomeRes.status !== 200) {
+            errorAlert(readWelcomeRes.status);
             return;
         }
 
@@ -100,7 +91,7 @@ const JudgeWelcome = () => {
                     the &apos;flag&apos; button.
                 </p>
                 <Checkbox checked={checkRead} onChange={setCheckRead}>
-                    Before you continue, please awknoledge that you have read and understand the
+                    Before you continue, please acknowledge that you have read and understand the
                     above instructions.
                 </Checkbox>
                 <Checkbox checked={checkEmail} onChange={setCheckEmail}>

@@ -13,12 +13,13 @@ const SIGMA_SQ_PRIOR = 1.0
 const ALPHA_PRIOR = 10.0
 const BETA_PRIOR = 1.0
 const EPSILON = 0.25
+const MIN_VIEWS = 4
 
 func Update(alpha float64, beta float64, muWinner float64, sigmaSqWinner float64, muLoser float64, sigmaSqLoser float64) (float64, float64, float64, float64, float64, float64) {
 	updatedAlpha, updatedBeta, _ := UpdateAnnotator(alpha, beta, muWinner, sigmaSqWinner, muLoser, sigmaSqLoser)
 	updatedMuWinner, updatedMuLoser := UpdateMus(alpha, beta, muWinner, sigmaSqWinner, muLoser, sigmaSqLoser)
 	updatedSigmaSqWinner, updatedSigmaSqLoser := UpdateSigmaSqs(alpha, beta, muWinner, sigmaSqWinner, muLoser, sigmaSqLoser)
-	return updatedAlpha, updatedBeta, updatedMuWinner, updatedMuLoser, updatedSigmaSqWinner, updatedSigmaSqLoser
+	return updatedAlpha, updatedBeta, updatedMuWinner, updatedSigmaSqWinner, updatedMuLoser, updatedSigmaSqLoser
 }
 
 func ExpectedInformationGain(alpha float64, beta float64, muA float64, sigmaSqA float64, muB float64, sigmaSqB float64) float64 {

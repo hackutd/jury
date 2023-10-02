@@ -27,8 +27,6 @@ func LoginAdmin(ctx *gin.Context) {
 		return
 	}
 
-	println(req.Password + " " + password)
-
 	// Return status OK if the password matches
 	if req.Password == password {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
@@ -146,5 +144,21 @@ func AdminAuthenticated(ctx *gin.Context) {
 	// This route will run the middleware first, and if the middleware
 	// passes, then that means the admin is authenticated
 
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /admin/reset - ResetDatabase resets the database
+func ResetDatabase(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Reset the database
+	err := database.DropAll(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error resetting database: " + err.Error()})
+		return
+	}
+
+	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }

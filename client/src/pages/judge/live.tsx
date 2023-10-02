@@ -6,6 +6,8 @@ import ProjectDisplay from '../../components/judge/ProjectDisplay';
 import Button from '../../components/Button';
 import VotePopup from '../../components/judge/VotePopup';
 import Back from '../../components/Back';
+import { getRequest, postRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 const JudgeLive = () => {
     const navigate = useNavigate();
@@ -17,30 +19,25 @@ const JudgeLive = () => {
     useEffect(() => {
         async function fetchData() {
             // Check to see if the user is logged in
-            const loggedIn = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/auth`, {
-                method: 'POST',
-                credentials: 'include',
-            });
-            if (!loggedIn.ok) {
-                console.error(`Judge is not logged in! ${loggedIn.status} ${loggedIn.statusText}`);
+            const loggedInRes = await postRequest<OkResponse>('/judge/auth', 'judge', null);
+            if (loggedInRes.status !== 200) {
+                errorAlert(loggedInRes.status);
+                return;
+            }
+            if (loggedInRes.data?.ok !== 1) {
+                console.error(`Judge is not logged in!`);
                 navigate('/judge/login');
                 return;
             }
 
             // Check for read welcome
-            const readWelcomeRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/welcome`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-            });
-            if (!readWelcomeRes.ok) {
-                alert(
-                    `Unable to connect to server: ${readWelcomeRes.status} ${readWelcomeRes.statusText}. Please check your connection or reload the page.`
-                );
+            const readWelcomeRes = await getRequest<OkResponse>('/judge/welcome', 'judge');
+            if (readWelcomeRes.status !== 200) {
+                errorAlert(readWelcomeRes.status);
                 return;
             }
-            const readWelcome = await readWelcomeRes.json();
-            if (!readWelcome.ok) {
+            const readWelcome = readWelcomeRes.data?.ok === 1;
+            if (!readWelcome) {
                 navigate('/judge/welcome');
             }
 
@@ -52,37 +49,31 @@ const JudgeLive = () => {
 
     // Once verification finishes, get the judge's next and prev project to judge
     async function getJudgeData() {
-        const judgeRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-        if (!judgeRes.ok) {
-            alert(
-                `Unable to connect to server: ${judgeRes.status} ${judgeRes.statusText}. Please check your connection or reload the page.`
-            );
+        const judgeRes = await getRequest<Judge>('/judge', 'judge');
+        if (judgeRes.status !== 200) {
+            errorAlert(judgeRes.status);
             return;
         }
-        const newJudge: Judge = await judgeRes.json();
+        const newJudge = judgeRes.data as Judge;
 
-        // If judge has literally no projects, query for a new project
+        // If judge has literally no projects, query for IPO (Initial Project Offering)
         if (!newJudge.prev && !newJudge.next) {
-            const judgeVoteRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/vote`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    judge_id: newJudge.id,
-                    curr_winner: true,
-                }),
-            });
+            const ipoRes = await postRequest<JudgeIpo>('/judge/ipo', 'judge', null);
+            if (ipoRes.status !== 200) {
+                errorAlert(ipoRes.status);
+                return;
+            }
 
-            const judgeVote: JudgeVoteRes = await judgeVoteRes.json();
-            if (judgeVote.next_project_id) newJudge.next = judgeVote.next_project_id;
-            if (judgeVote.prev_project_id) newJudge.prev = judgeVote.prev_project_id;
+            // No project has been returned (all projects have been judged)
+            if (!ipoRes.data?.project_id) {
+                navigate('/judge/done');
+                return;
+            }
+
+            newJudge.next = ipoRes.data?.project_id as string;
         } else if (!newJudge.next) {
             // If the judge only has a "prev" project, that means they've gone through all projects
-            navigate("/judge/done");
+            navigate('/judge/done');
         }
 
         console.log(newJudge);
@@ -100,22 +91,13 @@ const JudgeLive = () => {
         setJudge(null);
 
         // Vote for the given choice
-        const judgeVoteRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/vote`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                judge_id: judgeId,
-                curr_winner: choice === 0,
-            }),
+        const voteRes = await postRequest<OkResponse>('/judge/vote', 'judge', {
+            curr_winner: choice === 0,
         });
-
-        if (judgeVoteRes.status !== 200) {
-            alert('Error! Unable to cast vote :(');
+        if (voteRes.status !== 200) {
+            errorAlert(voteRes.status);
             return;
         }
-
-        console.log(await judgeVoteRes.json());
 
         getJudgeData();
     };

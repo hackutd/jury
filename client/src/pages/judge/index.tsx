@@ -11,9 +11,10 @@ import { errorAlert } from '../../util';
 
 const Judge = () => {
     const navigate = useNavigate();
-    const [name, setName] = useState('');
+    const [judge, setJudge] = useState<Judge | null>(null);
     const [projects, setProjects] = useState<JudgedProject[]>([]);
     const [loaded, setLoaded] = useState(false);
+    const [projCount, setProjCount] = useState(0);
 
     // Verify user is logged in and read welcome before proceeding
     useEffect(() => {
@@ -26,7 +27,7 @@ const Judge = () => {
             }
             if (loggedInRes.data?.ok !== 1) {
                 console.error(`Judge is not logged in!`);
-                // navigate('/judge/login');
+                navigate('/judge/login');
                 return;
             }
 
@@ -48,14 +49,22 @@ const Judge = () => {
                 return;
             }
             const judge: Judge = judgeRes.data as Judge;
-            setName(judge.name);
+            setJudge(judge);
+
+            // Get the project count
+            const projCountRes = await getRequest<ProjectCount>('/project/count', 'judge');
+            if (projCountRes.status !== 200) {
+                errorAlert(projCountRes.status);
+                return;
+            }
+            setProjCount(projCountRes.data?.count as number);
         }
 
         fetchData();
     }, []);
 
     useEffect(() => {
-        if (!name) return;
+        if (!judge) return;
 
         async function getProjects() {
             const projRes = await getRequest<JudgedProject[]>('/judge/projects', 'judge');
@@ -69,21 +78,23 @@ const Judge = () => {
         }
 
         getProjects();
-    }, [name]);
+    }, [judge]);
+
+    if (!loaded) return <Loading disabled={!loaded} />;
 
     return (
         <>
             <JuryHeader withLogout />
             <Container noCenter className="px-2">
-                <h1 className="text-2xl my-2">Welcome, {name}!</h1>
+                <h1 className="text-2xl my-2">Welcome, {judge?.name}!</h1>
                 <div className="w-full mb-6">
                     <Button type="primary" full square href="/judge/live">
                         Start Judging
                     </Button>
                 </div>
                 <div className="flex justify-evenly">
-                    <AdminStat name="Seen" value={0} />
-                    <AdminStat name="Projects" value={0} />
+                    <AdminStat name="Seen" value={judge?.seen_projects.length as number} />
+                    <AdminStat name="Projects" value={projCount} />
                 </div>
                 <h2 className="text-primary text-xl font-bold mt-4">Viewed Projects</h2>
                 <div className="h-[1px] w-full bg-light my-2"></div>
@@ -92,11 +103,10 @@ const Judge = () => {
                         id={p.project_id}
                         name={p.name}
                         description={p.description}
-                        stars={0}
+                        stars={p.stars}
                         key={p.project_id}
                     />
                 ))}
-                <Loading disabled={loaded} />
             </Container>
         </>
     );

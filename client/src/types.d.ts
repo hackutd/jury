@@ -76,3 +76,12 @@ interface ClockState {
     time: number;
     running: boolean;
 }
+
+interface JudgeIpo {
+    initial: number;
+    project_id: string;
+}
+
+interface ProjectCount {
+    count: number;
+}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
 import Paragraph from '../Paragraph';
+import { getRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 interface ProjectDisplayProps {
     /* Project ID to display */
@@ -14,25 +16,16 @@ const ProjectDisplay = (props: ProjectDisplayProps) => {
     const [project, setProject] = useState<Project | null>(null);
 
     useEffect(() => {
-        console.log(props.projectId)
         async function fetchData() {
             if (!props.projectId) return;
             
-            const projectRes = await fetch(
-                `${process.env.REACT_APP_JURY_URL}/project/${props.projectId}`,
-                {
-                    method: 'GET',
-                    credentials: 'include',
-                }
-            );
-            if (!projectRes.ok) {
-                alert(
-                    `Unable to get project - ${projectRes.status}: ${projectRes.statusText}. Please check your internet connection or refresh the page!`
-                );
+            const projRes = await getRequest<Project>(`/project/${props.projectId}`, 'judge');
+            if (projRes.status !== 200) {
+                errorAlert(projRes.status);
                 return;
             }
 
-            const newProject = await projectRes.json();
+            const newProject = projRes.data as Project;
             setProject(newProject);
         }
 

@@ -5,27 +5,23 @@ import JuryHeader from '../../components/JuryHeader';
 import StarDisplay from '../../components/judge/StarDisplay';
 import Paragraph from '../../components/Paragraph';
 import Back from '../../components/Back';
+import { getRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 const Project = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [project, setProject] = useState<null | Project>(null);
+    const [project, setProject] = useState<null | JudgedProject>(null);
 
     useEffect(() => {
         async function fetchData() {
-            const projectRes = await fetch(`${process.env.REACT_APP_JURY_URL}/project/${id}`, {
-                method: 'GET',
-                credentials: 'include',
-            });
-            if (!projectRes.ok) {
-                alert(
-                    `Unable to get project - ${projectRes.status}: ${projectRes.statusText}. Please check your internet connection or refresh the page!`
-                );
+            const projRes = await getRequest<JudgedProject>(`/judge/project/${id}`, 'judge');
+            if (projRes.status !== 200) {
+                errorAlert(projRes.status);
                 return;
             }
-
-            const newProject = await projectRes.json();
-            setProject(newProject);
+            const proj = projRes.data as JudgedProject;
+            setProject(proj);
         }
 
         fetchData();

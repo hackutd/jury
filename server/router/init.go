@@ -54,10 +54,17 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/judge/stats", JudgeStats)
 	adminRouter.DELETE("/judge/:id", DeleteJudge)
 	judgeRouter.GET("/judge/projects", GetJudgeProjects)
+	judgeRouter.POST("/judge/ipo", GetJudgeIPO)
+	judgeRouter.POST("/judge/vote", JudgeVote)
 	adminRouter.POST("/project/devpost", AddDevpostCsv)
 	adminRouter.POST("/project/new", AddProject)
 	adminRouter.GET("/project/list", ListProjects)
 	adminRouter.POST("/project/csv", AddProjectsCsv)
+	judgeRouter.GET("/project/:id", GetProject)
+	judgeRouter.GET("/judge/vote/info", GetVotingProjectInfo)
+	judgeRouter.POST("/judge/stars", UpdateStars)
+	judgeRouter.GET("/project/count", GetProjectCount)
+	judgeRouter.GET("/judge/project/:id", GetJudgedProject)
 	adminRouter.DELETE("/project/:id", DeleteProject)
 	adminRouter.GET("/project/stats", ProjectStats)
 	defaultRouter.POST("/admin/login", LoginAdmin)
@@ -67,6 +74,12 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/clock/unpause", UnpauseClock)
 	adminRouter.POST("/admin/clock/reset", ResetClock)
 	adminRouter.POST("/admin/auth", AdminAuthenticated)
+	adminRouter.POST("/admin/reset", ResetDatabase)
+
+	// Add no route handler
+	router.NoRoute(func(ctx *gin.Context) {
+		ctx.JSON(404, gin.H{"error": "Route not found"})
+	})
 
 	return router
 }

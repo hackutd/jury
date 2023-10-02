@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"server/crowdbt"
 	"server/database"
 	"server/models"
 	"server/util"
@@ -261,7 +262,112 @@ func DeleteJudge(ctx *gin.Context) {
 
 // POST /judge/vote - Endpoint for judge to cast a vote on a project
 func JudgeVote(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
 
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the vote from the request
+	var voteReq models.JudgeVote
+	err := ctx.BindJSON(&voteReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get both projects from the database
+	prevProject, err := database.FindProjectById(db, judge.Prev)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding previous project in database: " + err.Error()})
+		return
+	}
+	nextProject, err := database.FindProjectById(db, judge.Next)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding next project in database: " + err.Error()})
+		return
+	}
+
+	// If there is no previous project, then this is the first project for the judge
+	if prevProject == nil {
+		// Get a new project for the judge
+		newProject, err := util.PickNextProject(db, judge)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
+			return
+		}
+		if newProject != nil {
+			err = database.UpdateProjectSeen(db, newProject, judge)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project seen: " + err.Error()})
+				return
+			}
+			judge.Next = &newProject.Id
+		}
+
+		// Update the judge in the DB
+		judge.Prev = &nextProject.Id
+		err = database.UpdateJudge(db, judge)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
+			return
+		}
+
+		// Send OK
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+		return
+	}
+
+	// Set winner/loser based on curr_winner
+	var winner, loser *models.Project
+	if voteReq.CurrWinner {
+		winner, loser = nextProject, prevProject
+	} else {
+		winner, loser = prevProject, nextProject
+	}
+
+	// Run the update function
+	nAlpha, nBeta, nMuWinner, nSigmaWinner, nMuLoser, nSigmaLoser := crowdbt.Update(judge.Alpha, judge.Beta, winner.Mu, winner.SigmaSq, loser.Mu, loser.SigmaSq)
+
+	// Update the fields
+	judge.Alpha = nAlpha
+	judge.Beta = nBeta
+	winner.Mu = nMuWinner
+	winner.SigmaSq = nSigmaWinner
+	loser.Mu = nMuLoser
+	loser.SigmaSq = nSigmaLoser
+
+	// Update other fields
+	judge.Prev = judge.Next
+	judge.Votes += 1
+	winner.Votes += 1
+
+	// Get new project for judge
+	newProject, err := util.PickNextProject(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
+		return
+	}
+	if newProject != nil {
+		err = database.UpdateProjectSeen(db, newProject, judge)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project seen: " + err.Error()})
+			return
+		}
+		judge.Next = &newProject.Id
+	} else {
+		judge.Next = nil
+	}
+
+	// Perform database transaction to update judge and both projects
+	err = database.UpdateAfterVote(db, judge, winner, loser)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge and projects in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // GET /judge/ipo - Endpoint for judge to get IPO (Initial Project Offering) to vote on.
@@ -269,6 +375,9 @@ func JudgeVote(ctx *gin.Context) {
 // If this field is true, then this is the first project for the judge and will return a "project_id" field.
 // Otherwise, it will return only the "initial" field as false.
 func GetJudgeIPO(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
@@ -278,11 +387,28 @@ func GetJudgeIPO(ctx *gin.Context) {
 		return
 	}
 
-	// Get the database from the context
-	// db := ctx.MustGet("db").(*mongo.Database)
+	// Get the next project for the judge and update the judge/project seen in the database
+	project, err := util.PickNextProject(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
+		return
+	}
+	err = database.UpdateProjectSeen(db, project, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project seen: " + err.Error()})
+		return
+	}
 
-	// TODO: Finish
+	// Update judge
+	judge.Next = &project.Id
+	err = database.UpdateJudgeNext(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
+		return
+	}
 
+	// Send OK and project ID
+	ctx.JSON(http.StatusOK, gin.H{"initial": true, "project_id": project.Id})
 }
 
 // GET /judge/projects - Endpoint to get a list of projects that a judge has seen
@@ -292,4 +418,94 @@ func GetJudgeProjects(ctx *gin.Context) {
 
 	// Return the judge's seen projects list
 	ctx.JSON(http.StatusOK, judge.SeenProjects)
+}
+
+// GET /judge/vote/info - Endpoint to get info about the current projects the judge is voting on
+func GetVotingProjectInfo(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the current projects the judge is voting on
+	prevProject, err := database.FindProjectById(db, judge.Prev)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding previous project in database: " + err.Error()})
+		return
+	}
+	nextProject, err := database.FindProjectById(db, judge.Next)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding next project in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{
+		"prev_name":     prevProject.Name,
+		"prev_location": prevProject.Location,
+		"curr_name":     nextProject.Name,
+		"curr_location": nextProject.Location,
+	})
+}
+
+type UpdateStarsRequest struct {
+	ProjectId string `json:"project_id"`
+	Stars     int64  `json:"stars"`
+}
+
+// POST /judge/stars - Endpoint to update the stars for a single seen project.
+// Body: project_id, stars
+func UpdateStars(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the stars from the request
+	var starsReq UpdateStarsRequest
+	err := ctx.BindJSON(&starsReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Search judge's seen projects for the project ID
+	for i, p := range judge.SeenProjects {
+		if p.ProjectId.Hex() == starsReq.ProjectId {
+			judge.SeenProjects[i].Stars = starsReq.Stars
+			break
+		}
+	}
+
+	// Update the stars for the project
+	err = database.UpdateJudgeStars(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge stars in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// GET /judge/project/:id - Gets a project that's been judged by ID
+func GetJudgedProject(ctx *gin.Context) {
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the project ID from the URL
+	projectId := ctx.Param("id")
+
+	// Search through the judge seen projects for the project ID
+	for _, p := range judge.SeenProjects {
+		if p.ProjectId.Hex() == projectId {
+			ctx.JSON(http.StatusOK, p)
+			return
+		}
+	}
+
+	// Send bad request bc project ID invalid
+	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
 }

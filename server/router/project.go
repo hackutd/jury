@@ -214,6 +214,7 @@ func DeleteProject(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
+// POST /project/stats - ProjectStats returns stats about projects
 func ProjectStats(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -227,4 +228,46 @@ func ProjectStats(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, stats)
+}
+
+// GET /project/:id - GetProject returns a project by ID
+func GetProject(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the id from the request
+	id := ctx.Param("id")
+
+	// Convert project ID string to ObjectID
+	projectObjectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
+	// Get the project from the database
+	project, err := database.FindProjectById(db, &projectObjectId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project from database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, project)
+}
+
+// GET /project/count - GetProjectCount returns the number of projects in the database
+func GetProjectCount(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the project from the database
+	count, err := database.CountProjectDocuments(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"count": count})
 }

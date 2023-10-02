@@ -20,3 +20,7 @@ type Stats struct {
 	AvgMu    float64 `json:"avg_mu"`
 	AvgSigma float64 `json:"avg_sigma"`
 }
+
+type JudgeVote struct {
+	CurrWinner bool `json:"curr_winner"`
+}

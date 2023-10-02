@@ -54,3 +54,26 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 
 	return &stats, nil
 }
+
+// DropAll drops all collections in the database.
+func DropAll(db *mongo.Database) error {
+	// Drop all collections
+	err := db.Collection("judges").Drop(context.Background())
+	if err != nil {
+		return err
+	}
+	err = db.Collection("projects").Drop(context.Background())
+	if err != nil {
+		return err
+	}
+	err = db.Collection("votes").Drop(context.Background())
+	if err != nil {
+		return err
+	}
+	err = db.Collection("options").Drop(context.Background())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

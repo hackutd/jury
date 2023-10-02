@@ -53,6 +53,15 @@ func NewJudge(name string, email string, notes string) *Judge {
 	}
 }
 
+func JudgeProjectFromProject(project *Project) *JudgedProject {
+	return &JudgedProject{
+		ProjectId:   project.Id,
+		Name:        project.Name,
+		Description: project.Description,
+		Stars:       0,
+	}
+}
+
 // Create custom marshal function to change the format of the primitive.DateTime to a unix timestamp
 func (j *Judge) MarshalJSON() ([]byte, error) {
 	type Alias Judge

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import VotePopupButton from './VotePopupButton';
 import Button from '../Button';
 import { twMerge } from 'tailwind-merge';
+import { getRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 interface VotePopupProps {
     /* Type of popup to show */
@@ -45,18 +47,12 @@ const VotePopup = (props: VotePopupProps) => {
 
         async function getProjectInfo() {
             // Gets the project info
-            const piRes = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/vote/info`, {
-                method: 'GET',
-                credentials: 'include',
-            });
-
+            const piRes = await getRequest<VotingProjectInfo>('/judge/vote/info', 'judge');
             if (piRes.status !== 200) {
-                alert('Unable to fetch project info :(');
+                errorAlert(piRes.status);
                 return;
             }
-
-            // Set project info
-            setProjectInfo(await piRes.json());
+            setProjectInfo(piRes.data as VotingProjectInfo);
         }
 
         getProjectInfo();
@@ -112,6 +108,11 @@ const VotePopup = (props: VotePopupProps) => {
     if (!props.open) return null;
 
     const handleClick = () => {
+        if (selected === -1) {
+            alert('Please select an option.');
+            return;
+        }
+        
         props.close(false);
         props.popupType === 'vote'
             ? props.voteFunc(selected)

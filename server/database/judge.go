@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
 // InsertJudge inserts a judge into the database
@@ -53,9 +55,15 @@ func UpdateJudge(db *mongo.Database, judge *models.Judge) error {
 	return err
 }
 
+// UpdateJudgeNext updates the next project of a judge
+func UpdateJudgeNext(db *mongo.Database, judge *models.Judge) error {
+	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"next": judge.Next}})
+	return err
+}
+
 // FindAllJudges returns a list of all judges in the database
 func FindAllJudges(db *mongo.Database) ([]*models.Judge, error) {
-	var judges []*models.Judge
+	judges := make([]*models.Judge, 0)
 	cursor, err := db.Collection("judges").Find(context.Background(), gin.H{})
 	if err != nil {
 		return nil, err
@@ -113,5 +121,47 @@ func AggregateJudgeStats(db *mongo.Database) (*models.JudgeStats, error) {
 // DeleteJudgeById deletes a judge from the database by their id
 func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
 	_, err := db.Collection("judges").DeleteOne(context.Background(), gin.H{"_id": id})
+	return err
+}
+
+// UpdateAfterVote updates the database after a judge votes using a transaction
+func UpdateAfterVote(db *mongo.Database, judge *models.Judge, winner *models.Project, loser *models.Project) error {
+	wc := writeconcern.Majority()
+	txnOptions := options.Transaction().SetWriteConcern(wc)
+
+	session, err := db.Client().StartSession()
+	if err != nil {
+		return err
+	}
+	defer session.EndSession(context.Background())
+
+	_, err = session.WithTransaction(context.Background(), func(ctx mongo.SessionContext) (interface{}, error) {
+		// Update the judge
+		_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": judge})
+		if err != nil {
+			return nil, err
+		}
+
+		// Update the winner
+		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": winner.Id}, gin.H{"$set": winner})
+		if err != nil {
+			return nil, err
+		}
+
+		// Update the loser
+		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": loser.Id}, gin.H{"$set": loser})
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}, txnOptions)
+
+	return err
+}
+
+// UpdateJudgeStars updates the seen projects field of a judge
+func UpdateJudgeStars(db *mongo.Database, judge *models.Judge) error {
+	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
 	return err
 }
