@@ -59,17 +59,15 @@ const VotePopup = (props: VotePopupProps) => {
     }, [props.popupType]);
 
     useEffect(() => {
-        if (!projectInfo) return;
-
         const pt: PopupText = {
             vote: [
                 {
-                    text: projectInfo.curr_name,
-                    subtext: 'Current: Table ' + projectInfo.curr_location,
+                    text: projectInfo ? projectInfo.curr_name : '',
+                    subtext: 'Current: Table ' + (projectInfo ? projectInfo.curr_location : ''),
                 },
                 {
-                    text: projectInfo.prev_name,
-                    subtext: 'Previous: Table ' + projectInfo.prev_location,
+                    text: projectInfo ? projectInfo.prev_name : '',
+                    subtext: 'Previous: Table ' + (projectInfo ? projectInfo?.prev_location : ''),
                 },
             ],
             flag: [
@@ -112,7 +110,7 @@ const VotePopup = (props: VotePopupProps) => {
             alert('Please select an option.');
             return;
         }
-        
+
         props.close(false);
         props.popupType === 'vote'
             ? props.voteFunc(selected)
