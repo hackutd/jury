@@ -20,7 +20,7 @@ const ProjectEntry = (props: ProjectEntryProps) => {
             <div className="cursor-pointer hover:bg-primary/10 duration-100" onClick={openProject}>
                 <div className="flex items-center justify-end">
                     <h3 className="text-xl grow">{props.name}</h3>
-                    <StarDisplay stars={props.stars} />
+                    <StarDisplay stars={props.stars} id={props.id} />
                 </div>
                 <p className="text-light line-clamp-3">{props.description.replace('\\n', ' ')}</p>
             </div>

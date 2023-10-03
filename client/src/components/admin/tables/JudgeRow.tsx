@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { fixIfFloatDigits, timeSince } from '../../../util';
+import { errorAlert, fixIfFloatDigits, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditJudgePopup from './EditJudgePopup';
+import { postRequest } from '../../../api';
+import useAdminStore from '../../../store';
+import { twMerge } from 'tailwind-merge';
 
 interface JudgeRowProps {
     judge: Judge;
@@ -15,6 +18,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const fetchJudges = useAdminStore((state) => state.fetchJudges);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -39,6 +43,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 break;
             case 'hide':
                 // Hide
+                hideJudge();
                 break;
             case 'delete':
                 // Open delete popup
@@ -49,14 +54,24 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
         setPopup(false);
     };
 
+    const hideJudge = async () => {
+        const res = await postRequest<OkResponse>(judge.active ? '/judge/hide' : '/judge/unhide', 'admin', { id: judge.id });
+        if (res.status === 200) {
+            alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
+            fetchJudges();
+        } else {
+            errorAlert(res.status);
+        }
+    };
+
     return (
         <>
             <tr
                 key={idx}
-                className={
-                    'border-t-2 border-backgroundDark duration-150 ' +
-                    (checked ? 'bg-primary/20' : 'bg-background')
-                }
+                className={twMerge(
+                    'border-t-2 border-backgroundDark duration-150',
+                    checked ? 'bg-primary/20' : !judge.active ? 'bg-lightest' : 'bg-background'
+                )}
             >
                 <td className="px-2">
                     <input
@@ -73,7 +88,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 <td className="text-center">{fixIfFloatDigits(judge.alpha, 5)}</td>
                 <td className="text-center">{fixIfFloatDigits(judge.beta, 5)}</td>
                 {/* TODO: What the fuck is this; just change the datatype to a long pls */}
-                <td className="text-center">{timeSince(judge.last_activity.$date.$numberLong)}</td>
+                <td className="text-center">{timeSince(judge.last_activity)}</td>
                 <td className="text-right font-bold flex align-center justify-end">
                     {popup && (
                         <div
@@ -90,7 +105,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                                 className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
                                 onClick={() => doAction('hide')}
                             >
-                                Hide
+                                {judge.active ? 'Hide' : 'Un-hide'}
                             </div>
                             <div
                                 className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150 text-error"

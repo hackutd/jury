@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import Button from '../Button';
+import { postRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 interface PauseButtonProps {
     paused: boolean;
@@ -19,18 +21,13 @@ const PauseButton = ({ paused, setPaused, clock }: PauseButtonProps) => {
 
     const handleClick = async (pause: boolean) => {
         // Send pause/unpause request to server
-        const res = await fetch(
-            `${process.env.REACT_APP_JURY_URL}/admin/clock/${pause ? 'pause' : 'unpause'}`,
-            {
-                method: 'POST',
-                credentials: 'include',
-            }
-        );
-
-        // If successful, update state
-        if (res.ok) {
-            setPaused(pause);
+        const res = await postRequest(`/admin/clock/${pause ? 'pause' : 'unpause'}`, 'admin', null);
+        if (res.status !== 200) {
+            errorAlert(res.status);
+            return;
         }
+        
+        setPaused(pause);
     };
 
     return paused ? (

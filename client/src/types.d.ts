@@ -1,5 +1,5 @@
 interface Project {
-    _id: { $oid: string };
+    id: string;
     name: string;
     location: number;
     mu: number;
@@ -7,31 +7,25 @@ interface Project {
     votes: number;
     seen: number;
     description: string;
-    stars: number;
-    last_activity: {
-        $date: {
-            $numberLong: number;
-        };
-    };
+    active: boolean;
+    prioritized: boolean;
+    last_activity: number;
 }
 
 interface Judge {
-    _id: { $oid: string };
+    id: string;
     name: string;
     email: string;
     notes: string;
     alpha: number;
     votes: number;
     beta: number;
-    last_activity: {
-        $date: {
-            $numberLong: number;
-        };
-    };
+    last_activity: number;
     read_welcome: boolean;
-    seen_projects: { $oid: string }[];
-    next: { $oid: string };
-    prev: { $oid: string };
+    seen_projects: JudgedProject[];
+    active: boolean;
+    next: string;
+    prev: string;
 }
 
 interface Stats {
@@ -56,11 +50,40 @@ interface JudgeVoteRes {
     next_project_id: string;
 }
 
-type VotePopupState = "vote" | "skip" | "flag";
+type VotePopupState = 'vote' | 'skip' | 'flag';
 
 interface VotingProjectInfo {
     curr_name: string;
     curr_location: number;
     prev_name: string;
     prev_location: number;
+}
+
+interface OkResponse {
+    ok: number;
+}
+
+interface TokenResponse {
+    token: string;
+}
+
+interface JudgedProject {
+    project_id: string;
+    name: string;
+    description: string;
+    stars: number;
+}
+
+interface ClockState {
+    time: number;
+    running: boolean;
+}
+
+interface JudgeIpo {
+    initial: number;
+    project_id: string;
+}
+
+interface ProjectCount {
+    count: number;
 }

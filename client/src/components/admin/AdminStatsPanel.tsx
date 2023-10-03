@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import AdminStat from './AdminStat';
 import PauseButton from './PauseButton';
 import useAdminStore from '../../store';
+import { getRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 // Jank global variables for keeping track of drift in timer
 let start: number;
@@ -13,34 +15,18 @@ const AdminStatsPanel = () => {
     const [time, setTime] = useState<number>(0);
     const [paused, setPaused] = useState(true);
 
-    const handleEventSourceMessage = (e: MessageEvent) => {
-        // Get the data from the message
-        const data = e.data as string;
-
-        if (data.trim() === 'clock') {
-            fetchClock();
-        } else {
-            fetchStats();
-        }
-    };
-
     // Fetch clock info
     const fetchClock = async () => {
-        const data = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/clock`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        }).then((data) => data.json());
+        const res = await getRequest<ClockState>('/admin/clock', 'admin');
+        if (res.status !== 200) {
+            errorAlert(res.status);
+            return;
+        }
+        const data = res.data as ClockState;
 
         // If the clock is paused, set paused state to true
-        setPaused(data.paused);
-
-        // Set clock time
-        if (data.start === 0 || data.paused) {
-            setTime(data.prev);
-        } else {
-            setTime(data.prev + (Date.now() - data.start));
-        }
+        setPaused(!data.running);
+        setTime(data.time);
     };
 
     // Convert ms time to time string
@@ -57,17 +43,10 @@ const AdminStatsPanel = () => {
         return num.toString().padStart(2, '0');
     };
 
-    // Add event source listener for when to sync stats (happens on DB change)
-    // Also fetch stats on load
+    // Fetch clock and stats on load
     useEffect(() => {
-        const eventSource = new EventSource(`${process.env.REACT_APP_JURY_URL}/admin/sync`, {
-            withCredentials: true,
-        });
-        eventSource.onmessage = handleEventSourceMessage;
         fetchStats();
         fetchClock();
-
-        // eslint-disable-next-line
     }, []);
 
     // Timer for updating time each second

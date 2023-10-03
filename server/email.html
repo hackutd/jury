@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link
+            rel="noopener"
+            target="_blank"
+            href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <table
+            style="
+                width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+                text-align: center;
+                font-family: Roboto, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                border: solid 1px #bfbfbf;
+                border-radius: 4px;
+                padding: 16px;
+            "
+        >
+            <tr>
+                <td>
+                    <h1 style="font-weight: bold; font-size: 32px; margin: 0px; color: black">
+                        Jury Judging Platform
+                    </h1>
+                    <h2 style="font-weight: bold; font-size: 16px; margin: 0px; color: #00ace6">
+                        {{.AppName}}
+                    </h2>
+                    <p style="text-align: left">
+                        Hi {{.Name}}! Thank you for volunteering to help judge our hackathon. To
+                        access the judging platform, click the button below to start judging. If you
+                        are unable to click the button, you may go to
+                        <a href="{{.BaseUrl}}/judge/login" target="_blank" style="color: #00ace6">
+                            {{.BaseUrl}}/judge/login
+                        </a>
+                        &nbsp;and type the following code:
+                    </p>
+                    <p style="font-weight: bold; font-size: 32px; color: #657985; margin: 0px">
+                        {{.Code}}
+                    </p>
+                    <p style="text-align: left">
+                        Please do not share the link or code with anyone else as it is unique to
+                        you. Best of luck judging!
+                    </p>
+                    <a
+                        href="{{.BaseUrl}}/judge/login?code={{.Code}}"
+                        target="_blank"
+                        style="
+                            background-color: #00ace6;
+                            border-radius: 100px;
+                            width: 100%;
+                            display: block;
+                            color: white;
+                            font-size: 20px;
+                            font-weight: bold;
+                            text-decoration: none;
+                            padding: 8px 0px;
+                        "
+                    >
+                        Start Judging
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>

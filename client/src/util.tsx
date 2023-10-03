@@ -44,4 +44,11 @@ function fixIfFloatDigits(n: number, d: number): string {
     return n.toFixed(d);
 }
 
-export { timeSince, arrow, fixIfFloat, fixIfFloatDigits };
+function errorAlert(status: number) {
+    alert(
+        `Unable to connect to server (Error ${status}). Please check your connection or reload the page.`
+    );
+    console.error(`Could not connect to server: error ${status}`);
+}
+
+export { timeSince, arrow, fixIfFloat, fixIfFloatDigits, errorAlert };

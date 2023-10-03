@@ -74,7 +74,7 @@ const JudgesTable = () => {
                 break;
             case JudgeSortField.Updated:
                 sortFunc = (a, b) =>
-                    (a.last_activity.$date.$numberLong - b.last_activity.$date.$numberLong) * asc;
+                    (a.last_activity - b.last_activity) * asc;
                 break;
         }
         setJudges(unsortedJudges.sort(sortFunc));

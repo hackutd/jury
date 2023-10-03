@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import AdminStat from '../AdminStat';
+import { getRequest } from '../../../api';
+import { errorAlert } from '../../../util';
 
 interface JudgeStats {
     num: number;
@@ -11,13 +13,12 @@ const AddJudgeStatsPanel = () => {
     const [stats, setStats] = useState<JudgeStats>({ num: 0, avg_votes: 0, num_active: 0 });
     useEffect(() => {
         const fetchStats = async () => {
-            const fetchedStats = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/stats`, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-            }).then((data) => data.json());
-            // TODO: Add error checking
-            setStats(fetchedStats);
+            const res = await getRequest('/judge/stats', 'admin');
+            if (res.status !== 200) {
+                errorAlert(res.status);
+                return;
+            }
+            setStats(res.data as JudgeStats);
         };
 
         fetchStats();

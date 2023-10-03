@@ -33,7 +33,7 @@ services:
         networks:
             - jury-dev-network
 
-    rust-dev:
+    go-dev:
         depends_on:
             - 'mongo'
             - 'mongorssetup'
@@ -42,26 +42,23 @@ services:
             - MONGODB_URI=mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongo:27017/
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
             - PORT=8000
-            - CARGO_TARGET_DIR=/root/target
         build:
             context: './'
             dockerfile: dev.Dockerfile
         ports:
-            - 8000:8000
+            - ${PORT:-8000}:8000
         volumes:
-            - .:/jury
-            - ./.cargo/registry:/usr/local/cargo/registry
-            - ./.target:/root/target
+            - ./server:/jury
         networks:
             - jury-dev-network
 
     node-dev:
         depends_on:
-            - 'rust-dev'
+            - 'go-dev'
         container_name: jury-dev-frontend
         environment:
             - REACT_APP_JURY_NAME=${JURY_NAME}
-            - REACT_APP_JURY_URL=http://localhost:8000/api
+            - REACT_APP_JURY_URL=http://localhost:${PORT:-8000}:8000/api
             - REACT_APP_HUB=${HEHE:-}
         build:
             context: './'

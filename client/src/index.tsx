@@ -1,19 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
-import Home from './Home';
-import HomeHub from './components/home/HomeHub';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import JudgeLogin from './judge/login';
-import Judge from './judge';
-import AdminLogin from './admin/login';
-import Admin from './admin';
-import AddProjects from './admin/AddProjects';
-import AddJudges from './admin/AddJudges';
-import JudgeWelcome from './judge/welcome';
-import JudgeLive from './judge/live';
-import Project from './judge/project';
-import Done from './judge/done';
+import './index.css';
+import Home from './pages/Home';
+import HomeHub from './components/home/HomeHub';
+import JudgeLogin from './pages/judge/login';
+import Judge from './pages/judge';
+import AdminLogin from './pages/admin/login';
+import Admin from './pages/admin';
+import AddProjects from './pages/admin/AddProjects';
+import AddJudges from './pages/admin/AddJudges';
+import JudgeWelcome from './pages/judge/welcome';
+import JudgeLive from './pages/judge/live';
+import Project from './pages/judge/project';
+import Done from './pages/judge/done';
+import Hidden from './pages/judge/hidden';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
     {
         path: '/judge/done',
         element: <Done />,
+    },
+    {
+        path: '/judge/hidden',
+        element: <Hidden />,
     },
     {
         path: '/admin/login',

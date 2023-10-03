@@ -2,21 +2,16 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import TextInput from '../../TextInput';
 import TextArea from '../../TextArea';
 import { useState } from 'react';
+import { postRequest } from '../../../api';
+import { errorAlert } from '../../../util';
 
 interface NewProjectData {
     name: string;
     description: string;
+    url: string;
     link: string;
     video: string;
     challenge_list: string;
-}
-
-interface ProjectUpload {
-    name: string;
-    description: string;
-    link: string;
-    video: string;
-    challenge_list: string[];
 }
 
 const NewProjectForm = () => {
@@ -24,38 +19,23 @@ const NewProjectForm = () => {
     const { register, handleSubmit, reset } = useForm<NewProjectData>();
 
     const onSubmit: SubmitHandler<NewProjectData> = async (data) => {
-        const project: ProjectUpload = {
-            name: data.name,
-            description: data.description,
-            link: data.link,
-            video: data.video,
-            challenge_list: data.challenge_list.split(',').map((x) => x.trim()),
-        };
-
         // Upload project
         setIsSubmitting(true);
-        try {
-            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/project/new`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(project),
-                credentials: 'include',
-            });
 
-            // Throw error if response is not ok
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            // Reset the form and show success message
-            reset();
-            alert(`Added project ${data.name} successfully!`);
-        } catch (err) {
-            console.error(err);
-            alert('Error adding project: ' + err);
+        const res = await postRequest('/project/new', 'admin', data);
+        if (res.status === 400) {
+            alert(`Error with form: ${res.error}`);
+            setIsSubmitting(false);
+            return;
         }
+        if (res.status !== 200) {
+            errorAlert(res.status);
+            setIsSubmitting(false);
+            return;
+        }
+
+        alert('Project added successfully!');
+        reset();
         setIsSubmitting(false);
     };
 
@@ -70,6 +50,7 @@ const NewProjectForm = () => {
                         placeholder="Description (optional)"
                         register={register}
                     />
+                    <TextInput name="url" placeholder="URL" register={register} />
                     <div className="flex flex-row w-full mt-4 space-x-6">
                         <TextInput
                             name="link"

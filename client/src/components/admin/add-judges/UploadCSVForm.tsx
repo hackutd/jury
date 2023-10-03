@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createHeaders } from '../../../api';
 
 interface UploadCSVFormProps {
     /* The format of the CSV file */
@@ -46,22 +47,23 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
             // Determine the path based on the format
             const path =
                 props.format === 'judge'
-                    ? '/judge/csv/upload'
+                    ? '/judge/csv'
                     : props.format === 'project'
-                    ? '/project/csv/upload'
+                    ? '/project/csv'
                     : '/project/devpost';
 
             // Make the request
             const response = await fetch(`${process.env.REACT_APP_JURY_URL}${path}`, {
                 method: 'POST',
                 body: formData,
-                credentials: 'include',
+                headers: createHeaders('admin', false),
             });
-            
+
             // Throw error if response is not ok
             if (!response.ok) {
                 console.error(`HTTP error! Status: ${response.status}`);
                 setError(await response.text());
+                setIsUploading(false);
                 return;
             }
 
@@ -69,10 +71,11 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
             setFile(null);
             setFileName('No file chosen');
             const resource = props.format === 'judge' ? 'judge' : 'project';
-            setMsg(`Added ${await response.text()} ${resource}(s) successfully!`);
+            setMsg(`Added ${resource}(s) successfully!`);
         } catch (err) {
             console.error(err);
             setError(err as string);
+            setIsUploading(false);
         }
 
         setIsUploading(false);
@@ -80,7 +83,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
 
     const displayText =
         props.format === 'project'
-            ? 'name, description, "Try It" link, video link, and a comma separated challenge list (in quotes)'
+            ? 'name, description, url, "Try It" link, video link, and a comma separated challenge list (in quotes)'
             : 'name, email, and notes';
 
     return (

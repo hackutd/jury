@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import TextInput from '../../TextInput';
 import TextArea from '../../TextArea';
+import { postRequest } from '../../../api';
+import { errorAlert } from '../../../util';
 
 interface NewJudgeData {
     name: string;
@@ -15,30 +17,15 @@ const NewJudgeForm = () => {
 
     const onSubmit: SubmitHandler<NewJudgeData> = async (data) => {
         setIsSubmitting(true);
-
-        // Upload judge
-        try {
-            const response = await fetch(`${process.env.REACT_APP_JURY_URL}/judge/new`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-                credentials: 'include',
-            });
-
-            // Throw error if response is not ok
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            // Reset the form and show success message
-            reset();
-            alert(`Added judge ${data.name} successfully!`);
-        } catch (err) {
-            console.error(err);
-            alert('Error adding judge: ' + err);
+        
+        const res = await postRequest('/judge/new', 'admin', data);
+        if (res.status !== 200) {
+            errorAlert(res.status);
+            return;
         }
+        
+        alert('Judge added successfully!');
+        reset();
         setIsSubmitting(false);
     };
 
