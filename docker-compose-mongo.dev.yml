@@ -41,6 +41,10 @@ services:
         environment:
             - MONGODB_URI=mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongo:27017/
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
+            - EMAIL_HOST=${EMAIL_HOST}
+            - EMAIL_PORT=${EMAIL_PORT}
+            - EMAIL_FROM=${EMAIL_FROM}
+            - EMAIL_PASSWORD=${EMAIL_PASSWORD}
             - PORT=8000
         build:
             context: './'

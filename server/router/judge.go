@@ -21,19 +21,13 @@ func GetJudge(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, judge)
 }
 
-type AddJudgeRequest struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Notes string `json:"notes"`
-}
-
 // POST /judge/new - Endpoint to add a single judge
 func AddJudge(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the judge from the request
-	var judgeReq AddJudgeRequest
+	var judgeReq models.AddJudgeRequest
 	err := ctx.BindJSON(&judgeReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -696,6 +690,40 @@ func UnhideJudge(ctx *gin.Context) {
 	err = database.SetJudgeHidden(db, &judgeObjectId, false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error unhiding judge in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// PUT /judge/:id - Endpoint to edit a judge
+func EditJudge(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the body content
+	var judgeReq models.AddJudgeRequest
+	err := ctx.BindJSON(&judgeReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the judge ID from the path
+	judgeId := ctx.Param("id")
+
+	// Convert ID string to ObjectID
+	judgeObjectId, err := primitive.ObjectIDFromHex(judgeId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid judge ID"})
+		return
+	}
+
+	// Edit judge in database
+	err = database.UpdateJudgeBasicInfo(db, &judgeObjectId, &judgeReq)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error editing judge in database: " + err.Error()})
 		return
 	}
 
