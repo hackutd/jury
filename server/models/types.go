@@ -28,3 +28,9 @@ type JudgeVote struct {
 type IdRequest struct {
 	Id string `json:"id"`
 }
+
+type AddJudgeRequest struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Notes string `json:"notes"`
+}

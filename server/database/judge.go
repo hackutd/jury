@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"server/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -10,6 +11,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
+
+// UpdateJudgeLastActivity to the current time
+func UpdateJudgeLastActivity(db *mongo.Database, id *primitive.ObjectID) error {
+	// Get current time
+	lastActivity := primitive.NewDateTimeFromTime(time.Now())
+	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
+	return err
+}
 
 // InsertJudge inserts a judge into the database
 func InsertJudge(db *mongo.Database, judge *models.Judge) error {
@@ -52,12 +61,22 @@ func FindJudgeByCode(db *mongo.Database, code string) (*models.Judge, error) {
 // UpdateJudge updates a judge in the database
 func UpdateJudge(db *mongo.Database, judge *models.Judge) error {
 	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": judge})
+	if err != nil {
+		return err
+	}
+
+	err = UpdateJudgeLastActivity(db, &judge.Id)
 	return err
 }
 
 // UpdateJudgeNext updates the next project of a judge
 func UpdateJudgeNext(db *mongo.Database, judge *models.Judge) error {
 	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"next": judge.Next}})
+	if err != nil {
+		return err
+	}
+
+	err = UpdateJudgeLastActivity(db, &judge.Id)
 	return err
 }
 
@@ -156,18 +175,43 @@ func UpdateAfterVote(db *mongo.Database, judge *models.Judge, winner *models.Pro
 
 		return nil, nil
 	}, txnOptions)
+	if err != nil {
+		return err
+	}
 
+	err = UpdateJudgeLastActivity(db, &judge.Id)
 	return err
 }
 
 // UpdateJudgeStars updates the seen projects field of a judge
 func UpdateJudgeStars(db *mongo.Database, judge *models.Judge) error {
 	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
+	if err != nil {
+		return err
+	}
+
+	err = UpdateJudgeLastActivity(db, &judge.Id)
 	return err
 }
 
 // SetJudgeHidden sets the active field of a judge
 func SetJudgeHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
 	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"active": !hidden}})
+	if err != nil {
+		return err
+	}
+
+	err = UpdateJudgeLastActivity(db, id)
+	return err
+}
+
+// UpdateJudgeBasicInfo updates the basic info of a judge (name, email, notes)
+func UpdateJudgeBasicInfo(db *mongo.Database, judgeId *primitive.ObjectID, addRequest *models.AddJudgeRequest) error {
+	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judgeId}, gin.H{"$set": gin.H{"name": addRequest.Name, "email": addRequest.Email, "notes": addRequest.Notes}})
+	if err != nil {
+		return err
+	}
+
+	err = UpdateJudgeLastActivity(db, judgeId)
 	return err
 }

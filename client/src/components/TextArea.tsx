@@ -7,6 +7,9 @@ interface TextAreaProps {
     /* Placeholder of the field */
     placeholder: string;
 
+    /* Default value of the field */
+    defaultValue?: string;
+
     /* Register function from react-hook-form */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     register: UseFormRegister<any>;
@@ -17,6 +20,7 @@ const TextArea = (props: TextAreaProps) => {
         <textarea
             className="w-full h-36 px-4 py-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
             placeholder={props.placeholder}
+            defaultValue={props.defaultValue}
             {...props.register(props.name)}
         />
     );

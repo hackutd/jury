@@ -31,9 +31,30 @@ export async function postRequest<T>(
     body: any
 ): Promise<FetchResponse<T>> {
     try {
-        console.log(path);
         const options: RequestInit = {
             method: 'POST',
+            headers: createHeaders(auth, true),
+            body: body ? JSON.stringify(body) : null,
+        };
+        const response = await fetch(`${BACKEND_URL}${path}`, options);
+        const data = await response.json();
+        return { status: response.status, error: data.error ? data.error : '', data };
+    // eslint-disable-next-line
+    } catch (error: any) {
+        console.error(error);
+        return { status: 404, error: error, data: null };
+    }
+}
+
+export async function putRequest<T>(
+    path: string,
+    auth: string,
+    // eslint-disable-next-line
+    body: any
+): Promise<FetchResponse<T>> {
+    try {
+        const options: RequestInit = {
+            method: 'PUT',
             headers: createHeaders(auth, true),
             body: body ? JSON.stringify(body) : null,
         };

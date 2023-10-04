@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"server/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -10,6 +11,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
+
+// UpdateProjectLastActivity to the current time
+func UpdateProjectLastActivity(db *mongo.Database, id *primitive.ObjectID) error {
+	// Get current time
+	lastActivity := primitive.NewDateTimeFromTime(time.Now())
+	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
+	return err
+}
 
 // InsertProjects inserts a list of projects into the database
 func InsertProjects(db *mongo.Database, projects []*models.Project) error {
@@ -166,6 +175,11 @@ func UpdateProjectSeen(db *mongo.Database, project *models.Project, judge *model
 
 		return nil, err
 	}, txnOptions)
+	if err != nil {
+		return err
+	}
+
+	err = UpdateProjectLastActivity(db, &project.Id)
 
 	return err
 }
