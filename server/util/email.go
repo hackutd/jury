@@ -28,12 +28,12 @@ func SendJudgeEmail(judge *models.Judge, hostname string) error {
 	auth := smtp.PlainAuth("jury", from, password, smtpHost)
 
 	// Other info
-	appName := config.GetEnv("JURY_NAME")
+	appName := config.GetEnv("REACT_APP_JURY_NAME")
 
 	// Message body
 	var body bytes.Buffer
 	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Jury [Hackathon Judging Platform] \n%s\n\n", mimeHeaders)))
+	body.Write([]byte(fmt.Sprintf("Subject: Jury Judging Platform [%s] \n%s\n\n", appName, mimeHeaders)))
 
 	// Template
 	t, _ := template.ParseFiles("email.html")
