@@ -71,7 +71,7 @@ const JudgeWelcome = () => {
                 </h1>
                 <h2 className="text-lg font-bold">PLEASE READ THE FOLLOWING:</h2>
                 <p className="my-2">
-                    Welcome to Gavel, an innovative judging system that utilizes pairwise
+                    Welcome to Jury, an innovative judging system that utilizes pairwise
                     comparisons for hackathon judging.
                 </p>
                 <p className="my-2">
