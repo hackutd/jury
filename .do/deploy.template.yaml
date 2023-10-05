@@ -14,6 +14,7 @@ spec:
   name: jury
   region: nyc
   services:
+  - name: jury-service
   - dockerfile_path: Dockerfile
     envs:
     - key: JURY_NAME
