@@ -24,6 +24,6 @@ spec:
     git:
       branch: master
       repo_clone_url: https://github.com/acmutd/jury.git
-    instance_size_slug: s-1vcpu-512mb-10gb
+    instance_size_slug: basic-xxs
     instance_count: 1
   
