@@ -2,7 +2,56 @@
 
 A project designed to create a new pairwise judging system using modern technologies aimed at optimizing the user experience of judges and admin users. See the inspiration for this project: [Gavel by anishathalye](https://github.com/anishathalye/gavel). Refer to [this excellent article](https://www.anishathalye.com/2015/03/07/designing-a-better-judging-system/) for more details on the underlying formulas of Gavel! The majority of our algorithm will be based off of research done in the field of [pairwise comparison](https://en.wikipedia.org/wiki/Pairwise_comparison).
 
-# Deployment
+# One Click Deploy!
+
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/acmutd/jury/tree/master&refcode=de08cdf58df3)
+
+## 0. Set up MongoDB Atlas
+
+MongoDB is a **free** NoSQL database that is hosted in the cloud! Their website has great instructions on how to quickly create an account and 100% lifetime free database, perfect for Jury: https://www.mongodb.com/docs/atlas/getting-started/.
+
+Follow the instructions up to step 5: connect to your cluster. You will get a URI string that looks like `mongodb+srv://<username>:<password>@<something>.mongodb.net/?retryWrites=true&w=majority`, except \<username\>, \<password\>, and \<something\> should be filled in. You will need that for the environmental variables.
+
+## 1. Resources
+
+- Click Edit Plan
+- Change plan to "Basic"
+- Change Instance Size to "$5.00/mo -- Basic (512 MB RAM | 1 vCPU)"
+
+Note that since Digital Ocean charges prorated, this will literally be like less than 20 cents a day.
+
+## 2. Environmental Variables
+
+Click on "edit" next to "jury-service" and fill in the env as follows:
+
+- REACT_APP_JURY_NAME - Name of the app to display to the user (eg. HackUTD X Judging)
+- JURY_ADMIN_PASSWORD - Password for the admin portal (suggestion: use 2 random words)
+- MONGODB_URI - URI of MongoDB Atlas instance (see step 0)
+- EMAIL_HOST - SMTP email host (see below)
+- EMAIL_FROM - SMTP email sending from address (see below)
+- EMAIL_PASSWORD - SMTP email password (see below)
+- EMAIL_POST - 587
+
+### Email hosting
+
+If using Gmail SMTP:
+- EMAIL_HOST = smtp.gmail.com
+- EMAIL_FROM = gmail username
+- EMAIL_PASSWORD = google app password
+
+If using SendGrid SMTP:
+- EMAIL_HOST = smtp.sendgrid.com
+- EMAIL_FROM = sendgrid email sender
+- EMAIL_PASSWORD = sendgrid API key
+
+## 3. Info
+
+You can change the start of the URL if you want:
+- App Info > edit
+- Change app name (URL will be <app_name><some_characters>.ondigitalocean.app)
+- Click Next
+
+# Deploy Manually
 
 ## Setup
 
