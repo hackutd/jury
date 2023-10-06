@@ -4,7 +4,7 @@ spec:
   - name: jury-service
     dockerfile_path: Dockerfile
     envs:
-    - key: JURY_NAME
+    - key: REACT_APP_JURY_NAME
       scope: RUN_AND_BUILD_TIME
     - key: JURY_ADMIN_PASSWORD
       scope: RUN_AND_BUILD_TIME
@@ -23,4 +23,3 @@ spec:
       repo_clone_url: https://github.com/acmutd/jury.git
     instance_size_slug: basic-xxs
     instance_count: 1
-  
