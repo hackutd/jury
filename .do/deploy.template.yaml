@@ -23,5 +23,5 @@ spec:
       type: SECRET
     git:
       branch: master
-      repo: https://github.com/acmutd/jury.git
+      repo_clone_url: https://github.com/acmutd/jury.git
   
