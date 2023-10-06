@@ -2,7 +2,7 @@ spec:
   name: jury
   services:
   - name: jury-service
-  - dockerfile_path: Dockerfile
+    dockerfile_path: Dockerfile
     envs:
     - key: JURY_NAME
       scope: RUN_AND_BUILD_TIME
