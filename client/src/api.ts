@@ -30,8 +30,6 @@ export async function postRequest<T>(
     // eslint-disable-next-line
     body: any
 ): Promise<FetchResponse<T>> {
-    console.log(BACKEND_URL);
-    console.log(process.env.REACT_APP_JURY_URL)
     try {
         const options: RequestInit = {
             method: 'POST',
