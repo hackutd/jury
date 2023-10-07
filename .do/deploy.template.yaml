@@ -6,6 +6,9 @@ spec:
     envs:
     - key: REACT_APP_JURY_NAME
       scope: RUN_AND_BUILD_TIME
+    - key: REACT_APP_JURY_URL
+      scope: RUN_AND_BUILD_TIME
+      value: /api
     - key: JURY_ADMIN_PASSWORD
       scope: RUN_AND_BUILD_TIME
     - key: MONGODB_URI
@@ -14,6 +17,7 @@ spec:
       scope: RUN_AND_BUILD_TIME
     - key: EMAIL_PORT
       scope: RUN_AND_BUILD_TIME
+      value: "587"
     - key: EMAIL_FROM
       scope: RUN_AND_BUILD_TIME
     - key: EMAIL_PASSWORD

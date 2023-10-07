@@ -17,7 +17,7 @@ export async function getRequest<T>(path: string, auth: string): Promise<FetchRe
         const response = await fetch(`${BACKEND_URL}${path}`, options);
         const data = await response.json();
         return { status: response.status, error: data.error ? data.error : '', data };
-    // eslint-disable-next-line
+        // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
         return { status: 404, error: error, data: null };
@@ -39,7 +39,7 @@ export async function postRequest<T>(
         const response = await fetch(`${BACKEND_URL}${path}`, options);
         const data = await response.json();
         return { status: response.status, error: data.error ? data.error : '', data };
-    // eslint-disable-next-line
+        // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
         return { status: 404, error: error, data: null };
@@ -61,7 +61,7 @@ export async function putRequest<T>(
         const response = await fetch(`${BACKEND_URL}${path}`, options);
         const data = await response.json();
         return { status: response.status, error: data.error ? data.error : '', data };
-    // eslint-disable-next-line
+        // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
         return { status: 404, error: error, data: null };
@@ -80,7 +80,7 @@ export async function deleteRequest(
         const response = await fetch(`${BACKEND_URL}${path}`, options);
         const data = await response.json();
         return { status: response.status, error: data.error ? data.error : '', data };
-    // eslint-disable-next-line
+        // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
         return { status: 404, error: error, data: null };
