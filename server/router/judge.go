@@ -552,8 +552,15 @@ func JudgeSkip(ctx *gin.Context) {
 		return
 	}
 
+	// Get skipped project from database
+	skippedProject, err := database.FindProjectById(db, judge.Next)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding skipped project in database: " + err.Error()})
+		return
+	}
+
 	// Add skipped project to skipped database
-	err = database.InsertSkip(db, models.NewSkip(judge.Next, &judge.Id, skipReq.Reason))
+	err = database.InsertSkip(db, models.NewSkip(skippedProject, judge, skipReq.Reason))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting skip into database: " + err.Error()})
 		return
@@ -604,8 +611,15 @@ func JudgeFlag(ctx *gin.Context) {
 		return
 	}
 
+	// Get flagged project from database
+	flaggedProject, err := database.FindProjectById(db, judge.Next)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding flagged project in database: " + err.Error()})
+		return
+	}
+
 	// Add flagged project to flag database
-	err = database.InsertFlag(db, models.NewFlag(judge.Next, &judge.Id, skipReq.Reason))
+	err = database.InsertFlag(db, models.NewFlag(flaggedProject, judge, skipReq.Reason))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting flag into database: " + err.Error()})
 		return

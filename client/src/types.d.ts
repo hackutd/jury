@@ -87,3 +87,14 @@ interface JudgeIpo {
 interface ProjectCount {
     count: number;
 }
+
+interface Flag {
+    id: string;
+    judge_id: string;
+    project_id: string;
+    time: number;
+    project_name: string;
+    judge_name: string;
+    project_location: number;
+    reason: string;
+}

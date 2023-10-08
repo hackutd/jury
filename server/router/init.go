@@ -86,6 +86,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
 	adminRouter.PUT("/judge/:id", EditJudge)
 	defaultRouter.GET("/admin/started", IsClockPaused)
+	adminRouter.GET("/admin/flags", GetFlags)
 
 	// Serve frontend static files
 	router.Use(static.Serve("/static", static.LocalFile("./public/static", true)))

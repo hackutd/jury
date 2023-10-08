@@ -25,3 +25,17 @@ func FindAllSkips(db *mongo.Database) ([]*models.Skip, error) {
 	}
 	return skips, nil
 }
+
+// FindAllNotPresent returns all skips with the reason "Not Present"
+func FindAllNotPresent(db *mongo.Database) ([]*models.Skip, error) {
+	skips := make([]*models.Skip, 0)
+	cursor, err := db.Collection("skips").Find(context.Background(), gin.H{"reason": "Not Present"})
+	if err != nil {
+		return nil, err
+	}
+	err = cursor.All(context.Background(), &skips)
+	if err != nil {
+		return nil, err
+	}
+	return skips, nil
+}
