@@ -69,6 +69,10 @@ const JudgeLive = () => {
                 errorAlert(ipoRes.status);
                 return;
             }
+            if (!ipoRes.data?.initial) {
+                navigate('/judge/early');
+                return;
+            }
 
             // No project has been returned (all projects have been judged)
             if (!ipoRes.data?.project_id) {

@@ -404,11 +404,17 @@ func GetJudgeIPO(ctx *gin.Context) {
 	}
 
 	// Get the next project for the judge and update the judge/project seen in the database
+	// If no project, return initial as false
 	project, err := util.PickNextProject(db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 		return
 	}
+	if project == nil {
+		ctx.JSON(http.StatusOK, gin.H{"initial": false})
+		return
+	}
+
 	err = database.UpdateProjectSeen(db, project, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project seen: " + err.Error()})
@@ -546,9 +552,6 @@ func JudgeSkip(ctx *gin.Context) {
 		return
 	}
 
-	// Remove the last seen project
-	judge.SeenProjects = judge.SeenProjects[:len(judge.SeenProjects)-1]
-
 	// Add skipped project to skipped database
 	err = database.InsertSkip(db, models.NewSkip(judge.Next, &judge.Id, skipReq.Reason))
 	if err != nil {
@@ -563,6 +566,7 @@ func JudgeSkip(ctx *gin.Context) {
 		return
 	}
 	if newProject != nil {
+		// TODO: We should prob have a separate list for skipped projects so judges can go back
 		err = database.UpdateProjectSeen(db, newProject, judge)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project seen: " + err.Error()})
@@ -571,11 +575,13 @@ func JudgeSkip(ctx *gin.Context) {
 		judge.Next = &newProject.Id
 	} else {
 		judge.Next = nil
-		err = database.UpdateJudge(db, judge)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
-			return
-		}
+	}
+
+	// Update the judge in the DB
+	err = database.UpdateJudge(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
+		return
 	}
 
 	// Send OK
@@ -597,9 +603,6 @@ func JudgeFlag(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
-
-	// Remove the last seen project
-	judge.SeenProjects = judge.SeenProjects[:len(judge.SeenProjects)-1]
 
 	// Add flagged project to flag database
 	err = database.InsertFlag(db, models.NewFlag(judge.Next, &judge.Id, skipReq.Reason))
@@ -623,11 +626,13 @@ func JudgeFlag(ctx *gin.Context) {
 		judge.Next = &newProject.Id
 	} else {
 		judge.Next = nil
-		err = database.UpdateJudge(db, judge)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
-			return
-		}
+	}
+
+	// Update the judge in the DB
+	err = database.UpdateJudge(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
+		return
 	}
 
 	// Send OK

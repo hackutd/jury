@@ -12,8 +12,8 @@ const AddProjects = () => {
                     <AddProjectsStatsPanel />
                 <div className="mt-8 flex flex-col w-full space-y-8">
                     <NewProjectForm />
-                    <UploadCSVForm format="project" />
-                    <UploadCSVForm format="devpost" />
+                    <UploadCSVForm key={0} format="devpost" />
+                    <UploadCSVForm key={1} format="project" />
                 </div>
             </div>
         </>
