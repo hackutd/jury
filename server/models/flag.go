@@ -8,7 +8,7 @@ import (
 )
 
 type Flag struct {
-	Id        primitive.ObjectID  `json:"id" bson:"_id"`
+	Id        primitive.ObjectID  `json:"id" bson:"_id,omitempty"`
 	ProjectId *primitive.ObjectID `json:"projectId" bson:"projectId"`
 	JudgeId   *primitive.ObjectID `json:"judgeId" bson:"judgeId"`
 	Time      primitive.DateTime  `json:"time" bson:"time"`
@@ -17,10 +17,9 @@ type Flag struct {
 
 func NewFlag(projectId *primitive.ObjectID, judgeId *primitive.ObjectID, reason string) *Flag {
 	return &Flag{
-		Id:        primitive.NewObjectID(),
 		ProjectId: projectId,
 		JudgeId:   judgeId,
-		Time:      primitive.DateTime(time.Now().UnixNano()),
+		Time:      primitive.NewDateTimeFromTime(time.Now()),
 		Reason:    reason,
 	}
 }

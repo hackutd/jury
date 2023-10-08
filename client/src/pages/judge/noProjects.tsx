@@ -2,17 +2,20 @@ import Back from '../../components/Back';
 import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 
-const Done = () => {
+const NoProjects = () => {
     return (
         <>
             <JuryHeader withLogout />
             <Container className="px-2 justify-start">
                 <Back location="/judge" className="self-start" />
-                <h1 className="text-xl font-bold mb-4">You&apos;ve seen all the projects!</h1>
-                <p>Click &quot;Back&quot; to view all the projects you&apos;ve judged</p>
+                <h1 className='text-xl font-bold mb-4'>There are no projects to judge</h1>
+                <p>
+                    You&apos;re early! There seems to be no projects currently in the system to
+                    judge. Please let an organizer know if this is unexpected.
+                </p>
             </Container>
         </>
     );
 };
 
-export default Done;
+export default NoProjects;
