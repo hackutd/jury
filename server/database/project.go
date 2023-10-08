@@ -161,8 +161,8 @@ func UpdateProjectSeen(db *mongo.Database, project *models.Project, judge *model
 	defer session.EndSession(context.Background())
 
 	_, err = session.WithTransaction(context.Background(), func(ctx mongo.SessionContext) (interface{}, error) {
-		// Update the project's seen value
-		_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": project.Id}, gin.H{"$inc": gin.H{"seen": 1}})
+		// Update the project's seen value and de-prioritize it
+		_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": project.Id}, gin.H{"$inc": gin.H{"seen": 1}, "$set": gin.H{"prioritized": false}})
 		if err != nil {
 			return nil, err
 		}

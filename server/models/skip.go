@@ -8,19 +8,25 @@ import (
 )
 
 type Skip struct {
-	Id        primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
-	ProjectId *primitive.ObjectID `bson:"projectId" json:"projectId"`
-	JudgeId   *primitive.ObjectID `bson:"judgeId" json:"judgeId"`
-	Time      primitive.DateTime  `bson:"time" json:"time"`
-	Reason    string              `bson:"reason" json:"reason"`
+	Id              primitive.ObjectID  `json:"id" bson:"_id,omitempty"`
+	ProjectId       *primitive.ObjectID `json:"project_id" bson:"project_id"`
+	JudgeId         *primitive.ObjectID `json:"judge_id" bson:"judge_id"`
+	Time            primitive.DateTime  `json:"time" bson:"time"`
+	ProjectName     string              `json:"project_name" bson:"project_name"`
+	ProjectLocation int64               `json:"project_location" bson:"project_location"`
+	JudgeName       string              `json:"judge_name" bson:"judge_name"`
+	Reason          string              `json:"reason" bson:"reason"`
 }
 
-func NewSkip(projectId *primitive.ObjectID, judgeId *primitive.ObjectID, reason string) *Skip {
+func NewSkip(project *Project, judge *Judge, reason string) *Skip {
 	return &Skip{
-		ProjectId: projectId,
-		JudgeId:   judgeId,
-		Time:      primitive.NewDateTimeFromTime(time.Now()),
-		Reason:    reason,
+		ProjectId:       &project.Id,
+		JudgeId:         &judge.Id,
+		Time:            primitive.NewDateTimeFromTime(time.Now()),
+		ProjectName:     project.Name,
+		ProjectLocation: project.Location,
+		JudgeName:       judge.Name,
+		Reason:          reason,
 	}
 }
 

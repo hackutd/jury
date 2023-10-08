@@ -95,7 +95,13 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                 key={idx}
                 className={
                     'border-t-2 border-backgroundDark duration-150 ' +
-                    (checked ? 'bg-primary/20' : !project.active ? 'bg-lightest' : 'bg-background')
+                    (checked
+                        ? 'bg-primary/20'
+                        : !project.active
+                        ? 'bg-lightest'
+                        : project.prioritized
+                        ? 'bg-primary/30'
+                        : 'bg-background')
                 }
             >
                 <td className="px-2">

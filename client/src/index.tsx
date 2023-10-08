@@ -16,6 +16,7 @@ import Project from './pages/judge/project';
 import Done from './pages/judge/done';
 import Hidden from './pages/judge/hidden';
 import NoProjects from './pages/judge/noProjects';
+import NotStarted from './pages/judge/notStarted';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
     {
         path: '/judge/early',
         element: <NoProjects />,
+    },
+    {
+        path: '/judge/not-started',
+        element: <NotStarted />,
     },
     {
         path: '/judge/hidden',

@@ -162,3 +162,42 @@ func ResetDatabase(ctx *gin.Context) {
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
+
+func IsClockPaused(ctx *gin.Context) {
+	// Get the clock from the context
+	clock := ctx.MustGet("clock").(*models.ClockState)
+
+	// Send OK
+	if clock.Running {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
+}
+
+func GetFlags(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get all the flags
+	flags, err := database.FindAllFlags(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting flags: " + err.Error()})
+		return
+	}
+
+	// Get all skips that have the reason "Not Present"
+	skips, err := database.FindAllNotPresent(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting skips: " + err.Error()})
+		return
+	}
+
+	// Join two arrays
+	for _, skip := range skips {
+		flags = append(flags, models.SkipToFlag(skip))
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, flags)
+}
