@@ -162,3 +162,15 @@ func ResetDatabase(ctx *gin.Context) {
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
+
+func IsClockPaused(ctx *gin.Context) {
+	// Get the clock from the context
+	clock := ctx.MustGet("clock").(*models.ClockState)
+
+	// Send OK
+	if clock.Running {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
+}

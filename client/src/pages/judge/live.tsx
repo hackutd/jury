@@ -41,6 +41,18 @@ const JudgeLive = () => {
                 navigate('/judge/welcome');
             }
 
+            // Check to see if judging has started
+            const startedRes = await getRequest<OkResponse>('/admin/started', '');
+            if (startedRes.status !== 200) {
+                errorAlert(startedRes.status);
+                return;
+            }
+            if (startedRes.data?.ok !== 1) {
+                console.error(`Judging has not started!`);
+                navigate('/judge/not-started');
+                return;
+            }
+
             setVerified(true);
         }
 
@@ -55,7 +67,7 @@ const JudgeLive = () => {
             return;
         }
         const newJudge = judgeRes.data as Judge;
-        
+
         // If the judge is disabled, redirect to the disabled page
         if (!newJudge.active) {
             navigate('/judge/hidden');
