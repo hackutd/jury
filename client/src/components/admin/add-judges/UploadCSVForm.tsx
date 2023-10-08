@@ -105,7 +105,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                             onDragOver={(e) => e.preventDefault()}
                         >
                             <label
-                                htmlFor="dropzone-file"
+                                htmlFor={"dropzone-file-"+props.format}
                                 className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-sm cursor-pointer 
                                 ${
                                     error
@@ -125,7 +125,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                                     </p>
                                 </div>
                                 <input
-                                    id="dropzone-file"
+                                    id={"dropzone-file-"+props.format}
                                     type="file"
                                     className="hidden"
                                     onChange={(e) => {
@@ -134,6 +134,8 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                                             setFileName(e.target.files[0].name);
                                             setError(null);
                                             setMsg(null);
+                                            
+                                            console.log(props.format)
                                         }
                                     }}
                                 />

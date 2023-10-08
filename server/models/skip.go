@@ -8,19 +8,18 @@ import (
 )
 
 type Skip struct {
-	Id        primitive.ObjectID  `json:"id" bson:"_id"`
-	ProjectId *primitive.ObjectID `json:"projectId" bson:"projectId"`
-	JudgeId   *primitive.ObjectID `json:"judgeId" bson:"judgeId"`
-	Time      primitive.DateTime  `json:"time" bson:"time"`
-	Reason    string              `json:"reason" bson:"reason"`
+	Id        primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
+	ProjectId *primitive.ObjectID `bson:"projectId" json:"projectId"`
+	JudgeId   *primitive.ObjectID `bson:"judgeId" json:"judgeId"`
+	Time      primitive.DateTime  `bson:"time" json:"time"`
+	Reason    string              `bson:"reason" json:"reason"`
 }
 
 func NewSkip(projectId *primitive.ObjectID, judgeId *primitive.ObjectID, reason string) *Skip {
 	return &Skip{
-		Id:        primitive.NewObjectID(),
 		ProjectId: projectId,
 		JudgeId:   judgeId,
-		Time:      primitive.DateTime(time.Now().UnixNano()),
+		Time:      primitive.NewDateTimeFromTime(time.Now()),
 		Reason:    reason,
 	}
 }

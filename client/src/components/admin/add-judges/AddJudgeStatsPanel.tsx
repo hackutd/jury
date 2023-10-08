@@ -14,6 +14,9 @@ const AddJudgeStatsPanel = () => {
     useEffect(() => {
         const fetchStats = async () => {
             const res = await getRequest('/judge/stats', 'admin');
+            if (res.status === 500) {
+                return;
+            }
             if (res.status !== 200) {
                 errorAlert(res.status);
                 return;

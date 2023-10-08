@@ -14,6 +14,9 @@ const AddProjectsStatsPanel = () => {
     useEffect(() => {
         const fetchStats = async () => {
             const res = await getRequest('/project/stats', 'admin');
+            if (res.status === 500) {
+                return;
+            }
             if (res.status !== 200) {
                 errorAlert(res.status);
                 return;
