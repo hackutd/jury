@@ -1,12 +1,11 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 )
 
-var requiredEnvs = [...]string{"JURY_ADMIN_PASSWORD", "EMAIL_HOST", "EMAIL_HOST", "EMAIL_PORT", "EMAIL_FROM"}
+var requiredEnvs = [...]string{"JURY_ADMIN_PASSWORD", "EMAIL_FROM"}
 
 // Checks to see if all required environmental variables are defined
 func CheckEnv() {
@@ -29,7 +28,7 @@ func hasEnv(key string) bool {
 func GetEnv(key string) string {
 	val, ok := os.LookupEnv(key)
 	if !ok {
-		fmt.Fprintf(os.Stderr, "%s environmental variable not defined\n", key)
+		log.Fatalf("%s environmental variable not defined\n", key)
 		return ""
 	}
 	return val

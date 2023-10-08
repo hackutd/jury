@@ -8,7 +8,9 @@ services:
             - EMAIL_HOST=${EMAIL_HOST}
             - EMAIL_PORT=${EMAIL_PORT}
             - EMAIL_FROM=${EMAIL_FROM}
+            - EMAIL_FROM_NAME=${EMAIL_FROM_NAME}
             - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+            - SENDGRID_API_KEY=${SENDGRID_API_KEY}
             - REACT_APP_JURY_NAME=${JURY_NAME}
             - PORT=8000
         build:
