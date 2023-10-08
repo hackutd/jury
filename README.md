@@ -27,10 +27,6 @@ Click on "edit" next to "jury-service" and fill in the env as follows:
 - REACT_APP_JURY_NAME - Name of the app to display to the user (eg. HackUTD X Judging)
 - JURY_ADMIN_PASSWORD - Password for the admin portal (suggestion: use 2 random words)
 - MONGODB_URI - URI of MongoDB Atlas instance (see step 0)
-- EMAIL_HOST - SMTP email host (see below)
-- EMAIL_FROM - SMTP email sending from address (see below)
-- EMAIL_PASSWORD - SMTP email password (see below)
-- EMAIL_POST - 587
 
 ### Email hosting
 
@@ -39,10 +35,12 @@ If using Gmail SMTP:
 - EMAIL_FROM = gmail username
 - EMAIL_PASSWORD = google app password
 
-If using SendGrid SMTP:
-- EMAIL_HOST = smtp.sendgrid.com
-- EMAIL_FROM = sendgrid email sender
-- EMAIL_PASSWORD = sendgrid API key
+If using SendGrid:
+- SENDGRID_API_KEY = API key provided by SendGrid
+- EMAIL_FROM = email to send from
+- EMAIL_FROM_NAME = display name of sender
+
+**NOTE: Only set `SENDGRID_API_KEY` if using Sendgrid!!**
 
 ## 3. Info
 

@@ -20,7 +20,11 @@ spec:
       value: "587"
     - key: EMAIL_FROM
       scope: RUN_AND_BUILD_TIME
+    - key: EMAIL_FROM_NAME
+      scope: RUN_AND_BUILD_TIME
     - key: EMAIL_PASSWORD
+      scope: RUN_AND_BUILD_TIME
+    - key: SENDGRID_API_KEY
       scope: RUN_AND_BUILD_TIME
     git:
       branch: master
