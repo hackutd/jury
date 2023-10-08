@@ -12,7 +12,7 @@ type Options struct {
 func NewOptions() *Options {
 	return &Options{
 		Ref:          0,
-		NextTableNum: 0,
+		NextTableNum: 1,
 		Clock:        *NewClockState(),
 	}
 }
