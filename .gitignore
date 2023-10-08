@@ -4,3 +4,4 @@ target
 data
 .cargo
 .vscode
+server/tmp
