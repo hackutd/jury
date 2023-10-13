@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import './index.css';
 import Home from './pages/Home';
 import HomeHub from './components/home/HomeHub';
 import JudgeLogin from './pages/judge/login';
@@ -13,10 +12,8 @@ import AddJudges from './pages/admin/AddJudges';
 import JudgeWelcome from './pages/judge/welcome';
 import JudgeLive from './pages/judge/live';
 import Project from './pages/judge/project';
-import Done from './pages/judge/done';
-import Hidden from './pages/judge/hidden';
-import NoProjects from './pages/judge/noProjects';
-import NotStarted from './pages/judge/notStarted';
+
+import './index.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -44,22 +41,6 @@ const router = createBrowserRouter([
     {
         path: '/judge/project/:id',
         element: <Project />,
-    },
-    {
-        path: '/judge/done',
-        element: <Done />,
-    },
-    {
-        path: '/judge/early',
-        element: <NoProjects />,
-    },
-    {
-        path: '/judge/not-started',
-        element: <NotStarted />,
-    },
-    {
-        path: '/judge/hidden',
-        element: <Hidden />,
     },
     {
         path: '/admin/login',

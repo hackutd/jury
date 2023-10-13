@@ -8,12 +8,23 @@ import VotePopup from '../../components/judge/VotePopup';
 import Back from '../../components/Back';
 import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
+import data from '../../data.json';
+import JudgeInfoPage from '../../components/judge/info';
+
+const infoPages = ['paused', 'hidden', 'no-projects', 'done'];
+const infoData = [
+    data.judgeInfo.paused,
+    data.judgeInfo.hidden,
+    data.judgeInfo.noProjects,
+    data.judgeInfo.done,
+];
 
 const JudgeLive = () => {
     const navigate = useNavigate();
     const [verified, setVerified] = useState(false);
     const [judge, setJudge] = useState<Judge | null>(null);
     const [popup, setPopup] = useState<boolean>(false);
+    const [infoPage, setInfoPage] = useState<string>('');
     const [popupType, setPopupType] = useState<VotePopupState>('skip');
 
     useEffect(() => {
@@ -48,8 +59,8 @@ const JudgeLive = () => {
                 return;
             }
             if (startedRes.data?.ok !== 1) {
-                console.error(`Judging has not started!`);
-                navigate('/judge/not-started');
+                console.error(`Judging is paused!`);
+                setInfoPage('paused');
                 return;
             }
 
@@ -70,7 +81,7 @@ const JudgeLive = () => {
 
         // If the judge is disabled, redirect to the disabled page
         if (!newJudge.active) {
-            navigate('/judge/hidden');
+            setInfoPage('hidden');
             return;
         }
 
@@ -82,13 +93,13 @@ const JudgeLive = () => {
                 return;
             }
             if (!ipoRes.data?.initial) {
-                navigate('/judge/early');
+                setInfoPage('no-projects');
                 return;
             }
 
             // No project has been returned (all projects have been judged)
             if (!ipoRes.data?.project_id) {
-                navigate('/judge/done');
+                setInfoPage('done');
                 return;
             }
 
@@ -157,7 +168,7 @@ const JudgeLive = () => {
         getJudgeData();
     };
 
-    // Show loading screen
+    // Show loading screen if judge does not exist
     if (!judge) {
         return (
             <>
@@ -177,6 +188,17 @@ const JudgeLive = () => {
         setPopupType(pop);
         setPopup(true);
     };
+
+    // Display an error page if an error condition holds
+    const infoIndex = infoPages.indexOf(infoPage);
+    if (infoIndex !== -1) {
+        return (
+            <JudgeInfoPage
+                title={infoData[infoIndex].title}
+                description={infoData[infoIndex].description}
+            />
+        );
+    }
 
     return (
         <>
