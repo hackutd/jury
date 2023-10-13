@@ -8,15 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
 // UpdateJudgeLastActivity to the current time
-func UpdateJudgeLastActivity(db *mongo.Database, id *primitive.ObjectID) error {
+func UpdateJudgeLastActivity(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) error {
 	// Get current time
 	lastActivity := primitive.NewDateTimeFromTime(time.Now())
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
 	return err
 }
 
@@ -65,7 +63,7 @@ func UpdateJudge(db *mongo.Database, judge *models.Judge) error {
 		return err
 	}
 
-	err = UpdateJudgeLastActivity(db, &judge.Id)
+	err = UpdateJudgeLastActivity(db, context.Background(), &judge.Id)
 	return err
 }
 
@@ -76,7 +74,7 @@ func UpdateJudgeNext(db *mongo.Database, judge *models.Judge) error {
 		return err
 	}
 
-	err = UpdateJudgeLastActivity(db, &judge.Id)
+	err = UpdateJudgeLastActivity(db, context.Background(), &judge.Id)
 	return err
 }
 
@@ -145,16 +143,8 @@ func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
 
 // UpdateAfterVote updates the database after a judge votes using a transaction
 func UpdateAfterVote(db *mongo.Database, judge *models.Judge, winner *models.Project, loser *models.Project) error {
-	wc := writeconcern.Majority()
-	txnOptions := options.Transaction().SetWriteConcern(wc)
-
-	session, err := db.Client().StartSession()
-	if err != nil {
-		return err
-	}
-	defer session.EndSession(context.Background())
-
-	_, err = session.WithTransaction(context.Background(), func(ctx mongo.SessionContext) (interface{}, error) {
+	// Update the judge, winner, and loser documents
+	err := WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
 		// Update the judge
 		_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": judge})
 		if err != nil {
@@ -173,13 +163,14 @@ func UpdateAfterVote(db *mongo.Database, judge *models.Judge, winner *models.Pro
 			return nil, err
 		}
 
-		return nil, nil
-	}, txnOptions)
+		// Update the judge's last activity field
+		err = UpdateJudgeLastActivity(db, ctx, &judge.Id)
+		return nil, err
+	})
 	if err != nil {
 		return err
 	}
 
-	err = UpdateJudgeLastActivity(db, &judge.Id)
 	return err
 }
 
@@ -190,7 +181,7 @@ func UpdateJudgeStars(db *mongo.Database, judge *models.Judge) error {
 		return err
 	}
 
-	err = UpdateJudgeLastActivity(db, &judge.Id)
+	err = UpdateJudgeLastActivity(db, context.Background(), &judge.Id)
 	return err
 }
 
@@ -201,7 +192,7 @@ func SetJudgeHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) err
 		return err
 	}
 
-	err = UpdateJudgeLastActivity(db, id)
+	err = UpdateJudgeLastActivity(db, context.Background(), id)
 	return err
 }
 
@@ -212,6 +203,6 @@ func UpdateJudgeBasicInfo(db *mongo.Database, judgeId *primitive.ObjectID, addRe
 		return err
 	}
 
-	err = UpdateJudgeLastActivity(db, judgeId)
+	err = UpdateJudgeLastActivity(db, context.Background(), judgeId)
 	return err
 }

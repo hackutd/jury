@@ -87,7 +87,6 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 <td className="text-center">{judge.votes}</td>
                 <td className="text-center">{fixIfFloatDigits(judge.alpha, 5)}</td>
                 <td className="text-center">{fixIfFloatDigits(judge.beta, 5)}</td>
-                {/* TODO: What the fuck is this; just change the datatype to a long pls */}
                 <td className="text-center">{timeSince(judge.last_activity)}</td>
                 <td className="text-right font-bold flex align-center justify-end">
                     {popup && (

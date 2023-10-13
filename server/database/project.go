@@ -8,15 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 )
 
 // UpdateProjectLastActivity to the current time
-func UpdateProjectLastActivity(db *mongo.Database, id *primitive.ObjectID) error {
+func UpdateProjectLastActivity(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) error {
 	// Get current time
 	lastActivity := primitive.NewDateTimeFromTime(time.Now())
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
+	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
 	return err
 }
 
@@ -31,7 +29,7 @@ func InsertProjects(db *mongo.Database, projects []*models.Project) error {
 }
 
 // InsertProject inserts a project into the database
-func InsertProject(db *mongo.Database, project *models.Project) error {
+func InsertProject(db *mongo.Database, ctx context.Context, project *models.Project) error {
 	_, err := db.Collection("projects").InsertOne(context.Background(), project)
 	return err
 }
@@ -147,22 +145,11 @@ func FindProjectById(db *mongo.Database, id *primitive.ObjectID) (*models.Projec
 	return &project, nil
 }
 
-// TODO: Abstract transaction to a function wrapper
-
 // Update the seen value of the new project picked and the seen list of the judge that saw it
 func UpdateProjectSeen(db *mongo.Database, project *models.Project, judge *models.Judge) error {
-	wc := writeconcern.Majority()
-	txnOptions := options.Transaction().SetWriteConcern(wc)
-
-	session, err := db.Client().StartSession()
-	if err != nil {
-		return err
-	}
-	defer session.EndSession(context.Background())
-
-	_, err = session.WithTransaction(context.Background(), func(ctx mongo.SessionContext) (interface{}, error) {
+	err := WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
 		// Update the project's seen value and de-prioritize it
-		_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": project.Id}, gin.H{"$inc": gin.H{"seen": 1}, "$set": gin.H{"prioritized": false}})
+		_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": project.Id}, gin.H{"$inc": gin.H{"seen": 1}, "$set": gin.H{"prioritized": false}})
 		if err != nil {
 			return nil, err
 		}
@@ -171,15 +158,18 @@ func UpdateProjectSeen(db *mongo.Database, project *models.Project, judge *model
 		judge.SeenProjects = append(judge.SeenProjects, *models.JudgeProjectFromProject(project))
 
 		// Update the judge
-		_, err = db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
+		_, err = db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
+		if err != nil {
+			return nil, err
+		}
 
+		// Update the project's last_activity field
+		err = UpdateProjectLastActivity(db, ctx, &project.Id)
 		return nil, err
-	}, txnOptions)
+	})
 	if err != nil {
 		return err
 	}
-
-	err = UpdateProjectLastActivity(db, &project.Id)
 
 	return err
 }

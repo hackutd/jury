@@ -23,8 +23,8 @@ func GetOptions(db *mongo.Database) (*models.Options, error) {
 	return &options, err
 }
 
-func UpdateNextTableNum(db *mongo.Database, nextTableNum int64) error {
-	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"next_table_num": nextTableNum}})
+func UpdateNextTableNum(db *mongo.Database, ctx context.Context, nextTableNum int64) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"next_table_num": nextTableNum}})
 	return err
 }
 
