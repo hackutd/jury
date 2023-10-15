@@ -175,27 +175,16 @@ func IsClockPaused(ctx *gin.Context) {
 	}
 }
 
+// POST /admin/flags - GetFlags returns all flags
 func GetFlags(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get all the flags
-	flags, err := database.FindAllFlags(db)
+	flags, err := database.FindAllSkips(db, true)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting flags: " + err.Error()})
 		return
-	}
-
-	// Get all skips that have the reason "Not Present"
-	skips, err := database.FindAllNotPresent(db)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting skips: " + err.Error()})
-		return
-	}
-
-	// Join two arrays
-	for _, skip := range skips {
-		flags = append(flags, models.SkipToFlag(skip))
 	}
 
 	// Send OK

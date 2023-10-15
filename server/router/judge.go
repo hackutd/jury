@@ -559,8 +559,15 @@ func JudgeSkip(ctx *gin.Context) {
 		return
 	}
 
+	// Create a new skip object
+	skip, err := models.NewSkip(skippedProject, judge, skipReq.Reason)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error creating skip object: " + err.Error()})
+		return
+	}
+
 	// Add skipped project to skipped database
-	err = database.InsertSkip(db, models.NewSkip(skippedProject, judge, skipReq.Reason))
+	err = database.InsertSkip(db, skip)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting skip into database: " + err.Error()})
 		return
@@ -574,64 +581,6 @@ func JudgeSkip(ctx *gin.Context) {
 	}
 	if newProject != nil {
 		// TODO: We should prob have a separate list for skipped projects so judges can go back
-		err = database.UpdateProjectSeen(db, newProject, judge)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project seen: " + err.Error()})
-			return
-		}
-		judge.Next = &newProject.Id
-	} else {
-		judge.Next = nil
-	}
-
-	// Update the judge in the DB
-	err = database.UpdateJudge(db, judge)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// POST /judge/flag - Endpoint to flag a project
-func JudgeFlag(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the judge from the context
-	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Get the skip reason from the request
-	var skipReq SkipRequest
-	err := ctx.BindJSON(&skipReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
-		return
-	}
-
-	// Get flagged project from database
-	flaggedProject, err := database.FindProjectById(db, judge.Next)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding flagged project in database: " + err.Error()})
-		return
-	}
-
-	// Add flagged project to flag database
-	err = database.InsertFlag(db, models.NewFlag(flaggedProject, judge, skipReq.Reason))
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting flag into database: " + err.Error()})
-		return
-	}
-
-	// Get a new project for the judge
-	newProject, err := util.PickNextProject(db, judge)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
-		return
-	}
-	if newProject != nil {
 		err = database.UpdateProjectSeen(db, newProject, judge)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project seen: " + err.Error()})

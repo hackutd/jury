@@ -8,31 +8,24 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// InsertSkip inserts a skip object into the database
 func InsertSkip(db *mongo.Database, skip *models.Skip) error {
 	_, err := db.Collection("skips").InsertOne(context.Background(), skip)
 	return err
 }
 
-func FindAllSkips(db *mongo.Database) ([]*models.Skip, error) {
-	skips := make([]*models.Skip, 0)
-	cursor, err := db.Collection("skips").Find(context.Background(), gin.H{})
+// FindAllSkips returns all skip objects, or all flag objects
+func FindAllSkips(db *mongo.Database, flag bool) ([]*models.Skip, error) {
+	cond := gin.H{}
+	if flag {
+		cond["flag"] = true
+	}
+	cursor, err := db.Collection("skips").Find(context.Background(), cond)
 	if err != nil {
 		return nil, err
 	}
-	err = cursor.All(context.Background(), &skips)
-	if err != nil {
-		return nil, err
-	}
-	return skips, nil
-}
 
-// FindAllNotPresent returns all skips with the reason "Not Present"
-func FindAllNotPresent(db *mongo.Database) ([]*models.Skip, error) {
 	skips := make([]*models.Skip, 0)
-	cursor, err := db.Collection("skips").Find(context.Background(), gin.H{"reason": "Not Present"})
-	if err != nil {
-		return nil, err
-	}
 	err = cursor.All(context.Background(), &skips)
 	if err != nil {
 		return nil, err

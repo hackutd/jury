@@ -137,10 +137,10 @@ const JudgeLive = () => {
     const flag = async (choice: number) => {
         setJudge(null);
 
-        const options = ['Cannot Demo Project', 'Too Complex', 'Offensive'];
+        const options = ['cannot-demo', 'too-complex', 'offensive'];
 
         // Flag the current project
-        const flagRes = await postRequest<OkResponse>('/judge/flag', 'judge', {
+        const flagRes = await postRequest<OkResponse>('/judge/skip', 'judge', {
             reason: options[choice],
         });
         if (flagRes.status !== 200) {
@@ -154,7 +154,7 @@ const JudgeLive = () => {
     const skip = async (choice: number) => {
         setJudge(null);
 
-        const options = ['Not Present', 'Busy (Being Judged)'];
+        const options = ['absent', 'busy'];
 
         // Skip the current project
         const skipRes = await postRequest<OkResponse>('/judge/skip', 'judge', {
