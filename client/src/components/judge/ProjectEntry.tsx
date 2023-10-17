@@ -17,12 +17,16 @@ const ProjectEntry = (props: ProjectEntryProps) => {
 
     return (
         <>
-            <div className="cursor-pointer hover:bg-primary/10 duration-100" onClick={openProject}>
+            <div className="cursor-pointer hover:bg-primary/10 duration-100">
                 <div className="flex items-center justify-end">
-                    <h3 className="text-xl grow">{props.name}</h3>
-                    <StarDisplay stars={props.stars} id={props.id} />
+                    <h3 className="text-xl grow" onClick={openProject}>
+                        {props.name}
+                    </h3>
+                    <StarDisplay stars={props.stars} id={props.id} clickable />
                 </div>
-                <p className="text-light line-clamp-3">{props.description.replace('\\n', ' ')}</p>
+                <p className="text-light line-clamp-3" onClick={openProject}>
+                    {props.description.replace('\\n', ' ')}
+                </p>
             </div>
             <div className="h-[1px] w-full bg-light my-2"></div>
         </>
