@@ -104,19 +104,20 @@ func AddProject(ctx *gin.Context) {
 	// Create the project
 	project := models.NewProject(projectReq.Name, options.NextTableNum, projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
 
-	// TODO: Inserting project and updating options should be done in a transaction (but can be ignored for now bc it's unlikely to cause problems)
+	// Insert project and update the next table num field in options
+	err = database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
+		// Insert project
+		err := database.InsertProject(db, ctx, project)
+		if err != nil {
+			return nil, err
+		}
 
-	// Insert the project into the database
-	err = database.InsertProject(db, project)
+		// Update next table num in options doc
+		err = database.UpdateNextTableNum(db, ctx, options.NextTableNum+1)
+		return nil, err
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting project into database: " + err.Error()})
-		return
-	}
-
-	// Update the options
-	err = database.UpdateNextTableNum(db, options.NextTableNum+1)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating options in database: " + err.Error()})
 		return
 	}
 

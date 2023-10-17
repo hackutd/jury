@@ -1,0 +1,46 @@
+{
+    "judgeInfo": {
+        "done": {
+            "title": "You've seen all the projects!",
+            "description": "Click 'Back' to view all the projects you've judged."
+        },
+        "hidden": {
+            "title": "Your judging account is currently disabled",
+            "description": "Please contact an organizer to enable your account to continue judging."
+        },
+        "paused": {
+            "title": "Judging Paused",
+            "description": "Judging either has not started or is paused. If you think this is an error, please let an event organizer know."
+        },
+        "noProjects": {
+            "title": "There are no projects to judge",
+            "description": "You're early! There seems to be no projects currently in the system to judge. Please let an organizer know if this is unexpected."
+        }
+    },
+    "flags": {
+        "cannot-demo": {
+            "text": "Cannot Demo Project",
+            "subtext": "Team cannot prove they made the project"
+        },
+
+        "too-complex": {
+            "text": "Too Complex",
+            "subtext": "Appears too complex to be made in hackathon"
+        },
+
+        "offensive": {
+            "text": "Offensive Project",
+            "subtext": "Offensive or breaks Code of Conduct"
+        }
+    },
+    "skips": {
+        "absent": {
+            "text": "Not Present",
+            "subtext": "Group is not present for judging"
+        },
+        "busy": {
+            "text": "Busy (Being Judged)",
+            "subtext": "Group is busy with another judge"
+        }
+    }
+}

@@ -9,11 +9,11 @@ interface StarProps {
     clickable: boolean;
     num: number;
     project_id: string;
-    update: React.Dispatch<React.SetStateAction<number>>
+    update: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const Star = (props: StarProps) => {
-    const handleClick = async () => {
+    const handleClick: React.MouseEventHandler<HTMLDivElement> = async (e) => {
         if (!props.clickable) return;
 
         // Update star count based on the star # clicked
@@ -22,10 +22,10 @@ const Star = (props: StarProps) => {
             project_id: props.project_id,
         });
         if (res.status !== 200) {
-            errorAlert(res.status)
+            errorAlert(res.status);
             return;
         }
-        
+
         // Update star count
         props.update(props.num);
     };
