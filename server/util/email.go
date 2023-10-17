@@ -22,6 +22,7 @@ func SendJudgeEmail(judge *models.Judge, hostname string) error {
 
 	// Sender info
 	from := config.GetEnv("EMAIL_FROM")
+	username := config.GetEnv("EMAIL_USERNAME")
 	password := config.GetEnv("EMAIL_PASSWORD")
 
 	// Receiver info
@@ -34,7 +35,7 @@ func SendJudgeEmail(judge *models.Judge, hostname string) error {
 	smtpPort := config.GetEnv("EMAIL_PORT")
 
 	// Auth
-	auth := smtp.PlainAuth("jury", from, password, smtpHost)
+	auth := smtp.PlainAuth("jury", username, password, smtpHost)
 
 	// Other info
 	appName := config.GetEnv("REACT_APP_JURY_NAME")

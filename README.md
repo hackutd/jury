@@ -33,12 +33,19 @@ Click on "edit" next to "jury-service" and fill in the env as follows:
 If using Gmail SMTP:
 - EMAIL_HOST = smtp.gmail.com
 - EMAIL_FROM = gmail username
+- EMAIL_USERNAME = gmail username
 - EMAIL_PASSWORD = google app password
 
 If using SendGrid:
 - SENDGRID_API_KEY = API key provided by SendGrid
 - EMAIL_FROM = email to send from
 - EMAIL_FROM_NAME = display name of sender
+
+If using [AWS SES](https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html):
+- EMAIL_HOST = email-smtp.<region>.amazonaws.com
+- EMAIL_FROM = verified email to send from
+- EMAIL_USERNAME = SES SMTP username
+- EMAIL_PASSWORD = SES SMTP password
 
 **NOTE: Only set `SENDGRID_API_KEY` if using Sendgrid!!**
 
