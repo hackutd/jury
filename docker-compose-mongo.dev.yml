@@ -44,6 +44,7 @@ services:
             - EMAIL_HOST=${EMAIL_HOST}
             - EMAIL_PORT=${EMAIL_PORT}
             - EMAIL_FROM=${EMAIL_FROM}
+            - EMAIL_USERNAME=${EMAIL_USERNAME}
             - EMAIL_PASSWORD=${EMAIL_PASSWORD}
             - REACT_APP_JURY_NAME=${JURY_NAME}
             - PORT=8000

@@ -24,6 +24,8 @@ spec:
       scope: RUN_AND_BUILD_TIME
     - key: EMAIL_PASSWORD
       scope: RUN_AND_BUILD_TIME
+    - key: EMAIL_USERNAME
+      scope: RUN_AND_BUILD_TIME
     - key: SENDGRID_API_KEY
       scope: RUN_AND_BUILD_TIME
     git:
