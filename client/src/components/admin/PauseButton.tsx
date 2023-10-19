@@ -23,7 +23,7 @@ const PauseButton = ({ paused, setPaused, clock }: PauseButtonProps) => {
         // Send pause/unpause request to server
         const res = await postRequest(`/admin/clock/${pause ? 'pause' : 'unpause'}`, 'admin', null);
         if (res.status !== 200) {
-            errorAlert(res.status);
+            errorAlert(res);
             return;
         }
         

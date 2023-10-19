@@ -21,7 +21,7 @@ const ProjectDisplay = (props: ProjectDisplayProps) => {
             
             const projRes = await getRequest<Project>(`/project/${props.projectId}`, 'judge');
             if (projRes.status !== 200) {
-                errorAlert(projRes.status);
+                errorAlert(projRes);
                 return;
             }
 

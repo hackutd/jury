@@ -67,7 +67,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
             alert(`Project ${project.active ? 'hidden' : 'un-hidden'} successfully!`);
             fetchProjects();
         } else {
-            errorAlert(res.status);
+            errorAlert(res);
         }
     };
 
@@ -85,7 +85,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
             );
             fetchProjects();
         } else {
-            errorAlert(res.status);
+            errorAlert(res);
         }
     };
 

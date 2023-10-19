@@ -20,7 +20,7 @@ const NewJudgeForm = () => {
         
         const res = await postRequest('/judge/new', 'admin', data);
         if (res.status !== 200) {
-            errorAlert(res.status);
+            errorAlert(res);
             return;
         }
         

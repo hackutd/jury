@@ -29,7 +29,7 @@ const NewProjectForm = () => {
             return;
         }
         if (res.status !== 200) {
-            errorAlert(res.status);
+            errorAlert(res);
             setIsSubmitting(false);
             return;
         }

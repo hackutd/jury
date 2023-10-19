@@ -30,7 +30,7 @@ const EditJudgePopup = ({ judge, close }: EditJudgePopupProps) => {
 
         const res = await putRequest(`/judge/${judge.id}`, 'admin', data);
         if (res.status !== 200) {
-            errorAlert(res.status);
+            errorAlert(res);
             return;
         }
 

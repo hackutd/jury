@@ -60,7 +60,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
             alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
             fetchJudges();
         } else {
-            errorAlert(res.status);
+            errorAlert(res);
         }
     };
 

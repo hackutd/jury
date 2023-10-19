@@ -62,7 +62,7 @@ const AdminLogin = () => {
 
         // Internal server error
         if (res.status !== 200) {
-            errorAlert(res.status);
+            errorAlert(res);
 
             setError(true);
             setLoginLock(false);

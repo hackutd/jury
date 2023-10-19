@@ -22,7 +22,7 @@ const Star = (props: StarProps) => {
             project_id: props.project_id,
         });
         if (res.status !== 200) {
-            errorAlert(res.status);
+            errorAlert(res);
             return;
         }
 

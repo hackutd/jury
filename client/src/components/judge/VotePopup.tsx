@@ -49,7 +49,7 @@ const VotePopup = (props: VotePopupProps) => {
             // Gets the project info
             const piRes = await getRequest<VotingProjectInfo>('/judge/vote/info', 'judge');
             if (piRes.status !== 200) {
-                errorAlert(piRes.status);
+                errorAlert(piRes);
                 return;
             }
             setProjectInfo(piRes.data as VotingProjectInfo);

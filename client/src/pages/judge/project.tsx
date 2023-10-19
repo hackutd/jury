@@ -16,7 +16,7 @@ const Project = () => {
         async function fetchData() {
             const projRes = await getRequest<JudgedProject>(`/judge/project/${id}`, 'judge');
             if (projRes.status !== 200) {
-                errorAlert(projRes.status);
+                errorAlert(projRes);
                 return;
             }
             const proj = projRes.data as JudgedProject;

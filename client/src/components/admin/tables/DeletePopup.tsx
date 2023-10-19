@@ -29,7 +29,7 @@ const DeletePopup = ({ element, close }: DeletePopupProps) => {
             isProject(element) ? fetchProjects() : fetchJudges();
             alert(`${resource} deleted successfully!`);
         } else {
-            errorAlert(res.status);
+            errorAlert(res);
         }
 
         close(false);

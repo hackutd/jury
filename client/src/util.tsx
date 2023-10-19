@@ -44,11 +44,10 @@ function fixIfFloatDigits(n: number, d: number): string {
     return n.toFixed(d);
 }
 
-function errorAlert(status: number) {
-    alert(
-        `Unable to connect to server (Error ${status}). Please check your connection or reload the page.`
-    );
-    console.error(`Could not connect to server: error ${status}`);
+function errorAlert<T>(res: FetchResponse<T>) {
+    const err = `Error sending request to server (Status ${res.status}): ${res.error}`;
+    alert(err);
+    console.error(err);
 }
 
 export { timeSince, arrow, fixIfFloat, fixIfFloatDigits, errorAlert };

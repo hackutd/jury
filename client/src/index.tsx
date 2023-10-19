@@ -14,6 +14,7 @@ import JudgeLive from './pages/judge/live';
 import Project from './pages/judge/project';
 
 import './index.css';
+import AdminSettings from './pages/admin/settings';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
         path: '/admin/add-judges',
         element: <AddJudges />,
     },
+    {
+        path: '/admin/settings',
+        element: <AdminSettings />,
+    }
 ]);
 
 root.render(

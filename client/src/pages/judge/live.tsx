@@ -32,7 +32,7 @@ const JudgeLive = () => {
             // Check to see if the user is logged in
             const loggedInRes = await postRequest<OkResponse>('/judge/auth', 'judge', null);
             if (loggedInRes.status !== 200) {
-                errorAlert(loggedInRes.status);
+                errorAlert(loggedInRes);
                 return;
             }
             if (loggedInRes.data?.ok !== 1) {
@@ -44,7 +44,7 @@ const JudgeLive = () => {
             // Check for read welcome
             const readWelcomeRes = await getRequest<OkResponse>('/judge/welcome', 'judge');
             if (readWelcomeRes.status !== 200) {
-                errorAlert(readWelcomeRes.status);
+                errorAlert(readWelcomeRes);
                 return;
             }
             const readWelcome = readWelcomeRes.data?.ok === 1;
@@ -55,7 +55,7 @@ const JudgeLive = () => {
             // Check to see if judging has started
             const startedRes = await getRequest<OkResponse>('/admin/started', '');
             if (startedRes.status !== 200) {
-                errorAlert(startedRes.status);
+                errorAlert(startedRes);
                 return;
             }
             if (startedRes.data?.ok !== 1) {
@@ -74,7 +74,7 @@ const JudgeLive = () => {
     async function getJudgeData() {
         const judgeRes = await getRequest<Judge>('/judge', 'judge');
         if (judgeRes.status !== 200) {
-            errorAlert(judgeRes.status);
+            errorAlert(judgeRes);
             return;
         }
         const newJudge = judgeRes.data as Judge;
@@ -89,7 +89,7 @@ const JudgeLive = () => {
         if (!newJudge.prev && !newJudge.next) {
             const ipoRes = await postRequest<JudgeIpo>('/judge/ipo', 'judge', null);
             if (ipoRes.status !== 200) {
-                errorAlert(ipoRes.status);
+                errorAlert(ipoRes);
                 return;
             }
             if (!ipoRes.data?.initial) {
@@ -127,7 +127,7 @@ const JudgeLive = () => {
             curr_winner: choice === 0,
         });
         if (voteRes.status !== 200) {
-            errorAlert(voteRes.status);
+            errorAlert(voteRes);
             return;
         }
 
@@ -144,7 +144,7 @@ const JudgeLive = () => {
             reason: options[choice],
         });
         if (flagRes.status !== 200) {
-            errorAlert(flagRes.status);
+            errorAlert(flagRes);
             return;
         }
 
@@ -161,7 +161,7 @@ const JudgeLive = () => {
             reason: options[choice],
         });
         if (skipRes.status !== 200) {
-            errorAlert(skipRes.status);
+            errorAlert(skipRes);
             return;
         }
 

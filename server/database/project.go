@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // UpdateProjectLastActivity to the current time
@@ -188,5 +189,17 @@ func SetProjectHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) e
 // SetProjectPrioritized sets the prioritized field of a project
 func SetProjectPrioritized(db *mongo.Database, id *primitive.ObjectID, prioritized bool) error {
 	_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"prioritized": prioritized}})
+	return err
+}
+
+// UpdateProjects will update ALL projects in the database
+func UpdateProjects(db *mongo.Database, projects []*models.Project) error {
+	models := make([]mongo.WriteModel, 0, len(projects))
+	for _, project := range projects {
+		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": project.Id}).SetUpdate(gin.H{"$set": project}))
+	}
+
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := db.Collection("projects").BulkWrite(context.Background(), models, opts)
 	return err
 }
