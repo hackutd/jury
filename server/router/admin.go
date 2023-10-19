@@ -6,6 +6,7 @@ import (
 	"server/config"
 	"server/database"
 	"server/models"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -214,6 +215,7 @@ type SetGroupsRequest struct {
 	RawGroups string `json:"raw_groups"`
 }
 
+// POST /admin/options - SetOptions sets the options object
 func SetGroups(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -250,6 +252,17 @@ func SetGroups(ctx *gin.Context) {
 		}
 
 		groups = append(groups, *models.NewGroup(start, end))
+	}
+
+	// Sort groups by start time
+	sort.Sort(models.ByStartTime(groups))
+
+	// Check for overlapping groups
+	for i := 0; i < len(groups)-1; i++ {
+		if groups[i].End >= groups[i+1].Start {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("error: group (%d, %d) overlaps with previous group(s)", groups[i+1].Start, groups[i+1].End)})
+			return
+		}
 	}
 
 	// Get the options

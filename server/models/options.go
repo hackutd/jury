@@ -30,3 +30,10 @@ func NewGroup(start int, end int) *Group {
 		End:   int64(end),
 	}
 }
+
+// Type to sort groups by start time
+type ByStartTime []Group
+
+func (a ByStartTime) Len() int           { return len(a) }
+func (a ByStartTime) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByStartTime) Less(i, j int) bool { return a[i].Start < a[j].Start }
