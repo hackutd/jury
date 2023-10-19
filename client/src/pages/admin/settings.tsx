@@ -24,7 +24,7 @@ const AdminSettings = () => {
         // Create groupings
         const groupStr = res.data?.groups?.map((g) => `${g.start} ${g.end}`).join('\n');
         setGroups(groupStr || '');
-        
+
         setLoading(false);
     }
 
@@ -82,7 +82,9 @@ const AdminSettings = () => {
                 <p className="text-light">
                     Check this box to use table groupings. This will force judges to stay in a
                     grouping for 3 rounds before moving on. This ideally should decrease the
-                    distance judges will have to walk, if groups are defined correctly.
+                    distance judges will have to walk, if groups are defined correctly. Note that
+                    group sizes <span className="font-bold">must be greater than 3</span> otherwise
+                    the groupings will be ignored.
                 </p>
                 <Checkbox
                     checked={groupChecked}

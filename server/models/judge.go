@@ -10,21 +10,23 @@ import (
 )
 
 type Judge struct {
-	Id           primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
-	Token        string              `bson:"token" json:"token"`
-	Code         string              `bson:"code" json:"code"`
-	Name         string              `bson:"name" json:"name"`
-	Email        string              `bson:"email" json:"email"`
-	Active       bool                `bson:"active" json:"active"`
-	ReadWelcome  bool                `bson:"read_welcome" json:"read_welcome"`
-	Notes        string              `bson:"notes" json:"notes"`
-	Votes        int64               `bson:"votes" json:"votes"`
-	Next         *primitive.ObjectID `bson:"next" json:"next"`
-	Prev         *primitive.ObjectID `bson:"prev" json:"prev"`
-	Alpha        float64             `bson:"alpha" json:"alpha"`
-	Beta         float64             `bson:"beta" json:"beta"`
-	SeenProjects []JudgedProject     `bson:"seen_projects" json:"seen_projects"`
-	LastActivity primitive.DateTime  `bson:"last_activity" json:"last_activity"`
+	Id                primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
+	Token             string              `bson:"token" json:"token"`
+	Code              string              `bson:"code" json:"code"`
+	Name              string              `bson:"name" json:"name"`
+	Email             string              `bson:"email" json:"email"`
+	Active            bool                `bson:"active" json:"active"`
+	ReadWelcome       bool                `bson:"read_welcome" json:"read_welcome"`
+	Notes             string              `bson:"notes" json:"notes"`
+	Votes             int64               `bson:"votes" json:"votes"`
+	Next              *primitive.ObjectID `bson:"next" json:"next"`
+	Prev              *primitive.ObjectID `bson:"prev" json:"prev"`
+	Alpha             float64             `bson:"alpha" json:"alpha"`
+	Beta              float64             `bson:"beta" json:"beta"`
+	SeenProjects      []JudgedProject     `bson:"seen_projects" json:"seen_projects"`
+	VisitedGroups     []int64             `bson:"visited_groups" json:"visited_groups"`
+	CurrentGroupCount int64               `bson:"current_group_count" json:"current_group_count"`
+	LastActivity      primitive.DateTime  `bson:"last_activity" json:"last_activity"`
 }
 
 type JudgedProject struct {
@@ -36,20 +38,22 @@ type JudgedProject struct {
 
 func NewJudge(name string, email string, notes string) *Judge {
 	return &Judge{
-		Token:        "",
-		Code:         fmt.Sprintf("%d", rand.Intn(900000)+100000), // Generates a num between 100000 and 999999
-		Name:         name,
-		Email:        email,
-		Active:       true,
-		ReadWelcome:  false,
-		Notes:        notes,
-		Votes:        0,
-		Next:         nil,
-		Prev:         nil,
-		Alpha:        crowdbt.ALPHA_PRIOR,
-		Beta:         crowdbt.BETA_PRIOR,
-		SeenProjects: []JudgedProject{},
-		LastActivity: primitive.DateTime(0),
+		Token:             "",
+		Code:              fmt.Sprintf("%d", rand.Intn(900000)+100000), // Generates a num between 100000 and 999999
+		Name:              name,
+		Email:             email,
+		Active:            true,
+		ReadWelcome:       false,
+		Notes:             notes,
+		Votes:             0,
+		Next:              nil,
+		Prev:              nil,
+		Alpha:             crowdbt.ALPHA_PRIOR,
+		Beta:              crowdbt.BETA_PRIOR,
+		SeenProjects:      []JudgedProject{},
+		VisitedGroups:     []int64{},
+		CurrentGroupCount: 0,
+		LastActivity:      primitive.DateTime(0),
 	}
 }
 

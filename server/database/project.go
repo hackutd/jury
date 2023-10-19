@@ -159,7 +159,7 @@ func UpdateProjectSeen(db *mongo.Database, project *models.Project, judge *model
 		judge.SeenProjects = append(judge.SeenProjects, *models.JudgeProjectFromProject(project))
 
 		// Update the judge
-		_, err = db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
+		_, err = db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects, "current_group_count": judge.CurrentGroupCount, "visited_groups": judge.VisitedGroups}})
 		if err != nil {
 			return nil, err
 		}

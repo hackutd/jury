@@ -106,7 +106,7 @@ const JudgeLive = () => {
             newJudge.next = ipoRes.data?.project_id as string;
         } else if (!newJudge.next) {
             // If the judge only has a "prev" project, that means they've gone through all projects
-            navigate('/judge/done');
+            setInfoPage('done');
         }
 
         console.log(newJudge);
