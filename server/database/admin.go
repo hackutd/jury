@@ -67,3 +67,9 @@ func DropAll(db *mongo.Database) error {
 
 	return nil
 }
+
+func UpdateOptions(db *mongo.Database, options *models.Options) error {
+	// Update the options
+	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": options})
+	return err
+}

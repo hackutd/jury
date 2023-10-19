@@ -2,12 +2,6 @@ import Cookies from 'universal-cookie';
 
 const BACKEND_URL = process.env.REACT_APP_JURY_URL;
 
-interface FetchResponse<T> {
-    status: number;
-    error: string;
-    data: T | null;
-}
-
 export async function getRequest<T>(path: string, auth: string): Promise<FetchResponse<T>> {
     try {
         const options: RequestInit = {

@@ -104,15 +104,15 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 			videoLink = record[4]
 		}
 
-		// Add judge to slice
-		projects = append(projects, models.NewProject(record[0], options.NextTableNum, record[1], record[2], tryLink, videoLink, challengeList))
-
 		// Increment the table number
-		options.NextTableNum++
+		database.GetNextTableNum(options)
+
+		// Add project to slice
+		projects = append(projects, models.NewProject(record[0], options.CurrTableNum, record[1], record[2], tryLink, videoLink, challengeList))
 	}
 
 	// Update the options table number in the database
-	err = database.UpdateNextTableNum(db, context.Background(), options.NextTableNum)
+	err = database.UpdateCurrTableNum(db, context.Background(), options.CurrTableNum)
 	if err != nil {
 		return nil, err
 	}
@@ -184,23 +184,23 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 			challengeList[i] = strings.TrimSpace(challengeList[i])
 		}
 
+		// Increment table number
+		database.GetNextTableNum(options)
+
 		// Add project to slice
 		projects = append(projects, models.NewProject(
 			record[0],
-			options.NextTableNum,
+			options.CurrTableNum,
 			record[6],
 			record[1],
 			record[7],
 			record[8],
 			challengeList,
 		))
-
-		// Increment the table number
-		options.NextTableNum++
 	}
 
 	// Update the options table number in the database
-	err = database.UpdateNextTableNum(db, context.Background(), options.NextTableNum)
+	err = database.UpdateCurrTableNum(db, context.Background(), options.CurrTableNum)
 	if err != nil {
 		return nil, err
 	}

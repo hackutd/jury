@@ -98,3 +98,21 @@ interface Flag {
     project_location: number;
     reason: string;
 }
+
+interface Options {
+    curr_table_num: number;
+    clock: ClockState;
+    groups: Group[];
+    use_groups: boolean;
+}
+
+interface Group {
+    start: number;
+    end: number;
+}
+
+interface FetchResponse<T> {
+    status: number;
+    error: string;
+    data: T | null;
+}

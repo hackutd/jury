@@ -91,7 +91,7 @@ const JudgeLogin = () => {
         // Internal server error
         console.log(res.status)
         if (res.status !== 200) {
-            errorAlert(res.status);
+            errorAlert(res);
 
             setError(true);
             setLoginLock(false);

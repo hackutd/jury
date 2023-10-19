@@ -16,7 +16,7 @@ const FlagsPopup = ({ close }: FlagsPopupProps) => {
         async function getFlags() {
             const res = await getRequest<Flag[]>('/admin/flags', 'admin');
             if (res.status !== 200) {
-                errorAlert(res.status);
+                errorAlert(res);
             }
             setFlags(res.data as Flag[]);
         }

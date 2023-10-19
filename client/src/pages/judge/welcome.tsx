@@ -20,7 +20,7 @@ const JudgeWelcome = () => {
             // Check to see if the user is logged in
             const loggedInRes = await postRequest<OkResponse>('/judge/auth', 'judge', null);
             if (loggedInRes.status !== 200) {
-                errorAlert(loggedInRes.status);
+                errorAlert(loggedInRes);
                 return;
             }
             if (loggedInRes.data?.ok !== 1) {
@@ -32,7 +32,7 @@ const JudgeWelcome = () => {
             // Get the name & email of the user from the server
             const judgeRes = await getRequest<Judge>('/judge', 'judge');
             if (judgeRes.status !== 200) {
-                errorAlert(judgeRes.status);
+                errorAlert(judgeRes);
                 return;
             }
             setJudge(judgeRes.data as Judge);
@@ -53,7 +53,7 @@ const JudgeWelcome = () => {
         // POST to server to mark that the user has read the welcome message
         const readWelcomeRes = await postRequest<OkResponse>('/judge/welcome', 'judge', null);
         if (readWelcomeRes.status !== 200) {
-            errorAlert(readWelcomeRes.status);
+            errorAlert(readWelcomeRes);
             return;
         }
 

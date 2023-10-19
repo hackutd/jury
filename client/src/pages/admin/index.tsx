@@ -8,6 +8,7 @@ import Loading from '../../components/Loading';
 import { postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import { useNavigate } from 'react-router-dom';
+import Button from '../../components/Button';
 
 const Admin = () => {
     const navigate = useNavigate();
@@ -28,7 +29,7 @@ const Admin = () => {
                 return;
             }
 
-            errorAlert(loggedInRes.status);
+            errorAlert(loggedInRes);
         }
 
         checkLoggedIn();
@@ -40,6 +41,13 @@ const Admin = () => {
     return (
         <>
             <JuryHeader withLogout isAdmin />
+            <Button
+                type="outline"
+                onClick={() => {
+                    navigate('/admin/settings');
+                }}
+                className="fixed top-6 left-[16rem] w-40 md:w-52 text-lg py-2 px-1 hover:scale-100 focus:scale-100 rounded-md font-bold"
+            >Settings</Button>
             <AdminStatsPanel />
             <AdminToggleSwitch state={showProjects} setState={setShowProjects} />
             <AdminToolbar showProjects={showProjects} />

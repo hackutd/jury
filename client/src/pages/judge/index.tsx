@@ -27,7 +27,7 @@ const Judge = () => {
                 return;
             }
             if (loggedInRes.status !== 200) {
-                errorAlert(loggedInRes.status);
+                errorAlert(loggedInRes);
                 return;
             }
             if (loggedInRes.data?.ok !== 1) {
@@ -39,7 +39,7 @@ const Judge = () => {
             // Check for read welcome
             const readWelcomeRes = await getRequest<OkResponse>('/judge/welcome', 'judge');
             if (readWelcomeRes.status !== 200) {
-                errorAlert(readWelcomeRes.status);
+                errorAlert(readWelcomeRes);
                 return;
             }
             const readWelcome = readWelcomeRes.data?.ok === 1;
@@ -50,7 +50,7 @@ const Judge = () => {
             // Get the name & email of the user from the server
             const judgeRes = await getRequest<Judge>('/judge', 'judge');
             if (judgeRes.status !== 200) {
-                errorAlert(judgeRes.status);
+                errorAlert(judgeRes);
                 return;
             }
             const judge: Judge = judgeRes.data as Judge;
@@ -59,7 +59,7 @@ const Judge = () => {
             // Get the project count
             const projCountRes = await getRequest<ProjectCount>('/project/count', 'judge');
             if (projCountRes.status !== 200) {
-                errorAlert(projCountRes.status);
+                errorAlert(projCountRes);
                 return;
             }
             setProjCount(projCountRes.data?.count as number);
@@ -74,7 +74,7 @@ const Judge = () => {
         async function getProjects() {
             const projRes = await getRequest<JudgedProject[]>('/judge/projects', 'judge');
             if (projRes.status !== 200) {
-                errorAlert(projRes.status);
+                errorAlert(projRes);
                 return;
             }
             const newProjects = projRes.data as JudgedProject[];

@@ -18,7 +18,7 @@ const AddProjectsStatsPanel = () => {
                 return;
             }
             if (res.status !== 200) {
-                errorAlert(res.status);
+                errorAlert(res);
                 return;
             }
             setStats(res.data as ProjectStats);
