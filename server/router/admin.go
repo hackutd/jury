@@ -6,6 +6,7 @@ import (
 	"server/config"
 	"server/database"
 	"server/models"
+	"server/util"
 	"sort"
 	"strconv"
 	"strings"
@@ -284,4 +285,42 @@ func SetGroups(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /admin/export/judges - ExportJudges exports all judges to a CSV
+func ExportJudges(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get all the judges
+	judges, err := database.FindAllJudges(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
+		return
+	}
+
+	// Create the CSV
+	csvData := util.CreateJudgeCSV(judges)
+
+	// Send CSV
+	util.AddCsvData("judges", csvData, ctx)
+}
+
+// POST /admin/export/projects - ExportProjects exports all projects to a CSV
+func ExportProjects(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get all the projects
+	projects, err := database.FindAllProjects(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
+		return
+	}
+
+	// Create the CSV
+	csvData := util.CreateProjectCSV(projects)
+
+	// Send CSV
+	util.AddCsvData("projects", csvData, ctx)
 }
