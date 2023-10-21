@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getRequest, postRequest } from '../../api';
+import { createHeaders, getRequest, postRequest } from '../../api';
 import Button from '../../components/Button';
 import JuryHeader from '../../components/JuryHeader';
 import { errorAlert } from '../../util';
@@ -55,6 +55,27 @@ const AdminSettings = () => {
 
         alert('Groups updated!');
         getOptions();
+    };
+
+    const exportData = async (type: string) => {
+        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/export/${type}`, {
+            method: 'GET',
+            headers: createHeaders('admin', false),
+        });
+
+        if (res.status !== 200) {
+            alert('Error exporting data: ' + res.statusText);
+            return;
+        }
+        
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.setAttribute('download', `${type}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
     };
 
     return (
@@ -114,6 +135,29 @@ const AdminSettings = () => {
                 >
                     Update Groupings
                 </Button>
+                <h2 className="text-xl mt-4">Export Data</h2>
+                <h3 className="text-lg font-bold">Export Collections</h3>
+                <p className="text-light">Export each collection individually as a CSV download.</p>
+                <div className="flex">
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            exportData('judges');
+                        }}
+                        className="mt-4 w-auto md:w-auto px-4 py-2 mr-4"
+                    >
+                        Export Judges
+                    </Button>
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            exportData('projects');
+                        }}
+                        className="mt-4 w-auto md:w-auto px-4 py-2"
+                    >
+                        Export Projects
+                    </Button>
+                </div>
             </div>
             <Popup
                 enabled={reassignPopup}
