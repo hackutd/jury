@@ -11,11 +11,9 @@ services:
             - MONGO_INITDB_DATABASE=jury
             - MONGO_REPLICA_SET_NAME=rs0
         ports:
-            - 127.0.0.1:27107:27017
+            - 27017:27017
         volumes:
             - './data:/data/db'
-            - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
-            - ./init-mongo-dummy.js:/docker-entrypoint-initdb.d/init-mongo-dummy.js
         networks:
             - jury-dev-network
 
@@ -44,8 +42,10 @@ services:
             - EMAIL_HOST=${EMAIL_HOST}
             - EMAIL_PORT=${EMAIL_PORT}
             - EMAIL_FROM=${EMAIL_FROM}
+            - EMAIL_FROM_NAME=${EMAIL_FROM_NAME}
             - EMAIL_USERNAME=${EMAIL_USERNAME}
             - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+            - SENDGRID_API_KEY=${SENDGRID_API_KEY}
             - REACT_APP_JURY_NAME=${JURY_NAME}
             - PORT=8000
         build:
@@ -64,7 +64,7 @@ services:
         container_name: jury-dev-frontend
         environment:
             - REACT_APP_JURY_NAME=${JURY_NAME}
-            - REACT_APP_JURY_URL=http://localhost:${PORT:-8000}:8000/api
+            - REACT_APP_JURY_URL=http://localhost:${PORT:-8000}/api
             - REACT_APP_HUB=${HEHE:-}
         build:
             context: './'
