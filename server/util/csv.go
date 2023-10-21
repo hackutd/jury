@@ -1,14 +1,17 @@
 package util
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
+	"net/http"
 	"server/database"
 	"server/models"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -206,4 +209,52 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 	}
 
 	return projects, nil
+}
+
+func AddCsvData(name string, content []byte, ctx *gin.Context) {
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.csv", name))
+	ctx.Header("Content-Type", "text/csv")
+	ctx.Data(http.StatusOK, "text/csv", content)
+}
+
+// Create a CSV file from a list of judges
+func CreateJudgeCSV(judges []*models.Judge) []byte {
+	csvBuffer := &bytes.Buffer{}
+
+	// Create a new CSV writer
+	w := csv.NewWriter(csvBuffer)
+
+	// Write the header
+	w.Write([]string{"Name", "Email", "Notes", "Code", "Active", "ReadWelcome", "Notes", "Alpha", "Beta", "LastActivity"})
+
+	// Write each judge
+	for _, judge := range judges {
+		w.Write([]string{judge.Name, judge.Email, judge.Notes, judge.Code, fmt.Sprintf("%t", judge.Active), fmt.Sprintf("%t", judge.ReadWelcome), judge.Notes, fmt.Sprintf("%f", judge.Alpha), fmt.Sprintf("%f", judge.Beta), fmt.Sprintf("%d", judge.LastActivity)})
+	}
+
+	// Flush the writer
+	w.Flush()
+
+	return csvBuffer.Bytes()
+}
+
+// Create a CSV file from a list of projects
+func CreateProjectCSV(projects []*models.Project) []byte {
+	csvBuffer := &bytes.Buffer{}
+
+	// Create a new CSV writer
+	w := csv.NewWriter(csvBuffer)
+
+	// Write the header
+	w.Write([]string{"Name", "Table", "Description", "URL", "TryLink", "VideoLink", "ChallengeList", "Mu", "SigmaSq", "Active", "LastActivity"})
+
+	// Write each project
+	for _, project := range projects {
+		w.Write([]string{project.Name, fmt.Sprintf("Table %d", project.Location), project.Description, project.Url, project.TryLink, project.VideoLink, strings.Join(project.ChallengeList, ","), fmt.Sprintf("%f", project.Mu), fmt.Sprintf("%f", project.SigmaSq), fmt.Sprintf("%t", project.Active), fmt.Sprintf("%d", project.LastActivity)})
+	}
+
+	// Flush the writer
+	w.Flush()
+
+	return csvBuffer.Bytes()
 }
