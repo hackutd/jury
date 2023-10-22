@@ -81,7 +81,7 @@ const AdminStatsPanel = () => {
                 className={'basis-1/5' + (paused ? ' text-error' : '')}
             />
             <div className="flex justify-evenly basis-2/5">
-                <AdminStat name="Average Mu" value={stats.avg_mu} />
+                <AdminStat name="Highest Mu" value={stats.max_mu} />
                 <AdminStat name="Average Sigma^2" value={stats.avg_sigma} />
                 <AdminStat name="Judges" value={stats.judges} />
             </div>

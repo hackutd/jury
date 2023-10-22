@@ -16,7 +16,7 @@ const useAdminStore = create<AdminStore>()((set) => ({
         projects: 0,
         seen: 0,
         votes: 0,
-        avg_mu: 0,
+        max_mu: 0,
         avg_sigma: 0,
         judges: 0,
     },

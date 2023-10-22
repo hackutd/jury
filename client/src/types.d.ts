@@ -32,7 +32,7 @@ interface Stats {
     projects: number;
     seen: number;
     votes: number;
-    avg_mu: number;
+    max_mu: number;
     avg_sigma: number;
     judges: number;
 }

@@ -31,8 +31,8 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 			"avgSeen": gin.H{
 				"$avg": "$seen",
 			},
-			"avgMu": gin.H{
-				"$avg": "$mu",
+			"maxMu": gin.H{
+				"$max": "$mu",
 			},
 			"avgSigma": gin.H{
 				"$avg": "$sigma_sq",
