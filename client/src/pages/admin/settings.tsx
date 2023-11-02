@@ -11,6 +11,7 @@ const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
     const [groupChecked, setGroupChecked] = useState(false);
     const [groups, setGroups] = useState('');
+    const [judgingTimer, setJudgingTimer] = useState('');
     const [loading, setLoading] = useState(true);
 
     async function getOptions() {
@@ -24,6 +25,15 @@ const AdminSettings = () => {
         // Create groupings
         const groupStr = res.data?.groups?.map((g) => `${g.start} ${g.end}`).join('\n');
         setGroups(groupStr || '');
+
+        // Calculate judging timer MM:SS
+        const timer = res.data?.judging_timer;
+        if (timer) {
+            const minutes = Math.floor(timer / 60);
+            const seconds = timer % 60;
+            const timerStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            setJudgingTimer(timerStr);
+        }
 
         setLoading(false);
     }
@@ -57,6 +67,31 @@ const AdminSettings = () => {
         getOptions();
     };
 
+    const updateTimer = async () => {
+        // Convert judging timer to time
+        const [minutes, seconds] = judgingTimer.split(':');
+        const timer = parseInt(minutes) * 60 + parseInt(seconds);
+        if (isNaN(timer)) {
+            alert('Invalid timer format!');
+            return;
+        }
+        if (timer <= 0) {
+            alert('Timer must be greater than 0!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/timer', 'admin', {
+            judging_timer: timer,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+        
+        alert('Timer updated!');
+        getOptions();
+    };
+
     const exportData = async (type: string) => {
         const res = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/export/${type}`, {
             method: 'GET',
@@ -67,7 +102,7 @@ const AdminSettings = () => {
             alert('Error exporting data: ' + res.statusText);
             return;
         }
-        
+
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -84,8 +119,30 @@ const AdminSettings = () => {
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
                 {/* TODO: Add other settings */}
-                <h2 className="text-xl mt-4">Project Numbers</h2>
-                <h3 className="text-lg font-bold">Reassign Project Numbers</h3>
+                <h2 className="text-4xl mt-8 mb-2 text-primary">Judging Timer</h2>
+                <h3 className="text-xl font-bold">Set Judging Timer</h3>
+                <p className="text-light">
+                    Set how long judges have to view each project. This will reflect on the timer
+                    that shows on the judging page.
+                </p>
+                <input
+                    className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
+                    type="string"
+                    placeholder="MM:SS"
+                    value={judgingTimer}
+                    onChange={(e) => {
+                        setJudgingTimer(e.target.value);
+                    }}
+                />
+                <Button
+                    type="primary"
+                    onClick={updateTimer}
+                    className="mt-4 w-auto md:w-auto px-4 py-2"
+                >
+                    Update Timer
+                </Button>
+                <h2 className="text-4xl mt-8 mb-2 text-primary">Project Numbers</h2>
+                <h3 className="text-xl font-bold">Reassign Project Numbers</h3>
                 <p className="text-light">
                     Reassign all table numbers to the projects. This will keep the relative order
                     but reassign the table numbers starting from the first project.
@@ -99,7 +156,7 @@ const AdminSettings = () => {
                 >
                     Reassign
                 </Button>
-                <h3 className="text-lg font-bold mt-4">Table Groupings</h3>
+                <h3 className="text-xl font-bold mt-4">Table Groupings</h3>
                 <p className="text-light">
                     Check this box to use table groupings. This will force judges to stay in a
                     grouping for 3 rounds before moving on. This ideally should decrease the
@@ -135,7 +192,7 @@ const AdminSettings = () => {
                 >
                     Update Groupings
                 </Button>
-                <h2 className="text-xl mt-4">Export Data</h2>
+                <h2 className="text-4xl mt-8 mb-2 text-primary">Export Data</h2>
                 <h3 className="text-lg font-bold">Export Collections</h3>
                 <p className="text-light">Export each collection individually as a CSV download.</p>
                 <div className="flex">

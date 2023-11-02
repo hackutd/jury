@@ -324,3 +324,54 @@ func ExportProjects(ctx *gin.Context) {
 	// Send CSV
 	util.AddCsvData("projects", csvData, ctx)
 }
+
+func GetJudgingTimer(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the options
+	options, err := database.GetOptions(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"judging_timer": options.JudgingTimer})
+}
+
+type SetJudgingTimerRequest struct {
+	JudgingTimer int64 `json:"judging_timer"`
+}
+
+func SetJudgingTimer(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get request
+	var req SetJudgingTimerRequest
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Get the options
+	options, err := database.GetOptions(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	options.JudgingTimer = req.JudgingTimer
+
+	// Save the options in the database
+	err = database.UpdateOptions(db, options)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}

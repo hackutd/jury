@@ -91,6 +91,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/groups", SetGroups)
 	adminRouter.GET("/admin/export/judges", ExportJudges)
 	adminRouter.GET("/admin/export/projects", ExportProjects)
+	judgeRouter.GET("/admin/timer", GetJudgingTimer)
+	adminRouter.POST("/admin/timer", SetJudgingTimer)
 
 	// Serve frontend static files
 	router.Use(static.Serve("/static", static.LocalFile("./public/static", true)))

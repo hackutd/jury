@@ -104,6 +104,7 @@ interface Options {
     clock: ClockState;
     groups: Group[];
     use_groups: boolean;
+    judging_timer: number;
 }
 
 interface Group {
@@ -115,4 +116,8 @@ interface FetchResponse<T> {
     status: number;
     error: string;
     data: T | null;
+}
+
+interface Timer {
+    judging_timer: number;
 }
