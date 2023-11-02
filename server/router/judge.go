@@ -50,6 +50,12 @@ func AddJudge(ctx *gin.Context) {
 	// Get hostname from request
 	hostname := util.GetFullHostname(ctx)
 
+	// Make sure email is right
+	if !util.CheckEmail(judge.Email) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
+		return
+	}
+
 	// Send email to judge
 	err = util.SendJudgeEmail(judge, hostname)
 	if err != nil {
@@ -162,6 +168,14 @@ func AddJudgesCsv(ctx *gin.Context) {
 
 	// Get hostname from request
 	hostname := util.GetFullHostname(ctx)
+
+	// Check all judge emails
+	for _, judge := range judges {
+		if !util.CheckEmail(judge.Email) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email: " + judge.Email})
+			return
+		}
+	}
 
 	// Send emails to all judges
 	for _, judge := range judges {
