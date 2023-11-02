@@ -325,6 +325,30 @@ func ExportProjects(ctx *gin.Context) {
 	util.AddCsvData("projects", csvData, ctx)
 }
 
+// POST /admin/export/challenges - ExportProjectsByChallenge exports all projects to a zip file, with CSVs each
+// containing projects that only belong to a single challenge
+func ExportProjectsByChallenge(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get all the projects
+	projects, err := database.FindAllProjects(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
+		return
+	}
+
+	// Create the zip file
+	zipData, err := util.CreateProjectChallengeZip(projects)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error creating zip file: " + err.Error()})
+		return
+	}
+
+	// Send zip file
+	util.AddZipFile("projects", zipData, ctx)
+}
+
 func GetJudgingTimer(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)

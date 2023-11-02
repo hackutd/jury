@@ -92,7 +92,7 @@ const AdminSettings = () => {
         getOptions();
     };
 
-    const exportData = async (type: string) => {
+    const exportCsv = async (type: string) => {
         const res = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/export/${type}`, {
             method: 'GET',
             headers: createHeaders('admin', false),
@@ -103,11 +103,28 @@ const AdminSettings = () => {
             return;
         }
 
-        const blob = await res.blob();
+        saveToFile(await res.blob() as Blob, type, 'csv');
+    };
+    
+    const exportByChallenge = async () => {
+        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/export/challenges`, {
+            method: 'GET',
+            headers: createHeaders('admin', false),
+        });
+
+        if (res.status !== 200) {
+            alert('Error exporting data: ' + res.statusText);
+            return;
+        }
+
+        saveToFile(await res.blob() as Blob, 'challenge-projects', 'zip');
+    };
+    
+    const saveToFile = (blob: Blob, name: string, ext: string) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.setAttribute('download', `${type}.csv`);
+        a.setAttribute('download', `${name}.${ext}`);
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -199,7 +216,7 @@ const AdminSettings = () => {
                     <Button
                         type="primary"
                         onClick={() => {
-                            exportData('judges');
+                            exportCsv('judges');
                         }}
                         className="mt-4 w-auto md:w-auto px-4 py-2 mr-4"
                     >
@@ -208,11 +225,18 @@ const AdminSettings = () => {
                     <Button
                         type="primary"
                         onClick={() => {
-                            exportData('projects');
+                            exportCsv('projects');
                         }}
-                        className="mt-4 w-auto md:w-auto px-4 py-2"
+                        className="mt-4 w-auto md:w-auto px-4 py-2 mr-4"
                     >
                         Export Projects
+                    </Button>
+                    <Button
+                        type="primary"
+                        onClick={exportByChallenge}
+                        className="mt-4 w-auto md:w-auto px-4 py-2"
+                    >
+                        Export by Challenges
                     </Button>
                 </div>
             </div>
