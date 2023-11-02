@@ -10,6 +10,9 @@ import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import data from '../../data.json';
 import JudgeInfoPage from '../../components/judge/info';
+import alarm from '../../assets/alarm.mp3';
+import InfoPopup from '../../components/InfoPopup';
+import { twMerge } from 'tailwind-merge';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done'];
 const infoData = [
@@ -19,6 +22,8 @@ const infoData = [
     data.judgeInfo.done,
 ];
 
+const audio = new Audio(alarm);
+
 const JudgeLive = () => {
     const navigate = useNavigate();
     const [verified, setVerified] = useState(false);
@@ -26,6 +31,15 @@ const JudgeLive = () => {
     const [popup, setPopup] = useState<boolean>(false);
     const [infoPage, setInfoPage] = useState<string>('');
     const [popupType, setPopupType] = useState<VotePopupState>('skip');
+    const [started, setStarted] = useState(false);
+    const [time, setTime] = useState(0);
+    const [timerStart, setTimerStart] = useState(0);
+    const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+    const [timerDisplay, setTimerDisplay] = useState('');
+    const [timesUp, setTimesUp] = useState(false);
+    const [stopAudio, setStopAudio] = useState(false);
+    const [audioPopupOpen, setAudioPopupOpen] = useState(false);
+    const [paused, setPaused] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
@@ -109,7 +123,6 @@ const JudgeLive = () => {
             setInfoPage('done');
         }
 
-        console.log(newJudge);
         setJudge(newJudge);
     }
 
@@ -118,6 +131,78 @@ const JudgeLive = () => {
 
         getJudgeData();
     }, [verified]);
+
+    useEffect(() => {
+        if (timerStart === 0 || time === 0) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            const elapsed = Date.now() - timerStart;
+            const remaining = time - elapsed;
+
+            if (remaining <= 0) {
+                clearInterval(timerInterval as NodeJS.Timeout);
+                setTimesUp(true);
+                return;
+            }
+
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            setTimerDisplay(
+                `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+            );
+        }, 100);
+        setTimerInterval(interval);
+        setStarted(true);
+
+        return () => {
+            if (timerInterval) clearInterval(timerInterval);
+        };
+    }, [timerStart]);
+
+    useEffect(() => {
+        if (!timesUp) return;
+
+        // Show popup
+        setAudioPopupOpen(true);
+
+        // Play sound
+        setStopAudio(false);
+        audioLoop();
+    }, [timesUp]);
+
+    // When popup closed, stop audio
+    useEffect(() => {
+        if (!audioPopupOpen) noAudio();
+    }, [audioPopupOpen]);
+
+    const audioLoop = () => {
+        audio.play();
+        audio.addEventListener('ended', () => {
+            audio.currentTime = 0;
+            console.log('Audio is done!');
+            if (stopAudio) return;
+            audioLoop();
+        });
+    };
+
+    const noAudio = () => {
+        audio.pause();
+        audio.currentTime = 0;
+        setStopAudio(true);
+    };
+    
+    const pauseTimer = () => {
+        clearInterval(timerInterval as NodeJS.Timeout);
+        
+        // Calculate remaining time
+        const elapsed = Date.now() - timerStart;
+        const remaining = time - elapsed;
+        setTime(remaining);
+
+        setPaused(true);
+    }
 
     const judgeVote = async (choice: number) => {
         setJudge(null);
@@ -131,6 +216,7 @@ const JudgeLive = () => {
             return;
         }
 
+        resetTimer();
         getJudgeData();
     };
 
@@ -148,6 +234,7 @@ const JudgeLive = () => {
             return;
         }
 
+        resetTimer();
         getJudgeData();
     };
 
@@ -165,6 +252,7 @@ const JudgeLive = () => {
             return;
         }
 
+        resetTimer();
         getJudgeData();
     };
 
@@ -188,6 +276,37 @@ const JudgeLive = () => {
         setPopupType(pop);
         setPopup(true);
     };
+    
+    const resetTimer = () => {
+        clearInterval(timerInterval as NodeJS.Timeout);
+        setTime(0);
+        setTimerStart(0);
+        setTimerInterval(null);
+        setTimerDisplay('');
+        setTimesUp(false);
+        setStarted(false);
+        setPaused(false);
+    }
+
+    // Start the judging timer
+    const startJudging = async () => {
+        // Get judging timer
+        const timerRes = await getRequest<Timer>('/admin/timer', 'judge');
+        if (timerRes.status !== 200) {
+            errorAlert(timerRes);
+            return;
+        }
+
+        // Start the timer client-side
+        const newTime = timerRes.data?.judging_timer as number;
+        const minutes = Math.floor(newTime / 60);
+        const seconds = Math.floor(newTime % 60);
+        setTime(newTime * 1000);
+        setTimerStart(Date.now());
+        setTimerDisplay(
+            `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+        );
+    };
 
     // Display an error page if an error condition holds
     const infoIndex = infoPages.indexOf(infoPage);
@@ -204,37 +323,67 @@ const JudgeLive = () => {
         <>
             <JuryHeader withLogout />
             <Container noCenter className="px-2 pb-4">
-                <div className="flex items-center my-2 mx-1">
-                    <Button
-                        type="primary"
-                        className="bg-error mx-2 py-1 text-xl rounded-xl basis-2/5"
-                        disabled={judge === null}
-                        onClick={() => {
-                            openPopup('flag');
-                        }}
-                    >
-                        Flag
-                    </Button>
-                    <Button
-                        type="primary"
-                        className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black"
-                        disabled={judge === null}
-                        onClick={() => {
-                            openPopup('skip');
-                        }}
-                    >
-                        Skip
-                    </Button>
-                    <Button
-                        type="primary"
-                        className="mx-2 py-1 text-xl rounded-xl"
-                        disabled={judge === null}
-                        onClick={() => {
-                            openPopup('vote');
-                        }}
-                    >
-                        Done
-                    </Button>
+                <div className="p-2">
+                    {!started ? (
+                        <Button
+                            type="primary"
+                            className="py-8 text-5xl rounded-xl"
+                            full
+                            onClick={startJudging}
+                        >
+                            Start Judging
+                        </Button>
+                    ) : (
+                        <div
+                            className={twMerge(
+                                'py-5 text-6xl rounded-xl w-full border-primary border-4 border-solid text-center cursor-pointer ',
+                                timesUp ? 'border-error bg-error/20' : '',
+                                paused ? 'bg-lighter/20' : ''
+                            )}
+                            onClick={() => {
+                                if (paused) {
+                                    setTimerStart(Date.now());
+                                    setPaused(false);
+                                    return;
+                                }
+                                pauseTimer();
+                            }}
+                        >
+                            {timerDisplay}
+                        </div>
+                    )}
+                    <div className="flex items-center mt-4">
+                        <Button
+                            type="primary"
+                            className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark"
+                            disabled={judge === null || !started}
+                            onClick={() => {
+                                openPopup('flag');
+                            }}
+                        >
+                            Flag
+                        </Button>
+                        <Button
+                            type="primary"
+                            className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter"
+                            disabled={judge === null || !started}
+                            onClick={() => {
+                                openPopup('skip');
+                            }}
+                        >
+                            Skip
+                        </Button>
+                        <Button
+                            type="primary"
+                            className="ml-2 py-1 text-xl rounded-xl"
+                            disabled={judge === null || !started}
+                            onClick={() => {
+                                openPopup('vote');
+                            }}
+                        >
+                            Done
+                        </Button>
+                    </div>
                 </div>
                 <Back location="/judge" />
                 {judge.next && <ProjectDisplay projectId={judge.next} />}
@@ -254,6 +403,14 @@ const JudgeLive = () => {
                     voteFunc={judgeVote}
                     skipFunc={skip}
                 />
+                <InfoPopup
+                    enabled={audioPopupOpen}
+                    setEnabled={setAudioPopupOpen}
+                    title="Time is Up!"
+                    submitText="Close"
+                >
+                    Please remind the participant that they should be done with their presentation.
+                </InfoPopup>
             </Container>
         </>
     );

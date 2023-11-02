@@ -12,6 +12,12 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+// CheckEmail checks to see if the email is valid
+func CheckEmail(email string) bool {
+	_, err := mail.ParseEmail(email)
+	return err == nil
+}
+
 // SendJudgeEmail sends an email to the judge with their code
 func SendJudgeEmail(judge *models.Judge, hostname string) error {
 	// If sendgrid API key exists, send email with sendgrid

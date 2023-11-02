@@ -1,6 +1,7 @@
 package util
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/csv"
@@ -217,6 +218,12 @@ func AddCsvData(name string, content []byte, ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "text/csv", content)
 }
 
+func AddZipFile(name string, content []byte, ctx *gin.Context) {
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.zip", name))
+	ctx.Header("Content-Type", "application/octet-stream")
+	ctx.Data(http.StatusOK, "application/octet-stream", content)
+}
+
 // Create a CSV file from a list of judges
 func CreateJudgeCSV(judges []*models.Judge) []byte {
 	csvBuffer := &bytes.Buffer{}
@@ -257,4 +264,68 @@ func CreateProjectCSV(projects []*models.Project) []byte {
 	w.Flush()
 
 	return csvBuffer.Bytes()
+}
+
+func CreateProjectChallengeZip(projects []*models.Project) ([]byte, error) {
+	csvList := [][]byte{}
+
+	// Get list of challenges
+	challengeList := []string{}
+	for _, project := range projects {
+		for _, challenge := range project.ChallengeList {
+			if !contains(challengeList, challenge) {
+				challengeList = append(challengeList, challenge)
+			}
+		}
+	}
+
+	// Create a CSV for each challenge
+	for _, challenge := range challengeList {
+		currChallengeProjects := []*models.Project{}
+		for _, project := range projects {
+			if contains(project.ChallengeList, challenge) {
+				currChallengeProjects = append(currChallengeProjects, project)
+			}
+		}
+
+		// Create CSV for the challenge
+		csv := CreateProjectCSV(currChallengeProjects)
+		csvList = append(csvList, csv)
+	}
+
+	// Create buffer for zip file
+	zipBuffer := &bytes.Buffer{}
+
+	// Create a new zip writer
+	w := zip.NewWriter(zipBuffer)
+
+	// Write each CSV to the zip file
+	for i, csv := range csvList {
+		f, err := w.Create(fmt.Sprintf("%s.csv", challengeList[i]))
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = f.Write(csv)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Close the zip writer
+	err := w.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return zipBuffer.Bytes(), nil
+}
+
+func contains(list []string, str string) bool {
+	for _, s := range list {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }

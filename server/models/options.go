@@ -8,6 +8,7 @@ type Options struct {
 	CurrTableNum int64              `bson:"curr_table_num" json:"curr_table_num"`
 	Clock        ClockState         `bson:"clock" json:"clock"`
 	Groups       []Group            `bson:"groups" json:"groups"`
+	JudgingTimer int64              `bson:"judging_timer" json:"judging_timer"`
 	UseGroups    bool               `bson:"use_groups" json:"use_groups"`
 }
 
@@ -20,6 +21,7 @@ func NewOptions() *Options {
 	return &Options{
 		Ref:          0,
 		CurrTableNum: 0,
+		JudgingTimer: 300,
 		Clock:        *NewClockState(),
 	}
 }
