@@ -15,8 +15,8 @@ type ProjectStats struct {
 type Stats struct {
 	Projects int64   `json:"projects"`
 	Judges   int64   `json:"judges"`
-	Seen     int64   `json:"seen"`
-	Votes    int64   `json:"votes"`
+	AvgVotes float64 `json:"avg_votes"`
+	AvgSeen  float64 `json:"avg_seen"`
 	MaxMu    float64 `json:"max_mu"`
 	AvgSigma float64 `json:"avg_sigma"`
 }

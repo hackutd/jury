@@ -14,8 +14,8 @@ interface AdminStore {
 const useAdminStore = create<AdminStore>()((set) => ({
     stats: {
         projects: 0,
-        seen: 0,
-        votes: 0,
+        avg_seen: 0,
+        avg_votes: 0,
         max_mu: 0,
         avg_sigma: 0,
         judges: 0,
