@@ -73,7 +73,7 @@ const JudgeLive = () => {
                 return;
             }
             if (startedRes.data?.ok !== 1) {
-                console.error(`Judging is paused!`);
+                setVerified(true);
                 setInfoPage('paused');
                 return;
             }
@@ -128,7 +128,8 @@ const JudgeLive = () => {
 
     useEffect(() => {
         if (!verified) return;
-
+        if (infoPage === 'paused') return;
+        
         getJudgeData();
     }, [verified]);
 
@@ -256,6 +257,17 @@ const JudgeLive = () => {
         getJudgeData();
     };
 
+    // Display an error page if an error condition holds
+    const infoIndex = infoPages.indexOf(infoPage);
+    if (infoIndex !== -1) {
+        return (
+            <JudgeInfoPage
+                title={infoData[infoIndex].title}
+                description={infoData[infoIndex].description}
+            />
+        );
+    }
+
     // Show loading screen if judge does not exist
     if (!judge) {
         return (
@@ -307,17 +319,6 @@ const JudgeLive = () => {
             `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
         );
     };
-
-    // Display an error page if an error condition holds
-    const infoIndex = infoPages.indexOf(infoPage);
-    if (infoIndex !== -1) {
-        return (
-            <JudgeInfoPage
-                title={infoData[infoIndex].title}
-                description={infoData[infoIndex].description}
-            />
-        );
-    }
 
     return (
         <>
@@ -386,12 +387,12 @@ const JudgeLive = () => {
                     </div>
                 </div>
                 <Back location="/judge" />
-                {judge.next && <ProjectDisplay projectId={judge.next} />}
+                {judge.next && <ProjectDisplay judge={judge} projectId={judge.next} />}
                 {judge.prev && (
                     <>
                         <div className="my-6 h-[0.5px] shrink-0 w-full bg-light"></div>
                         <h3 className="font-bold text-light px-2 mb-1">Previous Project</h3>
-                        <ProjectDisplay projectId={judge.prev} />
+                        <ProjectDisplay judge={judge} projectId={judge.prev} />
                     </>
                 )}
                 <VotePopup

@@ -13,7 +13,7 @@ interface StarProps {
 }
 
 const Star = (props: StarProps) => {
-    const handleClick: React.MouseEventHandler<HTMLDivElement> = async (e) => {
+    const handleClick: React.MouseEventHandler<HTMLDivElement> = async () => {
         if (!props.clickable) return;
 
         // Update star count based on the star # clicked
