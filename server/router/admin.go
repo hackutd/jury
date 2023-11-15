@@ -141,7 +141,7 @@ func ResetClock(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"clock": clock})
+	ctx.JSON(http.StatusOK, gin.H{"clock": clock, "ok": 1})
 }
 
 // POST /admin/auth - Checks if an admin is authenticated

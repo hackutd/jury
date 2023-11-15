@@ -7,8 +7,20 @@ import Popup from '../../components/Popup';
 import Checkbox from '../../components/Checkbox';
 import Loading from '../../components/Loading';
 
+// Text components
+const Section = ({ children: c }: { children: React.ReactNode }) => (
+    <h2 className="text-4xl mt-8 mb-2 text-primary">{c}</h2>
+);
+const SubSection = ({ children: c }: { children: React.ReactNode }) => (
+    <h3 className="text-xl font-bold">{c}</h3>
+);
+const Description = ({ children: c }: { children: React.ReactNode }) => (
+    <p className="text-light">{c}</p>
+);
+
 const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
+    const [clockResetPopup, setClockResetPopup] = useState(false);
     const [groupChecked, setGroupChecked] = useState(false);
     const [groups, setGroups] = useState('');
     const [judgingTimer, setJudgingTimer] = useState('');
@@ -87,9 +99,20 @@ const AdminSettings = () => {
             errorAlert(res);
             return;
         }
-        
+
         alert('Timer updated!');
         getOptions();
+    };
+
+    const resetClock = async () => {
+        const res = await postRequest<OkResponse>('/admin/clock/reset', 'admin', null);
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Clock reset!');
+        setClockResetPopup(false);
     };
 
     const exportCsv = async (type: string) => {
@@ -103,9 +126,9 @@ const AdminSettings = () => {
             return;
         }
 
-        saveToFile(await res.blob() as Blob, type, 'csv');
+        saveToFile((await res.blob()) as Blob, type, 'csv');
     };
-    
+
     const exportByChallenge = async () => {
         const res = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/export/challenges`, {
             method: 'GET',
@@ -117,9 +140,9 @@ const AdminSettings = () => {
             return;
         }
 
-        saveToFile(await res.blob() as Blob, 'challenge-projects', 'zip');
+        saveToFile((await res.blob()) as Blob, 'challenge-projects', 'zip');
     };
-    
+
     const saveToFile = (blob: Blob, name: string, ext: string) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -136,12 +159,24 @@ const AdminSettings = () => {
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
                 {/* TODO: Add other settings */}
-                <h2 className="text-4xl mt-8 mb-2 text-primary">Judging Timer</h2>
-                <h3 className="text-xl font-bold">Set Judging Timer</h3>
-                <p className="text-light">
+                <Section>Set Main Clock</Section>
+                <SubSection>Reset Clock</SubSection>
+                <Description>Reset the clock back to 00:00:00</Description>
+                <Button
+                    type="primary"
+                    onClick={() => {
+                        setClockResetPopup(true);
+                    }}
+                    className="mt-4 w-auto md:w-auto px-4 py-2"
+                >
+                    Reset
+                </Button>
+                <Section>Judging Timer</Section>
+                <SubSection>Set Judging Timer</SubSection>
+                <Description>
                     Set how long judges have to view each project. This will reflect on the timer
                     that shows on the judging page.
-                </p>
+                </Description>
                 <input
                     className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
                     type="string"
@@ -158,12 +193,12 @@ const AdminSettings = () => {
                 >
                     Update Timer
                 </Button>
-                <h2 className="text-4xl mt-8 mb-2 text-primary">Project Numbers</h2>
-                <h3 className="text-xl font-bold">Reassign Project Numbers</h3>
-                <p className="text-light">
-                    Reassign all table numbers to the projects. This will keep the relative order
-                    but reassign the table numbers starting from the first project.
-                </p>
+                <Section>Project Numbers</Section>
+                <SubSection>Reassign Project Numbers</SubSection>
+                <Description>
+                    Reassign all project numbers to the projects. This will keep the relative order
+                    but reassign the project numbers starting from the first project.
+                </Description>
                 <Button
                     type="primary"
                     onClick={() => {
@@ -173,14 +208,14 @@ const AdminSettings = () => {
                 >
                     Reassign
                 </Button>
-                <h3 className="text-xl font-bold mt-4">Table Groupings</h3>
-                <p className="text-light">
+                <SubSection>Table Groupings</SubSection>
+                <Description>
                     Check this box to use table groupings. This will force judges to stay in a
                     grouping for 3 rounds before moving on. This ideally should decrease the
                     distance judges will have to walk, if groups are defined correctly. Note that
                     group sizes <span className="font-bold">must be greater than 3</span> otherwise
                     the groupings will be ignored.
-                </p>
+                </Description>
                 <Checkbox
                     checked={groupChecked}
                     onChange={(c) => {
@@ -209,9 +244,9 @@ const AdminSettings = () => {
                 >
                     Update Groupings
                 </Button>
-                <h2 className="text-4xl mt-8 mb-2 text-primary">Export Data</h2>
-                <h3 className="text-lg font-bold">Export Collections</h3>
-                <p className="text-light">Export each collection individually as a CSV download.</p>
+                <Section>Export Data</Section>
+                <SubSection>Export Collection</SubSection>
+                <Description>Export each collection individually as a CSV download.</Description>
                 <div className="flex">
                     <Button
                         type="primary"
@@ -250,6 +285,16 @@ const AdminSettings = () => {
             >
                 Are you sure you want to reassign project numbers? This should NOT be done DURING
                 judging; only beforehand!!
+            </Popup>
+            <Popup
+                enabled={clockResetPopup}
+                setEnabled={setClockResetPopup}
+                onSubmit={resetClock}
+                submitText="Reset"
+                title="Heads Up!"
+                red
+            >
+                Are you sure you want to reset the main clock? This will reset the clock to 00:00:00
             </Popup>
             <Loading disabled={!loading} />
         </>
