@@ -24,7 +24,7 @@ func CheckEnv() {
 	}
 }
 
-// Returns true if the environmental variable is defined and not empty
+// hasEnv returns true if the environmental variable is defined and not empty
 func hasEnv(key string) bool {
 	val, ok := os.LookupEnv(key)
 	if !ok {
@@ -33,6 +33,7 @@ func hasEnv(key string) bool {
 	return val != ""
 }
 
+// GetEnv returns the value of the environmental variable or panics if it does not exist
 func GetEnv(key string) string {
 	val, ok := os.LookupEnv(key)
 	if !ok {
@@ -42,6 +43,7 @@ func GetEnv(key string) string {
 	return val
 }
 
+// GetOptEnv returns the value of the environmental variable or the default value if it does not exist
 func GetOptEnv(key string, defaultVal string) string {
 	val, ok := os.LookupEnv(key)
 	if !ok {

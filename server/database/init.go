@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Initializes the database connection to MongoDB.
+// InitDb initializes the database connection to MongoDB.
 // This will proactively panic if any step of the connection protocol breaks
 func InitDb() *mongo.Database {
 	// Use the SetServerAPIOptions() method to set the Stable API version to 1
