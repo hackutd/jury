@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"server/crowdbt"
 	"server/database"
+	"server/funcs"
 	"server/models"
 	"server/util"
 
@@ -51,13 +52,13 @@ func AddJudge(ctx *gin.Context) {
 	hostname := util.GetFullHostname(ctx)
 
 	// Make sure email is right
-	if !util.CheckEmail(judge.Email) {
+	if !funcs.CheckEmail(judge.Email) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
 		return
 	}
 
 	// Send email to judge
-	err = util.SendJudgeEmail(judge, hostname)
+	err = funcs.SendJudgeEmail(judge, hostname)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
 		return
@@ -160,7 +161,7 @@ func AddJudgesCsv(ctx *gin.Context) {
 	}
 
 	// Parse the CSV file
-	judges, err := util.ParseJudgeCSV(string(content), hasHeader)
+	judges, err := funcs.ParseJudgeCSV(string(content), hasHeader)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing CSV file: " + err.Error()})
 		return
@@ -171,7 +172,7 @@ func AddJudgesCsv(ctx *gin.Context) {
 
 	// Check all judge emails
 	for _, judge := range judges {
-		if !util.CheckEmail(judge.Email) {
+		if !funcs.CheckEmail(judge.Email) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email: " + judge.Email})
 			return
 		}
@@ -179,7 +180,7 @@ func AddJudgesCsv(ctx *gin.Context) {
 
 	// Send emails to all judges
 	for _, judge := range judges {
-		err = util.SendJudgeEmail(judge, hostname)
+		err = funcs.SendJudgeEmail(judge, hostname)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge " + judge.Name + " email: " + err.Error()})
 			return
@@ -321,7 +322,7 @@ func JudgeVote(ctx *gin.Context) {
 	// If there is no previous project, then this is the first project for the judge
 	if prevProject == nil {
 		// Get a new project for the judge
-		newProject, err := util.PickNextProject(db, judge)
+		newProject, err := funcs.PickNextProject(db, judge)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 			return
@@ -373,7 +374,7 @@ func JudgeVote(ctx *gin.Context) {
 	winner.Votes += 1
 
 	// Get new project for judge
-	newProject, err := util.PickNextProject(db, judge)
+	newProject, err := funcs.PickNextProject(db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 		return
@@ -419,7 +420,7 @@ func GetJudgeIPO(ctx *gin.Context) {
 
 	// Get the next project for the judge and update the judge/project seen in the database
 	// If no project, return initial as false
-	project, err := util.PickNextProject(db, judge)
+	project, err := funcs.PickNextProject(db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 		return
@@ -588,7 +589,7 @@ func JudgeSkip(ctx *gin.Context) {
 	}
 
 	// Get a new project for the judge
-	newProject, err := util.PickNextProject(db, judge)
+	newProject, err := funcs.PickNextProject(db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 		return
