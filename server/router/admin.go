@@ -349,6 +349,7 @@ func ExportProjectsByChallenge(ctx *gin.Context) {
 	funcs.AddZipFile("projects", zipData, ctx)
 }
 
+// GET /admin/timer - GetJudgingTimer returns the judging timer
 func GetJudgingTimer(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -368,6 +369,7 @@ type SetJudgingTimerRequest struct {
 	JudgingTimer int64 `json:"judging_timer"`
 }
 
+// POST /admin/timer - SetJudgingTimer sets the judging timer
 func SetJudgingTimer(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
