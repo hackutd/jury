@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 	"server/database"
+	"server/funcs"
 	"server/models"
-	"server/util"
 	"sort"
 	"strings"
 
@@ -42,7 +42,7 @@ func AddDevpostCsv(ctx *gin.Context) {
 	}
 
 	// Parse the CSV file
-	projects, err := util.ParseDevpostCSV(string(content), db)
+	projects, err := funcs.ParseDevpostCSV(string(content), db)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing CSV file: " + err.Error()})
 		return
@@ -177,7 +177,7 @@ func AddProjectsCsv(ctx *gin.Context) {
 	}
 
 	// Parse the CSV file
-	projects, err := util.ParseProjectCsv(string(content), hasHeader, db)
+	projects, err := funcs.ParseProjectCsv(string(content), hasHeader, db)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing CSV file: " + err.Error()})
 		return

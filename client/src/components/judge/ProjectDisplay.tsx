@@ -3,10 +3,14 @@ import { twMerge } from 'tailwind-merge';
 import Paragraph from '../Paragraph';
 import { getRequest } from '../../api';
 import { errorAlert } from '../../util';
+import StarDisplay from './StarDisplay';
 
 interface ProjectDisplayProps {
     /* Project ID to display */
     projectId: string;
+
+    /* Judge for the project */
+    judge: Judge;
 
     /* Define the className */
     className?: string;
@@ -18,7 +22,7 @@ const ProjectDisplay = (props: ProjectDisplayProps) => {
     useEffect(() => {
         async function fetchData() {
             if (!props.projectId) return;
-            
+
             const projRes = await getRequest<Project>(`/project/${props.projectId}`, 'judge');
             if (projRes.status !== 200) {
                 errorAlert(projRes);
@@ -38,9 +42,19 @@ const ProjectDisplay = (props: ProjectDisplayProps) => {
 
     return (
         <div className={twMerge('px-2', props.className)}>
-            <h1 className='text-3xl mb-1'>{project.name}</h1>
-            <h2 className='text-xl mb-1'>Table {project.location}</h2>
-            <Paragraph className='text-light' text={project.description} />
+            <h1 className="text-3xl mb-1">{project.name}</h1>
+            <h2 className="text-xl mb-1">Table {project.location}</h2>
+            <div className="flex mb-3">
+                <StarDisplay
+                    id={project.id}
+                    clickable={true}
+                    stars={
+                        props.judge.seen_projects.find((jp) => jp.project_id === project.id)
+                            ?.stars || 0
+                    }
+                />
+            </div>
+            <Paragraph className="text-light" text={project.description} />
         </div>
     );
 };
