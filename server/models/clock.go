@@ -4,14 +4,14 @@ import "time"
 
 type ClockState struct {
 	StartTime int64 `json:"start_time" bson:"start_time"`
-	Prev      int64 `json:"prev" bson:"prev"`
+	PauseTime      int64 `json:"pause_time" bson:"pause_time"`
 	Running   bool  `json:"running" bson:"running"`
 }
 
 func NewClockState() *ClockState {
 	return &ClockState{
 		StartTime: 0,
-		Prev:      0,
+		PauseTime:      0,
 		Running:   false,
 	}
 }
@@ -26,7 +26,7 @@ func (c *ClockState) Pause() {
 		return
 	}
 	c.Running = false
-	c.Prev += GetCurrTime() - c.StartTime
+	c.PauseTime = GetCurrTime()
 }
 
 func (c *ClockState) Resume() {
@@ -39,13 +39,13 @@ func (c *ClockState) Resume() {
 
 func (c *ClockState) Reset() {
 	c.StartTime = 0
-	c.Prev = 0
+	c.PauseTime = 0
 	c.Running = false
 }
 
 func (c *ClockState) GetDuration() int64 {
 	if !c.Running {
-		return c.Prev
+		return c.PauseTime
 	}
-	return c.Prev + GetCurrTime() - c.StartTime
+	return c.StartTime + GetCurrTime() - c.PauseTime
 }
