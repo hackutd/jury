@@ -204,7 +204,7 @@ const AdminSettings = () => {
                     onClick={() => {
                         setReassignPopup(true);
                     }}
-                    className="mt-4 w-auto md:w-auto px-4 py-2 bg-gold text-black"
+                    className="mt-4 mb-8 w-auto md:w-auto px-4 py-2 bg-gold text-black"
                 >
                     Reassign
                 </Button>
