@@ -21,6 +21,7 @@ const Description = ({ children: c }: { children: React.ReactNode }) => (
 const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
     const [clockResetPopup, setClockResetPopup] = useState(false);
+    const [dropPopup, setDropPopup] = useState(false);
     const [groupChecked, setGroupChecked] = useState(false);
     const [groups, setGroups] = useState('');
     const [judgingTimer, setJudgingTimer] = useState('');
@@ -113,6 +114,17 @@ const AdminSettings = () => {
 
         alert('Clock reset!');
         setClockResetPopup(false);
+    };
+
+    const dropDatabase = async () => {
+        const res = await postRequest<OkResponse>('/admin/reset', 'admin', null);
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Database reset!');
+        setDropPopup(false);
     };
 
     const exportCsv = async (type: string) => {
@@ -224,11 +236,11 @@ const AdminSettings = () => {
                 >
                     Enable Table Groupings
                 </Checkbox>
-                <p className="text-light mt-4">
+                <Description>
                     {
                         'List table groupings below. It should be in the form <tableStartNum> <tableEndNum>. Each group should be on its own line. No table numbers should overlap. If groups are defined, table numbers will be assigned according to the ranges defined here (ie. groups of 1-10, 101-110 will skip table numbers 11-100). If there are more table numbers than groups defined, the default behavior is to append incrementally to the last group.'
                     }
-                </p>
+                </Description>
                 <textarea
                     className="w-full h-36 px-4 py-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
                     placeholder="1 10"
@@ -274,6 +286,21 @@ const AdminSettings = () => {
                         Export by Challenges
                     </Button>
                 </div>
+                <Section>Reset Database</Section>
+                <SubSection>THIS WILL DELETE THE ENTIRE DATABASE</SubSection>
+                <Description>
+                    Mostly used for testing purposes/before the event if you want to reset
+                    everything bc something got messed up. Do NOT use this during judging (duh).
+                </Description>
+                <Button
+                    type="error"
+                    onClick={() => {
+                        setDropPopup(true);
+                    }}
+                    className="mt-4 w-auto md:w-auto px-4 py-2"
+                >
+                    Drop Database
+                </Button>
             </div>
             <Popup
                 enabled={reassignPopup}
@@ -295,6 +322,17 @@ const AdminSettings = () => {
                 red
             >
                 Are you sure you want to reset the main clock? This will reset the clock to 00:00:00
+            </Popup>
+            <Popup
+                enabled={dropPopup}
+                setEnabled={setDropPopup}
+                onSubmit={dropDatabase}
+                submitText="RESET DATA"
+                title="Heads Up!"
+                red
+            >
+                THIS WILL ACTUALLY DELETE ALL DATA!!!!! YOU NEED TO BE ABSOLUTELY SURE YOU WANT TO
+                DO THIS. THIS IS YOUR LAST WARNING!
             </Popup>
             <Loading disabled={!loading} />
         </>
