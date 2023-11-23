@@ -15,6 +15,7 @@ import Project from './pages/judge/project';
 
 import './index.css';
 import AdminSettings from './pages/admin/settings';
+import Expo from './pages/Expo';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
     {
         path: '/admin',
         element: <Admin />,
+    },
+    {
+        path: '/expo',
+        element: <Expo />,
     },
     {
         path: '/admin/add-projects',
