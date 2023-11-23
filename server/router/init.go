@@ -61,6 +61,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/project/devpost", AddDevpostCsv)
 	adminRouter.POST("/project/new", AddProject)
 	adminRouter.GET("/project/list", ListProjects)
+	defaultRouter.GET("/project/list/public", ListPublicProjects)
 	adminRouter.POST("/project/csv", AddProjectsCsv)
 	judgeRouter.GET("/project/:id", GetProject)
 	judgeRouter.GET("/judge/vote/info", GetVotingProjectInfo)

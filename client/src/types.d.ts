@@ -12,6 +12,16 @@ interface Project {
     last_activity: number;
 }
 
+interface PublicProject {
+    name: string;
+    location: number;
+    description: string;
+    url: string;
+    try_link: string;
+    video_link: string;
+    challenge_list: string;
+}
+
 interface Judge {
     id: string;
     name: string;

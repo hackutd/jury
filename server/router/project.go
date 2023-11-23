@@ -146,6 +146,45 @@ func ListProjects(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, projects)
 }
 
+type PublicProject struct {
+	Name          string `json:"name"`
+	Location      int64  `json:"location"`
+	Description   string `json:"description"`
+	Url           string `json:"url"`
+	TryLink       string `json:"tryLink"`
+	VideoLink     string `json:"videoLink"`
+	ChallengeList string `json:"challengeList"`
+}
+
+func ListPublicProjects(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the projects from the database
+	projects, err := database.FindAllProjects(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects from database: " + err.Error()})
+		return
+	}
+
+	// Convert projects to public projects
+	publicProjects := make([]PublicProject, len(projects))
+	for i, project := range projects {
+		publicProjects[i] = PublicProject{
+			Name:          project.Name,
+			Location:      project.Location,
+			Description:   project.Description,
+			Url:           project.Url,
+			TryLink:       project.TryLink,
+			VideoLink:     project.VideoLink,
+			ChallengeList: strings.Join(project.ChallengeList, ", "),
+		}
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, publicProjects)
+}
+
 // POST /project/csv - Endpoint to add projects from a CSV file
 func AddProjectsCsv(ctx *gin.Context) {
 	// Get the database from the context

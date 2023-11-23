@@ -15,6 +15,9 @@ const App = () => {
             <Button href="/judge/login" type="primary">
                 Judging Portal
             </Button>
+            <Button href="/expo" type="outline" className="py-3 mt-4 mb-2">
+                Project Expo
+            </Button>
             <Button href="/admin/login" type="text">
                 Admin Portal
             </Button>
