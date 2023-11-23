@@ -68,7 +68,7 @@ const AdminLogin = () => {
             setLoginLock(false);
             return;
         }
-        
+
         // Wrong password
         if (res.data?.ok !== 1) {
             setError(true);
@@ -84,10 +84,11 @@ const AdminLogin = () => {
             maxAge: 60 * 60 * 24,
         });
 
-        // Redirect
-        navigate('/admin');
-
-        setLoginLock(false);
+        // Delay to allow cookie to be set; janky Firefox 119 fix
+        setTimeout(() => {
+            navigate('/admin');
+            setLoginLock(false);
+        }, 50);
     };
 
     return (

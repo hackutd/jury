@@ -3,6 +3,7 @@ package router
 import (
 	"log"
 	"server/database"
+	"server/models"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
@@ -12,14 +13,11 @@ import (
 
 // Creates a new Gin router with all routes defined
 func NewRouter(db *mongo.Database) *gin.Engine {
+	// Create the router
 	router := gin.Default()
 
 	// Get the clock state from the database
-	options, err := database.GetOptions(db)
-	if err != nil {
-		log.Fatalln("error getting options: " + err.Error())
-	}
-	clock := options.Clock
+	clock := getClockFromDb(db)
 
 	// Add shared variables to router
 	router.Use(useVar("db", db))
@@ -109,9 +107,32 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	return router
 }
 
+// useVar is a middleware that adds a variable to the context
 func useVar(key string, v any) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.Set(key, v)
 		ctx.Next()
 	}
+}
+
+// getClockFromDb gets the clock state from the database
+// and on init will pause the clock
+func getClockFromDb(db *mongo.Database) models.ClockState {
+	// Get the clock state from the database
+	options, err := database.GetOptions(db)
+	if err != nil {
+		log.Fatalln("error getting options: " + err.Error())
+	}
+	clock := options.Clock
+
+	// Pause the clock
+	clock.Pause()
+
+	// Update the clock in the database
+	err = database.UpdateClock(db, &clock)
+	if err != nil {
+		log.Fatalln("error updating clock: " + err.Error())
+	}
+
+	return clock
 }

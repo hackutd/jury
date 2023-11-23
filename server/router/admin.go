@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"server/config"
 	"server/database"
+	"server/funcs"
 	"server/models"
-	"server/util"
 	"sort"
 	"strconv"
 	"strings"
@@ -141,7 +141,7 @@ func ResetClock(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"clock": clock})
+	ctx.JSON(http.StatusOK, gin.H{"clock": clock, "ok": 1})
 }
 
 // POST /admin/auth - Checks if an admin is authenticated
@@ -300,10 +300,10 @@ func ExportJudges(ctx *gin.Context) {
 	}
 
 	// Create the CSV
-	csvData := util.CreateJudgeCSV(judges)
+	csvData := funcs.CreateJudgeCSV(judges)
 
 	// Send CSV
-	util.AddCsvData("judges", csvData, ctx)
+	funcs.AddCsvData("judges", csvData, ctx)
 }
 
 // POST /admin/export/projects - ExportProjects exports all projects to a CSV
@@ -319,10 +319,10 @@ func ExportProjects(ctx *gin.Context) {
 	}
 
 	// Create the CSV
-	csvData := util.CreateProjectCSV(projects)
+	csvData := funcs.CreateProjectCSV(projects)
 
 	// Send CSV
-	util.AddCsvData("projects", csvData, ctx)
+	funcs.AddCsvData("projects", csvData, ctx)
 }
 
 // POST /admin/export/challenges - ExportProjectsByChallenge exports all projects to a zip file, with CSVs each
@@ -339,16 +339,17 @@ func ExportProjectsByChallenge(ctx *gin.Context) {
 	}
 
 	// Create the zip file
-	zipData, err := util.CreateProjectChallengeZip(projects)
+	zipData, err := funcs.CreateProjectChallengeZip(projects)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error creating zip file: " + err.Error()})
 		return
 	}
 
 	// Send zip file
-	util.AddZipFile("projects", zipData, ctx)
+	funcs.AddZipFile("projects", zipData, ctx)
 }
 
+// GET /admin/timer - GetJudgingTimer returns the judging timer
 func GetJudgingTimer(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -368,6 +369,7 @@ type SetJudgingTimerRequest struct {
 	JudgingTimer int64 `json:"judging_timer"`
 }
 
+// POST /admin/timer - SetJudgingTimer sets the judging timer
 func SetJudgingTimer(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
