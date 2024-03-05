@@ -13,16 +13,17 @@ import JudgeWelcome from './pages/judge/welcome';
 import JudgeLive from './pages/judge/live';
 import Project from './pages/judge/project';
 
-import './index.css';
 import AdminSettings from './pages/admin/settings';
 import Expo from './pages/Expo';
+
+import './index.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
 const router = createBrowserRouter([
     {
         path: '/',
-        element: process.env.REACT_APP_HUB ? <HomeHub /> : <Home />,
+        element: import.meta.env.VITE_HUB ? <HomeHub /> : <Home />,
     },
     {
         path: '/judge/login',

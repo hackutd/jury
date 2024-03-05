@@ -40,7 +40,7 @@ const Expo = () => {
         <Container noCenter>
             <h1 className="mt-4 text-4xl text-center font-bold">Project Expo</h1>
             <h2 className="text-2xl text-center font-bold text-primary">
-                {process.env.REACT_APP_JURY_NAME}
+                {import.meta.env.VITE_JURY_NAME}
             </h2>
             <table className="mb-4">
                 <thead>

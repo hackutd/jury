@@ -12,14 +12,14 @@ services:
             - EMAIL_USERNAME=${EMAIL_USERNAME}
             - EMAIL_PASSWORD=${EMAIL_PASSWORD}
             - SENDGRID_API_KEY=${SENDGRID_API_KEY}
-            - REACT_APP_JURY_NAME=${JURY_NAME}
+            - VITE_JURY_NAME=${JURY_NAME}
             - PORT=8000
         build:
             context: './'
             dockerfile: Dockerfile
             args:
-                - REACT_APP_JURY_NAME=${JURY_NAME}
-                - REACT_APP_JURY_URL=/api
-                - REACT_APP_HUB=${HEHE:-}
+                - VITE_JURY_NAME=${JURY_NAME}
+                - VITE_JURY_URL=/api
+                - VITE_HUB=${HEHE:-}
         ports:
             - ${PORT:-8000}:8000

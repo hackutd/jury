@@ -53,7 +53,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                     : '/project/devpost';
 
             // Make the request
-            const response = await fetch(`${process.env.REACT_APP_JURY_URL}${path}`, {
+            const response = await fetch(`${import.meta.env.VITE_JURY_URL}${path}`, {
                 method: 'POST',
                 body: formData,
                 headers: createHeaders('admin', false),

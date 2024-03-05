@@ -4,9 +4,9 @@ spec:
   - name: jury-service
     dockerfile_path: Dockerfile
     envs:
-    - key: REACT_APP_JURY_NAME
+    - key: VITE_JURY_NAME
       scope: RUN_AND_BUILD_TIME
-    - key: REACT_APP_JURY_URL
+    - key: VITE_JURY_URL
       scope: RUN_AND_BUILD_TIME
       value: /api
     - key: JURY_ADMIN_PASSWORD

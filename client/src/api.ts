@@ -1,6 +1,6 @@
 import Cookies from 'universal-cookie';
 
-const BACKEND_URL = process.env.REACT_APP_JURY_URL;
+const BACKEND_URL = import.meta.env.VITE_JURY_URL;
 
 export async function getRequest<T>(path: string, auth: string): Promise<FetchResponse<T>> {
     try {
