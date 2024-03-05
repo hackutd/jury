@@ -52,7 +52,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
                     adminCenter
                 )}
             >
-                {process.env.REACT_APP_JURY_NAME}
+                {import.meta.env.VITE_JURY_NAME}
             </div>
             {props.withBack && (
                 <div

@@ -44,7 +44,7 @@ func SendJudgeEmail(judge *models.Judge, hostname string) error {
 	auth := smtp.PlainAuth("jury", username, password, smtpHost)
 
 	// Other info
-	appName := config.GetEnv("REACT_APP_JURY_NAME")
+	appName := config.GetEnv("VITE_JURY_NAME")
 
 	// Message body
 	var body bytes.Buffer
@@ -89,7 +89,7 @@ func FillTemplate(name string, baseUrl string, code string, appName string) ([]b
 
 // Send email with Sendgrid
 func SendgridEmail(sendgridApiKey string, judge *models.Judge, hostname string) error {
-	appName := config.GetEnv("REACT_APP_JURY_NAME")
+	appName := config.GetEnv("VITE_JURY_NAME")
 
 	from := mail.NewEmail(config.GetEnv("EMAIL_FROM_NAME"), config.GetEnv("EMAIL_FROM"))
 	subject := "Jury Judging Platform [" + appName + "]"

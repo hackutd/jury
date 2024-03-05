@@ -127,8 +127,9 @@ const AdminSettings = () => {
         setDropPopup(false);
     };
 
+    // TODO: Why is this not using the getRequest function?
     const exportCsv = async (type: string) => {
-        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/export/${type}`, {
+        const res = await fetch(`${import.meta.env.VITE_JURY_URL}/admin/export/${type}`, {
             method: 'GET',
             headers: createHeaders('admin', false),
         });
@@ -142,7 +143,7 @@ const AdminSettings = () => {
     };
 
     const exportByChallenge = async () => {
-        const res = await fetch(`${process.env.REACT_APP_JURY_URL}/admin/export/challenges`, {
+        const res = await fetch(`${import.meta.env.VITE_JURY_URL}/admin/export/challenges`, {
             method: 'GET',
             headers: createHeaders('admin', false),
         });

@@ -6,9 +6,9 @@ COPY client/src src
 COPY ["client/package.json", "client/tailwind.config.js", "client/tsconfig.json", "./"]
 
 ARG NODE_ENV=production
-ARG REACT_APP_JURY_NAME
-ARG REACT_APP_HUB
-ARG REACT_APP_JURY_URL
+ARG VITE_JURY_NAME
+ARG VITE_HUB
+ARG VITE_JURY_URL
 
 RUN yarn install
 RUN yarn build

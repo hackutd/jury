@@ -24,7 +24,7 @@ Note that since Digital Ocean charges prorated, this will literally be like less
 
 Click on "edit" next to "jury-service" and fill in the env as follows:
 
-- REACT_APP_JURY_NAME - Name of the app to display to the user (eg. HackUTD X Judging)
+- VITE_JURY_NAME - Name of the app to display to the user (eg. HackUTD X Judging)
 - JURY_ADMIN_PASSWORD - Password for the admin portal (suggestion: use 2 random words)
 - MONGODB_URI - URI of MongoDB Atlas instance (see step 0)
 
@@ -129,12 +129,12 @@ Here is the Figma design file: https://www.figma.com/file/qwBWs4i7pJMpFbcjMffDZU
 
 ## Backend Routes
 
-All routes are found at the `http://localhost:8000/api` endpoint, which can be accessed on the frontend through the `REACT_APP_JURY_URL` environmental variable.
+All routes are found at the `http://localhost:8000/api` endpoint, which can be accessed on the frontend through the `VITE_JURY_URL` environmental variable.
 
 An example fetch request (The `credentials: include` allow for authentication cookies to be sent over):
 
 ```js
-const fetchedProjects = await fetch(`${process.env.REACT_APP_JURY_URL}/project/list`, {
+const fetchedProjects = await fetch(`${import.meta.env.VITE_JURY_URL}/project/list`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

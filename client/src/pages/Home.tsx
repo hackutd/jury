@@ -10,7 +10,7 @@ const App = () => {
                 </a>
             </h1>
             <h2 className="text-primary text-3xl text-center font-bold mb-24">
-                {process.env.REACT_APP_JURY_NAME}
+                {import.meta.env.VITE_JURY_NAME}
             </h2>
             <Button href="/judge/login" type="primary">
                 Judging Portal
