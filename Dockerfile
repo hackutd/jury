@@ -1,16 +1,16 @@
 # STEP 0: Statically build node client
 FROM node:lts-hydrogen as client-builder
 WORKDIR /client
-COPY client/public public
-COPY client/src src
+COPY client ./
 COPY ["client/package.json", "client/tailwind.config.js", "client/tsconfig.json", "./"]
 
-ARG NODE_ENV=production
 ARG VITE_JURY_NAME
 ARG VITE_HUB
 ARG VITE_JURY_URL
 
 RUN yarn install
+
+ARG NODE_ENV=production
 RUN yarn build
 
 # STEP 1: Compile backend

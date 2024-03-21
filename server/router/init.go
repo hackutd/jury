@@ -95,7 +95,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/timer", SetJudgingTimer)
 
 	// Serve frontend static files
-	router.Use(static.Serve("/static", static.LocalFile("./public/static", true)))
+	router.Use(static.Serve("/assets", static.LocalFile("./public/assets", true)))
 	router.StaticFile("/favicon.ico", "./public/favicon.ico")
 	router.LoadHTMLFiles("./public/index.html")
 
