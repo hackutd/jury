@@ -34,3 +34,10 @@ func UpdateClock(db *mongo.Database, clock *models.ClockState) error {
 	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"clock": clock}})
 	return err
 }
+
+// GetCategories gets the categories from the database
+func GetCategories(db *mongo.Database) ([]string, error) {
+	var options models.Options
+	err := db.Collection("options").FindOne(context.Background(), gin.H{}).Decode(&options)
+	return options.Categories, err
+}

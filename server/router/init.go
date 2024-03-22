@@ -55,6 +55,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.GET("/judge/projects", GetJudgeProjects)
 	judgeRouter.POST("/judge/next", GetNextJudgeProject)
 	judgeRouter.POST("/judge/skip", JudgeSkip)
+	judgeRouter.POST("/judge/score", JudgeScore)
+	judgeRouter.POST("/judge/rank", JudgeRank)
 	judgeRouter.POST("/judge/break", JudgeBreak)
 	adminRouter.POST("/project/devpost", AddDevpostCsv)
 	adminRouter.POST("/project/new", AddProject)
@@ -91,6 +93,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.POST("/admin/timer", SetJudgingTimer)
 	adminRouter.POST("/admin/categories", SetCategories)
+	judgeRouter.GET("/categories", GetCategories)
 
 	// Serve frontend static files
 	router.Use(static.Serve("/assets", static.LocalFile("./public/assets", true)))

@@ -34,8 +34,12 @@ const Project = () => {
             <Container noCenter={true} className="px-2">
                 <Back location="/judge" />
                 <h1 className="text-3xl mb-1">{project.name}</h1>
-                <div className="flex mb-3">
-                    <StarDisplay stars={project.stars} clickable id={project.project_id} />
+                <div className='text-right'>
+                    {Object.entries(project.categories).map(([name, score]) => (
+                        <p>
+                            {name}: {score}
+                        </p>
+                    ))}
                 </div>
                 <Paragraph text={project.description} className="text-light" />
             </Container>

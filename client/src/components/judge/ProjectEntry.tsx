@@ -1,35 +1,38 @@
 import { useNavigate } from 'react-router-dom';
-import StarDisplay from './StarDisplay';
 
 interface ProjectEntryProps {
-    id: string;
-    name: string;
-    description: string;
-    stars: number;
+    project?: SortableJudgedProject;
 }
 
-const ProjectEntry = (props: ProjectEntryProps) => {
-    const navigate = useNavigate();
+const ProjectEntry = ({ project }: ProjectEntryProps) => {
+    // const navigate = useNavigate();
 
-    const openProject = () => {
-        navigate(`/judge/project/${props.id}`);
-    };
+    // const openProject = () => {
+    //     navigate(`/judge/project/${project.project_id}`);
+    // };
+
+    if (!project) {
+        return null;
+    }
+
+    if (project.id === -1) {
+        return <div>
+            <h3 className="text-xl grow mt-4">Unsorted Projects below here...</h3>
+        </div>
+    }
 
     return (
-        <>
-            <div className="cursor-pointer hover:bg-primary/10 duration-100">
-                <div className="flex items-center justify-end">
-                    <h3 className="text-xl grow" onClick={openProject}>
-                        {props.name}
-                    </h3>
-                    <StarDisplay stars={props.stars} id={props.id} clickable />
-                </div>
-                <p className="text-light line-clamp-3" onClick={openProject}>
-                    {props.description.replace('\\n', ' ')}
+            <div className="m-1 p-2 drop-shadow-md bg-background rounded-md">
+                <h3 className="text-xl grow">
+                    <b>Table {project.location}</b>{': '}
+                    {project.name}
+                </h3>
+                <p className="text-light">
+                    {'| '}{Object.entries(project.categories).map(([name, score], i) => (
+                        <span key={i}>{name.substring(0, 4) + ': ' + score + ' | '}</span>
+                    ))}
                 </p>
             </div>
-            <div className="h-[1px] w-full bg-light my-2"></div>
-        </>
     );
 };
 

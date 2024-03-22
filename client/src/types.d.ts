@@ -79,6 +79,10 @@ interface JudgedProject {
     description: string;
 }
 
+type SortableJudgedProject = {
+    id: number;
+} & JudgedProject;
+
 interface ClockState {
     time: number;
     running: boolean;

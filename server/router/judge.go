@@ -490,6 +490,78 @@ func EditJudge(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
+type JudgeScoreRequest struct {
+	Categories map[string]int `json:"categories"`
+}
+
+// POST /judge/score - Endpoint to finish judging a project (give it a score in categories)
+func JudgeScore(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the request object
+	var scoreReq JudgeScoreRequest
+	err := ctx.BindJSON(&scoreReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the project from the database
+	project, err := database.FindProjectById(db, judge.Current)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding project in database: " + err.Error()})
+		return
+	}
+
+	// Create the judged project object
+	judgedProject := models.JudgeProjectFromProject(project, scoreReq.Categories)
+
+	// Update the project with the score
+	err = database.UpdateAfterSeen(db, judge, judgedProject)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error storing scores in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+type RankRequest struct {
+	Ranking []primitive.ObjectID `json:"ranking"`
+}
+
+// POST /judge/rank - Update the judge's ranking of projects
+func JudgeRank(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the request object
+	var rankReq RankRequest
+	err := ctx.BindJSON(&rankReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Update the judge's ranking
+	err = database.UpdateJudgeRanking(db, judge, rankReq.Ranking)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge ranking in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
 // POST /judge/break - Allows a judge to take a break and free up their current project
 func JudgeBreak(ctx *gin.Context) {
 	// Get the database from the context
@@ -507,4 +579,20 @@ func JudgeBreak(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// GET /categories - Endpoint to get the categories
+func GetCategories(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get categories from database
+	categories, err := database.GetCategories(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting categories: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, categories)
 }

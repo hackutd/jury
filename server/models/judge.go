@@ -26,7 +26,7 @@ type Judge struct {
 
 type JudgedProject struct {
 	ProjectId   primitive.ObjectID `bson:"project_id" json:"project_id"`
-	Categories  []map[string]int   `bson:"categories" json:"categories"`
+	Categories  map[string]int     `bson:"categories" json:"categories"`
 	Notes       string             `bson:"notes" json:"notes"`
 	Name        string             `bson:"name" json:"name"`
 	Location    int64              `bson:"location" json:"location"`
@@ -50,10 +50,10 @@ func NewJudge(name string, email string, notes string) *Judge {
 	}
 }
 
-func JudgeProjectFromProject(project *Project) *JudgedProject {
+func JudgeProjectFromProject(project *Project, categories map[string]int) *JudgedProject {
 	return &JudgedProject{
 		ProjectId:   project.Id,
-		Categories:  []map[string]int{}, // TODO: Do we need to add the categories from options
+		Categories:  categories,
 		Name:        project.Name,
 		Location:    project.Location,
 		Description: project.Description,

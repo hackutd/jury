@@ -127,7 +127,7 @@ const JudgeLive = () => {
     useEffect(() => {
         if (!verified) return;
         if (infoPage === 'paused') return;
-        
+
         getJudgeData();
     }, [verified]);
 
@@ -195,29 +195,28 @@ const JudgeLive = () => {
         audio.currentTime = 0;
         setStopAudio(true);
     };
-    
+
     // Pause the timer
     const pauseTimer = () => {
         clearInterval(timerInterval as number);
-        
+
         // Calculate remaining time
         const elapsed = Date.now() - timerStart;
         const remaining = time - elapsed;
         setTime(remaining);
 
         setPaused(true);
-    }
+    };
 
-    const judgeVote = async (choice: number) => {
+    const judgeVote = async (scores: {[category: string]: number}) => {
         setJudge(null);
 
-        // Vote for the given choice
-        // TODO: This no longer exists!
-        const voteRes = await postRequest<OkResponse>('/judge/vote', 'judge', {
-            curr_winner: choice === 0,
+        // Score the current project
+        const scoreRes = await postRequest<OkResponse>('/judge/score', 'judge', {
+            categories: scores,
         });
-        if (voteRes.status !== 200) {
-            errorAlert(voteRes);
+        if (scoreRes.status !== 200) {
+            errorAlert(scoreRes);
             return;
         }
 
@@ -258,7 +257,7 @@ const JudgeLive = () => {
 
         resetTimer();
         getJudgeData();
-    }
+    };
 
     // Display an error page if an error condition holds
     const infoIndex = infoPages.indexOf(infoPage);
@@ -287,7 +286,7 @@ const JudgeLive = () => {
         setPopupType(pop);
         setPopup(true);
     };
-    
+
     // Reset the judging timer
     const resetTimer = () => {
         clearInterval(timerInterval as number);
@@ -298,7 +297,7 @@ const JudgeLive = () => {
         setTimesUp(false);
         setStarted(false);
         setPaused(false);
-    }
+    };
 
     // Start the judging timer
     const startJudging = async () => {

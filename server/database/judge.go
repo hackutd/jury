@@ -219,3 +219,13 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, reason string, 
 	})
 	return err
 }
+
+// UpdateJudgeRanking updates the judge's ranking array
+func UpdateJudgeRanking(db *mongo.Database, judge *models.Judge, rankings []primitive.ObjectID) error {
+	_, err := db.Collection("judges").UpdateOne(
+		context.Background(),
+		gin.H{"_id": judge.Id},
+		gin.H{"$set": gin.H{"rankings": rankings, "last_activity": util.Now()}},
+	)
+	return err
+}

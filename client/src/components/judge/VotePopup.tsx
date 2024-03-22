@@ -16,7 +16,7 @@ interface VotePopupProps {
     judge: Judge;
 
     /* Function to call to vote */
-    voteFunc: (choice: number) => void;
+    voteFunc: (scores: { [category: string]: number }) => void;
 
     /* Function to call to flag */
     flagFunc: (choice: number) => void;
@@ -37,63 +37,54 @@ interface PopupTextObj {
     subtext: string;
 }
 
+const popupText: PopupText = {
+    vote: [],
+    flag: [
+        {
+            text: 'Absent',
+            subtext: 'Team is not present for judging at their table',
+        },
+        {
+            text: 'Cannot Demo Project',
+            subtext: 'Team cannot prove they made the project',
+        },
+        {
+            text: 'Too Complex',
+            subtext: 'Appears too complex to be made in hackathon',
+        },
+        {
+            text: 'Offensive Project',
+            subtext: 'Offensive or breaks Code of Conduct',
+        },
+    ],
+    busy: [],
+};
+
 const VotePopup = (props: VotePopupProps) => {
-    const [projectInfo, setProjectInfo] = useState<VotingProjectInfo | null>(null);
-    const [popupText, setPopupText] = useState<PopupText | null>(null);
+    const [categories, setCategories] = useState<string[]>([]);
+    const [categoryScores, setCategoryScores] = useState<number[]>([]);
     const [selected, setSelected] = useState(-1);
 
     useEffect(() => {
         if (props.popupType !== 'vote') return;
 
-        async function getProjectInfo() {
-            // Gets the project info
-            // TODO: This no longer exists :((
-            const piRes = await getRequest<VotingProjectInfo>('/judge/vote/info', 'judge');
-            if (piRes.status !== 200) {
-                errorAlert(piRes);
+        async function getCategories() {
+            // Get the categories
+            const res = await getRequest<string[]>(`/categories`, 'judge');
+            if (res.status !== 200) {
+                errorAlert(res);
                 return;
             }
-            setProjectInfo(piRes.data as VotingProjectInfo);
+
+            const cats = res.data ?? [];
+            const catScores = cats.map(() => 0);
+
+            setCategories(cats);
+            setCategoryScores(catScores);
         }
 
-        getProjectInfo();
+        getCategories();
     }, [props.popupType]);
-
-    useEffect(() => {
-        const pt: PopupText = {
-            vote: [
-                {
-                    text: projectInfo ? projectInfo.curr_name : '',
-                    subtext: 'Current: Table ' + (projectInfo ? projectInfo.curr_location : ''),
-                },
-                {
-                    text: projectInfo ? projectInfo.prev_name : '',
-                    subtext: 'Previous: Table ' + (projectInfo ? projectInfo?.prev_location : ''),
-                },
-            ],
-            flag: [
-                {
-                    text: 'Absent',
-                    subtext: 'Team is not present for judging at their table',
-                },
-                {
-                    text: 'Cannot Demo Project',
-                    subtext: 'Team cannot prove they made the project',
-                },
-                {
-                    text: 'Too Complex',
-                    subtext: 'Appears too complex to be made in hackathon',
-                },
-                {
-                    text: 'Offensive Project',
-                    subtext: 'Offensive or breaks Code of Conduct',
-                },
-            ],
-            busy: [],
-        };
-
-        setPopupText(pt);
-    }, [projectInfo]);
 
     useEffect(() => {
         setSelected(-1);
@@ -102,17 +93,27 @@ const VotePopup = (props: VotePopupProps) => {
     if (!props.open) return null;
 
     const handleClick = () => {
-        if (selected === -1 && props.popupType !== 'busy') {
+        if (selected === -1 && props.popupType === 'flag') {
             alert('Please select an option.');
             return;
         }
 
         props.close(false);
-        props.popupType === 'vote'
-            ? props.voteFunc(selected)
-            : props.popupType === 'flag'
-            ? props.flagFunc(selected)
-            : props.skipFunc();
+
+        // Create scores object if voting
+        // Scores object should be { [category]: score }
+        if (props.popupType === 'vote') {
+            const scores = categories.map((v, i) => ({ [v]: categoryScores[i] })).reduce((a, b) => ({ ...a, ...b }), {});
+            props.voteFunc(scores);
+            return;
+        }
+
+        if (props.popupType === 'busy') {
+            props.skipFunc();
+            return;
+        }
+
+        props.flagFunc(selected);
     };
 
     const titleColor =
@@ -150,7 +151,30 @@ const VotePopup = (props: VotePopupProps) => {
                     {title.subtext}
                 </h2>
                 <div className="flex flex-col items-center w-full my-4">
-                    {popupText &&
+                    {props.popupType === 'vote' ? (
+                        <div className="flex flex-col align-center">
+                            {categories.map((v, i) => (
+                                <div key={i}>
+                                    <p className="text-center">
+                                        <b>{v}</b>: {categoryScores[i]}
+                                    </p>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="10"
+                                        value={categoryScores[i]}
+                                        onChange={(e) => {
+                                            const newScores = [...categoryScores];
+                                            newScores[i] = parseInt(e.target.value);
+                                            setCategoryScores(newScores);
+                                        }}
+                                        className="w-full"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        popupText &&
                         popupText[props.popupType].map((v, i) => (
                             <VotePopupButton
                                 key={i}
@@ -162,7 +186,8 @@ const VotePopup = (props: VotePopupProps) => {
                                 type={props.popupType}
                                 selected={selected === i}
                             />
-                        ))}
+                        ))
+                    )}
                 </div>
                 <Button type="primary" onClick={handleClick}>
                     {props.popupType === 'busy' ? 'Skip' : 'Submit'}
