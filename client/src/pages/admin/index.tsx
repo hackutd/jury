@@ -12,7 +12,7 @@ import Button from '../../components/Button';
 
 const Admin = () => {
     const navigate = useNavigate();
-    const [showProjects, setShowProjects] = useState(false);
+    const [showProjects, setShowProjects] = useState(true);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
