@@ -1,7 +1,6 @@
 package router
 
 import (
-	"errors"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -305,7 +304,13 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	}
 
 	// Otherwise, get the next project for the judge
-	project, err := funcs.PickNextProject(db, judge)
+	// TODO: This wrapping is a little ridiculous...
+	var project *models.Project
+	err := database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
+		var err error
+		project, err = database.PickNextProject(db, judge, ctx)
+		return nil, err
+	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 		return
@@ -377,51 +382,8 @@ func JudgeSkip(ctx *gin.Context) {
 		return
 	}
 
-	// Get skipped project from database
-	skippedProject, err := database.FindProjectById(db, judge.Current)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding skipped project in database: " + err.Error()})
-		return
-	}
-
-	// Create a new skip object
-	skip, err := models.NewFlag(skippedProject, judge, skipReq.Reason)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error creating skip object: " + err.Error()})
-		return
-	}
-
-	// Insert the skip object into the database
-	// TODO: Move this to a function in database/flag.go or do smth organizationally
-	// cause its weird to use a db transaction here
-	err = database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
-		// Add skipped project to skipped database
-		err = database.InsertFlag(db, ctx, skip)
-		if err != nil {
-			return nil, errors.New("error inserting skip into database: " + err.Error())
-		}
-
-		// Decrement the project's seen count
-		err = database.DecrementProjectSeenCount(db, ctx, skippedProject)
-		if err != nil {
-			return nil, errors.New("error decrementing project seen count: " + err.Error())
-		}
-
-		// Get a new project for the judge
-		newProject, err := funcs.PickNextProject(db, judge)
-		if err != nil {
-			return nil, errors.New("error picking next project: " + err.Error())
-		}
-
-		// Update the new project and judge in the database
-		err = database.UpdateAfterPicked(db, newProject, judge)
-		if err != nil {
-			return nil, errors.New("error updating next picked project in database: " + err.Error())
-		}
-		judge.Current = &newProject.Id
-
-		return nil, nil
-	})
+	// Skip the project
+	err = database.SkipCurrentProject(db, judge, skipReq.Reason, true)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -521,6 +483,25 @@ func EditJudge(ctx *gin.Context) {
 	err = database.UpdateJudgeBasicInfo(db, &judgeObjectId, &judgeReq)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error editing judge in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /judge/break - Allows a judge to take a break and free up their current project
+func JudgeBreak(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Basically skip the project for the judge
+	err := database.SkipCurrentProject(db, judge, "break", false)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error skipping project: " + err.Error()})
 		return
 	}
 

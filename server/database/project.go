@@ -95,9 +95,9 @@ func AggregateProjectStats(db *mongo.Database) (*models.ProjectStats, error) {
 }
 
 // FindActiveProjects returns a list of all active projects in the database
-func FindActiveProjects(db *mongo.Database) ([]*models.Project, error) {
+func FindActiveProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*models.Project, error) {
 	var projects []*models.Project
-	cursor, err := db.Collection("projects").Find(context.Background(), gin.H{"active": true})
+	cursor, err := db.Collection("projects").Find(ctx, gin.H{"active": true})
 	if err != nil {
 		return nil, err
 	}
@@ -110,11 +110,11 @@ func FindActiveProjects(db *mongo.Database) ([]*models.Project, error) {
 
 // FindBusyProjects returns a list of all projects that are currently being judged.
 // To do this, we collect all projects in the judge's "current" field
-func FindBusyProjects(db *mongo.Database) ([]*primitive.ObjectID, error) {
+func FindBusyProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*primitive.ObjectID, error) {
 	// Get all judges that are currently judging a project
 	// TODO: This query can be optimized by projecting on the "current" field
 	var judges []*models.Judge
-	cursor, err := db.Collection("judges").Find(context.Background(), gin.H{
+	cursor, err := db.Collection("judges").Find(ctx, gin.H{
 		"current": gin.H{
 			"$ne": nil,
 		},
@@ -123,7 +123,7 @@ func FindBusyProjects(db *mongo.Database) ([]*primitive.ObjectID, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = cursor.All(context.Background(), &judges)
+	err = cursor.All(ctx, &judges)
 	if err != nil {
 		return nil, err
 	}
@@ -152,25 +152,29 @@ func FindProjectById(db *mongo.Database, id *primitive.ObjectID) (*models.Projec
 // UpdateAfterPicked updates the seen value of the new project picked and the judge's current project
 func UpdateAfterPicked(db *mongo.Database, project *models.Project, judge *models.Judge) error {
 	err := WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
-		// Update the project's seen value and de-prioritize it
-		_, err := db.Collection("projects").UpdateOne(
-			ctx,
-			gin.H{"_id": project.Id},
-			gin.H{"$inc": gin.H{"seen": 1}, "$set": gin.H{"prioritized": false, "last_activity": util.Now()}},
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		// Set the judge's current project
-		_, err = db.Collection("judges").UpdateOne(
-			ctx,
-			gin.H{"_id": judge.Id},
-			gin.H{"$set": gin.H{"current": project.Id, "last_activity": util.Now()}},
-		)
-		return nil, err
+		return UpdateAfterPickedWithTx(db, project, judge, ctx)
 	})
 	return err
+}
+
+// UpdateAfterPickedWithTx updates the seen value of the new project picked and the judge's current project
+func UpdateAfterPickedWithTx(db *mongo.Database, project *models.Project, judge *models.Judge, ctx mongo.SessionContext) (interface{}, error) {
+	// Update the project's seen value and de-prioritize it
+	_, err := db.Collection("projects").UpdateOne(
+		ctx,
+		gin.H{"_id": project.Id},
+		gin.H{"$inc": gin.H{"seen": 1}, "$set": gin.H{"prioritized": false, "last_activity": util.Now()}},
+	)
+	if err != nil {
+		return nil, err
+	}
+	// Set the judge's current project
+	_, err = db.Collection("judges").UpdateOne(
+		ctx,
+		gin.H{"_id": judge.Id},
+		gin.H{"$set": gin.H{"current": project.Id, "last_activity": util.Now()}},
+	)
+	return nil, err
 }
 
 // CountProjectDocuments returns the number of documents in the projects collection

@@ -87,6 +87,16 @@ const Judge = () => {
 
     if (!loaded) return <Loading disabled={!loaded} />;
 
+    const takeBreak = async () => {
+        const res = await postRequest<OkResponse>('/judge/break', 'judge', null);
+        if (res.status !== 200) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('You can now take a break! Press "Next project" to continue judging.');
+    };
+
     return (
         <>
             <JuryHeader withLogout />
@@ -94,8 +104,13 @@ const Judge = () => {
                 <h1 className="text-2xl my-2">Welcome, {judge?.name}!</h1>
                 <div className="w-full mb-6">
                     <Button type="primary" full square href="/judge/live">
-                        Start Judging
+                        Next Project
                     </Button>
+                    <div className="flex align-center justify-center mt-4">
+                        <Button type="outline" square onClick={takeBreak} className="text-lg p-2">
+                            I want to take a break!
+                        </Button>
+                    </div>
                 </div>
                 <div className="flex justify-evenly">
                     <StatBlock name="Seen" value={judge?.seen_projects.length as number} />

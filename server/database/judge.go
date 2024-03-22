@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"server/models"
 	"server/util"
 
@@ -158,5 +159,63 @@ func UpdateJudgeBasicInfo(db *mongo.Database, judgeId *primitive.ObjectID, addRe
 		gin.H{"_id": judgeId},
 		gin.H{"$set": gin.H{"name": addRequest.Name, "email": addRequest.Email, "notes": addRequest.Notes}},
 	)
+	return err
+}
+
+// SkipCurrentProject skips the current project for a judge
+func SkipCurrentProject(db *mongo.Database, judge *models.Judge, reason string, getNew bool) error {
+	// Get skipped project from database
+	skippedProject, err := FindProjectById(db, judge.Current)
+	if err != nil {
+		return errors.New("error finding skipped project in database: " + err.Error())
+	}
+
+	// Run rest of DB operations in a transaction
+	err = WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
+		// If skipping for any reason other than wanting a break, add the project to the skipped list
+		if reason != "break" {
+			// Create a new skip object
+			skip, err := models.NewFlag(skippedProject, judge, reason)
+			if err != nil {
+				return nil, errors.New("error creating skip object: " + err.Error())
+			}
+
+			// Add skipped project to skipped database
+			err = InsertFlag(db, ctx, skip)
+			if err != nil {
+				return nil, errors.New("error inserting skip into database: " + err.Error())
+			}
+		}
+
+		// Update the judge
+		_, err := db.Collection("judges").UpdateOne(
+			ctx,
+			gin.H{"_id": judge.Id},
+			gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update the project
+		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}})
+		if err != nil {
+			return nil, err
+		}
+
+		// Don't get a new project if we're not supposed to
+		if !getNew {
+			return nil, nil
+		}
+
+		// Get a new project
+		project, err := PickNextProject(db, judge, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update the judge
+		return UpdateAfterPickedWithTx(db, project, judge, ctx)
+	})
 	return err
 }

@@ -1,18 +1,16 @@
-package funcs
+package database
 
 import (
 	"math/rand"
-	"server/database"
 	"server/models"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // PickNextProject - Picks the next project for the judge to judge
-// TODO: Wrap in transaction to avoid race condition where two judges pick the same project
-func PickNextProject(db *mongo.Database, judge *models.Judge) (*models.Project, error) {
+func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext) (*models.Project, error) {
 	// Get items
-	items, err := FindPreferredItems(db, judge)
+	items, err := FindPreferredItems(db, judge, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -39,9 +37,9 @@ func PickNextProject(db *mongo.Database, judge *models.Judge) (*models.Project, 
 //  3. Filter out all projects that the judge has flagged (except for busy projects)
 //  4. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
 //  5. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
-func FindPreferredItems(db *mongo.Database, judge *models.Judge) ([]*models.Project, error) {
+func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext) ([]*models.Project, error) {
 	// Get the list of all active projects
-	projects, err := database.FindActiveProjects(db)
+	projects, err := FindActiveProjects(db, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +50,7 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge) ([]*models.Proj
 	}
 
 	// Get all flags for the judge
-	flags, err := database.FindFlagsByJudge(db, judge)
+	flags, err := FindFlagsByJudge(db, judge, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +83,7 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge) ([]*models.Proj
 
 	// Get all projects currently being judged and remove them from the list
 	// Also convert the list to a map for faster lookup
-	busyProjects, err := database.FindBusyProjects(db)
+	busyProjects, err := FindBusyProjects(db, ctx)
 	if err != nil {
 		return nil, err
 	}

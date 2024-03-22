@@ -28,9 +28,9 @@ func FindAllFlags(db *mongo.Database) ([]*models.Flag, error) {
 	return flags, nil
 }
 
-func FindFlagsByJudge(db *mongo.Database, judge *models.Judge) ([]*models.Flag, error) {
+func FindFlagsByJudge(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext) ([]*models.Flag, error) {
 	flags := make([]*models.Flag, 0)
-	cursor, err := db.Collection("flags").Find(context.Background(), gin.H{"judge_id": judge.Id})
+	cursor, err := db.Collection("flags").Find(ctx, gin.H{"judge_id": judge.Id})
 	if err != nil {
 		return nil, err
 	}
