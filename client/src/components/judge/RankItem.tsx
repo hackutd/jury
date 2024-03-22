@@ -13,6 +13,7 @@ const RankItem = forwardRef<HTMLDivElement, RankItemProps>(
             opacity: isOpacityEnabled ? 0.5 : 1,
             cursor: isDragging ? 'grabbing' : 'grab',
             transform: isDragging ? 'scale(1.05)' : 'scale(1)',
+            touchAction: 'none',
             ...style,
         };
         return (
