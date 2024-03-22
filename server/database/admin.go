@@ -87,8 +87,16 @@ func DropAll(db *mongo.Database) error {
 	return nil
 }
 
+// UpdateOptions updates the options in the database
 func UpdateOptions(db *mongo.Database, options *models.Options) error {
 	// Update the options
 	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": options})
+	return err
+}
+
+// UpdateCategories updates the categories in the database
+func UpdateCategories(db *mongo.Database, categories []string) error {
+	// Update the categories
+	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"categories": categories}})
 	return err
 }

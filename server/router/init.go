@@ -89,6 +89,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/admin/export/challenges", ExportProjectsByChallenge)
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.POST("/admin/timer", SetJudgingTimer)
+	adminRouter.POST("/admin/categories", SetCategories)
 
 	// Serve frontend static files
 	router.Use(static.Serve("/assets", static.LocalFile("./public/assets", true)))

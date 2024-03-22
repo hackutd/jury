@@ -88,6 +88,26 @@ const AdminSettings = () => {
         getOptions();
     };
 
+    const updateCategories = async () => {
+        // Split categories by comma and remove empty strings
+        const filteredCats = categories
+            .split(',')
+            .map((cat) => cat.trim())
+            .filter((cat) => cat !== '');
+
+        // Post the new categories
+        const res = await postRequest<OkResponse>('/admin/categories', 'admin', {
+            categories: filteredCats,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Categories updated!');
+        getOptions();
+    };
+
     const resetClock = async () => {
         const res = await postRequest<OkResponse>('/admin/clock/reset', 'admin', null);
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -159,7 +179,7 @@ const AdminSettings = () => {
                     onClick={() => {
                         setClockResetPopup(true);
                     }}
-                    className="mt-4 w-auto md:w-auto px-4 py-2"
+                    className="mt-4 w-auto md:w-auto px-4 py-2 mb-8"
                 >
                     Reset
                 </Button>
@@ -181,7 +201,7 @@ const AdminSettings = () => {
                 <Button
                     type="primary"
                     onClick={updateTimer}
-                    className="mt-4 w-auto md:w-auto px-4 py-2"
+                    className="mt-4 w-auto md:w-auto px-4 py-2 mb-8"
                 >
                     Update Timer
                 </Button>
@@ -192,20 +212,20 @@ const AdminSettings = () => {
                     separate each category with a comma.
                 </Description>
                 <input
-                    className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
+                    className="w-full h-14 px-4 text-xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
                     type="string"
                     placeholder="Cat 1, Cat 2, Cat 3, ..."
                     value={categories}
                     onChange={(e) => {
-                        setJudgingTimer(e.target.value);
+                        setCategories(e.target.value);
                     }}
                 />
                 <Button
                     type="primary"
-                    onClick={updateTimer}
+                    onClick={updateCategories}
                     className="mt-4 w-auto md:w-auto px-4 py-2"
                 >
-                    Update Timer
+                    Update Categories
                 </Button>
 
                 <Section>Project Numbers</Section>

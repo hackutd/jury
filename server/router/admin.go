@@ -320,3 +320,31 @@ func SetJudgingTimer(ctx *gin.Context) {
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
+
+type SetCategoriesRequest struct {
+	Categories []string `json:"categories"`
+}
+
+// POST /admin/categories - sets the categories
+func SetCategories(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the categories
+	var categoriesReq SetCategoriesRequest
+	err := ctx.BindJSON(&categoriesReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Save the categories in the database
+	err = database.UpdateCategories(db, categoriesReq.Categories)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving categories: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
