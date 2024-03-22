@@ -2,13 +2,13 @@ interface Project {
     id: string;
     name: string;
     location: number;
-    mu: number;
-    sigma_sq: number;
-    votes: number;
-    seen: number;
     description: string;
+    url: string;
+    try_link: string;
+    video_link: string;
+    challenge_list: string[];
+    seen: number;
     active: boolean;
-    prioritized: boolean;
     last_activity: number;
 }
 
@@ -27,23 +27,18 @@ interface Judge {
     name: string;
     email: string;
     notes: string;
-    alpha: number;
-    votes: number;
-    beta: number;
-    last_activity: number;
     read_welcome: boolean;
     seen_projects: JudgedProject[];
+    rankings: string[];
     active: boolean;
-    next: string;
-    prev: string;
+    current: string;
+    last_activity: number;
 }
 
 interface Stats {
     projects: number;
-    avg_seen: number;
-    avg_votes: number;
-    max_mu: number;
-    avg_sigma: number;
+    avg_project_seen: number;
+    avg_judge_seen: number;
     judges: number;
 }
 
@@ -54,12 +49,7 @@ interface SortState<T extends SortField> {
     ascending: boolean;
 }
 
-interface JudgeVoteRes {
-    judge_id: string;
-    prev_project_id: string;
-    next_project_id: string;
-}
-
+// TODO: Change this...
 type VotePopupState = 'vote' | 'skip' | 'flag';
 
 interface VotingProjectInfo {
@@ -79,19 +69,16 @@ interface TokenResponse {
 
 interface JudgedProject {
     project_id: string;
+    categories: { [name: string]: number };
+    notes: string;
     name: string;
+    location: number;
     description: string;
-    stars: number;
 }
 
 interface ClockState {
     time: number;
     running: boolean;
-}
-
-interface JudgeIpo {
-    initial: number;
-    project_id: string;
 }
 
 interface ProjectCount {
@@ -112,14 +99,8 @@ interface Flag {
 interface Options {
     curr_table_num: number;
     clock: ClockState;
-    groups: Group[];
-    use_groups: boolean;
     judging_timer: number;
-}
-
-interface Group {
-    start: number;
-    end: number;
+    categories: string[];
 }
 
 interface FetchResponse<T> {
