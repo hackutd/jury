@@ -123,3 +123,8 @@ interface Timer {
 interface NextJudgeProject {
     project_id: string;
 }
+
+interface ScoredItem {
+    id: string;
+    score: number;
+}

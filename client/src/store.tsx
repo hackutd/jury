@@ -14,10 +14,8 @@ interface AdminStore {
 const useAdminStore = create<AdminStore>()((set) => ({
     stats: {
         projects: 0,
-        avg_seen: 0,
-        avg_votes: 0,
-        max_mu: 0,
-        avg_sigma: 0,
+        avg_project_seen: 0,
+        avg_judge_seen: 0,
         judges: 0,
     },
 
@@ -38,6 +36,22 @@ const useAdminStore = create<AdminStore>()((set) => ({
             errorAlert(projRes);
             return;
         }
+        const projects = projRes.data as Project[];
+
+        const scoreRes = await getRequest<ScoredItem[]>('/admin/score', 'admin');
+        if (scoreRes.status !== 200) {
+            errorAlert(scoreRes);
+            return;
+        }
+        const scores = scoreRes.data as ScoredItem[];
+
+        projects.forEach((project) => {
+            const score = scores.find((s) => s.id === project.id);
+            if (score) {
+                project.score = score.score;
+            }
+        });
+
         set({ projects: projRes.data as Project[] });
     },
 

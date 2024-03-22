@@ -7,18 +7,18 @@ import (
 )
 
 type JudgeRanking struct {
-	Rankings []primitive.ObjectID
-	Unranked []primitive.ObjectID
+	Rankings []primitive.ObjectID `json:"rankings"`
+	Unranked []primitive.ObjectID `json:"unranked"`
 }
 
 type RankedObject struct {
-	Id    primitive.ObjectID
-	Score float64
+	Id    primitive.ObjectID `json:"id"`
+	Score float64            `json:"score"`
 }
 
 type Comparison struct {
-	Winner primitive.ObjectID
-	Loser  primitive.ObjectID
+	Winner primitive.ObjectID `json:"winner"`
+	Loser  primitive.ObjectID `json:"loser"`
 }
 
 // Convert a judge ranking to a list of pairwise comparisons
