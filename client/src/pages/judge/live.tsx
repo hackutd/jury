@@ -13,6 +13,8 @@ import JudgeInfoPage from '../../components/judge/info';
 import alarm from '../../assets/alarm.mp3';
 import InfoPopup from '../../components/InfoPopup';
 import { twMerge } from 'tailwind-merge';
+import FlagPopup from '../../components/judge/FlagPopup';
+import Popup from '../../components/Popup';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done'];
 const infoData = [
@@ -28,9 +30,10 @@ const JudgeLive = () => {
     const navigate = useNavigate();
     const [verified, setVerified] = useState(false);
     const [judge, setJudge] = useState<Judge | null>(null);
-    const [popup, setPopup] = useState<boolean>(false);
+    const [votePopup, setVotePopup] = useState<boolean>(false);
+    const [flagPopup, setFlagPopup] = useState<boolean>(false);
+    const [busyPopup, setBusyPopup] = useState<boolean>(false);
     const [infoPage, setInfoPage] = useState<string>('');
-    const [popupType, setPopupType] = useState<VotePopupState>('busy');
     const [started, setStarted] = useState(false);
     const [time, setTime] = useState(0);
     const [timerStart, setTimerStart] = useState(0);
@@ -208,36 +211,8 @@ const JudgeLive = () => {
         setPaused(true);
     };
 
-    const judgeVote = async (scores: {[category: string]: number}) => {
+    const actionCallback = () => {
         setJudge(null);
-
-        // Score the current project
-        const scoreRes = await postRequest<OkResponse>('/judge/score', 'judge', {
-            categories: scores,
-        });
-        if (scoreRes.status !== 200) {
-            errorAlert(scoreRes);
-            return;
-        }
-
-        resetTimer();
-        getJudgeData();
-    };
-
-    // Flag the current project
-    const flag = async (choice: number) => {
-        setJudge(null);
-
-        const options = ['absent', 'cannot-demo', 'too-complex', 'offensive'];
-
-        // Flag the current project
-        const flagRes = await postRequest<OkResponse>('/judge/skip', 'judge', {
-            reason: options[choice],
-        });
-        if (flagRes.status !== 200) {
-            errorAlert(flagRes);
-            return;
-        }
 
         resetTimer();
         getJudgeData();
@@ -255,6 +230,7 @@ const JudgeLive = () => {
             return;
         }
 
+        setBusyPopup(false);
         resetTimer();
         getJudgeData();
     };
@@ -283,8 +259,13 @@ const JudgeLive = () => {
     }
 
     const openPopup = (pop: VotePopupState) => {
-        setPopupType(pop);
-        setPopup(true);
+        if (pop === 'vote') {
+            setVotePopup(true);
+        } else if (pop === 'flag') {
+            setFlagPopup(true);
+        } else if (pop === 'busy') {
+            setBusyPopup(true);
+        }
     };
 
     // Reset the judging timer
@@ -387,16 +368,23 @@ const JudgeLive = () => {
                     </div>
                 </div>
                 {judge.current && <ProjectDisplay judge={judge} projectId={judge.current} />}
-                {/* TODO: This vote popup thing is jank asf */}
                 <VotePopup
-                    popupType={popupType}
-                    open={popup}
-                    close={setPopup}
-                    flagFunc={flag}
+                    open={votePopup}
+                    close={setVotePopup}
                     judge={judge}
-                    voteFunc={judgeVote}
-                    skipFunc={busy}
+                    callback={actionCallback}
                 />
+                <FlagPopup open={flagPopup} close={setFlagPopup} callback={actionCallback} />
+                <Popup
+                    title="Busy"
+                    enabled={busyPopup}
+                    setEnabled={setBusyPopup}
+                    submitText="Skip"
+                    onSubmit={busy}
+                >
+                    Confirm that the other team is being judged by another judge. If so, click below
+                    to skip this project for now.
+                </Popup>
                 <InfoPopup
                     enabled={audioPopupOpen}
                     setEnabled={setAudioPopupOpen}

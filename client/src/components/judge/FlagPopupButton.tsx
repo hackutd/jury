@@ -1,21 +1,14 @@
 import { twMerge } from 'tailwind-merge';
 import Button from '../Button';
 
-interface VotePopupButtonProps {
-    type: VotePopupState;
+interface FlagPopupButtonProps {
     text: string;
     subtext: string;
     onClick: (e: React.MouseEvent<Element>) => void;
     selected: boolean;
 }
 
-const VotePopupButton = (props: VotePopupButtonProps) => {
-    const selectedStyle =
-        props.type === 'vote'
-            ? 'text-primary bg-primary/10 border-primary'
-            : props.type === 'flag'
-            ? 'text-error bg-error/10 border-error'
-            : 'text-gold bg-gold/10 border-gold';
+const FlagPopupButton = (props: FlagPopupButtonProps) => {
     return (
         <Button
             type="outline"
@@ -23,7 +16,7 @@ const VotePopupButton = (props: VotePopupButtonProps) => {
             square
             className={twMerge(
                 'flex flex-col items-center py-2 my-2',
-                props.selected ? selectedStyle : 'text-black'
+                props.selected ? 'text-error bg-error/10 border-error' : 'text-black'
             )}
             onClick={props.onClick}
         >
@@ -33,4 +26,4 @@ const VotePopupButton = (props: VotePopupButtonProps) => {
     );
 };
 
-export default VotePopupButton;
+export default FlagPopupButton;
