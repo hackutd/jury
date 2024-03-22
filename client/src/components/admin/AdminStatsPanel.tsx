@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import AdminStat from './AdminStat';
+import StatBlock from '../StatBlock';
 import PauseButton from './PauseButton';
 import useAdminStore from '../../store';
 import { getRequest } from '../../api';
@@ -71,17 +71,17 @@ const AdminStatsPanel = () => {
         <div className="flex flex-row mt-8 w-full">
             <PauseButton paused={paused} setPaused={setPaused} clock={time} />
             <div className="flex justify-evenly basis-2/5">
-                <AdminStat name="Projects" value={stats.projects} />
-                <AdminStat name="Avg Project Seen" value={stats.avg_project_seen} />
+                <StatBlock name="Projects" value={stats.projects} />
+                <StatBlock name="Avg Project Seen" value={stats.avg_project_seen} />
             </div>
-            <AdminStat
+            <StatBlock
                 name="Judging Time"
                 value={msToTime(time)}
                 className={'basis-1/5' + (paused ? ' text-error' : '')}
             />
             <div className="flex justify-evenly basis-2/5">
-                <AdminStat name="Average Judge Seen" value={stats.avg_judge_seen} />
-                <AdminStat name="Judges" value={stats.judges} />
+                <StatBlock name="Average Judge Seen" value={stats.avg_judge_seen} />
+                <StatBlock name="Judges" value={stats.judges} />
             </div>
         </div>
     );

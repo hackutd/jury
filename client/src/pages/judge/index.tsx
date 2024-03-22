@@ -3,7 +3,7 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
-import AdminStat from '../../components/admin/AdminStat';
+import StatBlock from '../../components/StatBlock';
 import ProjectEntry from '../../components/judge/ProjectEntry';
 import Loading from '../../components/Loading';
 import { getRequest, postRequest } from '../../api';
@@ -98,8 +98,8 @@ const Judge = () => {
                     </Button>
                 </div>
                 <div className="flex justify-evenly">
-                    <AdminStat name="Seen" value={judge?.seen_projects.length as number} />
-                    <AdminStat name="Projects" value={projCount} />
+                    <StatBlock name="Seen" value={judge?.seen_projects.length as number} />
+                    <StatBlock name="Total Projects" value={projCount} />
                 </div>
                 <h2 className="text-primary text-xl font-bold mt-4">Viewed Projects</h2>
                 <div className="h-[1px] w-full bg-light my-2"></div>
@@ -108,7 +108,7 @@ const Judge = () => {
                         id={p.project_id}
                         name={p.name}
                         description={p.description}
-                        stars={p.stars}
+                        stars={5}
                         key={p.project_id}
                     />
                 ))}
