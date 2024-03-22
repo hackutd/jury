@@ -66,14 +66,8 @@ const ProjectsTable = () => {
             case ProjectSortField.TableNumber:
                 sortFunc = (a, b) => (a.location - b.location) * asc;
                 break;
-            case ProjectSortField.Mu:
-                sortFunc = (a, b) => (a.mu - b.mu) * asc;
-                break;
-            case ProjectSortField.Sigma:
-                sortFunc = (a, b) => (a.sigma_sq - b.sigma_sq) * asc;
-                break;
-            case ProjectSortField.Votes:
-                sortFunc = (a, b) => (a.votes - b.votes) * asc;
+            case ProjectSortField.Score:
+                sortFunc = (a, b) => (a.score - b.score) * asc;
                 break;
             case ProjectSortField.Seen:
                 sortFunc = (a, b) => (a.seen - b.seen) * asc;
@@ -106,21 +100,9 @@ const ProjectsTable = () => {
                             sortState={sortState}
                         />
                         <HeaderEntry
-                            name="Mu"
+                            name="Score"
                             updateSort={updateSort}
-                            sortField={ProjectSortField.Mu}
-                            sortState={sortState}
-                        />
-                        <HeaderEntry
-                            name="Sigma"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Sigma}
-                            sortState={sortState}
-                        />
-                        <HeaderEntry
-                            name="Votes"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Votes}
+                            sortField={ProjectSortField.Score}
                             sortState={sortState}
                         />
                         <HeaderEntry

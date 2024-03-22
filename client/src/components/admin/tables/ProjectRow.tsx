@@ -40,10 +40,6 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                 // Open edit popup
                 setEditPopup(true);
                 break;
-            case 'prioritize':
-                // Prioritize
-                prioritizeProject();
-                break;
             case 'hide':
                 // Hide
                 hideProject();
@@ -71,24 +67,6 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
         }
     };
 
-    const prioritizeProject = async () => {
-        const res = await postRequest<OkResponse>(
-            project.prioritized ? '/project/unprioritize' : '/project/prioritize',
-            'admin',
-            {
-                id: project.id,
-            }
-        );
-        if (res.status === 200) {
-            alert(
-                `Project ${project.prioritized ? 'un-prioritized' : 'prioritized'} successfully!`
-            );
-            fetchProjects();
-        } else {
-            errorAlert(res);
-        }
-    };
-
     return (
         <>
             <tr
@@ -99,8 +77,6 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                         ? 'bg-primary/20'
                         : !project.active
                         ? 'bg-lightest'
-                        : project.prioritized
-                        ? 'bg-primary/30'
                         : 'bg-background')
                 }
             >
@@ -118,9 +94,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
-                <td className="text-center">{fixIfFloatDigits(project.mu, 5)}</td>
-                <td className="text-center">{fixIfFloatDigits(project.sigma_sq, 5)}</td>
-                <td className="text-center">{project.votes}</td>
+                <td className="text-center">{project.score}</td>
                 <td className="text-center">{project.seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>
                 <td className="text-right font-bold flex align-center justify-end">
@@ -134,12 +108,6 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                                 onClick={() => doAction('edit')}
                             >
                                 Edit
-                            </div>
-                            <div
-                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
-                                onClick={() => doAction('prioritize')}
-                            >
-                                {project.prioritized ? 'Un-prioritize' : 'Prioritize'}
                             </div>
                             <div
                                 className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"

@@ -10,6 +10,8 @@ import { errorAlert } from '../../util';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
 
+// TODO: Add FAB to 'return to top'
+// TODO: Make pause button/settings have hover effects
 const Admin = () => {
     const navigate = useNavigate();
     const [showProjects, setShowProjects] = useState(true);
@@ -46,7 +48,7 @@ const Admin = () => {
                 onClick={() => {
                     navigate('/admin/settings');
                 }}
-                className="fixed top-6 left-[16rem] w-40 md:w-52 text-lg py-2 px-1 hover:scale-100 focus:scale-100 rounded-md font-bold"
+                className="absolute top-6 left-[16rem] w-40 md:w-52 text-lg py-2 px-1 hover:scale-100 focus:scale-100 rounded-md font-bold"
             >Settings</Button>
             <AdminStatsPanel />
             <AdminToggleSwitch state={showProjects} setState={setShowProjects} />

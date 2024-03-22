@@ -1,8 +1,8 @@
 export enum JudgeSortField {
     Name,
-    Votes,
-    Alpha,
-    Beta,
+    Code,
+    Seen,
+    Top,
     Updated,
     None,
 }
@@ -10,9 +10,7 @@ export enum JudgeSortField {
 export enum ProjectSortField {
     Name,
     TableNumber,
-    Mu,
-    Sigma,
-    Votes,
+    Score,
     Seen,
     Updated,
     None,

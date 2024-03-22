@@ -9,6 +9,7 @@ interface Project {
     challenge_list: string[];
     seen: number;
     active: boolean;
+    score: number;
     last_activity: number;
 }
 
@@ -25,9 +26,11 @@ interface PublicProject {
 interface Judge {
     id: string;
     name: string;
+    code: string;
     email: string;
     notes: string;
     read_welcome: boolean;
+    seen: number;
     seen_projects: JudgedProject[];
     rankings: string[];
     active: boolean;

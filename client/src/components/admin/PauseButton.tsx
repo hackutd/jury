@@ -10,7 +10,7 @@ interface PauseButtonProps {
 }
 
 const pauseButtonFormat =
-    'fixed top-6 left-6 w-40 md:w-52 text-lg py-2 px-1 hover:scale-100 focus:scale-100 rounded-md';
+    'absolute top-6 left-6 w-40 md:w-52 text-lg py-2 px-1 hover:scale-100 focus:scale-100 rounded-md';
 
 const PauseButton = ({ paused, setPaused, clock }: PauseButtonProps) => {
     const [resumeText, setResumeText] = useState('Resume');

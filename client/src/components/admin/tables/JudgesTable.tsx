@@ -63,18 +63,17 @@ const JudgesTable = () => {
             case JudgeSortField.Name:
                 sortFunc = (a, b) => a.name.localeCompare(b.name) * asc;
                 break;
-            case JudgeSortField.Votes:
-                sortFunc = (a, b) => (a.votes - b.votes) * asc;
+            case JudgeSortField.Code:
+                sortFunc = (a, b) => a.code.localeCompare(b.code) * asc;
                 break;
-            case JudgeSortField.Alpha:
-                sortFunc = (a, b) => (a.alpha - b.alpha) * asc;
+            case JudgeSortField.Seen:
+                sortFunc = (a, b) => (a.seen - b.seen) * asc;
                 break;
-            case JudgeSortField.Beta:
-                sortFunc = (a, b) => (a.beta - b.beta) * asc;
+            case JudgeSortField.Top:
+                sortFunc = (a, b) => (a.rankings.length - b.rankings.length) * asc;
                 break;
             case JudgeSortField.Updated:
-                sortFunc = (a, b) =>
-                    (a.last_activity - b.last_activity) * asc;
+                sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
         setJudges(unsortedJudges.sort(sortFunc));
@@ -94,21 +93,21 @@ const JudgesTable = () => {
                             align="left"
                         />
                         <HeaderEntry
-                            name="Votes"
+                            name="Code"
                             updateSort={updateSort}
-                            sortField={JudgeSortField.Votes}
+                            sortField={JudgeSortField.Code}
                             sortState={sortState}
                         />
                         <HeaderEntry
-                            name="Alpha"
+                            name="Seen"
                             updateSort={updateSort}
-                            sortField={JudgeSortField.Alpha}
+                            sortField={JudgeSortField.Seen}
                             sortState={sortState}
                         />
                         <HeaderEntry
-                            name="Beta"
+                            name="Top 5"
                             updateSort={updateSort}
-                            sortField={JudgeSortField.Beta}
+                            sortField={JudgeSortField.Top}
                             sortState={sortState}
                         />
                         <HeaderEntry
