@@ -575,7 +575,7 @@ func JudgeSkip(ctx *gin.Context) {
 	}
 
 	// Create a new skip object
-	skip, err := models.NewSkip(skippedProject, judge, skipReq.Reason)
+	skip, err := models.NewFlag(skippedProject, judge, skipReq.Reason)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error creating skip object: " + err.Error()})
 		return

@@ -22,7 +22,7 @@ var validReasons = []string{"busy", "absent", "cannot-demo", "too-complex", "off
 //
 // With the exception of the 1st reason, all other reasons are grounds for
 // flagging, which is defined by the `flag` field.
-type Skip struct {
+type Flag struct {
 	Id              primitive.ObjectID  `json:"id" bson:"_id,omitempty"`
 	ProjectId       *primitive.ObjectID `json:"project_id" bson:"project_id"`
 	JudgeId         *primitive.ObjectID `json:"judge_id" bson:"judge_id"`
@@ -31,10 +31,9 @@ type Skip struct {
 	ProjectLocation int64               `json:"project_location" bson:"project_location"`
 	JudgeName       string              `json:"judge_name" bson:"judge_name"`
 	Reason          string              `json:"reason" bson:"reason"`
-	Flag            bool                `json:"flag" bson:"flag"`
 }
 
-func NewSkip(project *Project, judge *Judge, reason string) (*Skip, error) {
+func NewFlag(project *Project, judge *Judge, reason string) (*Flag, error) {
 	// Check if the reason is valid
 	valid := false
 	for _, r := range validReasons {
@@ -48,7 +47,7 @@ func NewSkip(project *Project, judge *Judge, reason string) (*Skip, error) {
 	}
 
 	// Create the skip object
-	return &Skip{
+	return &Flag{
 		ProjectId:       &project.Id,
 		JudgeId:         &judge.Id,
 		Time:            primitive.NewDateTimeFromTime(time.Now()),
@@ -56,13 +55,12 @@ func NewSkip(project *Project, judge *Judge, reason string) (*Skip, error) {
 		ProjectLocation: project.Location,
 		JudgeName:       judge.Name,
 		Reason:          reason,
-		Flag:            reason != "busy",
 	}, nil
 }
 
 // Create custom marshal function to change the format of the primitive.DateTime to a unix timestamp
-func (s *Skip) MarshalJSON() ([]byte, error) {
-	type Alias Skip
+func (s *Flag) MarshalJSON() ([]byte, error) {
+	type Alias Flag
 	return json.Marshal(&struct {
 		*Alias
 		Time int64 `json:"time"`
@@ -73,8 +71,8 @@ func (s *Skip) MarshalJSON() ([]byte, error) {
 }
 
 // Create custom unmarshal function to change the format of the primitive.DateTime from a unix timestamp
-func (s *Skip) UnmarshalJSON(data []byte) error {
-	type Alias Skip
+func (s *Flag) UnmarshalJSON(data []byte) error {
+	type Alias Flag
 	aux := &struct {
 		Time int64 `json:"time"`
 		*Alias

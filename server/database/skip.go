@@ -9,13 +9,13 @@ import (
 )
 
 // InsertSkip inserts a skip object into the database
-func InsertSkip(db *mongo.Database, skip *models.Skip) error {
+func InsertSkip(db *mongo.Database, skip *models.Flag) error {
 	_, err := db.Collection("skips").InsertOne(context.Background(), skip)
 	return err
 }
 
 // FindAllSkips returns all skip objects, or all flag objects
-func FindAllSkips(db *mongo.Database, flag bool) ([]*models.Skip, error) {
+func FindAllSkips(db *mongo.Database, flag bool) ([]*models.Flag, error) {
 	cond := gin.H{}
 	if flag {
 		cond["flag"] = true
@@ -25,7 +25,7 @@ func FindAllSkips(db *mongo.Database, flag bool) ([]*models.Skip, error) {
 		return nil, err
 	}
 
-	skips := make([]*models.Skip, 0)
+	skips := make([]*models.Flag, 0)
 	err = cursor.All(context.Background(), &skips)
 	if err != nil {
 		return nil, err
