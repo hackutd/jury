@@ -64,6 +64,16 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
         }
     };
 
+    const getBestRanked = (judge: Judge) => {
+        if (judge.rankings.length === 0) {
+            return 'N/A';
+        }
+        
+        const best = judge.rankings[0];
+        const bestName = judge.seen_projects.find((p) => p.project_id === best)?.name;
+        return bestName ? bestName : best;
+    }
+
     return (
         <>
             <tr
@@ -86,7 +96,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 <td>{judge.name}</td>
                 <td className="text-center">{judge.code}</td>
                 <td className="text-center">{judge.seen}</td>
-                <td className="text-center">{showTopFive(judge.rankings)}</td>
+                <td className="text-center">{getBestRanked(judge)}</td>
                 <td className="text-center">{timeSince(judge.last_activity)}</td>
                 <td className="text-right font-bold flex align-center justify-end">
                     {popup && (

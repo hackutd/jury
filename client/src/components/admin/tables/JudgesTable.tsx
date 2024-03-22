@@ -105,7 +105,7 @@ const JudgesTable = () => {
                             sortState={sortState}
                         />
                         <HeaderEntry
-                            name="Top 5"
+                            name="Best Proj"
                             updateSort={updateSort}
                             sortField={JudgeSortField.Top}
                             sortState={sortState}
