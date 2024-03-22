@@ -146,7 +146,7 @@ func SetJudgeHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) err
 	_, err := db.Collection("judges").UpdateOne(
 		context.Background(),
 		gin.H{"_id": id},
-		gin.H{"$set": gin.H{"active": !hidden}, "last_activity": util.Now()},
+		gin.H{"$set": gin.H{"active": !hidden, "last_activity": util.Now()}},
 	)
 	return err
 }
