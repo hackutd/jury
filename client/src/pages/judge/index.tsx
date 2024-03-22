@@ -34,7 +34,11 @@ const Judge = () => {
     const [projCount, setProjCount] = useState(0);
     const [activeId, setActiveId] = useState<number | null>(null);
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            }
+        }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
