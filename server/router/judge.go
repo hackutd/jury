@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -390,28 +391,41 @@ func JudgeSkip(ctx *gin.Context) {
 		return
 	}
 
-	// Add skipped project to skipped database
-	err = database.InsertFlag(db, skip)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting skip into database: " + err.Error()})
-		return
-	}
+	// Insert the skip object into the database
+	// TODO: Move this to a function in database/flag.go or do smth organizationally
+	// cause its weird to use a db transaction here
+	err = database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
+		// Add skipped project to skipped database
+		err = database.InsertFlag(db, ctx, skip)
+		if err != nil {
+			return nil, errors.New("error inserting skip into database: " + err.Error())
+		}
 
-	// Get a new project for the judge
-	// TODO: This should be wrapped in a transaction
-	newProject, err := funcs.PickNextProject(db, judge)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
-		return
-	}
+		// Decrement the project's seen count
+		err = database.DecrementProjectSeenCount(db, ctx, skippedProject)
+		if err != nil {
+			return nil, errors.New("error decrementing project seen count: " + err.Error())
+		}
 
-	// Update the new project and judge in the database
-	err = database.UpdateAfterPicked(db, newProject, judge)
+		// Get a new project for the judge
+		newProject, err := funcs.PickNextProject(db, judge)
+		if err != nil {
+			return nil, errors.New("error picking next project: " + err.Error())
+		}
+
+		// Update the new project and judge in the database
+		err = database.UpdateAfterPicked(db, newProject, judge)
+		if err != nil {
+			return nil, errors.New("error updating next picked project in database: " + err.Error())
+		}
+		judge.Current = &newProject.Id
+
+		return nil, nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating next picked project in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	judge.Current = &newProject.Id
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})

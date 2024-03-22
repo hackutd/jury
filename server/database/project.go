@@ -201,3 +201,9 @@ func UpdateProjects(db *mongo.Database, projects []*models.Project) error {
 	_, err := db.Collection("projects").BulkWrite(context.Background(), models, opts)
 	return err
 }
+
+// DecrementProjectSeenCount decrements the seen count of a project (after being skipped)
+func DecrementProjectSeenCount(db *mongo.Database, ctx context.Context, project *models.Project) error {
+	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": project.Id}, gin.H{"$inc": gin.H{"seen": -1}})
+	return err
+}

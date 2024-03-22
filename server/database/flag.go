@@ -9,8 +9,8 @@ import (
 )
 
 // InsertFlag inserts a skip object into the database
-func InsertFlag(db *mongo.Database, skip *models.Flag) error {
-	_, err := db.Collection("flags").InsertOne(context.Background(), skip)
+func InsertFlag(db *mongo.Database, ctx context.Context, skip *models.Flag) error {
+	_, err := db.Collection("flags").InsertOne(ctx, skip)
 	return err
 }
 

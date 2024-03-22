@@ -8,6 +8,7 @@ type Options struct {
 	CurrTableNum int64              `bson:"curr_table_num" json:"curr_table_num"`
 	Clock        ClockState         `bson:"clock" json:"clock"`
 	JudgingTimer int64              `bson:"judging_timer" json:"judging_timer"`
+	Categories   []string           `bson:"categories" json:"categories"`
 }
 
 func NewOptions() *Options {
@@ -16,5 +17,6 @@ func NewOptions() *Options {
 		CurrTableNum: 0,
 		JudgingTimer: 300,
 		Clock:        *NewClockState(),
+		Categories:   []string{"Creativity/Innovation", "Technical Competence/Execution", "Research/Design", "Presentation"},
 	}
 }
