@@ -30,7 +30,7 @@ const JudgeLive = () => {
     const [judge, setJudge] = useState<Judge | null>(null);
     const [popup, setPopup] = useState<boolean>(false);
     const [infoPage, setInfoPage] = useState<string>('');
-    const [popupType, setPopupType] = useState<VotePopupState>('skip');
+    const [popupType, setPopupType] = useState<VotePopupState>('busy');
     const [started, setStarted] = useState(false);
     const [time, setTime] = useState(0);
     const [timerStart, setTimerStart] = useState(0);
@@ -324,6 +324,7 @@ const JudgeLive = () => {
         <>
             <JuryHeader withLogout />
             <Container noCenter className="px-2 pb-4">
+                <Back location="/judge" />
                 <div className="p-2">
                     {!started ? (
                         <Button
@@ -369,10 +370,10 @@ const JudgeLive = () => {
                             className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter"
                             disabled={judge === null || !started}
                             onClick={() => {
-                                openPopup('skip');
+                                openPopup('busy');
                             }}
                         >
-                            Skip
+                            Busy
                         </Button>
                         <Button
                             type="primary"
@@ -386,7 +387,6 @@ const JudgeLive = () => {
                         </Button>
                     </div>
                 </div>
-                <Back location="/judge" />
                 {judge.current && <ProjectDisplay judge={judge} projectId={judge.current} />}
                 {/* TODO: This vote popup thing is jank asf */}
                 <VotePopup

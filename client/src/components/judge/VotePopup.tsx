@@ -22,7 +22,7 @@ interface VotePopupProps {
     flagFunc: (choice: number) => void;
 
     /* Function to call to skip */
-    skipFunc: (choice: number) => void;
+    skipFunc: () => void;
 
     /* State variable for determining if popup is open */
     open: boolean;
@@ -73,6 +73,10 @@ const VotePopup = (props: VotePopupProps) => {
             ],
             flag: [
                 {
+                    text: 'Absent',
+                    subtext: 'Team is not present for judging at their table',
+                },
+                {
                     text: 'Cannot Demo Project',
                     subtext: 'Team cannot prove they made the project',
                 },
@@ -85,16 +89,7 @@ const VotePopup = (props: VotePopupProps) => {
                     subtext: 'Offensive or breaks Code of Conduct',
                 },
             ],
-            skip: [
-                {
-                    text: 'Not Present',
-                    subtext: 'Group is not present for judging',
-                },
-                {
-                    text: 'Busy (Being Judged)',
-                    subtext: 'Group is busy with another judge',
-                },
-            ],
+            busy: [],
         };
 
         setPopupText(pt);
@@ -107,7 +102,7 @@ const VotePopup = (props: VotePopupProps) => {
     if (!props.open) return null;
 
     const handleClick = () => {
-        if (selected === -1) {
+        if (selected === -1 && props.popupType !== 'busy') {
             alert('Please select an option.');
             return;
         }
@@ -117,7 +112,7 @@ const VotePopup = (props: VotePopupProps) => {
             ? props.voteFunc(selected)
             : props.popupType === 'flag'
             ? props.flagFunc(selected)
-            : props.skipFunc(selected);
+            : props.skipFunc();
     };
 
     const titleColor =
@@ -129,10 +124,14 @@ const VotePopup = (props: VotePopupProps) => {
 
     const title: PopupTextObj =
         props.popupType === 'vote'
-            ? { text: 'Judge Project', subtext: 'Select the better project' }
+            ? { text: 'Judge Project', subtext: 'Please rate the current project' }
             : props.popupType === 'flag'
             ? { text: 'Flag Project', subtext: 'Select a flag reason' }
-            : { text: 'Skip Project', subtext: 'Select a reason for skipping' };
+            : {
+                  text: 'Project is Busy',
+                  subtext:
+                      'Confirm that the other team is being judged by another judge. If so, click below to skip this project for now.',
+              };
 
     return (
         <>
@@ -142,7 +141,14 @@ const VotePopup = (props: VotePopupProps) => {
             ></div>
             <div className="bg-background fixed z-30 left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] px-6 py-6 md:px-10 md:w-1/3 w-11/12 flex flex-col items-center">
                 <h1 className={twMerge('text-3xl font-bold', titleColor)}>{title.text}</h1>
-                <h2 className="text-xl font-bold">{title.subtext}</h2>
+                <h2
+                    className={twMerge(
+                        'text-xl',
+                        props.popupType === 'busy' ? 'text-center mt-4' : 'font-bold'
+                    )}
+                >
+                    {title.subtext}
+                </h2>
                 <div className="flex flex-col items-center w-full my-4">
                     {popupText &&
                         popupText[props.popupType].map((v, i) => (
@@ -159,7 +165,7 @@ const VotePopup = (props: VotePopupProps) => {
                         ))}
                 </div>
                 <Button type="primary" onClick={handleClick}>
-                    Submit
+                    {props.popupType === 'busy' ? 'Skip' : 'Submit'}
                 </Button>
             </div>
         </>
