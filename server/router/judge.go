@@ -570,6 +570,12 @@ func JudgeBreak(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Error if the judge doesn't have a current project
+	if judge.Current == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge doesn't have a current project"})
+		return
+	}
+
 	// Basically skip the project for the judge
 	err := database.SkipCurrentProject(db, judge, "break", false)
 	if err != nil {

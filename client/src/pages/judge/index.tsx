@@ -131,6 +131,12 @@ const Judge = () => {
     if (!loaded) return <Loading disabled={!loaded} />;
 
     const takeBreak = async () => {
+        // Check if the user is allowed to take a break
+        if (judge?.current == null) {
+            alert('You are already taking a break!');
+            return;
+        }
+
         const res = await postRequest<OkResponse>('/judge/break', 'judge', null);
         if (res.status !== 200) {
             errorAlert(res);
