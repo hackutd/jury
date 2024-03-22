@@ -34,7 +34,7 @@ const JudgeLive = () => {
     const [started, setStarted] = useState(false);
     const [time, setTime] = useState(0);
     const [timerStart, setTimerStart] = useState(0);
-    const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+    const [timerInterval, setTimerInterval] = useState<number | null>(null);
     const [timerDisplay, setTimerDisplay] = useState('');
     const [timesUp, setTimesUp] = useState(false);
     const [stopAudio, setStopAudio] = useState(false);
@@ -91,41 +91,39 @@ const JudgeLive = () => {
             errorAlert(judgeRes);
             return;
         }
-        const newJudge = judgeRes.data as Judge;
+        const theJudge = judgeRes.data as Judge;
 
         // If the judge is disabled, redirect to the disabled page
-        if (!newJudge.active) {
+        if (!theJudge.active) {
             setInfoPage('hidden');
             return;
         }
 
-        // If judge has literally no projects, query for IPO (Initial Project Offering)
-        if (!newJudge.prev && !newJudge.next) {
-            const ipoRes = await postRequest<JudgeIpo>('/judge/ipo', 'judge', null);
-            if (ipoRes.status !== 200) {
-                errorAlert(ipoRes);
-                return;
-            }
-            if (!ipoRes.data?.initial) {
-                setInfoPage('no-projects');
-                return;
-            }
-
-            // No project has been returned (all projects have been judged)
-            if (!ipoRes.data?.project_id) {
-                setInfoPage('done');
-                return;
-            }
-
-            newJudge.next = ipoRes.data?.project_id as string;
-        } else if (!newJudge.next) {
-            // If the judge only has a "prev" project, that means they've gone through all projects
-            setInfoPage('done');
+        // If the judge has a current project, use that
+        if (theJudge.current) {
+            setJudge(theJudge);
+            return;
         }
 
-        setJudge(newJudge);
+        // Otherwise, query for the next project to judge
+        const newProject = await postRequest<NextJudgeProject>('/judge/next', 'judge', null);
+        if (newProject.status !== 200) {
+            errorAlert(newProject);
+            return;
+        }
+
+        // No project has been returned (all projects have been judged)
+        if (!newProject.data?.project_id) {
+            setInfoPage('done');
+            return;
+        }
+
+        // Set the judge's current project
+        theJudge.current = newProject.data.project_id;
+        setJudge(theJudge);
     }
 
+    // Get judge data after verification
     useEffect(() => {
         if (!verified) return;
         if (infoPage === 'paused') return;
@@ -133,6 +131,7 @@ const JudgeLive = () => {
         getJudgeData();
     }, [verified]);
 
+    // Timer logic
     useEffect(() => {
         if (timerStart === 0 || time === 0) {
             return;
@@ -143,7 +142,7 @@ const JudgeLive = () => {
             const remaining = time - elapsed;
 
             if (remaining <= 0) {
-                clearInterval(timerInterval as NodeJS.Timeout);
+                clearInterval(timerInterval as number);
                 setTimesUp(true);
                 return;
             }
@@ -162,6 +161,7 @@ const JudgeLive = () => {
         };
     }, [timerStart]);
 
+    // When time is up, show popup and play sound
     useEffect(() => {
         if (!timesUp) return;
 
@@ -178,6 +178,7 @@ const JudgeLive = () => {
         if (!audioPopupOpen) noAudio();
     }, [audioPopupOpen]);
 
+    // Make timer audio run in a loop
     const audioLoop = () => {
         audio.play();
         audio.addEventListener('ended', () => {
@@ -188,14 +189,16 @@ const JudgeLive = () => {
         });
     };
 
+    // Stop audio
     const noAudio = () => {
         audio.pause();
         audio.currentTime = 0;
         setStopAudio(true);
     };
     
+    // Pause the timer
     const pauseTimer = () => {
-        clearInterval(timerInterval as NodeJS.Timeout);
+        clearInterval(timerInterval as number);
         
         // Calculate remaining time
         const elapsed = Date.now() - timerStart;
@@ -222,10 +225,11 @@ const JudgeLive = () => {
         getJudgeData();
     };
 
+    // Flag the current project
     const flag = async (choice: number) => {
         setJudge(null);
 
-        const options = ['cannot-demo', 'too-complex', 'offensive'];
+        const options = ['absent', 'cannot-demo', 'too-complex', 'offensive'];
 
         // Flag the current project
         const flagRes = await postRequest<OkResponse>('/judge/skip', 'judge', {
@@ -240,23 +244,21 @@ const JudgeLive = () => {
         getJudgeData();
     };
 
-    const skip = async (choice: number) => {
+    const busy = async () => {
         setJudge(null);
 
-        const options = ['absent', 'busy'];
-
-        // Skip the current project
-        const skipRes = await postRequest<OkResponse>('/judge/skip', 'judge', {
-            reason: options[choice],
+        // Flag the current project
+        const flagRes = await postRequest<OkResponse>('/judge/skip', 'judge', {
+            reason: 'busy',
         });
-        if (skipRes.status !== 200) {
-            errorAlert(skipRes);
+        if (flagRes.status !== 200) {
+            errorAlert(flagRes);
             return;
         }
 
         resetTimer();
         getJudgeData();
-    };
+    }
 
     // Display an error page if an error condition holds
     const infoIndex = infoPages.indexOf(infoPage);
@@ -282,16 +284,13 @@ const JudgeLive = () => {
     }
 
     const openPopup = (pop: VotePopupState) => {
-        if (pop === 'vote' && !judge.prev) {
-            judgeVote(0);
-            return;
-        }
         setPopupType(pop);
         setPopup(true);
     };
     
+    // Reset the judging timer
     const resetTimer = () => {
-        clearInterval(timerInterval as NodeJS.Timeout);
+        clearInterval(timerInterval as number);
         setTime(0);
         setTimerStart(0);
         setTimerInterval(null);
@@ -388,14 +387,8 @@ const JudgeLive = () => {
                     </div>
                 </div>
                 <Back location="/judge" />
-                {judge.next && <ProjectDisplay judge={judge} projectId={judge.next} />}
-                {judge.prev && (
-                    <>
-                        <div className="my-6 h-[0.5px] shrink-0 w-full bg-light"></div>
-                        <h3 className="font-bold text-light px-2 mb-1">Previous Project</h3>
-                        <ProjectDisplay judge={judge} projectId={judge.prev} />
-                    </>
-                )}
+                {judge.current && <ProjectDisplay judge={judge} projectId={judge.current} />}
+                {/* TODO: This vote popup thing is jank asf */}
                 <VotePopup
                     popupType={popupType}
                     open={popup}
@@ -403,7 +396,7 @@ const JudgeLive = () => {
                     flagFunc={flag}
                     judge={judge}
                     voteFunc={judgeVote}
-                    skipFunc={skip}
+                    skipFunc={busy}
                 />
                 <InfoPopup
                     enabled={audioPopupOpen}

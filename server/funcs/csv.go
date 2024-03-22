@@ -124,6 +124,7 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 	return projects, nil
 }
 
+// TODO: After event, devpost will add a column between 0 and 1, the "auto assigned table numbers" TT - idk what to do abt this
 // Generate a workable CSV for Jury based on the output CSV from Devpost
 // Columns:
 //  0. Project Title - title

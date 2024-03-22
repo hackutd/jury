@@ -290,7 +290,7 @@ func DeleteJudge(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// GET /judge/next - Endpoint to get the next project for a judge
+// POST /judge/next - Endpoint to get the next project for a judge
 func GetNextJudgeProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)

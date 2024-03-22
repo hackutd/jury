@@ -115,3 +115,7 @@ interface FetchResponse<T> {
 interface Timer {
     judging_timer: number;
 }
+
+interface NextJudgeProject {
+    project_id: string;
+}
