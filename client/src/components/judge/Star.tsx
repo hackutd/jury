@@ -17,6 +17,7 @@ const Star = (props: StarProps) => {
         if (!props.clickable) return;
 
         // Update star count based on the star # clicked
+        // TODO: This no longer exists
         const res = await postRequest('/judge/stars', 'judge', {
             stars: props.num,
             project_id: props.project_id,

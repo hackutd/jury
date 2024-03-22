@@ -2,23 +2,21 @@ package models
 
 type JudgeStats struct {
 	Num       int64   `json:"num"`
-	AvgVotes  float64 `json:"avg_votes"`
+	AvgSeen   float64 `json:"avg_seen"`
 	NumActive int64   `json:"num_active"`
 }
 
 type ProjectStats struct {
-	Num      int64   `json:"num"`
-	AvgVotes float64 `json:"avg_votes"`
-	AvgSeen  float64 `json:"avg_seen"`
+	Num       int64   `json:"num"`
+	AvgSeen   float64 `json:"avg_seen"`
+	NumActive int64   `json:"num_active"`
 }
 
 type Stats struct {
-	Projects int64   `json:"projects"`
-	Judges   int64   `json:"judges"`
-	AvgVotes float64 `json:"avg_votes"`
-	AvgSeen  float64 `json:"avg_seen"`
-	MaxMu    float64 `json:"max_mu"`
-	AvgSigma float64 `json:"avg_sigma"`
+	Projects       int64   `json:"projects"`
+	Judges         int64   `json:"judges"`
+	AvgProjectSeen float64 `json:"avg_seen"`
+	AvgJudgeSeen   float64 `json:"avg_seen"`
 }
 
 type JudgeVote struct {

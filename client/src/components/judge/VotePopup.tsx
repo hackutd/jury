@@ -47,6 +47,7 @@ const VotePopup = (props: VotePopupProps) => {
 
         async function getProjectInfo() {
             // Gets the project info
+            // TODO: This no longer exists :((
             const piRes = await getRequest<VotingProjectInfo>('/judge/vote/info', 'judge');
             if (piRes.status !== 200) {
                 errorAlert(piRes);

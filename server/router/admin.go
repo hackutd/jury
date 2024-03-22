@@ -1,15 +1,11 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"server/config"
 	"server/database"
 	"server/funcs"
 	"server/models"
-	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -42,6 +38,14 @@ func LoginAdmin(ctx *gin.Context) {
 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid or missing password field"})
 }
 
+// POST /admin/auth - Checks if an admin is authenticated
+func AdminAuthenticated(ctx *gin.Context) {
+	// This route will run the middleware first, and if the middleware
+	// passes, then that means the admin is authenticated
+
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
 // GET /admin/stats - GetAdminStats returns stats about the system
 func GetAdminStats(ctx *gin.Context) {
 	// Get the database from the context
@@ -56,7 +60,6 @@ func GetAdminStats(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, stats)
-
 }
 
 // GET /admin/clock - GetClock returns the current clock state
@@ -144,12 +147,16 @@ func ResetClock(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"clock": clock, "ok": 1})
 }
 
-// POST /admin/auth - Checks if an admin is authenticated
-func AdminAuthenticated(ctx *gin.Context) {
-	// This route will run the middleware first, and if the middleware
-	// passes, then that means the admin is authenticated
+func IsClockPaused(ctx *gin.Context) {
+	// Get the clock from the context
+	clock := ctx.MustGet("clock").(*models.ClockState)
 
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	// Send OK
+	if clock.Running {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
 }
 
 // POST /admin/reset - ResetDatabase resets the database
@@ -168,25 +175,13 @@ func ResetDatabase(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-func IsClockPaused(ctx *gin.Context) {
-	// Get the clock from the context
-	clock := ctx.MustGet("clock").(*models.ClockState)
-
-	// Send OK
-	if clock.Running {
-		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-	} else {
-		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
-	}
-}
-
 // POST /admin/flags - GetFlags returns all flags
 func GetFlags(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get all the flags
-	flags, err := database.FindAllSkips(db, true)
+	flags, err := database.FindAllFlags(db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting flags: " + err.Error()})
 		return
@@ -209,82 +204,6 @@ func GetOptions(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, options)
-}
-
-type SetGroupsRequest struct {
-	UseGroups bool   `json:"use_groups"`
-	RawGroups string `json:"raw_groups"`
-}
-
-// POST /admin/options - SetOptions sets the options object
-func SetGroups(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get request
-	var req SetGroupsRequest
-	err := ctx.BindJSON(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-		return
-	}
-
-	// Parse the groups string; it should be in the form <int> <int>, separated by newlines
-	groupsSplit := strings.Split(req.RawGroups, "\n")
-	groups := make([]models.Group, 0)
-
-	for i, group := range groupsSplit {
-		// Ignore empty lines
-		if strings.TrimSpace(group) == "" {
-			continue
-		}
-
-		groupSplitSplit := strings.Split(group, " ")
-		start, err := strconv.Atoi(groupSplitSplit[0])
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("error on line %d with start: %s", i+1, err.Error())})
-			return
-		}
-
-		end, err := strconv.Atoi(groupSplitSplit[1])
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("error on line %d with end: %s", i+1, err.Error())})
-			return
-		}
-
-		groups = append(groups, *models.NewGroup(start, end))
-	}
-
-	// Sort groups by start time
-	sort.Sort(models.ByStartTime(groups))
-
-	// Check for overlapping groups
-	for i := 0; i < len(groups)-1; i++ {
-		if groups[i].End >= groups[i+1].Start {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("error: group (%d, %d) overlaps with previous group(s)", groups[i+1].Start, groups[i+1].End)})
-			return
-		}
-	}
-
-	// Get the options
-	options, err := database.GetOptions(db)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	options.Groups = groups
-	options.UseGroups = req.UseGroups
-
-	// Save the options in the database
-	err = database.UpdateOptions(db, options)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /admin/export/judges - ExportJudges exports all judges to a CSV

@@ -31,9 +31,7 @@
         "offensive": {
             "text": "Offensive Project",
             "subtext": "Offensive or breaks Code of Conduct"
-        }
-    },
-    "skips": {
+        },
         "absent": {
             "text": "Not Present",
             "subtext": "Group is not present for judging"

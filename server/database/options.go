@@ -23,11 +23,13 @@ func GetOptions(db *mongo.Database) (*models.Options, error) {
 	return &options, err
 }
 
+// UpdateOptions updates the current table number in the database
 func UpdateCurrTableNum(db *mongo.Database, ctx context.Context, currTableNum int64) error {
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"curr_table_num": currTableNum}})
 	return err
 }
 
+// UpdateOptions updates the clock in the database
 func UpdateClock(db *mongo.Database, clock *models.ClockState) error {
 	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"clock": clock}})
 	return err

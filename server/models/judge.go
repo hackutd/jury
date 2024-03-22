@@ -17,6 +17,8 @@ type Judge struct {
 	Active       bool                 `bson:"active" json:"active"`
 	ReadWelcome  bool                 `bson:"read_welcome" json:"read_welcome"`
 	Notes        string               `bson:"notes" json:"notes"`
+	Current      *primitive.ObjectID  `bson:"current" json:"current"`
+	Seen         int64                `bson:"seen" json:"seen"`
 	SeenProjects []JudgedProject      `bson:"seen_projects" json:"seen_projects"`
 	Rankings     []primitive.ObjectID `bson:"rankings" json:"rankings"`
 	LastActivity primitive.DateTime   `bson:"last_activity" json:"last_activity"`
@@ -40,6 +42,8 @@ func NewJudge(name string, email string, notes string) *Judge {
 		Active:       true,
 		ReadWelcome:  false,
 		Notes:        notes,
+		Current:      nil,
+		Seen:         0,
 		SeenProjects: []JudgedProject{},
 		Rankings:     []primitive.ObjectID{},
 		LastActivity: primitive.DateTime(0),

@@ -67,6 +67,7 @@ const AdminSettings = () => {
     };
 
     const updateGroupings = async () => {
+        // TODO: This no longer exists
         const res = await postRequest<OkResponse>('/admin/groups', 'admin', {
             use_groups: groupChecked,
             raw_groups: groups,

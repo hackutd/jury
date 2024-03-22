@@ -209,6 +209,7 @@ const JudgeLive = () => {
         setJudge(null);
 
         // Vote for the given choice
+        // TODO: This no longer exists!
         const voteRes = await postRequest<OkResponse>('/judge/vote', 'judge', {
             curr_winner: choice === 0,
         });
