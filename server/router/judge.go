@@ -2,10 +2,10 @@ package router
 
 import (
 	"net/http"
-	"server/crowdbt"
 	"server/database"
 	"server/funcs"
 	"server/models"
+	"server/ranking"
 	"server/util"
 
 	"github.com/gin-gonic/gin"
@@ -358,7 +358,7 @@ func JudgeVote(ctx *gin.Context) {
 	}
 
 	// Run the update function
-	nAlpha, nBeta, nMuWinner, nSigmaWinner, nMuLoser, nSigmaLoser := crowdbt.Update(judge.Alpha, judge.Beta, winner.Mu, winner.SigmaSq, loser.Mu, loser.SigmaSq)
+	nAlpha, nBeta, nMuWinner, nSigmaWinner, nMuLoser, nSigmaLoser := ranking.Update(judge.Alpha, judge.Beta, winner.Mu, winner.SigmaSq, loser.Mu, loser.SigmaSq)
 
 	// Update the fields
 	judge.Alpha = nAlpha

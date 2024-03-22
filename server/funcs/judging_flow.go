@@ -2,9 +2,9 @@ package funcs
 
 import (
 	"math/rand"
-	"server/crowdbt"
 	"server/database"
 	"server/models"
+	"server/ranking"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -32,7 +32,7 @@ func PickNextProject(db *mongo.Database, judge *models.Judge) (*models.Project, 
 	}
 
 	// Randomly pick the first element with an EPSILON chance
-	if rand.Float64() < crowdbt.EPSILON {
+	if rand.Float64() < ranking.EPSILON {
 		return items[0], nil
 	}
 
@@ -166,7 +166,7 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge) ([]*models.Proj
 	// If there are projects that have less than MIN_VIEWS, pick from that list
 	var lowViewProjects []*models.Project
 	for _, proj := range projects {
-		if proj.Seen < crowdbt.MIN_VIEWS {
+		if proj.Seen < ranking.MIN_VIEWS {
 			lowViewProjects = append(lowViewProjects, proj)
 		}
 	}
@@ -182,7 +182,7 @@ func maxInfoGain(items []*models.Project, prev *models.Project, judge *models.Ju
 	maxInfoGain := -1.0
 	var maxInfoGainProject *models.Project
 	for _, item := range items {
-		infoGain := crowdbt.ExpectedInformationGain(judge.Alpha, judge.Beta, prev.Mu, prev.SigmaSq, item.Mu, item.SigmaSq)
+		infoGain := ranking.ExpectedInformationGain(judge.Alpha, judge.Beta, prev.Mu, prev.SigmaSq, item.Mu, item.SigmaSq)
 		if infoGain > maxInfoGain {
 			maxInfoGain = infoGain
 			maxInfoGainProject = item

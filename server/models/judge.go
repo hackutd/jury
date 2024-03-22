@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"server/crowdbt"
+	"server/ranking"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -48,8 +48,8 @@ func NewJudge(name string, email string, notes string) *Judge {
 		Votes:             0,
 		Next:              nil,
 		Prev:              nil,
-		Alpha:             crowdbt.ALPHA_PRIOR,
-		Beta:              crowdbt.BETA_PRIOR,
+		Alpha:             ranking.ALPHA_PRIOR,
+		Beta:              ranking.BETA_PRIOR,
 		SeenProjects:      []JudgedProject{},
 		VisitedGroups:     []int64{},
 		CurrentGroupCount: 0,

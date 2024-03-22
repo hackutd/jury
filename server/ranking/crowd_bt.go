@@ -1,4 +1,4 @@
-package crowdbt
+package ranking
 
 import (
 	"math"

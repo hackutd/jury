@@ -2,7 +2,7 @@ package models
 
 import (
 	"encoding/json"
-	"server/crowdbt"
+	"server/ranking"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -36,8 +36,8 @@ func NewProject(name string, location int64, description string, url string, try
 		ChallengeList: challengeList,
 		Seen:          0,
 		Votes:         0,
-		Mu:            crowdbt.MU_PRIOR,
-		SigmaSq:       crowdbt.SIGMA_SQ_PRIOR,
+		Mu:            ranking.MU_PRIOR,
+		SigmaSq:       ranking.SIGMA_SQ_PRIOR,
 		Active:        true,
 		Prioritized:   false,
 		LastActivity:  primitive.DateTime(0),
