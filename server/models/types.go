@@ -30,7 +30,8 @@ type IdRequest struct {
 }
 
 type AddJudgeRequest struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Notes string `json:"notes"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Notes  string `json:"notes"`
+	NoSend bool   `json:"no_send"`
 }
