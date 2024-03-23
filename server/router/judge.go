@@ -602,3 +602,53 @@ func GetCategories(ctx *gin.Context) {
 	// Send OK
 	ctx.JSON(http.StatusOK, categories)
 }
+
+type UpdateScoreRequest struct {
+	Categories map[string]int     `json:"categories"`
+	Project    primitive.ObjectID `json:"project"`
+}
+
+// PUT /judge/score - Endpoint to update a judge's score for a certain project
+func JudgeUpdateScore(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the request object
+	var scoreReq UpdateScoreRequest
+	err := ctx.BindJSON(&scoreReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Find the index of the project in the judge's seen projects
+	index := -1
+	for i, p := range judge.SeenProjects {
+		if p.ProjectId == scoreReq.Project {
+			index = i
+			break
+		}
+	}
+
+	// If the project isn't in the judge's seen projects, return an error
+	if index == -1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
+		return
+	}
+
+	// Update that specific index of the seen projects array
+	judge.SeenProjects[index].Categories = scoreReq.Categories
+
+	// Update the judge's score for the project
+	err = database.UpdateJudgeSeenProjects(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}

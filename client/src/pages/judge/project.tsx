@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
-import StarDisplay from '../../components/judge/StarDisplay';
 import Paragraph from '../../components/Paragraph';
 import Back from '../../components/Back';
 import { getRequest } from '../../api';
 import { errorAlert } from '../../util';
+import Ratings from '../../components/judge/Ratings';
 
 const Project = () => {
     const { id } = useParams();
@@ -34,13 +34,8 @@ const Project = () => {
             <Container noCenter={true} className="px-2">
                 <Back location="/judge" />
                 <h1 className="text-3xl mb-1">{project.name}</h1>
-                <div className='text-right'>
-                    {Object.entries(project.categories).map(([name, score]) => (
-                        <p>
-                            {name}: {score}
-                        </p>
-                    ))}
-                </div>
+                <h2 className="text-xl font-bold text-light mb-2">Table {project.location}</h2>
+                <Ratings callback={() => {alert('Ratings submitted!'                )}} prior={project.categories} project={project} small submitText="Update" update />
                 <Paragraph text={project.description} className="text-light" />
             </Container>
         </>

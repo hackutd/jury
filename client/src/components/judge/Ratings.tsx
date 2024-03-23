@@ -1,16 +1,29 @@
 import { useEffect, useState } from 'react';
-import { getRequest, postRequest } from '../../api';
+import { getRequest, postRequest, putRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Button from '../Button';
 
 interface RatingsProps {
     callback: () => void;
     submitText?: string;
+    prior?: { [x: string]: number }; // TODO: wtf is this type
+    small?: boolean;
+    update?: boolean;
+    project: JudgedProject;
 }
 
 const Ratings = (props: RatingsProps) => {
     const [categories, setCategories] = useState<string[]>([]);
     const [categoryScores, setCategoryScores] = useState<number[]>([]);
+
+    useEffect(() => {
+        if (!props.prior || categories.length === 0) return;
+
+        console.log(props.prior);
+
+        const newScores = categories.map((v) => (props.prior as any)[v] ?? 0); // TODO: fix this
+        setCategoryScores(newScores);
+    }, [props.prior, categories]);
 
     // Get categories from the options
     useEffect(() => {
@@ -40,9 +53,14 @@ const Ratings = (props: RatingsProps) => {
             .reduce((a, b) => ({ ...a, ...b }), {});
 
         // Score the current project
-        const scoreRes = await postRequest<OkResponse>('/judge/score', 'judge', {
-            categories: scores,
-        });
+        const scoreRes = props.update
+            ? await putRequest<OkResponse>('/judge/score', 'judge', {
+                  categories: scores,
+                  project: props.project.project_id,
+              })
+            : await postRequest<OkResponse>('/judge/score', 'judge', {
+                  categories: scores,
+              });
         if (scoreRes.status !== 200) {
             errorAlert(scoreRes);
             return;
@@ -73,7 +91,11 @@ const Ratings = (props: RatingsProps) => {
                 </div>
             ))}
             <div className="flex justify-center mt-4">
-                <Button type="primary" onClick={submit}>
+                <Button
+                    type="primary"
+                    onClick={submit}
+                    className={props.small ? 'p-1 mb-4' : 'mb-4'}
+                >
                     {props.submitText ?? 'Submit'}
                 </Button>
             </div>

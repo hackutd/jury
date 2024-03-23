@@ -229,3 +229,9 @@ func UpdateJudgeRanking(db *mongo.Database, judge *models.Judge, rankings []prim
 	)
 	return err
 }
+
+// TODO: Move the stuff from UpdateJudgeRankings to here
+func UpdateJudgeSeenProjects(db *mongo.Database, judge *models.Judge) error {
+	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
+	return err
+}
