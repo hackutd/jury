@@ -4,6 +4,7 @@ import TextInput from '../../TextInput';
 import TextArea from '../../TextArea';
 import { postRequest } from '../../../api';
 import { errorAlert } from '../../../util';
+import Checkbox from '../../Checkbox';
 
 interface NewJudgeData {
     name: string;
@@ -11,19 +12,24 @@ interface NewJudgeData {
     notes: string;
 }
 
+type NewJudgeDataFull = NewJudgeData & { no_send: boolean };
+
 const NewJudgeForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { register, handleSubmit, reset } = useForm<NewJudgeData>();
+    const [noSend, setNoSend] = useState(false);
 
     const onSubmit: SubmitHandler<NewJudgeData> = async (data) => {
         setIsSubmitting(true);
-        
-        const res = await postRequest('/judge/new', 'admin', data);
+
+        const newdata = { ...data, no_send: noSend }
+
+        const res = await postRequest('/judge/new', 'admin', newdata);
         if (res.status !== 200) {
             errorAlert(res);
             return;
         }
-        
+
         alert('Judge added successfully!');
         reset();
         setIsSubmitting(false);
@@ -39,6 +45,9 @@ const NewJudgeForm = () => {
                         <TextInput name="email" placeholder="Email" register={register} required />
                     </div>
                     <TextArea name="notes" placeholder="Notes (optional)" register={register} />
+                    <Checkbox checked={noSend} onChange={setNoSend}>
+                        Do not send an email
+                    </Checkbox>
                     <button
                         className="w-full h-11 px-4 text-2xl text-white bg-primary rounded-full"
                         disabled={isSubmitting}
