@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"server/crowdbt"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -17,11 +16,7 @@ type Project struct {
 	VideoLink     string             `bson:"video_link" json:"video_link"`
 	ChallengeList []string           `bson:"challenge_list" json:"challenge_list"`
 	Seen          int64              `bson:"seen" json:"seen"`
-	Votes         int64              `bson:"votes" json:"votes"`
-	Mu            float64            `bson:"mu" json:"mu"`
-	SigmaSq       float64            `bson:"sigma_sq" json:"sigma_sq"`
 	Active        bool               `bson:"active" json:"active"`
-	Prioritized   bool               `bson:"prioritized" json:"prioritized"`
 	LastActivity  primitive.DateTime `bson:"last_activity" json:"last_activity"`
 }
 
@@ -35,11 +30,7 @@ func NewProject(name string, location int64, description string, url string, try
 		VideoLink:     videoLink,
 		ChallengeList: challengeList,
 		Seen:          0,
-		Votes:         0,
-		Mu:            crowdbt.MU_PRIOR,
-		SigmaSq:       crowdbt.SIGMA_SQ_PRIOR,
 		Active:        true,
-		Prioritized:   false,
 		LastActivity:  primitive.DateTime(0),
 	}
 }

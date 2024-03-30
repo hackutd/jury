@@ -2,8 +2,9 @@ package database
 
 import (
 	"context"
+	"errors"
 	"server/models"
-	"time"
+	"server/util"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,9 +12,9 @@ import (
 )
 
 // UpdateJudgeLastActivity to the current time
+// TODO: Do we actually need this???
 func UpdateJudgeLastActivity(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) error {
-	// Get current time
-	lastActivity := primitive.NewDateTimeFromTime(time.Now())
+	lastActivity := util.Now()
 	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
 	return err
 }
@@ -58,23 +59,8 @@ func FindJudgeByCode(db *mongo.Database, code string) (*models.Judge, error) {
 
 // UpdateJudge updates a judge in the database
 func UpdateJudge(db *mongo.Database, judge *models.Judge) error {
+	judge.LastActivity = util.Now()
 	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": judge})
-	if err != nil {
-		return err
-	}
-
-	err = UpdateJudgeLastActivity(db, context.Background(), &judge.Id)
-	return err
-}
-
-// UpdateJudgeNext updates the next project of a judge
-func UpdateJudgeNext(db *mongo.Database, judge *models.Judge) error {
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"next": judge.Next}})
-	if err != nil {
-		return err
-	}
-
-	err = UpdateJudgeLastActivity(db, context.Background(), &judge.Id)
 	return err
 }
 
@@ -109,8 +95,8 @@ func AggregateJudgeStats(db *mongo.Database) (*models.JudgeStats, error) {
 		{"$match": gin.H{"active": true}},
 		{"$group": gin.H{
 			"_id": nil,
-			"avgVotes": gin.H{
-				"$avg": "$votes",
+			"avgSeen": gin.H{
+				"$avg": "$seen",
 			},
 			"numActive": gin.H{
 				"$sum": 1,
@@ -141,68 +127,111 @@ func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
 	return err
 }
 
-// UpdateAfterVote updates the database after a judge votes using a transaction
-func UpdateAfterVote(db *mongo.Database, judge *models.Judge, winner *models.Project, loser *models.Project) error {
-	// Update the judge, winner, and loser documents
-	err := WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
-		// Update the judge
-		_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": judge})
-		if err != nil {
-			return nil, err
-		}
-
-		// Update the winner
-		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": winner.Id}, gin.H{"$set": winner})
-		if err != nil {
-			return nil, err
-		}
-
-		// Update the loser
-		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": loser.Id}, gin.H{"$set": loser})
-		if err != nil {
-			return nil, err
-		}
-
-		// Update the judge's last activity field
-		err = UpdateJudgeLastActivity(db, ctx, &judge.Id)
-		return nil, err
-	})
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-// UpdateJudgeStars updates the seen projects field of a judge
-func UpdateJudgeStars(db *mongo.Database, judge *models.Judge) error {
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
-	if err != nil {
-		return err
-	}
-
-	err = UpdateJudgeLastActivity(db, context.Background(), &judge.Id)
+// UpdateAfterSeen updates the judge's seen projects and increments the seen count
+func UpdateAfterSeen(db *mongo.Database, judge *models.Judge, seenProject *models.JudgedProject) error {
+	// Update the judge's seen projects
+	_, err := db.Collection("judges").UpdateOne(
+		context.Background(),
+		gin.H{"_id": judge.Id},
+		gin.H{
+			"$push": gin.H{"seen_projects": seenProject},
+			"$inc":  gin.H{"seen": 1},
+			"$set":  gin.H{"current": nil, "last_activity": util.Now()},
+		},
+	)
 	return err
 }
 
 // SetJudgeHidden sets the active field of a judge
 func SetJudgeHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"active": !hidden}})
-	if err != nil {
-		return err
-	}
-
-	err = UpdateJudgeLastActivity(db, context.Background(), id)
+	_, err := db.Collection("judges").UpdateOne(
+		context.Background(),
+		gin.H{"_id": id},
+		gin.H{"$set": gin.H{"active": !hidden, "last_activity": util.Now()}},
+	)
 	return err
 }
 
 // UpdateJudgeBasicInfo updates the basic info of a judge (name, email, notes)
 func UpdateJudgeBasicInfo(db *mongo.Database, judgeId *primitive.ObjectID, addRequest *models.AddJudgeRequest) error {
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judgeId}, gin.H{"$set": gin.H{"name": addRequest.Name, "email": addRequest.Email, "notes": addRequest.Notes}})
+	_, err := db.Collection("judges").UpdateOne(
+		context.Background(),
+		gin.H{"_id": judgeId},
+		gin.H{"$set": gin.H{"name": addRequest.Name, "email": addRequest.Email, "notes": addRequest.Notes}},
+	)
+	return err
+}
+
+// SkipCurrentProject skips the current project for a judge
+func SkipCurrentProject(db *mongo.Database, judge *models.Judge, reason string, getNew bool) error {
+	// Get skipped project from database
+	skippedProject, err := FindProjectById(db, judge.Current)
 	if err != nil {
-		return err
+		return errors.New("error finding skipped project in database: " + err.Error())
 	}
 
-	err = UpdateJudgeLastActivity(db, context.Background(), judgeId)
+	// Run rest of DB operations in a transaction
+	err = WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
+		// If skipping for any reason other than wanting a break, add the project to the skipped list
+		if reason != "break" {
+			// Create a new skip object
+			skip, err := models.NewFlag(skippedProject, judge, reason)
+			if err != nil {
+				return nil, errors.New("error creating skip object: " + err.Error())
+			}
+
+			// Add skipped project to skipped database
+			err = InsertFlag(db, ctx, skip)
+			if err != nil {
+				return nil, errors.New("error inserting skip into database: " + err.Error())
+			}
+		}
+
+		// Update the judge
+		_, err := db.Collection("judges").UpdateOne(
+			ctx,
+			gin.H{"_id": judge.Id},
+			gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update the project
+		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}})
+		if err != nil {
+			return nil, err
+		}
+
+		// Don't get a new project if we're not supposed to
+		if !getNew {
+			return nil, nil
+		}
+
+		// Get a new project
+		project, err := PickNextProject(db, judge, ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update the judge
+		return UpdateAfterPickedWithTx(db, project, judge, ctx)
+	})
+	return err
+}
+
+// UpdateJudgeRanking updates the judge's ranking array
+func UpdateJudgeRanking(db *mongo.Database, judge *models.Judge, rankings []primitive.ObjectID) error {
+	_, err := db.Collection("judges").UpdateOne(
+		context.Background(),
+		gin.H{"_id": judge.Id},
+		gin.H{"$set": gin.H{"rankings": rankings, "last_activity": util.Now()}},
+	)
+	return err
+}
+
+// TODO: Move the stuff from UpdateJudgeRankings to here
+func UpdateJudgeSeenProjects(db *mongo.Database, judge *models.Judge) error {
+	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
 	return err
 }

@@ -1,6 +1,6 @@
 import { twMerge } from 'tailwind-merge';
 
-const AdminStat = (props: { name: string; value: string | number; className?: string }) => {
+const StatBlock = (props: { name: string; value: string | number; className?: string }) => {
     function fixIfFloat(n: number): string {
         if (Math.round(n) === n) {
             return n.toString();
@@ -18,4 +18,4 @@ const AdminStat = (props: { name: string; value: string | number; className?: st
     );
 };
 
-export default AdminStat;
+export default StatBlock;

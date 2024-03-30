@@ -1,12 +1,12 @@
-package crowdbt_test
+package ranking_test
 
 import (
-	"server/crowdbt"
+	"server/ranking"
 	"testing"
 )
 
 func TestUpdate(t *testing.T) {
-	a, b, c, d, e, f := crowdbt.Update(20.0, 12.2, 4.2, 1.0, 3.11, 0.65)
+	a, b, c, d, e, f := ranking.Update(20.0, 12.2, 4.2, 1.0, 3.11, 0.65)
 	Assert(t, a, 20.29342378562617)
 	Assert(t, b, 12.144888310192417)
 	Assert(t, c, 4.28143039999674)

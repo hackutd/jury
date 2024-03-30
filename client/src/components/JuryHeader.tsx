@@ -31,7 +31,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
     return (
         <div
             className={twMerge(
-                'md:px-2 px-4 relative mx-auto mt-6 w-full flex flex-col',
+                'md:px-2 px-4 relative mx-auto pt-6 w-full flex flex-col bg-background',
                 props.isAdmin ? 'items-center' : 'md:w-[30rem]'
             )}
         >
@@ -56,7 +56,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
             </div>
             {props.withBack && (
                 <div
-                    className="absolute top-0 left-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 text-light text-xl mr-2"
+                    className="absolute top-6 left-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 text-light text-xl mr-2"
                     onClick={backToAdmin}
                 >
                     ◂&nbsp;&nbsp;Back
@@ -64,7 +64,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
             )}
             {props.withLogout && (
                 <div
-                    className="absolute top-0 right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200"
+                    className="absolute top-6 right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200"
                     onClick={logout}
                 >
                     <div className="text-light text-xl mr-2">Logout</div>

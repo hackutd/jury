@@ -3,8 +3,10 @@ package util
 import (
 	"crypto/rand"
 	"math/big"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -29,4 +31,9 @@ func GetFullHostname(ctx *gin.Context) string {
 		scheme = "https"
 	}
 	return scheme + "://" + ctx.Request.Host
+}
+
+// Now returns the current time as a primitive.DateTime
+func Now() primitive.DateTime {
+	return primitive.NewDateTimeFromTime(time.Now())
 }

@@ -3,7 +3,6 @@ import { twMerge } from 'tailwind-merge';
 import Paragraph from '../Paragraph';
 import { getRequest } from '../../api';
 import { errorAlert } from '../../util';
-import StarDisplay from './StarDisplay';
 
 interface ProjectDisplayProps {
     /* Project ID to display */
@@ -44,16 +43,6 @@ const ProjectDisplay = (props: ProjectDisplayProps) => {
         <div className={twMerge('px-2', props.className)}>
             <h1 className="text-3xl mb-1">{project.name}</h1>
             <h2 className="text-xl mb-1">Table {project.location}</h2>
-            <div className="flex mb-3">
-                <StarDisplay
-                    id={project.id}
-                    clickable={true}
-                    stars={
-                        props.judge.seen_projects.find((jp) => jp.project_id === project.id)
-                            ?.stars || 0
-                    }
-                />
-            </div>
             <Paragraph className="text-light" text={project.description} />
         </div>
     );

@@ -124,6 +124,7 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 	return projects, nil
 }
 
+// TODO: After event, devpost will add a column between 0 and 1, the "auto assigned table numbers" TT - idk what to do abt this
 // Generate a workable CSV for Jury based on the output CSV from Devpost
 // Columns:
 //  0. Project Title - title
@@ -212,12 +213,14 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 	return projects, nil
 }
 
+// AddCSVData adds a CSV file to the response
 func AddCsvData(name string, content []byte, ctx *gin.Context) {
 	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.csv", name))
 	ctx.Header("Content-Type", "text/csv")
 	ctx.Data(http.StatusOK, "text/csv", content)
 }
 
+// AddZipFile adds a zip file to the response
 func AddZipFile(name string, content []byte, ctx *gin.Context) {
 	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s.zip", name))
 	ctx.Header("Content-Type", "application/octet-stream")
@@ -232,11 +235,12 @@ func CreateJudgeCSV(judges []*models.Judge) []byte {
 	w := csv.NewWriter(csvBuffer)
 
 	// Write the header
-	w.Write([]string{"Name", "Email", "Notes", "Code", "Active", "ReadWelcome", "Notes", "Alpha", "Beta", "LastActivity"})
+	// TODO: Add judge rankings to output
+	w.Write([]string{"Name", "Email", "Notes", "Code", "Active", "ReadWelcome", "Seen", "LastActivity"})
 
 	// Write each judge
 	for _, judge := range judges {
-		w.Write([]string{judge.Name, judge.Email, judge.Notes, judge.Code, fmt.Sprintf("%t", judge.Active), fmt.Sprintf("%t", judge.ReadWelcome), judge.Notes, fmt.Sprintf("%f", judge.Alpha), fmt.Sprintf("%f", judge.Beta), fmt.Sprintf("%d", judge.LastActivity)})
+		w.Write([]string{judge.Name, judge.Email, judge.Notes, judge.Code, fmt.Sprintf("%t", judge.Active), fmt.Sprintf("%t", judge.ReadWelcome), fmt.Sprintf("%d", judge.Seen), fmt.Sprintf("%d", judge.LastActivity)})
 	}
 
 	// Flush the writer
@@ -253,11 +257,11 @@ func CreateProjectCSV(projects []*models.Project) []byte {
 	w := csv.NewWriter(csvBuffer)
 
 	// Write the header
-	w.Write([]string{"Name", "Table", "Description", "URL", "TryLink", "VideoLink", "ChallengeList", "Mu", "SigmaSq", "Active", "LastActivity"})
+	w.Write([]string{"Name", "Table", "Description", "URL", "TryLink", "VideoLink", "ChallengeList", "Seen", "LastActivity"})
 
 	// Write each project
 	for _, project := range projects {
-		w.Write([]string{project.Name, fmt.Sprintf("Table %d", project.Location), project.Description, project.Url, project.TryLink, project.VideoLink, strings.Join(project.ChallengeList, ","), fmt.Sprintf("%f", project.Mu), fmt.Sprintf("%f", project.SigmaSq), fmt.Sprintf("%t", project.Active), fmt.Sprintf("%d", project.LastActivity)})
+		w.Write([]string{project.Name, fmt.Sprintf("Table %d", project.Location), project.Description, project.Url, project.TryLink, project.VideoLink, strings.Join(project.ChallengeList, ","), fmt.Sprintf("%d", project.Seen), fmt.Sprintf("%t", project.Active), fmt.Sprintf("%d", project.LastActivity)})
 	}
 
 	// Flush the writer
@@ -266,6 +270,7 @@ func CreateProjectCSV(projects []*models.Project) []byte {
 	return csvBuffer.Bytes()
 }
 
+// CreateProjectChallengeZip creates a zip file with a CSV for each challenge
 func CreateProjectChallengeZip(projects []*models.Project) ([]byte, error) {
 	csvList := [][]byte{}
 
@@ -321,6 +326,7 @@ func CreateProjectChallengeZip(projects []*models.Project) ([]byte, error) {
 	return zipBuffer.Bytes(), nil
 }
 
+// contains checks if a string is in a list of strings
 func contains(list []string, str string) bool {
 	for _, s := range list {
 		if s == str {

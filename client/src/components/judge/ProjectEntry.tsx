@@ -1,35 +1,51 @@
 import { useNavigate } from 'react-router-dom';
-import StarDisplay from './StarDisplay';
 
 interface ProjectEntryProps {
-    id: string;
-    name: string;
-    description: string;
-    stars: number;
+    project?: SortableJudgedProject;
 }
 
-const ProjectEntry = (props: ProjectEntryProps) => {
+const ProjectEntry = ({ project }: ProjectEntryProps) => {
+    if (!project) {
+        return null;
+    }
+
     const navigate = useNavigate();
 
     const openProject = () => {
-        navigate(`/judge/project/${props.id}`);
+        navigate(`/judge/project/${project.project_id}`);
     };
 
-    return (
-        <>
-            <div className="cursor-pointer hover:bg-primary/10 duration-100">
-                <div className="flex items-center justify-end">
-                    <h3 className="text-xl grow" onClick={openProject}>
-                        {props.name}
-                    </h3>
-                    <StarDisplay stars={props.stars} id={props.id} clickable />
-                </div>
-                <p className="text-light line-clamp-3" onClick={openProject}>
-                    {props.description.replace('\\n', ' ')}
-                </p>
+    if (project.id === -1) {
+        return (
+            <div>
+                <h3 className="text-xl grow mt-4">Unsorted Projects below here...</h3>
             </div>
-            <div className="h-[1px] w-full bg-light my-2"></div>
-        </>
+        );
+    }
+
+    return (
+        <div className="m-1 p-2 drop-shadow-md bg-background rounded-md">
+            <div className="flex flex-row">
+                <div>
+                    <h3 className="text-xl grow">
+                        <b>Table {project.location}</b>
+                        {': '}
+                        {project.name}
+                    </h3>
+                    <p className="text-light">
+                        {'| '}
+                        {Object.entries(project.categories).map(([name, score], i) => (
+                            <span key={i}>{name.substring(0, 4) + ': ' + score + ' | '}</span>
+                        ))}
+                    </p>
+                </div>
+                <div className="grow text-right flex items-center justify-end mr-2">
+                    <button onClick={openProject} className="text-3xl w-10 h-10 font-bold p-2 text-light duration-200 hover:text-primary leading-[0.5] rounded-full">
+                        +
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 };
 
