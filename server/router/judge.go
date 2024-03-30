@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -47,20 +48,25 @@ func AddJudge(ctx *gin.Context) {
 	// Create the judge
 	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes)
 
-	// Get hostname from request
-	hostname := util.GetFullHostname(ctx)
+	fmt.Println(judgeReq.NoSend)
 
-	// Make sure email is right
-	if !funcs.CheckEmail(judge.Email) {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
-		return
-	}
+	// Send email if no_send is false
+	if !judgeReq.NoSend {
+		// Get hostname from request
+		hostname := util.GetFullHostname(ctx)
 
-	// Send email to judge
-	err = funcs.SendJudgeEmail(judge, hostname)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
-		return
+		// Make sure email is right
+		if !funcs.CheckEmail(judge.Email) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
+			return
+		}
+
+		// Send email to judge
+		err = funcs.SendJudgeEmail(judge, hostname)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
+			return
+		}
 	}
 
 	// Insert the judge into the database
