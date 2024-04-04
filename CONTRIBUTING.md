@@ -1,3 +1,3 @@
 # Contributing
 
-See [contributing.md](/docs/docs/contributing.md) in the docs.
+See the [contributing guide](https://jury.mikz.dev/docs/contributing) on our documentation site!
