@@ -94,7 +94,7 @@ You can change the [subdomain](https://en.wikipedia.org/wiki/Subdomain) of the U
 -   Change app name (URL will be `<app_name><some_characters>.ondigitalocean.app`)
 -   Click Next
 
-You may also want to set up a custom domain name for your application (see [below](#optional-step-custom-domain)).
+You may also want to set up a custom domain name for your application (see [below](#custom-domain-name)).
 
 ## Step 5. Done!
 
