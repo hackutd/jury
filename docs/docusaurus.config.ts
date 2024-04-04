@@ -75,15 +75,15 @@ const config: Config = {
                     items: [
                         {
                             label: 'Contributing',
-                            to: '/docs/intro',
+                            to: '/docs/contributing',
                         },
                         {
-                            label: 'API Reference',
-                            to: '/docs/api',
+                            label: 'Public API',
+                            to: '/docs/reference/public-api',
                         },
                         {
                             label: 'Internal API Reference',
-                            to: '/docs/backend',
+                            to: '/docs/reference/internal-api',
                         },
                     ],
                 },
