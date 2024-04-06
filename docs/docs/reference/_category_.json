@@ -1,0 +1,11 @@
+{
+    "position": 4,
+    "label": "Reference",
+    "collapsible": true,
+    "collapsed": true,
+    "link": {
+        "type": "generated-index",
+        "title": "Reference Pages",
+        "description": "Reference pages provide technical details about the public and internal APIs."
+    }
+}
