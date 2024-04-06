@@ -32,3 +32,20 @@
     align-items: center;
     justify-content: center;
 }
+
+.description {
+    margin-top: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.list {
+    text-align: left;
+    color: #657985;
+}
+
+.subheading {
+    color: #657985;
+    font-weight: bold;
+}
