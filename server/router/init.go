@@ -92,6 +92,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/admin/export/judges", ExportJudges)
 	adminRouter.GET("/admin/export/projects", ExportProjects)
 	adminRouter.GET("/admin/export/challenges", ExportProjectsByChallenge)
+	adminRouter.GET("/admin/export/rankings", ExportRankings)
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.POST("/admin/timer", SetJudgingTimer)
 	adminRouter.POST("/admin/categories", SetCategories)

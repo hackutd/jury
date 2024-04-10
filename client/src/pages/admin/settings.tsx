@@ -278,9 +278,18 @@ const AdminSettings = () => {
                     <Button
                         type="primary"
                         onClick={exportByChallenge}
-                        className="mt-4 w-auto md:w-auto px-4 py-2"
+                        className="mt-4 w-auto md:w-auto px-4 py-2 mr-4"
                     >
                         Export by Challenges
+                    </Button>
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            exportCsv('rankings');
+                        }}
+                        className="mt-4 w-auto md:w-auto px-4 py-2"
+                    >
+                        Export Rankings
                     </Button>
                 </div>
 

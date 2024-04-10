@@ -270,6 +270,25 @@ func ExportProjectsByChallenge(ctx *gin.Context) {
 	funcs.AddZipFile("projects", zipData, ctx)
 }
 
+// POST /admin/export/rankings - ExportRankings exports the rankings of each judge as a CSV
+func ExportRankings(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get all the judges
+	judges, err := database.FindAllJudges(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
+		return
+	}
+
+	// Create the CSV
+	csvData := funcs.CreateJudgeRankingCSV(judges)
+
+	// Send CSV
+	funcs.AddCsvData("rankings", csvData, ctx)
+}
+
 // GET /admin/timer - GetJudgingTimer returns the judging timer
 func GetJudgingTimer(ctx *gin.Context) {
 	// Get the database from the context

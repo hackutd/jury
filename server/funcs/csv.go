@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"server/database"
 	"server/models"
+	"server/util"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -249,6 +250,58 @@ func CreateJudgeCSV(judges []*models.Judge) []byte {
 	return csvBuffer.Bytes()
 }
 
+// Create a CSV file from the judges but only the rankings
+func CreateJudgeRankingCSV(judges []*models.Judge) []byte {
+	csvBuffer := &bytes.Buffer{}
+
+	// Create a new CSV writer
+	w := csv.NewWriter(csvBuffer)
+
+	// Write the header
+	w.Write([]string{"Name", "Code", "Ranked", "Unranked"})
+
+	// Write each judge
+	for _, judge := range judges {
+		// Don't include if their rankings are empty :/
+		if len(judge.Rankings) == 0 {
+			continue
+		}
+
+		// Create a list of all ranked projects (just their location)
+		ranked := make([]int64, 0, len(judge.Rankings))
+		for _, projId := range judge.Rankings {
+			idx := util.IndexFunc(judge.SeenProjects, func(p models.JudgedProject) bool {
+				return p.ProjectId == projId
+			})
+			if idx == -1 {
+				continue
+			}
+
+			ranked = append(ranked, judge.SeenProjects[idx].Location)
+		}
+
+		// Create a list of all unranked projects (filter using ranked projects)
+		unranked := make([]int64, 0, len(judge.SeenProjects)-len(judge.Rankings))
+		for _, proj := range judge.SeenProjects {
+			if util.ContainsFunc(ranked, func(table int64) bool { return table == proj.Location }) {
+				unranked = append(unranked, proj.Location)
+			}
+		}
+
+		// Convert arrays to strings
+		rankedStr := util.IntToString(ranked)
+		unrankedStr := util.IntToString(unranked)
+
+		// Write line to CSV
+		w.Write([]string{judge.Name, judge.Code, strings.Join(rankedStr, ","), strings.Join(unrankedStr, ",")})
+	}
+
+	// Flush the writer
+	w.Flush()
+
+	return csvBuffer.Bytes()
+}
+
 // Create a CSV file from a list of projects
 func CreateProjectCSV(projects []*models.Project) []byte {
 	csvBuffer := &bytes.Buffer{}
@@ -257,7 +310,7 @@ func CreateProjectCSV(projects []*models.Project) []byte {
 	w := csv.NewWriter(csvBuffer)
 
 	// Write the header
-	w.Write([]string{"Name", "Table", "Description", "URL", "TryLink", "VideoLink", "ChallengeList", "Seen", "LastActivity"})
+	w.Write([]string{"Name", "Table", "Description", "URL", "TryLink", "VideoLink", "ChallengeList", "Seen", "Active", "LastActivity"})
 
 	// Write each project
 	for _, project := range projects {
