@@ -130,15 +130,20 @@ const AdminSettings = () => {
         setDropPopup(false);
     };
 
-    // TODO: Can we have this as not "any" datatype?
     const exportCsv = async (type: string) => {
-        const res = await getRequest<any>(`/admin/export/${type}`, 'admin');
+        const res = await fetch(`${import.meta.env.VITE_JURY_URL}/admin/export/${type}`, {
+            method: 'GET',
+            headers: createHeaders('admin', false),
+        });
+
         if (res.status !== 200) {
-            errorAlert(res);
+            const error = 'Error exporting data: ' + res.statusText;
+            alert(error);
+            console.error(error);
             return;
         }
 
-        saveToFile((await res.data?.blob()) as Blob, type, 'csv');
+        saveToFile((await res.blob()) as Blob, type, 'csv');
     };
 
     const exportByChallenge = async () => {
@@ -148,7 +153,9 @@ const AdminSettings = () => {
         });
 
         if (res.status !== 200) {
-            alert('Error exporting data: ' + res.statusText);
+            const error = 'Error exporting data: ' + res.statusText;
+            alert(error);
+            console.error(error);
             return;
         }
 
