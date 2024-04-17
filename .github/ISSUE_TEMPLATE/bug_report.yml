@@ -5,27 +5,15 @@ labels: ["bug"]
 body:
   - type: markdown
     attributes: 
-      value: Thank uuuu for filling out dis bug report <33
+      value: Thanks for filling out this bug report! Please let us know what went wrong below.
   - type: textarea
-    id: expected
+    id: what-happened
     attributes:
-      label: Expected Behavior
-      description: What should happen if the bug was not there
+      label: What Happened?
+      description: What is happening that doesn't seem right, in as much detail as possible.
+      placeholder: ex. The text box clips out of the edge of the screen
     validations:
       required: true
-  - type: textarea
-    id: current
-    attributes:
-      label: Current Behavior
-      description: What is happening right now
-    validations:
-      required: true
-  - type: textarea
-    id: description
-    attributes:
-      label: Describe the Bug
-      description: Use this area to describe the bug more in depth, if needed
-      placeholder: ex. When the button gets clicked, nothing happens
   - type: textarea
     id: reproduce
     attributes:
@@ -37,7 +25,7 @@ body:
   - type: dropdown
     id: device
     attributes:
-      label: What device are you seeing this issue on?
+      label: What device(s) are you seeing this issue on?
       multiple: true
       options:
         - Linux Computer
@@ -45,20 +33,27 @@ body:
         - Mac Computer
         - Android Mobile Device
         - iOS Mobile Device
+        - Other Device (list below)
   - type: dropdown
     id: browser
     attributes:
       label: What browser are you seeing this issue on?
       multiple: true
       options:
-        - Firefox
-        - Chromium (Chrome, Brave, Edge, Arc, Opera)
-        - Safari
+        - Firefox Desktop
+        - Chromium Desktop (Chrome, Brave, Edge, Arc, Opera)
+        - Safari Desktop
         - Firefox Mobile
         - Chromium Mobile
         - Safari Mobile
+        - Other Browser (list below)
   - type: textarea
     id: solutions
     attributes:
       label: Possible Solutions
       description: List possible solutions to the bug, if any
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Info
+      description: Please attach any additional information not included above to help us better address this issue; this can be images, videos, or logs (optional)

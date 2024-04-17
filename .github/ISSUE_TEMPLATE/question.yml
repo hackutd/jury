@@ -4,13 +4,13 @@ labels: ["question"]
 body:
   - type: markdown
     attributes:
-      value: Questionzzzz ask away OwO
+      value: If you have any questions or want to create an open discussion about a feature, please enter it here!
   - type: textarea
     id: question
     attributes:
       label: What is your question? Describe in detail.
       description: A clear and concise description of what the question is.
-      placeholder: ex. Should this component have [...]
+      placeholder: ex. Should this screen be changed to...?
   - type: textarea
     id: context
     attributes:
