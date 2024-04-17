@@ -6,18 +6,19 @@ body:
     attributes:
       value: Thanks for helping out and suggesting a new feature!!
   - type: textarea
-    id: problem
-    attributes:
-      label: Is your feature request related to a problem? Please describe.
-      description: A clear and concise description of what the problem is. 
-      placeholder: ex. I'm always frustrated when [...]
-  - type: textarea
     id: description
     attributes:
-      label: Describe the solution you'd like
+      label: Describe the feature you'd like
       description: A clear and concise description of what you want to happen or the feature you want.
+      placeholder: ex. I would like to add a button...
     validations:
       required: true
+  - type: textarea
+    id: justification
+    attributes:
+      label: Pre-existing Issue or Justification
+      description: Is your feature request related to a problem? Please describe the current issue you are facing or reason this feature should be added.
+      placeholder: ex. I'm always frustrated when [...]
   - type: textarea
     id: context
     attributes:
