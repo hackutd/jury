@@ -354,7 +354,7 @@ const JudgeLive = () => {
                         <Button
                             type="primary"
                             className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter"
-                            disabled={judge === null || !started}
+                            disabled={judge === null}
                             onClick={() => {
                                 openPopup('busy');
                             }}
