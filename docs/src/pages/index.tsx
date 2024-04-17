@@ -53,7 +53,7 @@ function HomepageHeader() {
 export default function Home(): JSX.Element {
     const { siteConfig } = useDocusaurusContext();
     return (
-        <Layout description="Description will go into a meta tag in <head />">
+        <Layout description="An all-in-one hackathon judging platform, created with modern technologies aimed at optimizing the user experience of hackers, judges, and organizers.">
             <HomepageHeader />
             <main></main>
         </Layout>
