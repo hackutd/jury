@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { twMerge } from 'tailwind-merge';
+
 import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import ProjectDisplay from '../../components/judge/ProjectDisplay';
 import Button from '../../components/Button';
 import VotePopup from '../../components/judge/VotePopup';
 import Back from '../../components/Back';
-import { getRequest, postRequest } from '../../api';
-import { errorAlert } from '../../util';
-import data from '../../data.json';
 import JudgeInfoPage from '../../components/judge/info';
-import alarm from '../../assets/alarm.mp3';
 import InfoPopup from '../../components/InfoPopup';
-import { twMerge } from 'tailwind-merge';
 import FlagPopup from '../../components/judge/FlagPopup';
 import Popup from '../../components/Popup';
+
+import { getRequest, postRequest } from '../../api';
+import { errorAlert } from '../../util';
+import alarm from '../../assets/alarm.mp3';
+import data from '../../data.json';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done'];
 const infoData = [
@@ -35,6 +37,7 @@ const JudgeLive = () => {
     const [busyPopup, setBusyPopup] = useState<boolean>(false);
     const [infoPage, setInfoPage] = useState<string>('');
     const [started, setStarted] = useState(false);
+    const [totalJudgingTime, setTotalJudgingTime] = useState(0);
     const [time, setTime] = useState(0);
     const [timerStart, setTimerStart] = useState(0);
     const [timerInterval, setTimerInterval] = useState<number | null>(null);
@@ -87,8 +90,19 @@ const JudgeLive = () => {
         fetchData();
     }, []);
 
-    // Once verification finishes, get the judge's next and prev project to judge
+    // Once verification finishes, get the judge's next project to judge, as well as the timer
     async function getJudgeData() {
+        // Get judging timer
+        const timerRes = await getRequest<Timer>('/admin/timer', 'judge');
+        if (timerRes.status !== 200) {
+            errorAlert(timerRes);
+            return;
+        }
+        const judgingTime = timerRes.data?.judging_timer as number;
+        setTotalJudgingTime(judgingTime);
+        if (judgingTime === 0) setStarted(true);
+
+        // Get the judge
         const judgeRes = await getRequest<Judge>('/judge', 'judge');
         if (judgeRes.status !== 200) {
             errorAlert(judgeRes);
@@ -136,7 +150,7 @@ const JudgeLive = () => {
 
     // Timer logic
     useEffect(() => {
-        if (timerStart === 0 || time === 0) {
+        if (timerStart === 0 || time === 0 || totalJudgingTime === 0) {
             return;
         }
 
@@ -282,18 +296,10 @@ const JudgeLive = () => {
 
     // Start the judging timer
     const startJudging = async () => {
-        // Get judging timer
-        const timerRes = await getRequest<Timer>('/admin/timer', 'judge');
-        if (timerRes.status !== 200) {
-            errorAlert(timerRes);
-            return;
-        }
-
         // Start the timer client-side
-        const newTime = timerRes.data?.judging_timer as number;
-        const minutes = Math.floor(newTime / 60);
-        const seconds = Math.floor(newTime % 60);
-        setTime(newTime * 1000);
+        const minutes = Math.floor(totalJudgingTime / 60);
+        const seconds = Math.floor(totalJudgingTime % 60);
+        setTime(totalJudgingTime * 1000);
         setTimerStart(Date.now());
         setTimerDisplay(
             `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
@@ -305,11 +311,11 @@ const JudgeLive = () => {
             <JuryHeader withLogout />
             <Container noCenter className="px-2 pb-4">
                 <Back location="/judge" />
-                <div className="p-2">
-                    {!started ? (
+                <div className="p-2 pb-4">
+                    {totalJudgingTime === 0 ? null : !started ? (
                         <Button
                             type="primary"
-                            className="py-8 text-5xl rounded-xl"
+                            className="py-8 text-5xl rounded-xl mb-4"
                             full
                             onClick={startJudging}
                         >
@@ -318,7 +324,7 @@ const JudgeLive = () => {
                     ) : (
                         <div
                             className={twMerge(
-                                'py-5 text-6xl rounded-xl w-full border-primary border-4 border-solid text-center cursor-pointer ',
+                                'py-5 mb-4 text-6xl rounded-xl w-full border-primary border-4 border-solid text-center cursor-pointer ',
                                 timesUp ? 'border-error bg-error/20' : '',
                                 paused ? 'bg-lighter/20' : ''
                             )}
@@ -334,7 +340,7 @@ const JudgeLive = () => {
                             {timerDisplay}
                         </div>
                     )}
-                    <div className="flex items-center mt-4">
+                    <div className="flex items-center">
                         <Button
                             type="primary"
                             className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark"
@@ -348,7 +354,7 @@ const JudgeLive = () => {
                         <Button
                             type="primary"
                             className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter"
-                            disabled={judge === null || !started}
+                            disabled={judge === null}
                             onClick={() => {
                                 openPopup('busy');
                             }}

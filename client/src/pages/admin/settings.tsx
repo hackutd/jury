@@ -66,16 +66,19 @@ const AdminSettings = () => {
     const updateTimer = async () => {
         // Convert judging timer to time
         const [minutes, seconds] = judgingTimer.split(':');
-        const timer = parseInt(minutes) * 60 + parseInt(seconds);
+        const timer = judgingTimer === '' ? 0 : parseInt(minutes) * 60 + parseInt(seconds);
+
+        // Check to make sure timer is valid and positive
         if (isNaN(timer)) {
             alert('Invalid timer format!');
             return;
         }
-        if (timer <= 0) {
-            alert('Timer must be greater than 0!');
+        if (timer < 0) {
+            alert('Timer must be a positive number!');
             return;
         }
 
+        // Update the timer
         const res = await postRequest<OkResponse>('/admin/timer', 'admin', {
             judging_timer: timer,
         });
@@ -194,7 +197,8 @@ const AdminSettings = () => {
                 <SubSection>Set Judging Timer</SubSection>
                 <Description>
                     Set how long judges have to view each project. This will reflect on the timer
-                    that shows on the judging page.
+                    that shows on the judging page. Leave this field blank (or 0) if you do not wish
+                    to have a timer for each judge.
                 </Description>
                 <input
                     className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
