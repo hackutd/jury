@@ -194,11 +194,23 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, reason string, 
 			gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
 		)
 		if err != nil {
-			return nil, err
+			return nil, errors.New("error updating judge: " + err.Error())
+		}
+
+		// Check to see how many times the project has been marked absent
+		active := true
+		absentCount, err := GetProjectAbsentCount(db, skippedProject, ctx)
+		if err != nil {
+			return nil, errors.New("error checking for project flags: " + err.Error())
+		}
+
+		// Hide project if it's been absent more than 3 times
+		if reason == "absent" && absentCount >= 2 {
+			active = false
 		}
 
 		// Update the project
-		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}})
+		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}, "$set": gin.H{"active": active}})
 		if err != nil {
 			return nil, err
 		}
