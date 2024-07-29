@@ -53,7 +53,7 @@ interface SortState<T extends SortField> {
 }
 
 // TODO: Change this...
-type VotePopupState = 'vote' | 'busy' | 'flag';
+type VotePopupState = 'vote' | 'skip' | 'flag';
 
 interface VotingProjectInfo {
     curr_name: string;
