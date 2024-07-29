@@ -8,7 +8,7 @@ import ProjectDisplay from '../../components/judge/ProjectDisplay';
 import Button from '../../components/Button';
 import RatePopup from '../../components/judge/popups/RatePopup';
 import Back from '../../components/Back';
-import JudgeInfoPage from '../../components/judge/info';
+import JudgeInfoPage from '../../components/judge/JudgeInfoPage';
 import InfoPopup from '../../components/InfoPopup';
 import FlagPopup from '../../components/judge/popups/FlagPopup';
 
@@ -254,13 +254,25 @@ const JudgeLive = () => {
         );
     }
 
+    // Open popup when clicked
     const openPopup = (pop: VotePopupState) => {
-        if (pop === 'vote') {
-            setVotePopup(true);
-        } else if (pop === 'flag') {
-            setFlagPopup(true);
-        } else if (pop === 'skip') {
-            setSkipPopup(true);
+        // Pause the timer before opening popup
+        pauseTimer();
+
+        // Open specified popup
+        switch (pop) {
+            case 'vote':
+                setVotePopup(true);
+                break;
+            case 'flag':
+                setFlagPopup(true);
+                break;
+            case 'skip':
+                setSkipPopup(true);
+                break;
+            default:
+                alert('Invalid popup state!');
+                break;
         }
     };
 
