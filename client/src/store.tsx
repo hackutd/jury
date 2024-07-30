@@ -67,4 +67,4 @@ const useAdminStore = create<AdminStore>()((set) => ({
     }
 }));
 
-export default useAdminStore;
+export { useAdminStore };

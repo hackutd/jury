@@ -3,7 +3,7 @@ import { errorAlert, showTopFive, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditJudgePopup from './EditJudgePopup';
 import { postRequest } from '../../../api';
-import useAdminStore from '../../../store';
+import { useAdminStore } from '../../../store';
 import { twMerge } from 'tailwind-merge';
 
 interface JudgeRowProps {

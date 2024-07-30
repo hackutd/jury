@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import useAdminStore from '../../../store';
+import { useAdminStore } from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { JudgeSortField } from '../../../enums';
 import JudgeRow from './JudgeRow';

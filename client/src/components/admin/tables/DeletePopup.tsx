@@ -1,5 +1,5 @@
 import { deleteRequest } from '../../../api';
-import useAdminStore from '../../../store';
+import { useAdminStore } from '../../../store';
 import { errorAlert } from '../../../util';
 
 type DeleteElement = Project | Judge;

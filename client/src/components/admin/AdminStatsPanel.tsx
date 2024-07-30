@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import StatBlock from '../StatBlock';
 import PauseButton from './PauseButton';
-import useAdminStore from '../../store';
+import { useAdminStore } from '../../store';
 import { getRequest } from '../../api';
 import { errorAlert } from '../../util';
 

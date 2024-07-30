@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { errorAlert, fixIfFloatDigits, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
-import useAdminStore from '../../../store';
+import { useAdminStore } from '../../../store';
 import { postRequest } from '../../../api';
 
 interface ProjectRowProps {

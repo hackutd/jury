@@ -4,7 +4,7 @@ import TextInput from '../../TextInput';
 import TextArea from '../../TextArea';
 import { putRequest } from '../../../api';
 import { errorAlert } from '../../../util';
-import useAdminStore from '../../../store';
+import { useAdminStore } from '../../../store';
 
 interface EditJudgePopupProps {
     /* Judge to edit */
