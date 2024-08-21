@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestCalcRanking(t *testing.T) {
+func TestCalcBordaRanking(t *testing.T) {
 	// Objects
 	obj1 := primitive.NewObjectID()
 	obj2 := primitive.NewObjectID()
@@ -37,7 +37,7 @@ func TestCalcRanking(t *testing.T) {
 
 	projects := []primitive.ObjectID{obj1, obj2, obj3, obj4, obj5}
 
-	rankings := ranking.CalcCopelandRanking(jrs, projects)
+	rankings := ranking.CalcBordaRanking(jrs, projects)
 
 	fmt.Println(rankings)
 	fmt.Println(projects)

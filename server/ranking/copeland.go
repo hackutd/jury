@@ -6,11 +6,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type RankedObject struct {
-	Id    primitive.ObjectID `json:"id"`
-	Score float64            `json:"score"`
-}
-
 type Comparison struct {
 	Winner primitive.ObjectID `json:"winner"`
 	Loser  primitive.ObjectID `json:"loser"`
@@ -38,8 +33,9 @@ func rankingToPairwise(judgeRanking JudgeRanking) []Comparison {
 	return pairwise
 }
 
-// Calculate the ranking of the projects based on the borda count method
-func CalcRanking(rankingLists []JudgeRanking, projects []primitive.ObjectID) []RankedObject {
+// Calculate the ranking of the projects based on the copeland count method.
+// See https://en.wikipedia.org/wiki/Copeland%27s_method
+func CalcCopelandRanking(rankingLists []JudgeRanking, projects []primitive.ObjectID) []RankedObject {
 	// Create a map to store the scores of each project
 	scores := make(map[primitive.ObjectID]float64)
 

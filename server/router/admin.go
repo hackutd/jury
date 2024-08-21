@@ -413,7 +413,7 @@ func GetScores(ctx *gin.Context) {
 	}
 
 	// Calculate the scores
-	scores := ranking.CalcRanking(judgeRankings, projectIds)
+	scores := ranking.CalcBordaRanking(judgeRankings, projectIds)
 
 	// Send OK
 	ctx.JSON(http.StatusOK, scores)
