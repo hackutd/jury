@@ -90,7 +90,11 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                         className="cursor-pointer hover:text-primary duration-100"
                     ></input>
                 </td>
-                <td>{project.name}</td>
+                <td>
+                    <a href={project.url} target="_blank" rel="noopener noreferrer">
+                        {project.name}
+                    </a>
+                </td>
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
