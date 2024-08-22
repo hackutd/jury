@@ -2,12 +2,19 @@ import Back from '../Back';
 import Container from '../Container';
 import JuryHeader from '../JuryHeader';
 
-interface InfoPageProps {
+interface JudgeInfoPageProps {
+    /* Title to show */
     title: string;
+    
+    /* Description to show */
     description: string;
 }
 
-const JudgeInfoPage = (props: InfoPageProps) => {
+/**
+ * Page to display when judging cannot happen. This could be because
+ * of multiple reasons such as a paused session or no more projects left.
+ */
+const JudgeInfoPage = (props: JudgeInfoPageProps) => {
     return (
         <>
             <JuryHeader withLogout />

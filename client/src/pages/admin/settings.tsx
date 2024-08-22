@@ -3,7 +3,7 @@ import { createHeaders, getRequest, postRequest } from '../../api';
 import Button from '../../components/Button';
 import JuryHeader from '../../components/JuryHeader';
 import { errorAlert } from '../../util';
-import Popup from '../../components/Popup';
+import TextPopup from '../../components/TextPopup';
 import Loading from '../../components/Loading';
 
 // Text components
@@ -314,7 +314,7 @@ const AdminSettings = () => {
                     Drop Database
                 </Button>
             </div>
-            <Popup
+            <TextPopup
                 enabled={reassignPopup}
                 setEnabled={setReassignPopup}
                 onSubmit={reassignTables}
@@ -324,8 +324,8 @@ const AdminSettings = () => {
             >
                 Are you sure you want to reassign project numbers? This should NOT be done DURING
                 judging; only beforehand!!
-            </Popup>
-            <Popup
+            </TextPopup>
+            <TextPopup
                 enabled={clockResetPopup}
                 setEnabled={setClockResetPopup}
                 onSubmit={resetClock}
@@ -334,8 +334,8 @@ const AdminSettings = () => {
                 red
             >
                 Are you sure you want to reset the main clock? This will reset the clock to 00:00:00
-            </Popup>
-            <Popup
+            </TextPopup>
+            <TextPopup
                 enabled={dropPopup}
                 setEnabled={setDropPopup}
                 onSubmit={dropDatabase}
@@ -345,7 +345,7 @@ const AdminSettings = () => {
             >
                 THIS WILL ACTUALLY DELETE ALL DATA!!!!! YOU NEED TO BE ABSOLUTELY SURE YOU WANT TO
                 DO THIS. THIS IS YOUR LAST WARNING!
-            </Popup>
+            </TextPopup>
             <Loading disabled={!loading} />
         </>
     );

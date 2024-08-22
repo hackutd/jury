@@ -9,7 +9,7 @@ interface RatingsProps {
     prior?: { [x: string]: number }; // TODO: wtf is this type
     small?: boolean;
     update?: boolean;
-    project: JudgedProject;
+    project?: JudgedProject;
 }
 
 const Ratings = (props: RatingsProps) => {
@@ -56,7 +56,7 @@ const Ratings = (props: RatingsProps) => {
         const scoreRes = props.update
             ? await putRequest<OkResponse>('/judge/score', 'judge', {
                   categories: scores,
-                  project: props.project.project_id,
+                  project: props.project?.project_id,
               })
             : await postRequest<OkResponse>('/judge/score', 'judge', {
                   categories: scores,

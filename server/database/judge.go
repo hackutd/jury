@@ -177,13 +177,13 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, reason string, 
 			// Create a new skip object
 			skip, err := models.NewFlag(skippedProject, judge, reason)
 			if err != nil {
-				return nil, errors.New("error creating skip object: " + err.Error())
+				return nil, errors.New("error creating flag object: " + err.Error())
 			}
 
-			// Add skipped project to skipped database
+			// Add skipped project to flags database
 			err = InsertFlag(db, ctx, skip)
 			if err != nil {
-				return nil, errors.New("error inserting skip into database: " + err.Error())
+				return nil, errors.New("error inserting flag into database: " + err.Error())
 			}
 		}
 
