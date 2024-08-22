@@ -91,9 +91,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                     ></input>
                 </td>
                 <td>
-                    <a href={project.url} target="_blank" rel="noopener noreferrer">
-                        {project.name}
-                    </a>
+                    {project.name}
                 </td>
                 <td className="text-center py-1">
                     Table {project.location} {checked}
