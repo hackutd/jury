@@ -28,6 +28,7 @@ const NewJudgeForm = () => {
         const res = await postRequest('/judge/new', 'admin', newdata);
         if (res.status !== 200) {
             errorAlert(res);
+            setIsSubmitting(false);
             return;
         }
 
