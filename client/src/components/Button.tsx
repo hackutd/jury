@@ -38,7 +38,7 @@ interface ButtonProps {
 const Button = (props: ButtonProps) => {
     // Define formatting
     const defaultFormat = 'py-4 text-center text-2xl no-underline outline-none ';
-    const borderFormat = props.type === 'outline' ? 'border-lightest border-[3px]' : 'border-none';
+    const borderFormat = props.type === 'outline' ? 'border-lightest border-[2.5px] hover:bg-backgroundDark' : 'border-none';
     const typeFormat =
         props.type === 'primary'
             ? 'bg-primary text-background hover:bg-primaryDark'
