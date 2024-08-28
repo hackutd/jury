@@ -5,6 +5,7 @@ import TextArea from '../../TextArea';
 import { postRequest } from '../../../api';
 import { errorAlert } from '../../../util';
 import Checkbox from '../../Checkbox';
+import Loading from '../../Loading';
 
 interface NewJudgeData {
     name: string;
@@ -22,11 +23,12 @@ const NewJudgeForm = () => {
     const onSubmit: SubmitHandler<NewJudgeData> = async (data) => {
         setIsSubmitting(true);
 
-        const newdata = { ...data, no_send: noSend }
+        const newdata: NewJudgeDataFull = { ...data, no_send: noSend };
 
         const res = await postRequest('/judge/new', 'admin', newdata);
         if (res.status !== 200) {
             errorAlert(res);
+            setIsSubmitting(false);
             return;
         }
 
@@ -56,6 +58,7 @@ const NewJudgeForm = () => {
                     </button>
                 </form>
             </div>
+            <Loading disabled={!isSubmitting} />
         </div>
     );
 };
