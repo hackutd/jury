@@ -6,7 +6,7 @@ services:
             - MONGODB_URI=${MONGODB_URI}
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
             - EMAIL_HOST=${EMAIL_HOST}
-            - EMAIL_PORT=${EMAIL_PORT:587}
+            - EMAIL_PORT=${EMAIL_PORT}
             - EMAIL_FROM=${EMAIL_FROM}
             - EMAIL_FROM_NAME=${EMAIL_FROM_NAME}
             - EMAIL_USERNAME=${EMAIL_USERNAME}

@@ -41,7 +41,7 @@ func SendJudgeEmail(judge *models.Judge, hostname string) error {
 
 	// SMTP server configuration
 	smtpHost := config.GetEnv("EMAIL_HOST")
-	smtpPort := config.GetEnv("EMAIL_PORT")
+	smtpPort := config.GetOptEnv("EMAIL_PORT", "587")
 
 	// Auth
 	auth := smtp.PlainAuth("jury", username, password, smtpHost)
