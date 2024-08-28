@@ -37,7 +37,7 @@ const Judge = () => {
         useSensor(PointerSensor, {
             activationConstraint: {
                 distance: 5,
-            }
+            },
         }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
@@ -156,23 +156,22 @@ const Judge = () => {
         const { active, over } = event;
 
         if (over != null) {
-            setProjects((items) => {
-                const oldIndex = projects.findIndex((i) => i.id === active.id);
-                const newIndex = projects.findIndex((i) => i.id === over.id);
-
-                return arrayMove(items, oldIndex, newIndex);
-            });
+            const oldIndex = projects.findIndex((i) => i.id === active.id);
+            const newIndex = projects.findIndex((i) => i.id === over.id);
+            const newProjects = arrayMove(projects, oldIndex, newIndex);
+            setProjects(newProjects);
+            saveSort(newProjects);
         }
 
         setActiveId(null);
     };
 
-    const saveSort = async () => {
+    const saveSort = async (newProjects: SortableJudgedProject[]) => {
         // Split index
-        const splitIndex = projects.findIndex((p) => p.id === -1);
+        const splitIndex = newProjects.findIndex((p) => p.id === -1);
 
         // Get the ranked projects
-        const rankedProjects = projects.slice(0, splitIndex);
+        const rankedProjects = newProjects.slice(0, splitIndex);
 
         // Save the rankings
         const saveRes = await postRequest<OkResponse>('/judge/rank', 'judge', {
@@ -182,14 +181,12 @@ const Judge = () => {
             errorAlert(saveRes);
             return;
         }
-
-        alert('Rankings saved!');
     };
 
     return (
         <>
             <JuryHeader withLogout />
-            <Container noCenter className="px-2">
+            <Container noCenter className="px-2 pb-4">
                 <h1 className="text-2xl my-2">Welcome, {judge?.name}!</h1>
                 <div className="w-full mb-6">
                     <Button type="primary" full square href="/judge/live">
@@ -224,11 +221,6 @@ const Judge = () => {
                         ) : null}
                     </DragOverlay>
                 </DndContext>
-                <div className="flex justify-center mt-4">
-                    <Button type="primary" onClick={saveSort}>
-                        Save
-                    </Button>
-                </div>
             </Container>
         </>
     );
