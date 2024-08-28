@@ -41,13 +41,13 @@ const Button = (props: ButtonProps) => {
     const borderFormat = props.type === 'outline' ? 'border-lightest border-[3px]' : 'border-none';
     const typeFormat =
         props.type === 'primary'
-            ? 'bg-primary text-background'
+            ? 'bg-primary text-background hover:bg-primaryDark'
             : props.type === 'error'
-            ? 'bg-error text-background'
-            : 'bg-transparent text-primary';
+            ? 'bg-error text-background hover:bg-errorDark'
+            : 'bg-transparent text-primary hover:text-primaryDark';
     const squareFormat = props.square ? 'rounded-2xl' : 'rounded-full';
     const varFormat = !props.disabled
-        ? typeFormat + ' cursor-pointer duration-200 hover:scale-110'
+        ? typeFormat + ' cursor-pointer duration-200'
         : 'cursor-auto text-lighter bg-backgroundDark';
     const boldFormat = props.bold ? 'font-bold' : 'font-normal';
     const widthFormat = props.full ? 'w-full' : 'w-3/4 md:w-2/3';
