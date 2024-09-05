@@ -66,21 +66,14 @@ func GetAdminStats(ctx *gin.Context) {
 
 // GET /admin/clock - GetClock returns the current clock state
 func GetClock(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
 	// Get the clock from the context
-	clock := ctx.MustGet("clock").(*models.ClockState)
-
-	// Save the options in the database
-	err := database.UpdateClock(db, clock)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
-		return
-	}
+	// TODO: Replace this with a call to the clock function
+	sc := ctx.MustGet("clock").(*models.SafeClock)
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"running": clock.Running, "time": clock.GetDuration()})
+	sc.Mutex.Lock()
+	ctx.JSON(http.StatusOK, gin.H{"running": sc.Clock.Running, "time": sc.Clock.GetDuration()})
+	sc.Mutex.Unlock()
 }
 
 // POST /admin/clock/pause - PauseClock pauses the clock
@@ -89,20 +82,22 @@ func PauseClock(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the clock from the context
-	clock := ctx.MustGet("clock").(*models.ClockState)
+	sc := ctx.MustGet("clock").(*models.SafeClock)
+	sc.Mutex.Lock()
+	defer sc.Mutex.Unlock()
 
 	// Pause the clock
-	clock.Pause()
+	sc.Clock.Pause()
 
 	// Save the clock in the database
-	err := database.UpdateClock(db, clock)
+	err := database.UpdateClock(db, &sc.Clock)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving clock: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"clock": clock})
+	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock})
 }
 
 // POST /admin/clock/unpause - UnpauseClock unpauses the clock
@@ -111,20 +106,22 @@ func UnpauseClock(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the clock from the context
-	clock := ctx.MustGet("clock").(*models.ClockState)
+	sc := ctx.MustGet("clock").(*models.SafeClock)
+	sc.Mutex.Lock()
+	defer sc.Mutex.Unlock()
 
 	// Unpause the clock
-	clock.Resume()
+	sc.Clock.Resume()
 
 	// Save the clock in the database
-	err := database.UpdateClock(db, clock)
+	err := database.UpdateClock(db, &sc.Clock)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving clock: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"clock": clock})
+	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock})
 }
 
 // POST /admin/clock/reset - ResetClock resets the clock
@@ -133,28 +130,33 @@ func ResetClock(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the clock from the context
-	clock := ctx.MustGet("clock").(*models.ClockState)
+	sc := ctx.MustGet("clock").(*models.SafeClock)
+	sc.Mutex.Lock()
+	defer sc.Mutex.Unlock()
 
 	// Reset the clock
-	clock.Reset()
+	sc.Clock.Reset()
 
 	// Save the clock in the database
-	err := database.UpdateClock(db, clock)
+	err := database.UpdateClock(db, &sc.Clock)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving clock: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"clock": clock, "ok": 1})
+	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock, "ok": 1})
 }
 
-func IsClockPaused(ctx *gin.Context) {
+// GET /admin/started - Returns true if the clock is running (NOT paused)
+func IsClockRunning(ctx *gin.Context) {
 	// Get the clock from the context
-	clock := ctx.MustGet("clock").(*models.ClockState)
+	sc := ctx.MustGet("clock").(*models.SafeClock)
+	sc.Mutex.Lock()
+	defer sc.Mutex.Unlock()
 
 	// Send OK
-	if clock.Running {
+	if sc.Clock.Running {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})

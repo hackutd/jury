@@ -85,7 +85,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/project/prioritize", PrioritizeProject)
 	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
 	adminRouter.PUT("/judge/:id", EditJudge)
-	defaultRouter.GET("/admin/started", IsClockPaused)
+	defaultRouter.GET("/admin/started", IsClockRunning)
 	adminRouter.GET("/admin/flags", GetFlags)
 	adminRouter.POST("/project/reassign", ReassignProjectNums)
 	adminRouter.GET("/admin/options", GetOptions)
@@ -121,7 +121,7 @@ func useVar(key string, v any) gin.HandlerFunc {
 
 // getClockFromDb gets the clock state from the database
 // and on init will pause the clock
-func getClockFromDb(db *mongo.Database) models.ClockState {
+func getClockFromDb(db *mongo.Database) *models.SafeClock {
 	// Get the clock state from the database
 	options, err := database.GetOptions(db)
 	if err != nil {
@@ -129,14 +129,8 @@ func getClockFromDb(db *mongo.Database) models.ClockState {
 	}
 	clock := options.Clock
 
-	// Pause the clock
-	clock.Pause()
+	// Wrap the clock in a mutex
+	mut := models.NewSafeClock(&clock)
 
-	// Update the clock in the database
-	err = database.UpdateClock(db, &clock)
-	if err != nil {
-		log.Fatalln("error updating clock: " + err.Error())
-	}
-
-	return clock
+	return mut
 }
