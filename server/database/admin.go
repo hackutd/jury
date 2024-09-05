@@ -43,7 +43,12 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 	projCursor.Next(context.Background())
 	err = projCursor.Decode(&projAvgSeen)
 	if err != nil {
-		return nil, err
+		// This means no documents were found
+		if err.Error() == "EOF" {
+			projAvgSeen = AvgSeenAgg{AvgSeen: 0}
+		} else {
+			return nil, err
+		}
 	}
 
 	// Get the average judge seen using an aggregation pipeline
@@ -64,9 +69,12 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 	var judgeAvgSeen AvgSeenAgg
 	judgeCursor.Next(context.Background())
 	err = judgeCursor.Decode(&judgeAvgSeen)
-	println(judgeAvgSeen.AvgSeen)
 	if err != nil {
-		return nil, err
+		if err.Error() == "EOF" {
+			judgeAvgSeen = AvgSeenAgg{AvgSeen: 0}
+		} else {
+			return nil, err
+		}
 	}
 
 	// Create the stats object
