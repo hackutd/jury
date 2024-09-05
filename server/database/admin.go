@@ -41,10 +41,13 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 	// Get the first document from the cursor
 	var projAvgSeen AvgSeenAgg
 	projCursor.Next(context.Background())
-	projCursor.Decode(&projAvgSeen)
+	err = projCursor.Decode(&projAvgSeen)
+	if err != nil {
+		return nil, err
+	}
 
 	// Get the average judge seen using an aggregation pipeline
-	judgeCursor, err := db.Collection("judge").Aggregate(context.Background(), []gin.H{
+	judgeCursor, err := db.Collection("judges").Aggregate(context.Background(), []gin.H{
 		{"$match": gin.H{"active": true}},
 		{"$group": gin.H{
 			"_id": nil,
@@ -60,7 +63,11 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 	// Get the first document from the cursor
 	var judgeAvgSeen AvgSeenAgg
 	judgeCursor.Next(context.Background())
-	judgeCursor.Decode(&judgeAvgSeen)
+	err = judgeCursor.Decode(&judgeAvgSeen)
+	println(judgeAvgSeen.AvgSeen)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create the stats object
 	var stats models.Stats

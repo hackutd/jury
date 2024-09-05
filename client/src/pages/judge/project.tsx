@@ -10,16 +10,16 @@ import Ratings from '../../components/judge/Ratings';
 
 const Project = () => {
     const { id } = useParams();
-    const [project, setProject] = useState<null | JudgedProject>(null);
+    const [project, setProject] = useState<null | JudgedProjectWithUrl>(null);
 
     useEffect(() => {
         async function fetchData() {
-            const projRes = await getRequest<JudgedProject>(`/judge/project/${id}`, 'judge');
+            const projRes = await getRequest<JudgedProjectWithUrl>(`/judge/project/${id}`, 'judge');
             if (projRes.status !== 200) {
                 errorAlert(projRes);
                 return;
             }
-            const proj = projRes.data as JudgedProject;
+            const proj = projRes.data as JudgedProjectWithUrl;
             setProject(proj);
         }
 
@@ -33,9 +33,24 @@ const Project = () => {
             <JuryHeader withLogout />
             <Container noCenter={true} className="px-2">
                 <Back location="/judge" />
-                <h1 className="text-3xl mb-1">{project.name}</h1>
+                <h1 className="text-3xl mb-1 font-bold">
+                    <a
+                        href={project.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-primary duration-200"
+                    >
+                        {project.name}
+                    </a>
+                </h1>
                 <h2 className="text-xl font-bold text-light mb-2">Table {project.location}</h2>
-                <Ratings callback={() => {alert('Ratings submitted!'                )}} prior={project.categories} project={project} small submitText="Update" update />
+                <Ratings
+                    prior={project.categories}
+                    project={project}
+                    small
+                    submitText="Update"
+                    update
+                />
                 <Paragraph text={project.description} className="text-light" />
             </Container>
         </>

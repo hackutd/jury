@@ -348,10 +348,32 @@ func GetJudgeProjects(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, judge.SeenProjects)
 }
 
+type JudgedProjectWithUrl struct {
+	models.JudgedProject
+	Url string `bson:"url" json:"url"`
+}
+
+func addUrlToJudgedProject(project *models.JudgedProject, url string) *JudgedProjectWithUrl {
+	return &JudgedProjectWithUrl{
+		JudgedProject: models.JudgedProject{
+			ProjectId:   project.ProjectId,
+			Categories:  project.Categories,
+			Name:        project.Name,
+			Location:    project.Location,
+			Description: project.Description,
+			Notes:       project.Notes,
+		},
+		Url: url,
+	}
+}
+
 // GET /judge/project/:id - Gets a project that's been judged by ID
 func GetJudgedProject(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the project ID from the URL
 	projectId := ctx.Param("id")
@@ -359,7 +381,16 @@ func GetJudgedProject(ctx *gin.Context) {
 	// Search through the judge seen projects for the project ID
 	for _, p := range judge.SeenProjects {
 		if p.ProjectId.Hex() == projectId {
-			ctx.JSON(http.StatusOK, p)
+			// Add URL to judged project
+			proj, err := database.FindProjectById(db, &p.ProjectId)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project url: " + err.Error()})
+				return
+			}
+			jpWithUrl := addUrlToJudgedProject(&p, proj.Url)
+
+			// Parse and send JSON
+			ctx.JSON(http.StatusOK, jpWithUrl)
 			return
 		}
 	}

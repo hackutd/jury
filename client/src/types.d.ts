@@ -79,6 +79,10 @@ interface JudgedProject {
     description: string;
 }
 
+type JudgedProjectWithUrl = {
+    url: string;
+} & JudgedProject;
+
 type SortableJudgedProject = {
     id: number;
 } & JudgedProject;

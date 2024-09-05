@@ -44,6 +44,16 @@ docker compose -f docker-compose-mongo.dev.yml up
 
 As with above, you will need to wait for both the backend and frontend to load. Additionally, you will have to wait for the MongoDB database to intialize and create a replica set (takes more than 10 seconds).
 
+### Connecting to the MongoDB Container (running locally)
+
+This is only applicable if you used the `docker-compose-mongo.dev.yml` compose file. Use `mongodb://{MONGODB_USER}:{MONGODB_PASS}@0.0.0.0:27107/?directConnection=true` as the connection string. This works with both MongoDB Compass and through `mongosh`.
+
+To reset the database and reload the sample data, completely remove the `data` folder that the Docker compose creates.
+
+:::info[Note]
+If you are using MongoDB Atlas, your connection string will be different. It is easier to see the data from the [MongoDB Atlas Console](https://cloud.mongodb.com/). MongoDB Atlas has connection instructions from `mongosh` [here](https://www.mongodb.com/docs/atlas/mongo-shell-connection/).
+:::
+
 ## Manual Installation
 
 Although the easiest development environment is through docker compose, you may manually start the frontend and backend separately. 
@@ -69,14 +79,26 @@ Backend dev server (PORT 8000):
 go run .
 ```
 
-### Connecting to the MongoDB Container (running locally)
+### Only running frontend
 
-Use `mongodb://{MONGODB_USER}:{MONGODB_PASS}@0.0.0.0:27107/?directConnection=true` as the connection string. This works with both MongoDB Compass and through `mongosh`.
+If you wish to ONLY work on the frontend code, you may use the hosted staging app API as your backend, without having to run the Go backend server locally. To do this, go into the `client` folder and make a copy of `client/.env.template` to `client/.env`. You should have the following environmental variables set:
 
-To reset the database and reload the sample data, completely remove the `data` folder that the Docker compose creates.
+```
+VITE_JURY_URL=https://jury-dev.mikz.dev/api
+VITE_JURY_NAME=
+```
 
-:::info[Note]
-If you are using MongoDB Atlas, your connection string will be different. It is easier to see the data from the [MongoDB Atlas Console](https://cloud.mongodb.com/). MongoDB Atlas has connection instructions from `mongosh` [here](https://www.mongodb.com/docs/atlas/mongo-shell-connection/).
+The `VITE_JURY_NAME` field can be anything; it'll be used as the name of the hackathon displayed, but make sure to have the `VITE_JURY_URL` set correctly!
+
+Once you have that setup, from the `client` folder run the following commands:
+
+```
+yarn install
+yarn start
+```
+
+:::warning[Troubleshooting]
+If you get the following warning: `error Error: EACCES: permission denied, unlink '<...>/jury/client/node_modules/.yarn-integrity'`, you will need to first remove the `node_modules` folder. Most likely you have run the docker instance before trying this. Docker will transfer ownership of the `node_modules` folder to itself. However, you can simply remove the folder to fix the issue (do `sudo rm -rf node_modules` on UNIX systems).
 :::
 
 ## Other Resources
