@@ -85,7 +85,11 @@ func AggregateProjectStats(db *mongo.Database) (*models.ProjectStats, error) {
 	cursor.Next(context.Background())
 	err = cursor.Decode(&stats)
 	if err != nil {
-		return nil, err
+		if err.Error() == "EOF" {
+			stats = models.ProjectStats{Num: 0, AvgSeen: 0, NumActive: 0}
+		} else {
+			return nil, err
+		}
 	}
 
 	// Set the total number of projects
