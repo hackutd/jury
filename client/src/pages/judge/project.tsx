@@ -45,9 +45,6 @@ const Project = () => {
                 </h1>
                 <h2 className="text-xl font-bold text-light mb-2">Table {project.location}</h2>
                 <Ratings
-                    callback={() => {
-                        alert('Ratings submitted!');
-                    }}
                     prior={project.categories}
                     project={project}
                     small

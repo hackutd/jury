@@ -112,7 +112,11 @@ func AggregateJudgeStats(db *mongo.Database) (*models.JudgeStats, error) {
 	cursor.Next(context.Background())
 	err = cursor.Decode(&stats)
 	if err != nil {
-		return nil, err
+		if err.Error() == "EOF" {
+			stats = models.JudgeStats{Num: 0, AvgSeen: 0, NumActive: 0}
+		} else {
+			return nil, err
+		}
 	}
 
 	// Set the total number of judges
