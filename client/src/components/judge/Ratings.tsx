@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getRequest, postRequest, putRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Button from '../Button';
-
+import { Slider } from '@mui/material';
 interface RatingsProps {
     callback: () => void;
     submitText?: string;
@@ -69,6 +69,21 @@ const Ratings = (props: RatingsProps) => {
         props.callback();
     };
 
+    // Slider marks
+    const marks = [
+        { value: 0 },
+        { value: 1 },
+        { value: 2 },
+        { value: 3 },
+        { value: 4 },
+        { value: 5 },
+        { value: 6 },
+        { value: 7 },
+        { value: 8 },
+        { value: 9 },
+	   { value: 10 },
+    ];
+
     return (
         <div className="flex flex-col align-center">
             {categories.map((v, i) => (
@@ -76,17 +91,38 @@ const Ratings = (props: RatingsProps) => {
                     <p className="text-center">
                         <b>{v}</b>: {categoryScores[i]}
                     </p>
-                    <input
-                        type="range"
-                        min="0"
-                        max="10"
+                    <Slider
+                        defaultValue={8}
+                        valueLabelDisplay="auto"
+                        step={1}
+                        track="inverted"
+                        sx={{
+                            height: 8,
+                            color: '#00ACE6',
+                            '& .MuiSlider-thumb': {
+                                backgroundColor: '#00ACE6',
+                            },
+                            '& .MuiSlider-track': {
+                                backgroundColor: '#00ACE6',
+                                height: 8,
+                            },
+                            '& .MuiSlider-rail': {
+                                backgroundColor: '#c9cfd2',
+                                height: 3, // This makes the right side (rail) skinnier
+                            },
+                            '& .MuiSlider-mark': {
+                                backgroundColor: '#404951',
+                            },
+                        }}
+                        marks={marks.filter((mark) => mark.value >= categoryScores[i])}
+                        min={0}
+                        max={10}
                         value={categoryScores[i]}
-                        onChange={(e) => {
+                        onChange={(e, newValue) => {
                             const newScores = [...categoryScores];
-                            newScores[i] = parseInt(e.target.value);
+                            newScores[i] = newValue as number;
                             setCategoryScores(newScores);
                         }}
-                        className="w-full"
                     />
                 </div>
             ))}
