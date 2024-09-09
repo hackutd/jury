@@ -96,6 +96,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.POST("/admin/timer", SetJudgingTimer)
 	adminRouter.POST("/admin/categories", SetCategories)
+	adminRouter.POST("/admin/min-views", SetMinViews)
 	judgeRouter.GET("/categories", GetCategories)
 
 	// Serve frontend static files

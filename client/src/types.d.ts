@@ -112,6 +112,7 @@ interface Options {
     clock: ClockState;
     judging_timer: number;
     categories: string[];
+    min_views: number;
 }
 
 interface FetchResponse<T> {
