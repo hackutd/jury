@@ -60,6 +60,7 @@ const Ratings = (props: RatingsProps) => {
               })
             : await postRequest<OkResponse>('/judge/score', 'judge', {
                   categories: scores,
+                  initial: true,
               });
         if (scoreRes.status !== 200) {
             errorAlert(scoreRes);
