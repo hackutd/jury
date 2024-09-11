@@ -19,7 +19,7 @@ const Droppable = (props: DroppableProps) => {
             items={props.projects}
             strategy={verticalListSortingStrategy}
         >
-            <div ref={setNodeRef} className={twMerge('bg-backgroundDark min-h-16 mb-8', style)}>
+            <div ref={setNodeRef} className={twMerge('bg-backgroundDark min-h-16 mb-4', style)}>
                 {props.projects.map((p) => (
                     <SortableItem key={p.id} item={p} />
                 ))}

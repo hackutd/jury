@@ -196,9 +196,12 @@ const Judge = () => {
             const newIndex = currProjs.findIndex((i) => i.id === over.id);
             const newProjects: SortableJudgedProject[] = arrayMove(currProjs, oldIndex, newIndex);
             activeRanked ? setRanked(newProjects) : setUnranked(newProjects);
-        }
 
-        // saveSort(newProjects);
+            if (activeRanked) saveSort(newProjects);
+            else saveSort(ranked);
+        } else {
+            saveSort(ranked);
+        }
 
         setActiveId(null);
     };
@@ -219,16 +222,10 @@ const Judge = () => {
         return !!ro;
     }
 
-    const saveSort = async (newProjects: SortableJudgedProject[]) => {
-        // Split index
-        const splitIndex = newProjects.findIndex((p) => p.id === -1);
-
-        // Get the ranked projects
-        const rankedProjects = newProjects.slice(0, splitIndex);
-
+    const saveSort = async (projects: SortableJudgedProject[]) => {
         // Save the rankings
         const saveRes = await postRequest<OkResponse>('/judge/rank', 'judge', {
-            ranking: rankedProjects.map((p) => p.project_id),
+            ranking: projects.map((p) => p.project_id),
         });
         if (saveRes.status !== 200) {
             errorAlert(saveRes);
@@ -255,8 +252,6 @@ const Judge = () => {
                     <StatBlock name="Seen" value={judge?.seen_projects.length as number} />
                     <StatBlock name="Total Projects" value={projCount} />
                 </div>
-                <h2 className="text-primary text-xl font-bold mt-4">Rank Projects</h2>
-                <div className="h-[1px] w-full bg-light my-2"></div>
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -264,8 +259,14 @@ const Judge = () => {
                     onDragOver={handleDragOver}
                     onDragEnd={handleDragEnd}
                 >
+                    <h2 className="text-primary text-xl font-bold mt-4">Ranked Projects</h2>
+                    <div className="h-[1px] w-full bg-light my-2"></div>
                     <Droppable id="ranked" projects={ranked} />
+
+                    <h2 className="text-primary text-xl font-bold mt-4">Unranked Projects</h2>
+                    <div className="h-[1px] w-full bg-light my-2"></div>
                     <Droppable id="unranked" projects={unranked} />
+
                     <DragOverlay>
                         {activeId ? (
                             <RankItem
