@@ -1,5 +1,5 @@
 import { CSSProperties, forwardRef } from 'react';
-import ProjectEntry from './ProjectEntry';
+import ProjectEntry from '../ProjectEntry';
 
 type RankItemProps = {
     item?: SortableJudgedProject; // Change to project
