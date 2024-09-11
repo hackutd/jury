@@ -32,6 +32,7 @@ const Judge = () => {
     const [loaded, setLoaded] = useState(false);
     const [projCount, setProjCount] = useState(0);
     const [activeId, setActiveId] = useState<number | null>(null);
+    const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -154,6 +155,8 @@ const Judge = () => {
         const activeRanked = isRankedObject(id);
         const overRanked = isRankedObject(overId);
 
+        setActiveDropzone(overRanked ? "ranked" : "unranked");
+
         // If moving to new container, swap the item to the new list
         if (activeRanked !== overRanked) {
             const activeContainer = activeRanked ? ranked : unranked;
@@ -200,6 +203,7 @@ const Judge = () => {
             saveSort(ranked);
         }
 
+        setActiveDropzone(null);
         setActiveId(null);
     };
 
@@ -258,11 +262,11 @@ const Judge = () => {
                 >
                     <h2 className="text-primary text-xl font-bold mt-4">Ranked Projects</h2>
                     <div className="h-[1px] w-full bg-light my-2"></div>
-                    <Droppable id="ranked" projects={ranked} />
+                    <Droppable id="ranked" projects={ranked} active={activeDropzone} />
 
                     <h2 className="text-primary text-xl font-bold mt-4">Unranked Projects</h2>
                     <div className="h-[1px] w-full bg-light my-2"></div>
-                    <Droppable id="unranked" projects={unranked} />
+                    <Droppable id="unranked" projects={unranked} active={activeDropzone} />
 
                     <DragOverlay>
                         {activeId ? (
