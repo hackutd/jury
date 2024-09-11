@@ -36,9 +36,9 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
     return (
         <div className="flex items-center cursor-default">
             {ranking !== -1 && (
-                <p className={twMerge('font-bold text-xl mr-2 w-3', rankColor)}>{ranking}</p>
+                <p className={twMerge('font-bold text-xl text-center w-6 shrink-0', rankColor)}>{ranking}</p>
             )}
-            <div className="m-1 px-2 py-1 bg-background border-solid border-2 border-lightest rounded-md grow">
+            <div className="m-1 pl-2 py-1 bg-background border-solid border-2 border-lightest rounded-md grow">
                 <div className="flex flex-row">
                     <div>
                         <h3 className="text-xl grow">
