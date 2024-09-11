@@ -150,8 +150,6 @@ const Judge = () => {
         }
         const { id: overId } = over;
 
-        console.log(over.id, active.id);
-
         const activeRanked = isRankedObject(id);
         const overRanked = isRankedObject(overId);
 
@@ -183,8 +181,6 @@ const Judge = () => {
             return;
         }
         const { id: overId } = over;
-
-        console.log(over.id, active.id);
 
         const activeRanked = isRankedObject(id);
         const overRanked = isRankedObject(overId);
