@@ -48,7 +48,7 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
                                 {project.name}
                             </a>
                         </h3>
-                        <p className="text-light">{project.notes}</p>
+                        <p className="text-light text-xs line-clamp-1">{project.notes}</p>
                         <div className="text-light flex flex-row">
                             {Object.entries(project.categories).map(([name, score], i) => (
                                 <div key={i}>
