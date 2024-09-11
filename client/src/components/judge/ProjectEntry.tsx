@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import DragHamburger from './dnd/DragHamburger';
 
 interface ProjectEntryProps {
     project?: SortableJudgedProject;
@@ -39,10 +40,11 @@ const ProjectEntry = ({ project }: ProjectEntryProps) => {
                         ))}
                     </p>
                 </div>
-                <div className="grow text-right flex items-center justify-end mr-2">
-                    <button onClick={openProject} className="text-3xl w-10 h-10 font-bold p-2 text-light duration-200 hover:text-primary leading-[0.5] rounded-full">
+                <div className="grow text-right flex items-center justify-end">
+                    <DragHamburger />
+                    {/* <button onClick={openProject} className="text-3xl w-10 h-10 font-bold p-2 text-light duration-200 hover:text-primary leading-[0.5] rounded-full">
                         +
-                    </button>
+                    </button> */}
                 </div>
             </div>
         </div>

@@ -14,7 +14,6 @@ import {
     DragOverlay,
     DragStartEvent,
     KeyboardSensor,
-    PointerSensor,
     UniqueIdentifier,
     closestCenter,
     useSensor,
@@ -23,6 +22,7 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import Droppable from '../../components/judge/dnd/Droppable';
 import RankItem from '../../components/judge/dnd/RankItem';
+import CustomPointerSensor from '../../components/judge/dnd/CustomPointerSensor';
 
 const Judge = () => {
     const navigate = useNavigate();
@@ -34,7 +34,7 @@ const Judge = () => {
     const [activeId, setActiveId] = useState<number | null>(null);
     const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(CustomPointerSensor, {
             activationConstraint: {
                 distance: 5,
             },
@@ -155,7 +155,7 @@ const Judge = () => {
         const activeRanked = isRankedObject(id);
         const overRanked = isRankedObject(overId);
 
-        setActiveDropzone(overRanked ? "ranked" : "unranked");
+        setActiveDropzone(overRanked ? 'ranked' : 'unranked');
 
         // If moving to new container, swap the item to the new list
         if (activeRanked !== overRanked) {
