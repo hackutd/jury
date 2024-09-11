@@ -110,6 +110,7 @@ const Judge = () => {
         const unrankedProjects = allProjects.filter((p) =>
             judge.rankings.every((r) => r !== p.project_id)
         );
+        unrankedProjects.reverse();
 
         setRanked(rankedProjects);
         setUnranked(unrankedProjects);
