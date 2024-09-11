@@ -706,3 +706,54 @@ func JudgeUpdateScore(ctx *gin.Context) {
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
+
+type UpdateNotesRequest struct {
+	Notes   string             `json:"notes"`
+	Project primitive.ObjectID `json:"project"`
+}
+
+// POST /judge/notes - Update the notes of a judge
+func JudgeUpdateNotes(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the request object
+	var scoreReq UpdateNotesRequest
+	err := ctx.BindJSON(&scoreReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Find the index of the project in the judge's seen projects
+	// TODO: Extract to diff function to get rid of repeated code from JudgeUpdateScore
+	index := -1
+	for i, p := range judge.SeenProjects {
+		if p.ProjectId == scoreReq.Project {
+			index = i
+			break
+		}
+	}
+
+	// If the project isn't in the judge's seen projects, return an error
+	if index == -1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
+		return
+	}
+
+	// Update that specific index of the seen projects array
+	judge.SeenProjects[index].Notes = scoreReq.Notes
+
+	// Update the judge's object for the project
+	err = database.UpdateJudgeSeenProjects(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}

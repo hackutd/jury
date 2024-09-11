@@ -17,7 +17,8 @@ export default {
             gold: '#F9BC1F',
             errorDark: '#C63A77',
             goldDark: '#E2AA17',
-            primaryDark: '#009ACE'
+            primaryDark: '#009ACE',
+            bronze: '#B28511',
         },
         fontFamily: {
             text: ['Rubik', 'Franklin Gothic Medium', 'Arial Narrow', 'Arial', 'sans-serif'],

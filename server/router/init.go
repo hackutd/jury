@@ -106,6 +106,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/categories", SetCategories)
 	adminRouter.POST("/admin/min-views", SetMinViews)
 	judgeRouter.GET("/categories", GetCategories)
+	judgeRouter.POST("/judge/notes", JudgeUpdateNotes)
 
 	// Serve frontend static files
 	router.Use(static.Serve("/assets", static.LocalFile("./public/assets", true)))

@@ -3,7 +3,8 @@ import { CSS } from '@dnd-kit/utilities';
 import RankItem from './RankItem';
 
 interface SortableItemProps {
-    item?: SortableJudgedProject;
+    item: SortableJudgedProject;
+    ranking: number;
     children?: React.ReactNode;
 }
 

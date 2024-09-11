@@ -4,13 +4,15 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import Paragraph from '../../components/Paragraph';
 import Back from '../../components/Back';
-import { getRequest } from '../../api';
+import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Ratings from '../../components/judge/Ratings';
+import RawTextInput from '../../components/RawTextInput';
 
 const Project = () => {
     const { id } = useParams();
     const [project, setProject] = useState<null | JudgedProjectWithUrl>(null);
+    const [notes, setNotes] = useState('');
 
     useEffect(() => {
         async function fetchData() {
@@ -21,10 +23,31 @@ const Project = () => {
             }
             const proj = projRes.data as JudgedProjectWithUrl;
             setProject(proj);
+            setNotes(proj.notes);
         }
 
         fetchData();
     }, []);
+
+    useEffect(() => {
+        if (!project) return;
+
+        async function updateNotes() {
+            const res = await postRequest<OkResponse>('/judge/notes', 'judge', {
+                notes,
+                project: project?.project_id,
+            });
+            if (res.status !== 200) {
+                errorAlert(res);
+            }
+        }
+        const delayDebounceFn = setTimeout(updateNotes, 1000);
+
+        return () => {
+            updateNotes();
+            clearTimeout(delayDebounceFn);
+        }
+    }, [notes]);
 
     if (!project) return <div>Loading...</div>;
 
@@ -50,6 +73,13 @@ const Project = () => {
                     small
                     submitText="Update"
                     update
+                />
+                <RawTextInput
+                    name="notes"
+                    placeholder="Your notes..."
+                    text={notes}
+                    setText={setNotes}
+                    className="text-md h-10 px-2 w-auto mb-4"
                 />
                 <Paragraph text={project.description} className="text-light" />
             </Container>
