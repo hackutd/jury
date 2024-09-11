@@ -3,8 +3,6 @@ package judging
 import (
 	"server/database"
 	"server/models"
-	"strconv"
-	"strings"
 	"sync"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -49,17 +47,6 @@ func CreateComparisons(projects []*models.Project, judges []*models.Judge) *Comp
 			}
 		}
 	}
-
-	// TODO: REMOVE TEST PRINT STATEMENT
-	sb := strings.Builder{}
-	for _, v := range comps.Arr {
-		for _, c := range v {
-			sb.WriteString(strconv.Itoa(c))
-			sb.WriteString(" ")
-		}
-		sb.WriteString("\n")
-	}
-	// println(sb.String())
 
 	return &comps
 }
