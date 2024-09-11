@@ -370,6 +370,33 @@ func SetCategories(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
+type MinViewsRequest struct {
+	MinViews int `json:"min_views"`
+}
+
+// POST /admin/min-views - sets the min views
+func SetMinViews(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the views
+	var minViewsReq MinViewsRequest
+	err := ctx.BindJSON(&minViewsReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+	}
+
+	// Save the min views in the db
+	err = database.UpdateMinViews(db, minViewsReq.MinViews)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving min views: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
 // /GET /admin/score - GetScores returns the calculated scores of all projects
 func GetScores(ctx *gin.Context) {
 	// Get the database from the context
@@ -413,7 +440,7 @@ func GetScores(ctx *gin.Context) {
 	}
 
 	// Calculate the scores
-	scores := ranking.CalcRanking(judgeRankings, projectIds)
+	scores := ranking.CalcBordaRanking(judgeRankings, projectIds)
 
 	// Send OK
 	ctx.JSON(http.StatusOK, scores)

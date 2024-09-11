@@ -115,3 +115,11 @@ func UpdateCategories(db *mongo.Database, categories []string) error {
 	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"categories": categories}})
 	return err
 }
+
+// UpdateMinViews will update the min views setting
+func UpdateMinViews(db *mongo.Database, minViews int) error {
+	// Update the min views
+	println(minViews)
+	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"min_views": minViews}})
+	return err
+}

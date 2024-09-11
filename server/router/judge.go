@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"server/database"
 	"server/funcs"
+	"server/judging"
 	"server/models"
 	"server/util"
 
@@ -303,6 +304,9 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Get the comparisons from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
 	// If the judge already has a next project, return that project
 	if judge.Current != nil {
 		ctx.JSON(http.StatusOK, gin.H{"project_id": judge.Current.Hex()})
@@ -314,7 +318,7 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	var project *models.Project
 	err := database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
 		var err error
-		project, err = database.PickNextProject(db, judge, ctx)
+		project, err = judging.PickNextProject(db, judge, ctx, comps)
 		return nil, err
 	})
 	if err != nil {
@@ -411,6 +415,9 @@ func JudgeSkip(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Get the comparisons object
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
 	// Get the skip reason from the request
 	var skipReq SkipRequest
 	err := ctx.BindJSON(&skipReq)
@@ -420,7 +427,7 @@ func JudgeSkip(ctx *gin.Context) {
 	}
 
 	// Skip the project
-	err = database.SkipCurrentProject(db, judge, skipReq.Reason, true)
+	err = judging.SkipCurrentProject(db, judge, comps, skipReq.Reason, true)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -607,6 +614,9 @@ func JudgeBreak(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Get the comparisons from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
 	// Error if the judge doesn't have a current project
 	if judge.Current == nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge doesn't have a current project"})
@@ -614,7 +624,7 @@ func JudgeBreak(ctx *gin.Context) {
 	}
 
 	// Basically skip the project for the judge
-	err := database.SkipCurrentProject(db, judge, "break", false)
+	err := judging.SkipCurrentProject(db, judge, comps, "break", false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error skipping project: " + err.Error()})
 		return
@@ -643,6 +653,7 @@ func GetCategories(ctx *gin.Context) {
 type UpdateScoreRequest struct {
 	Categories map[string]int     `json:"categories"`
 	Project    primitive.ObjectID `json:"project"`
+	Initial    bool               `json:"initial"`
 }
 
 // PUT /judge/score - Endpoint to update a judge's score for a certain project
@@ -652,6 +663,9 @@ func JudgeUpdateScore(ctx *gin.Context) {
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the comparisons object from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
 
 	// Get the request object
 	var scoreReq UpdateScoreRequest
@@ -685,6 +699,9 @@ func JudgeUpdateScore(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
 		return
 	}
+
+	// If this is the initial scoring, update the comparisons array
+	comps.UpdateProjectComparisonCount(judge.SeenProjects, scoreReq.Project)
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
