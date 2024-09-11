@@ -1,6 +1,6 @@
 const DragHamburger = () => {
     return (
-        <div className="drag-handle p-4 cursor-grab">
+        <div className="drag-handle p-2 cursor-grab">
             <svg
                 width="28"
                 height="25"

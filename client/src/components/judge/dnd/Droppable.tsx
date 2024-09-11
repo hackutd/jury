@@ -13,7 +13,9 @@ interface DroppableProps {
 const Droppable = (props: DroppableProps) => {
     const { isOver, setNodeRef } = useDroppable({ id: props.id });
     const style =
-        isOver || props.active === props.id ? 'border-backgroundDark' : 'border-transparent';
+        isOver || props.active === props.id || props.projects.length === 0
+            ? 'border-backgroundDark'
+            : 'border-transparent';
 
     return (
         <SortableContext
@@ -23,10 +25,14 @@ const Droppable = (props: DroppableProps) => {
         >
             <div
                 ref={setNodeRef}
-                className={twMerge('border-dashed border-2 duration-100 min-h-16 mb-4', style)}
+                className={twMerge('border-dashed border-2 duration-100 min-h-16', style)}
             >
-                {props.projects.map((p) => (
-                    <SortableItem key={p.id} item={p} />
+                {props.projects.map((p, i) => (
+                    <SortableItem
+                        key={p.id}
+                        item={p}
+                        ranking={props.id === 'ranked' ? i + 1 : -1}
+                    />
                 ))}
             </div>
         </SortableContext>

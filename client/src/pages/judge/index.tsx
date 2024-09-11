@@ -265,6 +265,9 @@ const Judge = () => {
                     <Droppable id="ranked" projects={ranked} active={activeDropzone} />
 
                     <h2 className="text-primary text-xl font-bold mt-4">Unranked Projects</h2>
+                    <p className="text-light text-sm">
+                        Projects will be sorted in reverse chronological order.
+                    </p>
                     <div className="h-[1px] w-full bg-light my-2"></div>
                     <Droppable id="unranked" projects={unranked} active={activeDropzone} />
 
@@ -273,8 +276,9 @@ const Judge = () => {
                             <RankItem
                                 item={
                                     unranked.find((p) => p.id === activeId) ??
-                                    ranked.find((p) => p.id === activeId)
+                                    (ranked.find((p) => p.id === activeId) as SortableJudgedProject)
                                 }
+                                ranking={ranked.findIndex((p) => p.id === activeId) + 1}
                             />
                         ) : null}
                     </DragOverlay>
