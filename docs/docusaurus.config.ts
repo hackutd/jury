@@ -50,7 +50,7 @@ const config: Config = {
         navbar: {
             title: 'Jury',
             logo: {
-                alt: 'My Site Logo',
+                alt: 'Jury Logo',
                 src: 'img/logo.svg',
             },
             items: [
@@ -58,7 +58,7 @@ const config: Config = {
                     type: 'docSidebar',
                     sidebarId: 'docsSidebar',
                     position: 'left',
-                    label: 'Contributing',
+                    label: 'Get Started!',
                 },
                 {
                     href: 'https://github.com/hackutd/jury',

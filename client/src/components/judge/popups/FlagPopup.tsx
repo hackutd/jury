@@ -82,7 +82,7 @@ const FlagPopup = (props: FlagPopupProps) => {
     const color = props.isSkip ? 'gold' : 'error';
 
     return (
-        <Popup enabled={props.enabled} setEnabled={props.setEnabled} className='items-center'>
+        <Popup enabled={props.enabled} setEnabled={props.setEnabled} className="items-center">
             <h1 className={`text-3xl font-bold text-${color}`}>
                 {props.isSkip ? 'Skip' : 'Flag'} Project
             </h1>
@@ -96,6 +96,9 @@ const FlagPopup = (props: FlagPopupProps) => {
             <Button type="primary" onClick={handleClick} className="mt-4">
                 Submit
             </Button>
+            <div className="hidden text-gold bg-gold/10 border-gold text-error bg-error/10 border-error">
+                Dummy div to get the tailwind colors loaded
+            </div>
         </Popup>
     );
 };

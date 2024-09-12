@@ -79,6 +79,10 @@ interface JudgedProject {
     description: string;
 }
 
+type JudgedProjectWithUrl = {
+    url: string;
+} & JudgedProject;
+
 type SortableJudgedProject = {
     id: number;
 } & JudgedProject;
@@ -108,6 +112,7 @@ interface Options {
     clock: ClockState;
     judging_timer: number;
     categories: string[];
+    min_views: number;
 }
 
 interface FetchResponse<T> {

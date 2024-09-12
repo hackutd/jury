@@ -16,6 +16,7 @@ import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import alarm from '../../assets/alarm.mp3';
 import data from '../../data.json';
+import RawTextInput from '../../components/RawTextInput';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done'];
 const infoData = [
@@ -45,6 +46,7 @@ const JudgeLive = () => {
     const [stopAudio, setStopAudio] = useState(false);
     const [audioPopupOpen, setAudioPopupOpen] = useState(false);
     const [paused, setPaused] = useState(false);
+    const [notes, setNotes] = useState('');
 
     useEffect(() => {
         async function fetchData() {
@@ -224,8 +226,19 @@ const JudgeLive = () => {
         setPaused(true);
     };
 
-    const flagCallback = () => {
+    const flagCallback = async (isVote?: boolean) => {
         setJudge(null);
+
+        // Update notes if voting
+        if (isVote) {
+            const res = await postRequest<OkResponse>('/judge/notes', 'judge', {
+                notes,
+                project: judge?.current,
+            });
+            if (res.status !== 200) {
+                errorAlert(res);
+            }
+        }
 
         resetTimer();
         getJudgeData();
@@ -309,7 +322,7 @@ const JudgeLive = () => {
                     {totalJudgingTime === 0 ? null : !started ? (
                         <Button
                             type="primary"
-                            className="py-8 text-5xl rounded-xl mb-4"
+                            className="py-8 text-4xl md:text-5xl rounded-xl mb-4"
                             full
                             onClick={startJudging}
                         >
@@ -337,8 +350,8 @@ const JudgeLive = () => {
                     <div className="flex items-center">
                         <Button
                             type="primary"
-                            className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark"
-                            disabled={judge === null || !started}
+                            className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark hover:bg-errorDark"
+                            disabled={judge === null}
                             onClick={() => {
                                 openPopup('flag');
                             }}
@@ -347,7 +360,7 @@ const JudgeLive = () => {
                         </Button>
                         <Button
                             type="primary"
-                            className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter"
+                            className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter hover:bg-goldDark"
                             disabled={judge === null}
                             onClick={() => {
                                 openPopup('skip');
@@ -368,11 +381,22 @@ const JudgeLive = () => {
                     </div>
                 </div>
                 {judge.current && <ProjectDisplay judge={judge} projectId={judge.current} />}
+                {/* Dummy div for fixed text input */}
+                <div className="w-full py-2 h-10"></div>
+                <div className="fixed bottom-0 flex p-2 w-full left-0 bg-background">
+                    <RawTextInput
+                        name="notes"
+                        placeholder="Personal notes..."
+                        className="text-md h-10 px-2 w-auto grow"
+                        text={notes}
+                        setText={setNotes}
+                    />
+                </div>
                 <RatePopup
                     enabled={votePopup}
                     setEnabled={setVotePopup}
                     judge={judge}
-                    callback={flagCallback}
+                    callback={flagCallback.bind(this, true)}
                 />
                 <FlagPopup enabled={flagPopup} setEnabled={setFlagPopup} onSubmit={flagCallback} />
                 <FlagPopup

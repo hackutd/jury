@@ -13,7 +13,7 @@ interface RatePopupProps {
     enabled: boolean;
 
     /* Callback function for flagging a project */
-    callback: () => void;
+    callback: () => Promise<void>;
 }
 
 /**
@@ -24,8 +24,8 @@ const RatePopup = (props: RatePopupProps) => {
 
     if (!props.enabled) return null;
 
-    const done = () => {
-        props.callback();
+    const done = async () => {
+        await props.callback();
         navigate('/judge');
     };
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"server/database"
 	"server/funcs"
+	"server/judging"
 	"server/models"
 	"server/util"
 
@@ -303,6 +304,9 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Get the comparisons from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
 	// If the judge already has a next project, return that project
 	if judge.Current != nil {
 		ctx.JSON(http.StatusOK, gin.H{"project_id": judge.Current.Hex()})
@@ -314,7 +318,7 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	var project *models.Project
 	err := database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
 		var err error
-		project, err = database.PickNextProject(db, judge, ctx)
+		project, err = judging.PickNextProject(db, judge, ctx, comps)
 		return nil, err
 	})
 	if err != nil {
@@ -348,10 +352,32 @@ func GetJudgeProjects(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, judge.SeenProjects)
 }
 
+type JudgedProjectWithUrl struct {
+	models.JudgedProject
+	Url string `bson:"url" json:"url"`
+}
+
+func addUrlToJudgedProject(project *models.JudgedProject, url string) *JudgedProjectWithUrl {
+	return &JudgedProjectWithUrl{
+		JudgedProject: models.JudgedProject{
+			ProjectId:   project.ProjectId,
+			Categories:  project.Categories,
+			Name:        project.Name,
+			Location:    project.Location,
+			Description: project.Description,
+			Notes:       project.Notes,
+		},
+		Url: url,
+	}
+}
+
 // GET /judge/project/:id - Gets a project that's been judged by ID
 func GetJudgedProject(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the project ID from the URL
 	projectId := ctx.Param("id")
@@ -359,7 +385,16 @@ func GetJudgedProject(ctx *gin.Context) {
 	// Search through the judge seen projects for the project ID
 	for _, p := range judge.SeenProjects {
 		if p.ProjectId.Hex() == projectId {
-			ctx.JSON(http.StatusOK, p)
+			// Add URL to judged project
+			proj, err := database.FindProjectById(db, &p.ProjectId)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project url: " + err.Error()})
+				return
+			}
+			jpWithUrl := addUrlToJudgedProject(&p, proj.Url)
+
+			// Parse and send JSON
+			ctx.JSON(http.StatusOK, jpWithUrl)
 			return
 		}
 	}
@@ -380,6 +415,9 @@ func JudgeSkip(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Get the comparisons object
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
 	// Get the skip reason from the request
 	var skipReq SkipRequest
 	err := ctx.BindJSON(&skipReq)
@@ -389,7 +427,7 @@ func JudgeSkip(ctx *gin.Context) {
 	}
 
 	// Skip the project
-	err = database.SkipCurrentProject(db, judge, skipReq.Reason, true)
+	err = judging.SkipCurrentProject(db, judge, comps, skipReq.Reason, true)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -576,6 +614,9 @@ func JudgeBreak(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Get the comparisons from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
 	// Error if the judge doesn't have a current project
 	if judge.Current == nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge doesn't have a current project"})
@@ -583,7 +624,7 @@ func JudgeBreak(ctx *gin.Context) {
 	}
 
 	// Basically skip the project for the judge
-	err := database.SkipCurrentProject(db, judge, "break", false)
+	err := judging.SkipCurrentProject(db, judge, comps, "break", false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error skipping project: " + err.Error()})
 		return
@@ -612,6 +653,7 @@ func GetCategories(ctx *gin.Context) {
 type UpdateScoreRequest struct {
 	Categories map[string]int     `json:"categories"`
 	Project    primitive.ObjectID `json:"project"`
+	Initial    bool               `json:"initial"`
 }
 
 // PUT /judge/score - Endpoint to update a judge's score for a certain project
@@ -621,6 +663,9 @@ func JudgeUpdateScore(ctx *gin.Context) {
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the comparisons object from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
 
 	// Get the request object
 	var scoreReq UpdateScoreRequest
@@ -649,6 +694,60 @@ func JudgeUpdateScore(ctx *gin.Context) {
 	judge.SeenProjects[index].Categories = scoreReq.Categories
 
 	// Update the judge's score for the project
+	err = database.UpdateJudgeSeenProjects(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
+		return
+	}
+
+	// If this is the initial scoring, update the comparisons array
+	comps.UpdateProjectComparisonCount(judge.SeenProjects, scoreReq.Project)
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+type UpdateNotesRequest struct {
+	Notes   string             `json:"notes"`
+	Project primitive.ObjectID `json:"project"`
+}
+
+// POST /judge/notes - Update the notes of a judge
+func JudgeUpdateNotes(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the request object
+	var scoreReq UpdateNotesRequest
+	err := ctx.BindJSON(&scoreReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Find the index of the project in the judge's seen projects
+	// TODO: Extract to diff function to get rid of repeated code from JudgeUpdateScore
+	index := -1
+	for i, p := range judge.SeenProjects {
+		if p.ProjectId == scoreReq.Project {
+			index = i
+			break
+		}
+	}
+
+	// If the project isn't in the judge's seen projects, return an error
+	if index == -1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
+		return
+	}
+
+	// Update that specific index of the seen projects array
+	judge.SeenProjects[index].Notes = scoreReq.Notes
+
+	// Update the judge's object for the project
 	err = database.UpdateJudgeSeenProjects(db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})

@@ -1,10 +1,11 @@
 import { CSSProperties, forwardRef } from 'react';
-import ProjectEntry from './ProjectEntry';
+import ProjectEntry from '../ProjectEntry';
 
 type RankItemProps = {
-    item?: SortableJudgedProject; // Change to project
+    item: SortableJudgedProject; // Change to project
     isOpacityEnabled?: boolean;
     isDragging?: boolean;
+    ranking: number;
 } & React.HTMLAttributes<HTMLDivElement>;
 
 const RankItem = forwardRef<HTMLDivElement, RankItemProps>(
@@ -18,7 +19,7 @@ const RankItem = forwardRef<HTMLDivElement, RankItemProps>(
         };
         return (
             <div {...props} ref={ref} style={styles}>
-                <ProjectEntry project={item} />
+                <ProjectEntry project={item} ranking={props.ranking === 0 ? -1 : props.ranking} />
             </div>
         );
     }

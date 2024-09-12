@@ -4,7 +4,7 @@ import { errorAlert } from '../../util';
 import Button from '../Button';
 
 interface RatingsProps {
-    callback: () => void;
+    callback?: () => void;
     submitText?: string;
     prior?: { [x: string]: number }; // TODO: wtf is this type
     small?: boolean;
@@ -18,8 +18,6 @@ const Ratings = (props: RatingsProps) => {
 
     useEffect(() => {
         if (!props.prior || categories.length === 0) return;
-
-        console.log(props.prior);
 
         const newScores = categories.map((v) => (props.prior as any)[v] ?? 0); // TODO: fix this
         setCategoryScores(newScores);
@@ -46,10 +44,12 @@ const Ratings = (props: RatingsProps) => {
     }, []);
 
     // Submit the scores
-    const submit = async () => {
+    const submit = async (newScores: number[]) => {
+        const scoresToUse = props.update ? newScores : categoryScores;
+
         // Create the scores object
         const scores = categories
-            .map((v, i) => ({ [v]: categoryScores[i] }))
+            .map((v, i) => ({ [v]: scoresToUse[i] }))
             .reduce((a, b) => ({ ...a, ...b }), {});
 
         // Score the current project
@@ -60,13 +60,14 @@ const Ratings = (props: RatingsProps) => {
               })
             : await postRequest<OkResponse>('/judge/score', 'judge', {
                   categories: scores,
+                  initial: true,
               });
         if (scoreRes.status !== 200) {
             errorAlert(scoreRes);
             return;
         }
 
-        props.callback();
+        if (props.callback) props.callback();
     };
 
     return (
@@ -85,20 +86,25 @@ const Ratings = (props: RatingsProps) => {
                             const newScores = [...categoryScores];
                             newScores[i] = parseInt(e.target.value);
                             setCategoryScores(newScores);
+                            if (props.update) submit(newScores);
                         }}
                         className="w-full"
                     />
                 </div>
             ))}
-            <div className="flex justify-center mt-4">
-                <Button
-                    type="primary"
-                    onClick={submit}
-                    className={props.small ? 'p-1 mb-4' : 'mb-4'}
-                >
-                    {props.submitText ?? 'Submit'}
-                </Button>
-            </div>
+            {!props.update ? (
+                <div className="flex justify-center mt-4">
+                    <Button
+                        type="primary"
+                        onClick={submit.bind(this, [])}
+                        className={props.small ? 'p-1 mb-4' : 'mb-4'}
+                    >
+                        {props.submitText ?? 'Submit'}
+                    </Button>
+                </div>
+            ) : (
+                <div className="h-4 w-full"></div>
+            )}
         </div>
     );
 };
