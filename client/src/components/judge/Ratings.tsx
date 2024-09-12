@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getRequest, postRequest, putRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Button from '../Button';
+import { getTrackBackground, Range } from 'react-range';
 
 interface RatingsProps {
     callback?: () => void;
@@ -77,19 +78,84 @@ const Ratings = (props: RatingsProps) => {
                     <p className="text-center">
                         <b>{v}</b>: {categoryScores[i]}
                     </p>
-                    <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        value={categoryScores[i]}
-                        onChange={(e) => {
-                            const newScores = [...categoryScores];
-                            newScores[i] = parseInt(e.target.value);
-                            setCategoryScores(newScores);
-                            if (props.update) submit(newScores);
-                        }}
-                        className="w-full"
-                    />
+                    <div className="py-6">
+                        {/* React Range Slider */}
+                        <Range
+                            label="Select your value"
+                            step={1}
+                            min={0}
+                            max={10}
+                            values={[categoryScores[i]]}
+                            onChange={(values) => {
+                                const newScores = [...categoryScores];
+                                newScores[i] = values[0];
+                                setCategoryScores(newScores);
+                                if (props.update) submit(newScores);
+                            }}
+                            renderMark={({ props, index }) => (
+                                <div
+                                    {...props}
+                                    key={props.key}
+                                    style={{
+                                        ...props.style,
+                                        height: '4px',
+                                        width: '4px',
+                                        opacity: index == 0 || index == 10 ? 0 : 1,
+                                        backgroundColor:
+                                            index < categoryScores[i] ? '#00ACE6' : '#646464',
+
+                                        borderRadius: '50%',
+                                        marginTop: '1px',
+                                    }}
+                                />
+                            )}
+                            renderTrack={({ props, children }) => {
+                                return (
+                                    <div
+                                        onMouseDown={props.onMouseDown}
+                                        onTouchStart={props.onTouchStart}
+                                        style={{
+                                            ...props.style,
+                                            height: '10px',
+                                            display: 'flex',
+                                            width: '100%',
+                                        }}
+                                    >
+                                        <div
+                                            ref={props.ref}
+                                            style={{
+                                                height: '6px',
+                                                width: '100%',
+                                                borderRadius: '5px',
+                                                background: getTrackBackground({
+                                                    values: [categoryScores[i]],
+                                                    colors: ['#00ACE6', '#ccc'],
+                                                    min: 0,
+                                                    max: 10,
+                                                }),
+                                                alignSelf: 'center',
+                                            }}
+                                        >
+                                            {children}
+                                        </div>
+                                    </div>
+                                );
+                            }}
+                            renderThumb={({ props }) => (
+                                <div
+                                    {...props}
+                                    key={props.key}
+                                    style={{
+                                        ...props.style,
+                                        height: '20px',
+                                        width: '20px',
+                                        backgroundColor: '#00ACE6',
+                                        borderRadius: '50%',
+                                    }}
+                                />
+                            )}
+                        />
+                    </div>
                 </div>
             ))}
             {!props.update ? (
