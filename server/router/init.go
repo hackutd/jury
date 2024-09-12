@@ -21,7 +21,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 
 	// Add shared variables to router
 	router.Use(useVar("db", db))
-	router.Use(useVar("clock", &clock))
+	router.Use(useVar("clock", clock))
 
 	// CORS
 	router.Use(cors.New(cors.Config{
