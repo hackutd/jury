@@ -313,8 +313,6 @@ const JudgeLive = () => {
         );
     };
 
-
-
     return (
         <>
             <JuryHeader withLogout />
