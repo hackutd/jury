@@ -78,7 +78,7 @@ const Ratings = (props: RatingsProps) => {
                     <p className="text-center">
                         <b>{v}</b>: {categoryScores[i]}
                     </p>
-                    <div className="py-6">
+                    <div className="pb-4 pt-2">
                         {/* React Range Slider */}
                         <Range
                             label="Select your value"
