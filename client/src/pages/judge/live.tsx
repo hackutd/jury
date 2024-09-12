@@ -351,7 +351,7 @@ const JudgeLive = () => {
                         <Button
                             type="primary"
                             className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark hover:bg-errorDark"
-                            disabled={judge === null || !started}
+                            disabled={judge === null}
                             onClick={() => {
                                 openPopup('flag');
                             }}
