@@ -196,6 +196,12 @@ const JudgeLive = () => {
         if (!audioPopupOpen) noAudio();
     }, [audioPopupOpen]);
 
+    // useEffect(() => {
+    //     if (judge === null) {
+    //         alert("no judge :(");
+    //     }
+    // }, [judge])
+
     // Make timer audio run in a loop
     const audioLoop = () => {
         audio.play();
@@ -313,6 +319,8 @@ const JudgeLive = () => {
         );
     };
 
+
+
     return (
         <>
             <JuryHeader withLogout />
@@ -351,7 +359,7 @@ const JudgeLive = () => {
                         <Button
                             type="primary"
                             className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark hover:bg-errorDark"
-                            disabled={judge === null || !started}
+                            disabled={false}
                             onClick={() => {
                                 openPopup('flag');
                             }}
