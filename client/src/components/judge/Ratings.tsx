@@ -72,13 +72,14 @@ const Ratings = (props: RatingsProps) => {
     };
 
     return (
-        <div className="flex flex-col align-center">
+        <div className="flex flex-col mx-4">
             {categories.map((v, i) => (
                 <div key={i}>
-                    <p className="text-center">
-                        <b>{v}</b>: {categoryScores[i]}
-                    </p>
-                    <div className="pb-4 pt-2">
+                    <div className="text-light text-mono flex flex-row justify-between">
+                        <p>{v}</p>
+                        <p>{categoryScores[i]}</p>
+                    </div>
+                    <div className="pb-4 pt-1">
                         {/* React Range Slider */}
                         <Range
                             label="Select your value"
@@ -96,17 +97,9 @@ const Ratings = (props: RatingsProps) => {
                                 <div
                                     {...props}
                                     key={props.key}
-                                    style={{
-                                        ...props.style,
-                                        height: '4px',
-                                        width: '4px',
-                                        opacity: index == 0 || index == 10 ? 0 : 1,
-                                        backgroundColor:
-                                            index < categoryScores[i] ? '#00ACE6' : '#646464',
-
-                                        borderRadius: '50%',
-                                        marginTop: '1px',
-                                    }}
+                                    className={`h-0.5 w-0.5 rounded-full mt-1 ${
+                                        index === 0 || index === 10 ? 'opacity-0' : 'opacity-100'
+                                    } ${index < categoryScores[i] ? 'bg-primary' : 'bg-black'}`}
                                 />
                             )}
                             renderTrack={({ props, children }) => {
@@ -114,27 +107,20 @@ const Ratings = (props: RatingsProps) => {
                                     <div
                                         onMouseDown={props.onMouseDown}
                                         onTouchStart={props.onTouchStart}
-                                        style={{
-                                            ...props.style,
-                                            height: '10px',
-                                            display: 'flex',
-                                            width: '100%',
-                                        }}
+                                        className="h-6 flex w-full"
+                                        style={{ ...props.style }}
                                     >
                                         <div
                                             ref={props.ref}
                                             style={{
-                                                height: '6px',
-                                                width: '100%',
-                                                borderRadius: '5px',
                                                 background: getTrackBackground({
                                                     values: [categoryScores[i]],
                                                     colors: ['#00ACE6', '#ccc'],
                                                     min: 0,
                                                     max: 10,
                                                 }),
-                                                alignSelf: 'center',
                                             }}
+                                            className={`h-[6px] w-full rounded-lg self-center`}
                                         >
                                             {children}
                                         </div>
@@ -145,13 +131,8 @@ const Ratings = (props: RatingsProps) => {
                                 <div
                                     {...props}
                                     key={props.key}
-                                    style={{
-                                        ...props.style,
-                                        height: '20px',
-                                        width: '20px',
-                                        backgroundColor: '#00ACE6',
-                                        borderRadius: '50%',
-                                    }}
+                                    className="h-5 w-5 bg-primary rounded-full"
+                                    style={{ ...props.style }}
                                 />
                             )}
                         />
