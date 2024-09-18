@@ -196,12 +196,6 @@ const JudgeLive = () => {
         if (!audioPopupOpen) noAudio();
     }, [audioPopupOpen]);
 
-    // useEffect(() => {
-    //     if (judge === null) {
-    //         alert("no judge :(");
-    //     }
-    // }, [judge])
-
     // Make timer audio run in a loop
     const audioLoop = () => {
         audio.play();
@@ -318,8 +312,6 @@ const JudgeLive = () => {
             `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
         );
     };
-
-
 
     return (
         <>

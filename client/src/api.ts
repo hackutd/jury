@@ -14,7 +14,7 @@ export async function getRequest<T>(path: string, auth: string): Promise<FetchRe
         // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
-        return { status: 404, error: error, data: null };
+        return { status: 404, error: 'Network connection issue', data: null };
     }
 }
 
@@ -36,7 +36,7 @@ export async function postRequest<T>(
         // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
-        return { status: 404, error: error, data: null };
+        return { status: 404, error: 'Network connection issue', data: null };
     }
 }
 
@@ -58,7 +58,7 @@ export async function putRequest<T>(
         // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
-        return { status: 404, error: error, data: null };
+        return { status: 404, error: 'Network connection issue', data: null };
     }
 }
 
@@ -77,7 +77,7 @@ export async function deleteRequest(
         // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
-        return { status: 404, error: error, data: null };
+        return { status: 404, error: 'Network connection issue', data: null };
     }
 }
 
