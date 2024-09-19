@@ -65,6 +65,10 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 			return nil, err
 		}
 
+		if project == nil {
+			return nil, nil
+		}
+
 		// Update the judge
 		return database.UpdateAfterPickedWithTx(db, project, judge, ctx)
 	})
@@ -153,9 +157,7 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.Sessi
 		done[proj.ProjectId.Hex()] = true
 	}
 	for _, flag := range flags {
-		if flag.Reason != "busy" {
-			done[flag.ProjectId.Hex()] = true
-		}
+		done[flag.ProjectId.Hex()] = true
 	}
 
 	// Filter out all projects that the judge has skipped or voted on

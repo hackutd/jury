@@ -571,6 +571,22 @@ func JudgeScore(ctx *gin.Context) {
 		return
 	}
 
+	// Reset list of skipped projects due to busy status
+	err = database.ResetBusyProjectListForJudge(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "error resetting busy project list in database: " + err.Error(),
+		})
+	}
+
+	// "Remove" busy status from current project so that other judges can come back to that project
+	err = database.ResetBusyStatusByProject(db, project)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "error resetting busy project status in database: " + err.Error(),
+		})
+	}
+
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
