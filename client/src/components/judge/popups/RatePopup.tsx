@@ -33,7 +33,7 @@ const RatePopup = (props: RatePopupProps) => {
         <Popup enabled={props.enabled} setEnabled={props.setEnabled}>
             <h1 className="text-3xl font-bold text-primary">Judge Project</h1>
             <h2 className="text-xl font-bold">Please rate the current project</h2>
-            <div className="flex flex-col items-center w-full my-4">
+            <div className="flex flex-col w-full my-4">
                 <Ratings callback={done} />
             </div>
         </Popup>

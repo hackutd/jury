@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getRequest, postRequest, putRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Button from '../Button';
+import { getTrackBackground, Range } from 'react-range';
 
 interface RatingsProps {
     callback?: () => void;
@@ -71,25 +72,71 @@ const Ratings = (props: RatingsProps) => {
     };
 
     return (
-        <div className="flex flex-col align-center">
+        <div className="flex flex-col mx-4">
             {categories.map((v, i) => (
                 <div key={i}>
-                    <p className="text-center">
-                        <b>{v}</b>: {categoryScores[i]}
-                    </p>
-                    <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        value={categoryScores[i]}
-                        onChange={(e) => {
-                            const newScores = [...categoryScores];
-                            newScores[i] = parseInt(e.target.value);
-                            setCategoryScores(newScores);
-                            if (props.update) submit(newScores);
-                        }}
-                        className="w-full"
-                    />
+                    <div className="text-light text-mono flex flex-row justify-between">
+                        <p>{v}</p>
+                        <p>{categoryScores[i]}</p>
+                    </div>
+                    <div className="pb-4 pt-1">
+                        {/* React Range Slider */}
+                        <Range
+                            label="Select your value"
+                            step={1}
+                            min={0}
+                            max={10}
+                            values={[categoryScores[i]]}
+                            onChange={(values) => {
+                                const newScores = [...categoryScores];
+                                newScores[i] = values[0];
+                                setCategoryScores(newScores);
+                                if (props.update) submit(newScores);
+                            }}
+                            renderMark={({ props, index }) => (
+                                <div
+                                    {...props}
+                                    key={props.key}
+                                    className={`h-0.5 w-0.5 rounded-full mt-1 ${
+                                        index === 0 || index === 10 ? 'opacity-0' : 'opacity-100'
+                                    } ${index < categoryScores[i] ? 'bg-primary' : 'bg-black'}`}
+                                />
+                            )}
+                            renderTrack={({ props, children }) => {
+                                return (
+                                    <div
+                                        onMouseDown={props.onMouseDown}
+                                        onTouchStart={props.onTouchStart}
+                                        className="h-6 flex w-full"
+                                        style={{ ...props.style }}
+                                    >
+                                        <div
+                                            ref={props.ref}
+                                            style={{
+                                                background: getTrackBackground({
+                                                    values: [categoryScores[i]],
+                                                    colors: ['#00ACE6', '#ccc'],
+                                                    min: 0,
+                                                    max: 10,
+                                                }),
+                                            }}
+                                            className={`h-[6px] w-full rounded-lg self-center`}
+                                        >
+                                            {children}
+                                        </div>
+                                    </div>
+                                );
+                            }}
+                            renderThumb={({ props }) => (
+                                <div
+                                    {...props}
+                                    key={props.key}
+                                    className="h-5 w-5 bg-primary rounded-full"
+                                    style={{ ...props.style }}
+                                />
+                            )}
+                        />
+                    </div>
                 </div>
             ))}
             {!props.update ? (
