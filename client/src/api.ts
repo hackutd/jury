@@ -9,7 +9,13 @@ export async function getRequest<T>(path: string, auth: string): Promise<FetchRe
             headers: createHeaders(auth, true),
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            return { status: response.status, error: 'Error parsing response', data: null };
+        }
         return { status: response.status, error: data.error ? data.error : '', data };
         // eslint-disable-next-line
     } catch (error: any) {
@@ -31,7 +37,13 @@ export async function postRequest<T>(
             body: body ? JSON.stringify(body) : null,
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            return { status: response.status, error: 'Error parsing response', data: null };
+        }
         return { status: response.status, error: data.error ? data.error : '', data };
         // eslint-disable-next-line
     } catch (error: any) {
@@ -53,7 +65,13 @@ export async function putRequest<T>(
             body: body ? JSON.stringify(body) : null,
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            return { status: response.status, error: 'Error parsing response', data: null };
+        }
         return { status: response.status, error: data.error ? data.error : '', data };
         // eslint-disable-next-line
     } catch (error: any) {
@@ -72,7 +90,13 @@ export async function deleteRequest(
             headers: createHeaders(auth, true),
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            return { status: response.status, error: 'Error parsing response', data: null };
+        }
         return { status: response.status, error: data.error ? data.error : '', data };
         // eslint-disable-next-line
     } catch (error: any) {
