@@ -261,6 +261,9 @@ const Judge = () => {
                     onDragEnd={handleDragEnd}
                 >
                     <h2 className="text-primary text-xl font-bold mt-4">Ranked Projects</h2>
+                    <p className="text-light text-sm">
+                        Click on titles to edit scores and see details.
+                    </p>
                     <div className="h-[1px] w-full bg-light my-2"></div>
                     <Droppable id="ranked" projects={ranked} active={activeDropzone} />
 

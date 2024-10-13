@@ -19,6 +19,7 @@ const SortableItem = (props: SortableItemProps) => {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
+        touchAction: 'initial',
     };
 
     return (
