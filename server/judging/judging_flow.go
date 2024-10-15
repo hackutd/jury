@@ -48,8 +48,25 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 			return nil, err
 		}
 
+		// Check to see how many times the project has been marked absent
+		active := true
+		absentCount, err := database.GetProjectAbsentCount(db, skippedProject, ctx)
+		if err != nil {
+			return nil, errors.New("error checking for project flags: " + err.Error())
+		}
+		// Hide project if it's been absent more than 3 times
+		if reason == "absent" && absentCount >= 2 {
+			active = false
+
+			// Also remove all absent flags for the project
+			err = database.DeleteAbsentFlags(db, skippedProject, ctx)
+			if err != nil {
+				return nil, errors.New("error deleting absent flags: " + err.Error())
+			}
+		}
+
 		// Update the project
-		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}})
+		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}, "$set": gin.H{"active": active}})
 		if err != nil {
 			return nil, err
 		}

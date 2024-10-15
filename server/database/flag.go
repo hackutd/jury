@@ -55,3 +55,9 @@ func GetProjectAbsentCount(db *mongo.Database, project *models.Project, ctx mong
 	}
 	return len(flags), nil
 }
+
+// DeleteAbsentFlags deletes all flags with the reason "absent" for a given project ID
+func DeleteAbsentFlags(db *mongo.Database, project *models.Project, ctx mongo.SessionContext) error {
+	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{"project_id": project.Id, "reason": "absent"})
+	return err
+}
