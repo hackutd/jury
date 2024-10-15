@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createHeaders } from '../../../api';
+import Loading from '../../Loading';
 
 interface UploadCSVFormProps {
     /* The format of the CSV file */
@@ -180,6 +181,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                         </div>
                     </form>
                 </div>
+                <Loading disabled={!isUploading} />
             </div>
         </>
     );

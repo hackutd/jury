@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"errors"
 	"server/models"
 	"server/util"
 
@@ -112,7 +111,11 @@ func AggregateJudgeStats(db *mongo.Database) (*models.JudgeStats, error) {
 	cursor.Next(context.Background())
 	err = cursor.Decode(&stats)
 	if err != nil {
-		return nil, err
+		if err.Error() == "EOF" {
+			stats = models.JudgeStats{Num: 0, AvgSeen: 0, NumActive: 0}
+		} else {
+			return nil, err
+		}
 	}
 
 	// Set the total number of judges
@@ -162,76 +165,6 @@ func UpdateJudgeBasicInfo(db *mongo.Database, judgeId *primitive.ObjectID, addRe
 	return err
 }
 
-// SkipCurrentProject skips the current project for a judge
-func SkipCurrentProject(db *mongo.Database, judge *models.Judge, reason string, getNew bool) error {
-	// Get skipped project from database
-	skippedProject, err := FindProjectById(db, judge.Current)
-	if err != nil {
-		return errors.New("error finding skipped project in database: " + err.Error())
-	}
-
-	// Run rest of DB operations in a transaction
-	err = WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
-		// If skipping for any reason other than wanting a break, add the project to the skipped list
-		if reason != "break" {
-			// Create a new skip object
-			skip, err := models.NewFlag(skippedProject, judge, reason)
-			if err != nil {
-				return nil, errors.New("error creating skip object: " + err.Error())
-			}
-
-			// Add skipped project to skipped database
-			err = InsertFlag(db, ctx, skip)
-			if err != nil {
-				return nil, errors.New("error inserting skip into database: " + err.Error())
-			}
-		}
-
-		// Update the judge
-		_, err := db.Collection("judges").UpdateOne(
-			ctx,
-			gin.H{"_id": judge.Id},
-			gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
-		)
-		if err != nil {
-			return nil, errors.New("error updating judge: " + err.Error())
-		}
-
-		// Check to see how many times the project has been marked absent
-		active := true
-		absentCount, err := GetProjectAbsentCount(db, skippedProject, ctx)
-		if err != nil {
-			return nil, errors.New("error checking for project flags: " + err.Error())
-		}
-
-		// Hide project if it's been absent more than 3 times
-		if reason == "absent" && absentCount >= 2 {
-			active = false
-		}
-
-		// Update the project
-		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}, "$set": gin.H{"active": active}})
-		if err != nil {
-			return nil, err
-		}
-
-		// Don't get a new project if we're not supposed to
-		if !getNew {
-			return nil, nil
-		}
-
-		// Get a new project
-		project, err := PickNextProject(db, judge, ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		// Update the judge
-		return UpdateAfterPickedWithTx(db, project, judge, ctx)
-	})
-	return err
-}
-
 // UpdateJudgeRanking updates the judge's ranking array
 func UpdateJudgeRanking(db *mongo.Database, judge *models.Judge, rankings []primitive.ObjectID) error {
 	_, err := db.Collection("judges").UpdateOne(
@@ -246,4 +179,27 @@ func UpdateJudgeRanking(db *mongo.Database, judge *models.Judge, rankings []prim
 func UpdateJudgeSeenProjects(db *mongo.Database, judge *models.Judge) error {
 	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
 	return err
+}
+
+// Reset list of projects that judge skipped due to busy
+func ResetBusyProjectListForJudge(db *mongo.Database, judge *models.Judge) error {
+	_, err := db.Collection("flags").DeleteMany(context.Background(), gin.H{
+		"judge_id": judge.Id,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Reset project status to non-busy by deleting all "busy" flag for a project
+func ResetBusyStatusByProject(db *mongo.Database, project *models.Project) error {
+	_, err := db.Collection("flags").DeleteMany(context.Background(), gin.H{
+		"project_id": project.Id,
+		"reason":     "busy",
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

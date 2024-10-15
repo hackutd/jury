@@ -3,6 +3,7 @@ package router
 import (
 	"log"
 	"server/database"
+	"server/judging"
 	"server/models"
 
 	"github.com/gin-contrib/cors"
@@ -19,9 +20,16 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	// Get the clock state from the database
 	clock := getClockFromDb(db)
 
+	// Create the comparisons object
+	comps, err := judging.LoadComparisons(db)
+	if err != nil {
+		log.Fatalf("error loading projects from the database: %s\n", err.Error())
+	}
+
 	// Add shared variables to router
 	router.Use(useVar("db", db))
 	router.Use(useVar("clock", &clock))
+	router.Use(useVar("comps", comps))
 
 	// CORS
 	router.Use(cors.New(cors.Config{
@@ -96,7 +104,9 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.POST("/admin/timer", SetJudgingTimer)
 	adminRouter.POST("/admin/categories", SetCategories)
+	adminRouter.POST("/admin/min-views", SetMinViews)
 	judgeRouter.GET("/categories", GetCategories)
+	judgeRouter.POST("/judge/notes", JudgeUpdateNotes)
 
 	// Serve frontend static files
 	router.Use(static.Serve("/assets", static.LocalFile("./public/assets", true)))

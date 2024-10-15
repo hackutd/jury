@@ -5,12 +5,12 @@ import { errorAlert } from '../../../util';
 
 interface JudgeStats {
     num: number;
-    avg_votes: number;
+    avg_seen: number;
     num_active: number;
 }
 
 const AddJudgeStatsPanel = () => {
-    const [stats, setStats] = useState<JudgeStats>({ num: 0, avg_votes: 0, num_active: 0 });
+    const [stats, setStats] = useState<JudgeStats>({ num: 0, avg_seen: 0, num_active: 0 });
     useEffect(() => {
         const fetchStats = async () => {
             const res = await getRequest('/judge/stats', 'admin');
@@ -31,7 +31,7 @@ const AddJudgeStatsPanel = () => {
         <div className="flex flex-col justify-evenly w-full mt-8">
             <div className="flex justify-evenly basis-2/5">
                 <StatBlock name="Total Judges" value={stats.num} />
-                <StatBlock name="Average Votes" value={stats.avg_votes} />
+                <StatBlock name="Average Seen" value={stats.avg_seen} />
                 <StatBlock name="Active Judges" value={stats.num_active} />
             </div>
         </div>

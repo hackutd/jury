@@ -1,5 +1,5 @@
 # STEP 0: Statically build node client
-FROM node:lts-hydrogen as client-builder
+FROM node:lts-hydrogen AS client-builder
 WORKDIR /client
 COPY client ./
 COPY ["client/package.json", "client/tailwind.config.js", "client/tsconfig.json", "./"]
@@ -14,7 +14,7 @@ ARG NODE_ENV=production
 RUN yarn build
 
 # STEP 1: Compile backend
-FROM golang:1.20 AS builder
+FROM golang:1.22 AS builder
 WORKDIR /usr/src/jury
 
 # Copy over the app

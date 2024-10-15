@@ -6,17 +6,17 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import ProjectDisplay from '../../components/judge/ProjectDisplay';
 import Button from '../../components/Button';
-import VotePopup from '../../components/judge/VotePopup';
+import RatePopup from '../../components/judge/popups/RatePopup';
 import Back from '../../components/Back';
-import JudgeInfoPage from '../../components/judge/info';
+import JudgeInfoPage from '../../components/judge/JudgeInfoPage';
 import InfoPopup from '../../components/InfoPopup';
-import FlagPopup from '../../components/judge/FlagPopup';
-import Popup from '../../components/Popup';
+import FlagPopup from '../../components/judge/popups/FlagPopup';
 
 import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import alarm from '../../assets/alarm.mp3';
 import data from '../../data.json';
+import RawTextInput from '../../components/RawTextInput';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done'];
 const infoData = [
@@ -34,7 +34,7 @@ const JudgeLive = () => {
     const [judge, setJudge] = useState<Judge | null>(null);
     const [votePopup, setVotePopup] = useState<boolean>(false);
     const [flagPopup, setFlagPopup] = useState<boolean>(false);
-    const [busyPopup, setBusyPopup] = useState<boolean>(false);
+    const [skipPopup, setSkipPopup] = useState<boolean>(false);
     const [infoPage, setInfoPage] = useState<string>('');
     const [started, setStarted] = useState(false);
     const [totalJudgingTime, setTotalJudgingTime] = useState(0);
@@ -46,6 +46,7 @@ const JudgeLive = () => {
     const [stopAudio, setStopAudio] = useState(false);
     const [audioPopupOpen, setAudioPopupOpen] = useState(false);
     const [paused, setPaused] = useState(false);
+    const [notes, setNotes] = useState('');
 
     useEffect(() => {
         async function fetchData() {
@@ -225,26 +226,20 @@ const JudgeLive = () => {
         setPaused(true);
     };
 
-    const actionCallback = () => {
+    const flagCallback = async (isVote?: boolean) => {
         setJudge(null);
 
-        resetTimer();
-        getJudgeData();
-    };
-
-    const busy = async () => {
-        setJudge(null);
-
-        // Flag the current project
-        const flagRes = await postRequest<OkResponse>('/judge/skip', 'judge', {
-            reason: 'busy',
-        });
-        if (flagRes.status !== 200) {
-            errorAlert(flagRes);
-            return;
+        // Update notes if voting
+        if (isVote) {
+            const res = await postRequest<OkResponse>('/judge/notes', 'judge', {
+                notes,
+                project: judge?.current,
+            });
+            if (res.status !== 200) {
+                errorAlert(res);
+            }
         }
 
-        setBusyPopup(false);
         resetTimer();
         getJudgeData();
     };
@@ -272,13 +267,25 @@ const JudgeLive = () => {
         );
     }
 
+    // Open popup when clicked
     const openPopup = (pop: VotePopupState) => {
-        if (pop === 'vote') {
-            setVotePopup(true);
-        } else if (pop === 'flag') {
-            setFlagPopup(true);
-        } else if (pop === 'busy') {
-            setBusyPopup(true);
+        // Pause the timer before opening popup
+        pauseTimer();
+
+        // Open specified popup
+        switch (pop) {
+            case 'vote':
+                setVotePopup(true);
+                break;
+            case 'flag':
+                setFlagPopup(true);
+                break;
+            case 'skip':
+                setSkipPopup(true);
+                break;
+            default:
+                alert('Invalid popup state!');
+                break;
         }
     };
 
@@ -315,7 +322,7 @@ const JudgeLive = () => {
                     {totalJudgingTime === 0 ? null : !started ? (
                         <Button
                             type="primary"
-                            className="py-8 text-5xl rounded-xl mb-4"
+                            className="py-8 text-4xl md:text-5xl rounded-xl mb-4"
                             full
                             onClick={startJudging}
                         >
@@ -343,8 +350,8 @@ const JudgeLive = () => {
                     <div className="flex items-center">
                         <Button
                             type="primary"
-                            className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark"
-                            disabled={judge === null || !started}
+                            className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark hover:bg-errorDark"
+                            disabled={judge === null}
                             onClick={() => {
                                 openPopup('flag');
                             }}
@@ -353,13 +360,13 @@ const JudgeLive = () => {
                         </Button>
                         <Button
                             type="primary"
-                            className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter"
+                            className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter hover:bg-goldDark"
                             disabled={judge === null}
                             onClick={() => {
-                                openPopup('busy');
+                                openPopup('skip');
                             }}
                         >
-                            Busy
+                            Skip
                         </Button>
                         <Button
                             type="primary"
@@ -374,23 +381,30 @@ const JudgeLive = () => {
                     </div>
                 </div>
                 {judge.current && <ProjectDisplay judge={judge} projectId={judge.current} />}
-                <VotePopup
-                    open={votePopup}
-                    close={setVotePopup}
+                {/* Dummy div for fixed text input */}
+                <div className="w-full py-2 h-10"></div>
+                <div className="fixed bottom-0 flex p-2 w-full left-0 bg-background">
+                    <RawTextInput
+                        name="notes"
+                        placeholder="Personal notes..."
+                        className="text-md h-10 px-2 w-auto grow"
+                        text={notes}
+                        setText={setNotes}
+                    />
+                </div>
+                <RatePopup
+                    enabled={votePopup}
+                    setEnabled={setVotePopup}
                     judge={judge}
-                    callback={actionCallback}
+                    callback={flagCallback.bind(this, true)}
                 />
-                <FlagPopup open={flagPopup} close={setFlagPopup} callback={actionCallback} />
-                <Popup
-                    title="Busy"
-                    enabled={busyPopup}
-                    setEnabled={setBusyPopup}
-                    submitText="Skip"
-                    onSubmit={busy}
-                >
-                    Confirm that the other team is being judged by another judge. If so, click below
-                    to skip this project for now.
-                </Popup>
+                <FlagPopup enabled={flagPopup} setEnabled={setFlagPopup} onSubmit={flagCallback} />
+                <FlagPopup
+                    enabled={skipPopup}
+                    setEnabled={setSkipPopup}
+                    onSubmit={flagCallback}
+                    isSkip
+                />
                 <InfoPopup
                     enabled={audioPopupOpen}
                     setEnabled={setAudioPopupOpen}

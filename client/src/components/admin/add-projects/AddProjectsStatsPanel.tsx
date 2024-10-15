@@ -31,7 +31,6 @@ const AddProjectsStatsPanel = () => {
         <div className="flex flex-col justify-evenly w-full mt-8">
             <div className="flex justify-evenly basis-2/5">
                 <StatBlock name="Active Projects" value={stats.num} />
-                <StatBlock name="Average Votes" value={stats.avg_votes} />
                 <StatBlock name="Average Seen" value={stats.avg_seen} />
             </div>
         </div>

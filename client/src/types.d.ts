@@ -53,7 +53,7 @@ interface SortState<T extends SortField> {
 }
 
 // TODO: Change this...
-type VotePopupState = 'vote' | 'busy' | 'flag';
+type VotePopupState = 'vote' | 'skip' | 'flag';
 
 interface VotingProjectInfo {
     curr_name: string;
@@ -78,6 +78,10 @@ interface JudgedProject {
     location: number;
     description: string;
 }
+
+type JudgedProjectWithUrl = {
+    url: string;
+} & JudgedProject;
 
 type SortableJudgedProject = {
     id: number;
@@ -108,6 +112,7 @@ interface Options {
     clock: ClockState;
     judging_timer: number;
     categories: string[];
+    min_views: number;
 }
 
 interface FetchResponse<T> {

@@ -3,7 +3,8 @@ import { CSS } from '@dnd-kit/utilities';
 import RankItem from './RankItem';
 
 interface SortableItemProps {
-    item?: SortableJudgedProject;
+    item: SortableJudgedProject;
+    ranking: number;
     children?: React.ReactNode;
 }
 
@@ -18,6 +19,7 @@ const SortableItem = (props: SortableItemProps) => {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
+        touchAction: 'initial',
     };
 
     return (

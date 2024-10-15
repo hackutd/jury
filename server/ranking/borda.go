@@ -6,58 +6,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type JudgeRanking struct {
-	Rankings []primitive.ObjectID `json:"rankings"`
-	Unranked []primitive.ObjectID `json:"unranked"`
-}
-
-type RankedObject struct {
-	Id    primitive.ObjectID `json:"id"`
-	Score float64            `json:"score"`
-}
-
-type Comparison struct {
-	Winner primitive.ObjectID `json:"winner"`
-	Loser  primitive.ObjectID `json:"loser"`
-}
-
-// Convert a judge ranking to a list of pairwise comparisons
-func rankingToPairwise(judgeRanking JudgeRanking) []Comparison {
-	// Create a slice to store the pairwise comparisons
-	pairwise := make([]Comparison, 0)
-
-	// Loop through each project in the ranking and compare it to all the projects below it
-	for i, winner := range judgeRanking.Rankings {
-		for _, loser := range judgeRanking.Rankings[i+1:] {
-			pairwise = append(pairwise, Comparison{winner, loser})
-		}
-	}
-
-	// Loop through each project in the ranking and compare it to all the unranked projects
-	for _, winner := range judgeRanking.Rankings {
-		for _, loser := range judgeRanking.Unranked {
-			pairwise = append(pairwise, Comparison{winner, loser})
-		}
-	}
-
-	return pairwise
-}
-
-// Calculate the ranking of the projects based on the borda count method
-func CalcRanking(rankingLists []JudgeRanking, projects []primitive.ObjectID) []RankedObject {
+// CalcBordaRanking calculates the ranking of projects based on the borda count rank aggregation model.
+// See https://en.wikipedia.org/wiki/Borda_count
+func CalcBordaRanking(rankingLists []JudgeRanking, projects []primitive.ObjectID) []RankedObject {
 	// Create a map to store the scores of each project
 	scores := make(map[primitive.ObjectID]float64)
 
-	// Create a list of pairwise comparisons from all judge rankings
-	pairs := make([]Comparison, 0)
+	// Loop through judges' rankings
 	for _, rankingList := range rankingLists {
-		pairs = append(pairs, rankingToPairwise(rankingList)...)
-	}
+		// Give n points to 1st place, n-1 to 2nd place, ... 1 to last place,
+		// where n is the number of ranked projects
+		n := len(rankingList.Rankings)
 
-	// Loop through each pairwise comparison and update the scores of the projects
-	for _, pair := range pairs {
-		scores[pair.Winner]++
-		scores[pair.Loser]--
+		for i, projId := range rankingList.Rankings {
+			scores[projId] += float64(n - i)
+		}
+
 	}
 
 	// Create the output DS

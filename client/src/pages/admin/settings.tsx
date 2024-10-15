@@ -3,7 +3,7 @@ import { createHeaders, getRequest, postRequest } from '../../api';
 import Button from '../../components/Button';
 import JuryHeader from '../../components/JuryHeader';
 import { errorAlert } from '../../util';
-import Popup from '../../components/Popup';
+import TextPopup from '../../components/TextPopup';
 import Loading from '../../components/Loading';
 
 // Text components
@@ -22,6 +22,7 @@ const AdminSettings = () => {
     const [clockResetPopup, setClockResetPopup] = useState(false);
     const [dropPopup, setDropPopup] = useState(false);
     const [judgingTimer, setJudgingTimer] = useState('');
+    const [minViews, setMinViews] = useState('');
     const [categories, setCategories] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -31,9 +32,13 @@ const AdminSettings = () => {
             errorAlert(res);
             return;
         }
+        if (!res.data) {
+            alert('error: could not get options data');
+            return;
+        }
 
         // Calculate judging timer MM:SS
-        const timer = res.data?.judging_timer;
+        const timer = res.data.judging_timer;
         if (timer) {
             const minutes = Math.floor(timer / 60);
             const seconds = timer % 60;
@@ -42,8 +47,11 @@ const AdminSettings = () => {
         }
 
         // Set categories
-        const cats = res.data?.categories.join(', ');
+        const cats = res.data.categories.join(', ');
         setCategories(cats ?? '');
+
+        // Set min views
+        setMinViews(res.data.min_views.toString());
 
         setLoading(false);
     }
@@ -88,6 +96,27 @@ const AdminSettings = () => {
         }
 
         alert('Timer updated!');
+        getOptions();
+    };
+
+    const updateMinViews = async () => {
+        // Convert minViews to integer
+        const v = parseInt(minViews);
+        if (isNaN(v)) {
+            alert('Minimum views should be a positive integer!');
+            return;
+        }
+
+        // Update min views
+        const res = await postRequest<OkResponse>('/admin/min-views', 'admin', {
+            min_views: v,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Min views updated!');
         getOptions();
     };
 
@@ -239,7 +268,7 @@ const AdminSettings = () => {
                     Update Categories
                 </Button>
 
-                <Section>Project Numbers</Section>
+                <Section>Judging Parameters</Section>
 
                 <SubSection>Reassign Project Numbers</SubSection>
                 <Description>
@@ -254,6 +283,30 @@ const AdminSettings = () => {
                     className="mt-4 mb-8 w-auto md:w-auto px-4 py-2 bg-gold text-black"
                 >
                     Reassign
+                </Button>
+
+                <SubSection>Set Minimum Project Views</SubSection>
+                <Description>
+                    Set the minimum amount of times that a project should be seen during judging.
+                    This will ensure all projects get seen at LEAST this many times before switching
+                    over to the optimal method of assigning projects. Set to 0 to ignore this
+                    condition (recommended: 3-5).
+                </Description>
+                <input
+                    className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
+                    type="string"
+                    placeholder="Enter integer..."
+                    value={minViews}
+                    onChange={(e) => {
+                        setMinViews(e.target.value);
+                    }}
+                />
+                <Button
+                    type="primary"
+                    onClick={updateMinViews}
+                    className="mt-4 w-auto md:w-auto px-4 py-2 mb-8"
+                >
+                    Update Min Views
                 </Button>
 
                 <Section>Export Data</Section>
@@ -314,7 +367,7 @@ const AdminSettings = () => {
                     Drop Database
                 </Button>
             </div>
-            <Popup
+            <TextPopup
                 enabled={reassignPopup}
                 setEnabled={setReassignPopup}
                 onSubmit={reassignTables}
@@ -324,8 +377,8 @@ const AdminSettings = () => {
             >
                 Are you sure you want to reassign project numbers? This should NOT be done DURING
                 judging; only beforehand!!
-            </Popup>
-            <Popup
+            </TextPopup>
+            <TextPopup
                 enabled={clockResetPopup}
                 setEnabled={setClockResetPopup}
                 onSubmit={resetClock}
@@ -334,8 +387,8 @@ const AdminSettings = () => {
                 red
             >
                 Are you sure you want to reset the main clock? This will reset the clock to 00:00:00
-            </Popup>
-            <Popup
+            </TextPopup>
+            <TextPopup
                 enabled={dropPopup}
                 setEnabled={setDropPopup}
                 onSubmit={dropDatabase}
@@ -345,7 +398,7 @@ const AdminSettings = () => {
             >
                 THIS WILL ACTUALLY DELETE ALL DATA!!!!! YOU NEED TO BE ABSOLUTELY SURE YOU WANT TO
                 DO THIS. THIS IS YOUR LAST WARNING!
-            </Popup>
+            </TextPopup>
             <Loading disabled={!loading} />
         </>
     );

@@ -6,11 +6,15 @@ description: Step-by-step instructions for how to deploy Jury for your Hackathon
 
 # Welcome!
 
-Whether you're interested in using Jury at your event or just helping out with the development process, we're glad you're here :D Continue reading for information to get Jury up and running in no time for your event. Or, if you're interested in setting up a development environment, go to [development setup](/docs/contributing).
+Whether you're interested in using Jury at your own hackathon or wanting to help develop and improve the software, we're glad you're here 💙. Continue reading for information to get Jury up and running in no time for your event. Or, if you're interested in setting up a development environment, go to [development setup](/docs/contributing).
+
+:::info[How does it work?]
+For a walkthrough of the judging process using Jury, check out our [Judging Walkthrough](/docs/walkthrough) page. For more technical details, read about how Jury works [here](/docs/details)!
+:::
 
 # Deploying for your Hackathon
 
-Jury is a stand-alone application used solely for the judging of hackathon projects. Before using Jury, make sure that your hackathon is doing judging in the [recommended physical setup](/docs/judging-setup).
+Jury is a stand-alone application used solely for the judging of hackathon projects. Before using Jury, make sure that your hackathon is using the [recommended physical setup](/docs/judging-setup).
 
 We will be deploying Jury on **Digital Ocean's [App Platform](https://www.digitalocean.com/products/app-platform)**. Jury can be built into a [Docker container](https://www.docker.com/resources/what-container/), which is perfect for serving on the App Platform. For our tier of App Platform, we are playing [$5/month](https://www.digitalocean.com/pricing/app-platform). This might sound like a lot, but Digital Ocean's pricing is **prorated hourly**. This means that (given 31 days in a month, 744 hours in a month) if you have the judging application up for 2 days (48 hours), you would be charged a whole... **32 cents**!!! And to make this deal even better, if you sign up with the referral link below, you get $200 in free Digital Ocean credits for 60 days.
 
@@ -102,6 +106,10 @@ Go to the review page and make sure everything looks good. Once you make sure al
 
 ## Next Steps
 
+### Troubleshooting
+
+If you have any issues with setting up a domain, please feel free to reach out to me ([Michael Zhao](mailto:michaelzhao314@gmail.com)).
+
 ### Custom Domain Name
 
 Follow the provided DigitalOcean guide to deploy to a [custom domain name](https://docs.digitalocean.com/products/app-platform/how-to/manage-domains/). Make sure you use **Option 2: Using a CNAME Pointer** if have your own domain hosting set up.
@@ -109,5 +117,5 @@ Follow the provided DigitalOcean guide to deploy to a [custom domain name](https
 ### Public API
 
 :::warning[WIP]
-🚧 The public API is still under construction 🚧
+🚧 The public API is still a WIP 🚧
 :::
