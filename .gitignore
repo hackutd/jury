@@ -5,3 +5,7 @@ data
 .cargo
 .vscode
 server/tmp
+
+# If someone accidentally makes these in root
+node_modules
+yarn.lock
