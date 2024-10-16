@@ -1,0 +1,79 @@
+services:
+    mongo:
+        build:
+            context: './'
+            dockerfile: mongo.Dockerfile
+        restart: always
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=admin
+            - MONGO_INITDB_ROOT_PASSWORD=admin
+            - MONGO_INITDB_DATABASE=jury
+            - MONGO_REPLICA_SET_NAME=rs0
+        ports:
+            - 27017:27017
+        networks:
+            - jury-dev-network
+
+    mongorssetup:
+        depends_on:
+            - 'mongo'
+        image: mongo:latest
+        environment:
+            - MONGODB_USER=admin
+            - MONGODB_PASS=admin
+        volumes:
+            - .:/scripts
+        restart: "no"
+        entrypoint: [ 'bash', '/scripts/init-mongo-rs.sh' ]
+        networks:
+            - jury-dev-network
+
+    # go-dev:
+    #     depends_on:
+    #         - 'mongo'
+    #         - 'mongorssetup'
+    #     container_name: jury-dev-backend
+    #     environment:
+    #         - MONGODB_URI=mongodb://admin:admin@mongo:27017/
+    #         - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
+    #         - EMAIL_HOST=${EMAIL_HOST}
+    #         - EMAIL_PORT=${EMAIL_PORT}
+    #         - EMAIL_FROM=${EMAIL_FROM}
+    #         - EMAIL_FROM_NAME=${EMAIL_FROM_NAME}
+    #         - EMAIL_USERNAME=${EMAIL_USERNAME}
+    #         - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+    #         - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+    #         - VITE_JURY_NAME=${JURY_NAME}
+    #         - PORT=8000
+    #     build:
+    #         context: './'
+    #         dockerfile: dev.Dockerfile
+    #     ports:
+    #         - ${PORT:-8000}:8000
+    #     volumes:
+    #         - ./server:/jury
+    #     networks:
+    #         - jury-dev-network
+
+    go-test:
+        depends_on:
+            - 'mongo'
+            - 'mongorssetup'
+            # - 'go-dev'
+        container_name: jury-testing
+        environment:
+            - MONGODB_URI=mongodb://admin:admin@mongo:27017/
+            - LOG_LEVEL=${LOG_LEVEL:-info}
+        build:
+            context: './'
+            dockerfile: tests/Dockerfile
+        ports:
+            - 8001:8001
+        volumes:
+            - ./tests:/jury
+        networks:
+            - jury-dev-network
+
+networks:
+    jury-dev-network:
+        driver: bridge

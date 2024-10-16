@@ -5,6 +5,7 @@ data
 .cargo
 .vscode
 server/tmp
+test-log.txt
 
 # If someone accidentally makes these in root
 node_modules
