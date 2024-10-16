@@ -28,42 +28,44 @@ services:
         networks:
             - jury-dev-network
 
-    # go-dev:
-    #     depends_on:
-    #         - 'mongo'
-    #         - 'mongorssetup'
-    #     container_name: jury-dev-backend
-    #     environment:
-    #         - MONGODB_URI=mongodb://admin:admin@mongo:27017/
-    #         - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
-    #         - EMAIL_HOST=${EMAIL_HOST}
-    #         - EMAIL_PORT=${EMAIL_PORT}
-    #         - EMAIL_FROM=${EMAIL_FROM}
-    #         - EMAIL_FROM_NAME=${EMAIL_FROM_NAME}
-    #         - EMAIL_USERNAME=${EMAIL_USERNAME}
-    #         - EMAIL_PASSWORD=${EMAIL_PASSWORD}
-    #         - SENDGRID_API_KEY=${SENDGRID_API_KEY}
-    #         - VITE_JURY_NAME=${JURY_NAME}
-    #         - PORT=8000
-    #     build:
-    #         context: './'
-    #         dockerfile: dev.Dockerfile
-    #     ports:
-    #         - ${PORT:-8000}:8000
-    #     volumes:
-    #         - ./server:/jury
-    #     networks:
-    #         - jury-dev-network
+    go-dev:
+        depends_on:
+            - 'mongo'
+            - 'mongorssetup'
+        container_name: jury-dev-backend
+        environment:
+            - MONGODB_URI=mongodb://admin:admin@mongo:27017/
+            - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
+            - EMAIL_HOST=${EMAIL_HOST}
+            - EMAIL_PORT=${EMAIL_PORT}
+            - EMAIL_FROM=${EMAIL_FROM}
+            - EMAIL_FROM_NAME=${EMAIL_FROM_NAME}
+            - EMAIL_USERNAME=${EMAIL_USERNAME}
+            - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+            - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+            - VITE_JURY_NAME=${JURY_NAME}
+            - PORT=8000
+        build:
+            context: './'
+            dockerfile: dev.Dockerfile
+        ports:
+            - 8000:8000
+        volumes:
+            - ./server:/jury
+        networks:
+            - jury-dev-network
 
     go-test:
         depends_on:
             - 'mongo'
             - 'mongorssetup'
-            # - 'go-dev'
+            - 'go-dev'
         container_name: jury-testing
         environment:
             - MONGODB_URI=mongodb://admin:admin@mongo:27017/
             - LOG_LEVEL=${LOG_LEVEL:-info}
+            - ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
+            - API_URL=http://go-dev:8000/api
         build:
             context: './'
             dockerfile: tests/Dockerfile

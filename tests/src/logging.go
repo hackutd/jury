@@ -13,6 +13,7 @@ const (
 	Error LogLevel = iota
 	Warn
 	Info
+	Verbose
 )
 
 type Logger struct {
@@ -55,6 +56,8 @@ func logLevelToInt(level string) int {
 		return int(Warn)
 	case "info":
 		return int(Info)
+	case "verbose":
+		return int(Verbose)
 	default:
 		log.Println("Invalid log level, defaulting to INFO")
 		return int(Info)

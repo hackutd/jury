@@ -50,6 +50,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	defaultRouter := router.Group("/api")
 
 	// Add routes
+	defaultRouter.GET("/", Heartbeat)
 	judgeRouter.GET("/judge", GetJudge)
 	adminRouter.POST("/judge/new", AddJudge)
 	defaultRouter.POST("/judge/login", LoginJudge)
@@ -149,4 +150,9 @@ func getClockFromDb(db *mongo.Database) models.ClockState {
 	}
 
 	return clock
+}
+
+// Heartbeat is a simple endpoint to check if the server is running
+func Heartbeat(ctx *gin.Context) {
+	ctx.JSON(200, gin.H{"ok": 1})
 }
