@@ -23,14 +23,22 @@ func main() {
 	src.WaitForBackend(logger)
 
 	// ### TIME TO START TESTING!!! ###
-	loginTests(logger)
+	apiEndpointTests(logger)
 }
 
-func loginTests(logger *src.Logger) {
-	logger.LogLn(src.Info, "\nLOGIN TESTS\n-----------")
+// apiEndpointTests tests the functionality of each API endpoint
+func apiEndpointTests(logger *src.Logger) {
+	logger.LogLn(src.Info, "\nAPI ENDPOINT TESTS\n------------------")
+
+	// Heartbeat
+	res := src.GetRequest(logger, "/", src.DefaultAuth())
+	if !src.IsOk(res) {
+		logger.LogLn(src.Error, "Error with heartbeat endpoint")
+		return
+	}
 
 	// Invalid login to admin account
-	res := src.PostRequest(logger, "/admin/login", src.H{"password": "THIS IS DEFINITELY THE WRONG PASSWORD"}, src.DefaultAuth())
+	res = src.PostRequest(logger, "/admin/login", src.H{"password": "THIS IS DEFINITELY THE WRONG PASSWORD"}, src.DefaultAuth())
 	if src.IsOk(res) {
 		logger.LogLn(src.Error, "Invalid login to admin account should not be successful")
 		return
@@ -44,6 +52,13 @@ func loginTests(logger *src.Logger) {
 		return
 	}
 
+	// Check if authenticated with invalid token
+	res = src.PostRequest(logger, "/admin/auth", nil, "Bearer INVALID_TOKEN")
+	if src.IsOk(res) {
+		logger.LogLn(src.Error, "Invalid token should not be authenticated")
+		return
+	}
+
 	// Check if authenticated
 	res = src.PostRequest(logger, "/admin/auth", nil, src.AdminAuth())
 	if !src.IsOk(res) {
@@ -51,5 +66,13 @@ func loginTests(logger *src.Logger) {
 		return
 	}
 
-	// TODO: Potentially create a parser for this so I don't have to write all of this by hand
+	// Get the clock
+	res = src.GetRequest(logger, "/admin/clock", src.AdminAuth())
+	if !src.IsValue(res, "running", src.BoolType, false) || !src.IsValue(res, "time", src.Float64Type, 0.0) {
+		logger.LogLn(src.Error, "Error getting the clock")
+		return
+	}
+
+	// Success!
+	logger.LogLn(src.Info, "\tAll API ENDPOINT TESTS passed!")
 }

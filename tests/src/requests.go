@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/valyala/fastjson"
 )
 
 type H map[string]any
@@ -32,6 +34,39 @@ func WaitForBackend(logger *Logger) {
 			break
 		}
 	}
+}
+
+func GetRequest(logger *Logger, url string, authHeader string) string {
+	logger.Log(Verbose, "Sending GET request to %s\n", url)
+
+	fullUrl := getBaseUrl() + url
+
+	// Send the GET request
+	req, err := http.NewRequest("GET", fullUrl, nil)
+	if err != nil {
+		logger.Log(Error, "Error creating GET request to %s: %s\n", url, err.Error())
+		return err.Error()
+	}
+	if authHeader != "" {
+		req.Header.Set("Authorization", authHeader)
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		logger.Log(Error, "Error sending GET request to %s: %s\n", url, err.Error())
+		return err.Error()
+	}
+
+	// Read the body
+	defer res.Body.Close()
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		logger.Log(Error, "Error reading response body: %s\n", err.Error())
+		return err.Error()
+	}
+
+	logger.Log(Verbose, "Response: %s\n", string(resBody))
+
+	return string(resBody)
 }
 
 func PostRequest(logger *Logger, url string, body H, authHeader string) string {
@@ -90,7 +125,34 @@ func AdminAuth() string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte("admin:"+GetEnv("ADMIN_PASSWORD")))
 }
 
-// Checks if body is okay
+// IsOk checks if body is okay
 func IsOk(body string) bool {
 	return strings.Contains(body, "\"ok\":1")
+}
+
+type JsonType int
+
+const (
+	StringType JsonType = iota
+	IntType
+	BoolType
+	Float64Type
+)
+
+// IsValue checks if body contains key with value
+func IsValue(body string, key string, valueType JsonType, value any) bool {
+	data := []byte(body)
+
+	switch valueType {
+	case StringType:
+		return fastjson.GetString(data, key) == value
+	case IntType:
+		return fastjson.GetInt(data, key) == value
+	case BoolType:
+		return fastjson.GetBool(data, key) == value
+	case Float64Type:
+		return fastjson.GetFloat64(data, key) == value
+	default:
+		return false
+	}
 }
