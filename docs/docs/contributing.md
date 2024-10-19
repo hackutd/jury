@@ -110,6 +110,23 @@ yarn start
 If you get the following warning: `error Error: EACCES: permission denied, unlink '<...>/jury/client/node_modules/.yarn-integrity'`, you will need to first remove the `node_modules` folder. Most likely you have run the docker instance before trying this. Docker will transfer ownership of the `node_modules` folder to itself. However, you can simply remove the folder to fix the issue (do `sudo rm -rf node_modules` on UNIX systems).
 :::
 
+## Testing
+
+A comprehensive framework for testing the backend is contained within the `tests` folder. Make sure you have your environmental variables defined as above. One extra environmental variable you can define is `LOG_LEVEL`, which defines what to output from the tests. The default level is `info`, but you can specify one of the following levels, in order of increasing verboseness:
+
+- error
+- warn
+- info
+- verbose
+
+To perform the tests, simply run the following:
+
+```
+docker compose -f docker-compose.test.yml up
+```
+
+This should run through all the tests and output results to `tests/test-log.txt`.
+
 ## Other Resources
 
 ### Design File
