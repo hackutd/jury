@@ -5,14 +5,12 @@ services:
             dockerfile: mongo.Dockerfile
         restart: always
         environment:
-            - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
-            - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASS}
+            - MONGO_INITDB_ROOT_USERNAME=admin
+            - MONGO_INITDB_ROOT_PASSWORD=admin
             - MONGO_INITDB_DATABASE=jury
             - MONGO_REPLICA_SET_NAME=rs0
         ports:
             - 27017:27017
-        volumes:
-            - './data:/data/db'
         networks:
             - jury-dev-network
 
@@ -21,8 +19,8 @@ services:
             - 'mongo'
         image: mongo:latest
         environment:
-            - MONGODB_USER=${MONGODB_USER}
-            - MONGODB_PASS=${MONGODB_PASS}
+            - MONGODB_USER=admin
+            - MONGODB_PASS=admin
         volumes:
             - .:/scripts
         restart: "no"
@@ -36,7 +34,7 @@ services:
             - 'mongorssetup'
         container_name: jury-dev-backend
         environment:
-            - MONGODB_URI=mongodb://${MONGODB_USER}:${MONGODB_PASS}@mongo:27017/
+            - MONGODB_URI=mongodb://admin:admin@mongo:27017/
             - JURY_ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
             - EMAIL_HOST=${EMAIL_HOST}
             - EMAIL_PORT=${EMAIL_PORT}
@@ -51,27 +49,30 @@ services:
             context: './'
             dockerfile: dev.Dockerfile
         ports:
-            - ${PORT:-8000}:8000
+            - 8000:8000
         volumes:
             - ./server:/jury
         networks:
             - jury-dev-network
 
-    node-dev:
+    go-test:
         depends_on:
+            - 'mongo'
+            - 'mongorssetup'
             - 'go-dev'
-        container_name: jury-dev-frontend
+        container_name: jury-testing
         environment:
-            - VITE_JURY_NAME=${JURY_NAME}
-            - VITE_JURY_URL=http://localhost:${PORT:-8000}/api
-            - VITE_HUB=${HEHE:-}
+            - MONGODB_URI=mongodb://admin:admin@mongo:27017/
+            - LOG_LEVEL=${LOG_LEVEL:-info}
+            - ADMIN_PASSWORD=${JURY_ADMIN_PASSWORD}
+            - API_URL=http://go-dev:8000/api
         build:
             context: './'
-            dockerfile: client/dev.Dockerfile
+            dockerfile: tests/Dockerfile
         ports:
-            - 3000:3000
+            - 8001:8001
         volumes:
-            - ./client:/client
+            - ./tests:/jury
         networks:
             - jury-dev-network
 
