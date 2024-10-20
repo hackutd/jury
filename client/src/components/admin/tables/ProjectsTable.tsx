@@ -67,7 +67,7 @@ const ProjectsTable = () => {
 
         getFlags();
     }, []);
-    
+
     // When projects change, update projects and sort
     useEffect(() => {
         setChecked(Array(unsortedProjects.length).fill(false));
@@ -78,6 +78,10 @@ const ProjectsTable = () => {
         switch (sortState.field) {
             case ProjectSortField.Name:
                 sortFunc = (a, b) => a.name.localeCompare(b.name) * asc;
+                break;
+            case ProjectSortField.Flagged:
+                // using the same sorting as "Seen" for now
+                sortFunc = (a, b) => (a.seen - b.seen) * asc;
                 break;
             case ProjectSortField.TableNumber:
                 sortFunc = (a, b) => (a.location - b.location) * asc;

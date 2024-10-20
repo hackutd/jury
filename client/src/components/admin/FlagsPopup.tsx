@@ -57,16 +57,16 @@ const FlagsPopup = ({ close, projectID }: FlagsPopupProps) => {
                 onClick={() => close(false)}
             ></div>
             <div className="bg-background fixed z-30 left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] py-6 px-10 w-2/3">
-                <div className="flex justify-around items-center px-4 mb-4">
+                <div className="flex justify-between items-end px-4 mb-4">
                     <div className="w-32"></div>
                     <h1 className="text-5xl font-bold">Flags</h1>
-                    <div className="flex items-center gap-4 w-32 whitespace-nowrap">
+                    <div className="flex items-center gap-2 w-32 whitespace-nowrap mr-3">
                         <input
                             type="checkbox"
                             onChange={() => setShowBusy(!showBusy)}
                             className="cursor-pointer hover:text-primary duration-100"
                         />
-                        <h1 className="font-bold">Busy Flags</h1>
+                        <h1 className="text-lg text-lighter">Show "busy" flags</h1>
                     </div>
                 </div>
                 <div className="h-[50vh] overflow-y-auto">
@@ -136,8 +136,8 @@ const FlagsPopup = ({ close, projectID }: FlagsPopupProps) => {
                                       index ===
                                       self.findIndex(
                                           (f) =>
-                                              f.id + ' ' + f.judge_id ===
-                                              flag.id + ' ' + flag.judge_id
+                                              `${f.project_id}_${f.judge_id}` ===
+                                              `${flag.project_id}_${flag.judge_id}` // More reliable unique key
                                       )
                               )
                               .map((flag) => (
