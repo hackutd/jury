@@ -4,7 +4,6 @@ import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
 import useAdminStore from '../../../store';
 import { postRequest } from '../../../api';
-import { getRequest } from '../../../api';
 import FlagsPopup from '../FlagsPopup';
 
 interface ProjectRowProps {
@@ -17,10 +16,9 @@ interface ProjectRowProps {
 
 const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: ProjectRowProps) => {
     const [popup, setPopup] = useState(false);
-    const [showFlags, setShowFlags] = useState(false);
-    const [matchingFlagCount, setMatchingFlagCount] = useState(0);
-    const [matchingFlag, setMatchingFlag] = useState<Flag | undefined>(undefined);
-    const [projectIDState, setProjectIDState] = useState('');
+    const [flagPopup, setflagPopup] = useState(false);
+    const [flagCount, setflagCount] = useState(0);
+    const [flagPopupProjectId, setflagPopupProjectId] = useState('');
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -75,31 +73,25 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
     };
 
     useEffect(() => {
-        // Filter flags to find all matching ones
         const matchingFlags = flags.filter((flag) => flag.project_id === project.id);
-        // Set matching flag count
-        const matchingFlagCount = matchingFlags.length;
+        const flagCount = matchingFlags.length;
         // If there is at least one matching flag, set the first one as the matching flag
-        if (matchingFlagCount > 0) {
-            setMatchingFlag(matchingFlags[0]); // Update matchingFlag state to the first match
-            setMatchingFlagCount(matchingFlagCount); // Update matchingFlagCount state
-            setProjectIDState(matchingFlags[0].project_id); // Update projectIDState based on first matching flag
+        if (flagCount > 0) {
+            setflagCount(flagCount);
+            setflagPopupProjectId(matchingFlags[0].project_id);
         } else {
-            setMatchingFlag(undefined); // No match found
-            setProjectIDState(''); // Clear project ID state
+            setflagPopupProjectId('');
         }
-    }, [flags, project]); // Recalculate when flags or project changes
+    }, [flags, project]);
 
-    const rowClassNameFlag = [
-        'border-t-2 border-backgroundDark duration-150',
-        matchingFlag ? 'bg-error bg-opacity-30' : '',
-        checked ? 'bg-primary/20' : !project.active ? 'bg-lightest' : 'bg-background',
-    ]
-        .filter(Boolean)
-        .join(' ');
     return (
         <>
-            <tr key={idx} className={rowClassNameFlag}>
+            <tr
+                key={idx}
+                className={`border-t-2 border-backgroundDark duration-150 ${
+                    flagCount && 'bg-error bg-opacity-30'
+                } ${checked ? 'bg-primary/20' : !project.active ? 'bg-lightest' : 'bg-background'}`}
+            >
                 <td className="px-2">
                     <input
                         type="checkbox"
@@ -114,10 +106,10 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 <td className="flex justify-center">
                     <button
                         onClick={() => {
-                            setShowFlags(true);
+                            setflagPopup(true);
                         }}
                     >
-                        {matchingFlag ? (
+                        {flagCount ? (
                             <div className="flex items-center gap-1">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -126,15 +118,11 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                                 >
                                     <path d="M200-120v-680h360l16 80h224v400H520l-16-80H280v280h-80Zm300-440Zm86 160h134v-240H510l-16-80H280v240h290l16 80Z" />
                                 </svg>
-                                {matchingFlagCount > 1 ? (
-                                    <h1 className="mt-1 text-error">({matchingFlagCount})</h1>
-                                ) : (
-                                    ''
+                                {flagCount > 1 && (
+                                    <h1 className="mt-1 text-error">({flagCount})</h1>
                                 )}
                             </div>
-                        ) : (
-                            ''
-                        )}
+                        ) : null}
                     </button>
                 </td>
                 <td className="text-center py-1">
@@ -170,7 +158,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                         </div>
                     )}
                     <div
-                        className="cursor-pointer hover:text-primary duration-150"
+                        className="cursor-pointer hover:text-primary duration-150 mr-2"
                         onClick={() => {
                             setPopup(!popup);
                         }}
@@ -179,7 +167,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                     </div>
                 </td>
             </tr>
-            {showFlags && <FlagsPopup close={setShowFlags} projectID={projectIDState} />}
+            {flagPopup && <FlagsPopup close={setflagPopup} projectID={flagPopupProjectId} />}
             {deletePopup && <DeletePopup element={project} close={setDeletePopup} />}
             {editPopup && <EditProjectPopup project={project} close={setEditPopup} />}
         </>
