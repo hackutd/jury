@@ -9,12 +9,18 @@ export async function getRequest<T>(path: string, auth: string): Promise<FetchRe
             headers: createHeaders(auth, true),
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        const data = await response.json();
-        return { status: response.status, error: data.error ? data.error : '', data };
+        
+        try {
+            const data = await response.json();
+            return { status: response.status, error: data.error ? data.error : '', data };
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            return { status: response.status, error: 'Error parsing response', data: null };
+        }
         // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
-        return { status: 404, error: error, data: null };
+        return { status: 404, error: 'Network connection issue', data: null };
     }
 }
 
@@ -31,12 +37,18 @@ export async function postRequest<T>(
             body: body ? JSON.stringify(body) : null,
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        const data = await response.json();
-        return { status: response.status, error: data.error ? data.error : '', data };
+        
+        try {
+            const data = await response.json();
+            return { status: response.status, error: data.error ? data.error : '', data };
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            return { status: response.status, error: 'Error parsing response', data: null };
+        }
         // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
-        return { status: 404, error: error, data: null };
+        return { status: 404, error: 'Network connection issue', data: null };
     }
 }
 
@@ -53,12 +65,18 @@ export async function putRequest<T>(
             body: body ? JSON.stringify(body) : null,
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        const data = await response.json();
-        return { status: response.status, error: data.error ? data.error : '', data };
+        
+        try {
+            const data = await response.json();
+            return { status: response.status, error: data.error ? data.error : '', data };
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            return { status: response.status, error: 'Error parsing response', data: null };
+        }
         // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
-        return { status: 404, error: error, data: null };
+        return { status: 404, error: 'Network connection issue', data: null };
     }
 }
 
@@ -72,12 +90,18 @@ export async function deleteRequest(
             headers: createHeaders(auth, true),
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        const data = await response.json();
-        return { status: response.status, error: data.error ? data.error : '', data };
+        
+        try {
+            const data = await response.json();
+            return { status: response.status, error: data.error ? data.error : '', data };
+        } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError);
+            return { status: response.status, error: 'Error parsing response', data: null };
+        }
         // eslint-disable-next-line
     } catch (error: any) {
         console.error(error);
-        return { status: 404, error: error, data: null };
+        return { status: 404, error: 'Network connection issue', data: null };
     }
 }
 
