@@ -30,7 +30,7 @@ const AdminToolbar = (props: { showProjects: boolean }) => {
                             setShowFlags(true);
                         }}
                     >
-                        See Flags
+                        See All Flags
                     </Button>
                 )}
             </div>

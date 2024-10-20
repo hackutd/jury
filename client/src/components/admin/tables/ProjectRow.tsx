@@ -4,16 +4,23 @@ import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
 import useAdminStore from '../../../store';
 import { postRequest } from '../../../api';
+import { getRequest } from '../../../api';
+import FlagsPopup from '../FlagsPopup';
 
 interface ProjectRowProps {
     project: Project;
     idx: number;
+    flags: Flag[];
     checked: boolean;
     handleCheckedChange: (e: React.ChangeEvent<HTMLInputElement>, idx: number) => void;
 }
 
-const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowProps) => {
+const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: ProjectRowProps) => {
     const [popup, setPopup] = useState(false);
+    const [showFlags, setShowFlags] = useState(false);
+    const [matchingFlagCount, setMatchingFlagCount] = useState(0);
+    const [matchingFlag, setMatchingFlag] = useState<Flag | undefined>(undefined);
+    const [projectIDState, setProjectIDState] = useState('');
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -67,19 +74,32 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
         }
     };
 
+    useEffect(() => {
+        // Filter flags to find all matching ones
+        const matchingFlags = flags.filter((flag) => flag.project_id === project.id);
+        // Set matching flag count
+        const matchingFlagCount = matchingFlags.length;
+        // If there is at least one matching flag, set the first one as the matching flag
+        if (matchingFlagCount > 0) {
+            setMatchingFlag(matchingFlags[0]); // Update matchingFlag state to the first match
+            setMatchingFlagCount(matchingFlagCount); // Update matchingFlagCount state
+            setProjectIDState(matchingFlags[0].project_id); // Update projectIDState based on first matching flag
+        } else {
+            setMatchingFlag(undefined); // No match found
+            setProjectIDState(''); // Clear project ID state
+        }
+    }, [flags, project]); // Recalculate when flags or project changes
+
+    const rowClassNameFlag = [
+        'border-t-2 border-backgroundDark duration-150',
+        matchingFlag ? 'bg-error bg-opacity-30' : '',
+        checked ? 'bg-primary/20' : !project.active ? 'bg-lightest' : 'bg-background',
+    ]
+        .filter(Boolean)
+        .join(' ');
     return (
         <>
-            <tr
-                key={idx}
-                className={
-                    'border-t-2 border-backgroundDark duration-150 ' +
-                    (checked
-                        ? 'bg-primary/20'
-                        : !project.active
-                        ? 'bg-lightest'
-                        : 'bg-background')
-                }
-            >
+            <tr key={idx} className={rowClassNameFlag}>
                 <td className="px-2">
                     <input
                         type="checkbox"
@@ -91,13 +111,39 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                     ></input>
                 </td>
                 <td>{project.name}</td>
+                <td className="flex justify-center">
+                    <button
+                        onClick={() => {
+                            setShowFlags(true);
+                        }}
+                    >
+                        {matchingFlag ? (
+                            <div className="flex items-center gap-1">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 -960 1000 1000"
+                                    className="h-[28px] w-[28px] fill-error mt-1 cursor-pointer hover:scale-110"
+                                >
+                                    <path d="M200-120v-680h360l16 80h224v400H520l-16-80H280v280h-80Zm300-440Zm86 160h134v-240H510l-16-80H280v240h290l16 80Z" />
+                                </svg>
+                                {matchingFlagCount > 1 ? (
+                                    <h1 className="mt-1 text-error">({matchingFlagCount})</h1>
+                                ) : (
+                                    ''
+                                )}
+                            </div>
+                        ) : (
+                            ''
+                        )}
+                    </button>
+                </td>
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
                 <td className="text-center">{project.score}</td>
                 <td className="text-center">{project.seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>
-                <td className="text-right font-bold flex align-center justify-end">
+                <td className="text-right align-center">
                     {popup && (
                         <div
                             className="absolute flex flex-col bg-background rounded-md border-lightest border-2 font-normal text-sm"
@@ -123,16 +169,17 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                             </div>
                         </div>
                     )}
-                    <span
-                        className="cursor-pointer px-1 hover:text-primary duration-150"
+                    <div
+                        className="cursor-pointer hover:text-primary duration-150"
                         onClick={() => {
                             setPopup(!popup);
                         }}
                     >
                         ...
-                    </span>
+                    </div>
                 </td>
             </tr>
+            {showFlags && <FlagsPopup close={setShowFlags} projectID={projectIDState} />}
             {deletePopup && <DeletePopup element={project} close={setDeletePopup} />}
             {editPopup && <EditProjectPopup project={project} close={setEditPopup} />}
         </>

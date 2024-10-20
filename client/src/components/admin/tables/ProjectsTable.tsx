@@ -3,12 +3,15 @@ import ProjectRow from './ProjectRow';
 import useAdminStore from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { ProjectSortField } from '../../../enums';
+import { getRequest } from '../../../api';
+import { errorAlert } from '../../../util';
 
 const ProjectsTable = () => {
     const unsortedProjects = useAdminStore((state) => state.projects);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const [projects, setProjects] = useState<Project[]>([]);
     const [checked, setChecked] = useState<boolean[]>([]);
+    const [flags, setFlags] = useState<Flag[]>([]);
     const [sortState, setSortState] = useState<SortState<ProjectSortField>>({
         field: ProjectSortField.None,
         ascending: true,
@@ -52,6 +55,19 @@ const ProjectsTable = () => {
         fetchProjects();
     }, [fetchProjects]);
 
+    // Fetch flags on load
+    useEffect(() => {
+        async function getFlags() {
+            const res = await getRequest<Flag[]>('/admin/flags', 'admin');
+            if (res.status !== 200) {
+                errorAlert(res);
+            }
+            setFlags(res.data as Flag[]);
+        }
+
+        getFlags();
+    }, []);
+    
     // When projects change, update projects and sort
     useEffect(() => {
         setChecked(Array(unsortedProjects.length).fill(false));
@@ -73,8 +89,7 @@ const ProjectsTable = () => {
                 sortFunc = (a, b) => (a.seen - b.seen) * asc;
                 break;
             case ProjectSortField.Updated:
-                sortFunc = (a, b) =>
-                    (a.last_activity - b.last_activity) * asc;
+                sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
         setProjects(unsortedProjects.sort(sortFunc));
@@ -91,7 +106,13 @@ const ProjectsTable = () => {
                             updateSort={updateSort}
                             sortField={ProjectSortField.Name}
                             sortState={sortState}
-                            align='left'
+                            align="left"
+                        />
+                        <HeaderEntry
+                            name="Flagged"
+                            updateSort={updateSort}
+                            sortField={ProjectSortField.Flagged}
+                            sortState={sortState}
                         />
                         <HeaderEntry
                             name="Table Number"
@@ -124,6 +145,7 @@ const ProjectsTable = () => {
                             key={idx}
                             idx={idx}
                             project={project}
+                            flags={flags}
                             checked={checked[idx]}
                             handleCheckedChange={handleCheckedChange}
                         />
