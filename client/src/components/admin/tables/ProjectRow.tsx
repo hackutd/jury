@@ -5,6 +5,7 @@ import EditProjectPopup from './EditProjectPopup';
 import useAdminStore from '../../../store';
 import { postRequest } from '../../../api';
 import FlagsPopup from '../FlagsPopup';
+import { twMerge } from 'tailwind-merge';
 
 interface ProjectRowProps {
     project: Project;
@@ -73,12 +74,9 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
     };
 
     useEffect(() => {
-        const matchingFlags = flags.filter((flag) => flag.project_id === project.id);
-        const flagCount = matchingFlags.length;
-        // If there is at least one matching flag, set the first one as the matching flag
-        if (flagCount > 0) {
+        if (flags.length > 0) {
             setflagCount(flagCount);
-            setflagPopupProjectId(matchingFlags[0].project_id);
+            setflagPopupProjectId(flags[0].project_id);
         } else {
             setflagPopupProjectId('');
         }
@@ -89,7 +87,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
             <tr
                 key={idx}
                 className={`border-t-2 border-backgroundDark duration-150 ${
-                    flagCount && 'bg-error bg-opacity-30'
+                    flags.length >= 1 && 'bg-error bg-opacity-30'
                 } ${checked ? 'bg-primary/20' : !project.active ? 'bg-lightest' : 'bg-background'}`}
             >
                 <td className="px-2">
@@ -109,7 +107,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                             setflagPopup(true);
                         }}
                     >
-                        {flagCount ? (
+                        {flags.length >= 1 && (
                             <div className="flex items-center gap-1">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -118,11 +116,11 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                                 >
                                     <path d="M200-120v-680h360l16 80h224v400H520l-16-80H280v280h-80Zm300-440Zm86 160h134v-240H510l-16-80H280v240h290l16 80Z" />
                                 </svg>
-                                {flagCount > 1 && (
-                                    <h1 className="mt-1 text-error">({flagCount})</h1>
+                                {flags.length > 1 && (
+                                    <h1 className="mt-1 text-error">({flags.length})</h1>
                                 )}
                             </div>
-                        ) : null}
+                        )}
                     </button>
                 </td>
                 <td className="text-center py-1">

@@ -80,8 +80,15 @@ const ProjectsTable = () => {
                 sortFunc = (a, b) => a.name.localeCompare(b.name) * asc;
                 break;
             case ProjectSortField.Flagged:
-                // using the same sorting as "Seen" for now
-                sortFunc = (a, b) => (a.seen - b.seen) * asc;
+                sortFunc = (a, b) => {
+                    const flagsA = flags
+                        .filter((flag) => !flag.reason.includes('busy'))
+                        .filter((flag) => flag.project_id === a.id).length;
+                    const flagsB = flags
+                        .filter((flag) => !flag.reason.includes('busy'))
+                        .filter((flag) => flag.project_id === b.id).length;
+                    return (flagsB - flagsA) * asc;
+                };
                 break;
             case ProjectSortField.TableNumber:
                 sortFunc = (a, b) => (a.location - b.location) * asc;
@@ -144,16 +151,22 @@ const ProjectsTable = () => {
                         />
                         <th className="text-right w-24">Actions</th>
                     </tr>
-                    {projects.map((project: Project, idx) => (
-                        <ProjectRow
-                            key={idx}
-                            idx={idx}
-                            project={project}
-                            flags={flags}
-                            checked={checked[idx]}
-                            handleCheckedChange={handleCheckedChange}
-                        />
-                    ))}
+                    {projects.map((project: Project, idx) => {
+                        const projectFlags = flags
+                            .filter((flag) => !flag.reason.includes('busy'))
+                            .filter((flag) => flag.project_id === project.id);
+
+                        return (
+                            <ProjectRow
+                                key={idx}
+                                idx={idx}
+                                project={project}
+                                flags={projectFlags}
+                                checked={checked[idx]}
+                                handleCheckedChange={handleCheckedChange}
+                            />
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

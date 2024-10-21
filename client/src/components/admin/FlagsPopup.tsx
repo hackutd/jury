@@ -13,7 +13,6 @@ const FlagsPopup = ({ close, projectID }: FlagsPopupProps) => {
     const [flags, setFlags] = useState<Flag[]>([]);
     const [sortedFlags, setSortedFlags] = useState<Flag[]>([]);
     const [sortMethod, setSortMethod] = useState(3);
-    const [showBusy, setShowBusy] = useState(false);
     const [displayedFlags, setDisplayedFlags] = useState<Flag[]>([]);
 
     useEffect(() => {
@@ -23,20 +22,18 @@ const FlagsPopup = ({ close, projectID }: FlagsPopupProps) => {
             filteredFlags = sortedFlags.filter((flag) => flag.project_id === projectID);
         } else {
             filteredFlags = sortedFlags
-                .filter((flag) => !flag.reason.includes('busy') || showBusy)
+                .filter((flag) => !flag.reason.includes('busy'))
                 .filter(
                     (flag, index, self) =>
                         index ===
                         self.findIndex(
-                            (f) =>
-                                `${f.project_id}_${f.judge_id}` ===
-                                `${flag.project_id}_${flag.judge_id}`
+                            (f) => `${f.id}_${f.judge_id}` === `${flag.id}_${flag.judge_id}`
                         )
                 );
         }
 
         setDisplayedFlags(filteredFlags);
-    }, [projectID, sortedFlags, showBusy]);
+    }, [projectID, sortedFlags]);
 
     useEffect(() => {
         async function getFlags() {
@@ -80,15 +77,7 @@ const FlagsPopup = ({ close, projectID }: FlagsPopupProps) => {
                 onClick={() => close(false)}
             ></div>
             <div className="bg-background fixed z-30 left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] py-6 px-10 w-2/3">
-                <div className="flex justify-between items-end">
-                    <div className="w-48"></div>
-                    <h1 className="text-5xl font-bold mb-6">Flags</h1>
-                    <div className="flex items-end">
-                        <Checkbox checked={showBusy} onChange={setShowBusy}>
-                            Show "busy" flags
-                        </Checkbox>
-                    </div>
-                </div>
+                <h1 className="text-5xl text-center font-bold mb-6">Flags</h1>
                 <div className="h-[50vh] overflow-y-auto">
                     <div className="flex flex-row items-center text-xl border-b-2 border-backgroundDark py-2">
                         <h2
@@ -130,7 +119,7 @@ const FlagsPopup = ({ close, projectID }: FlagsPopupProps) => {
                     </div>
                     {displayedFlags.map((flag) => (
                         <div
-                            key={`${flag.project_id} ${flag.judge_id}`}
+                            key={`${flag.id}`}
                             className="flex flex-row items-center text-xl border-b-2 border-backgroundDark py-1"
                         >
                             <h2 className="basis-2/5 text-left text-lg">
