@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getRequest } from '../../api';
 import { errorAlert, timeSince } from '../../util';
-import Checkbox from '../Checkbox';
 
 interface FlagsPopupProps {
     /* Function to modify the popup state variable */

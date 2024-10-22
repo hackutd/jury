@@ -86,9 +86,12 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
         <>
             <tr
                 key={idx}
-                className={`border-t-2 border-backgroundDark duration-150 ${
-                    flags.length >= 1 && 'bg-error bg-opacity-30'
-                } ${checked ? 'bg-primary/20' : !project.active ? 'bg-lightest' : 'bg-background'}`}
+                className={twMerge(
+                    'border-t-2 border-backgroundDark duration-150 bg-background',
+                    flags.length >= 1 && 'bg-error/30',
+                    !project.active && 'bg-lightest',
+                    checked && 'bg-primary/20'
+                )}
             >
                 <td className="px-2">
                     <input
