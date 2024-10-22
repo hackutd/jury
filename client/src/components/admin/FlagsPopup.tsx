@@ -15,20 +15,15 @@ const FlagsPopup = ({ close, projectID }: FlagsPopupProps) => {
     const [displayedFlags, setDisplayedFlags] = useState<Flag[]>([]);
 
     useEffect(() => {
-        let filteredFlags;
+        // Filter out busy flags and sort by time
+        const filteredFlags = sortedFlags
+            .filter((flag) => !flag.reason.includes('busy'))
+            .toSorted((a, b) => b.time - a.time);
 
+        // If a projectID is provided, only display flags for that project
         if (projectID) {
-            filteredFlags = sortedFlags.filter((flag) => flag.project_id === projectID);
-        } else {
-            filteredFlags = sortedFlags
-                .filter((flag) => !flag.reason.includes('busy'))
-                .filter(
-                    (flag, index, self) =>
-                        index ===
-                        self.findIndex(
-                            (f) => `${f.id}_${f.judge_id}` === `${flag.id}_${flag.judge_id}`
-                        )
-                );
+            setDisplayedFlags(filteredFlags.filter((flag) => flag.project_id === projectID));
+            return;
         }
 
         setDisplayedFlags(filteredFlags);
