@@ -3,12 +3,15 @@ import ProjectRow from './ProjectRow';
 import useAdminStore from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { ProjectSortField } from '../../../enums';
+import { getRequest } from '../../../api';
+import { errorAlert } from '../../../util';
 
 const ProjectsTable = () => {
     const unsortedProjects = useAdminStore((state) => state.projects);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const [projects, setProjects] = useState<Project[]>([]);
     const [checked, setChecked] = useState<boolean[]>([]);
+    const [flags, setFlags] = useState<Flag[]>([]);
     const [sortState, setSortState] = useState<SortState<ProjectSortField>>({
         field: ProjectSortField.None,
         ascending: true,
@@ -52,6 +55,19 @@ const ProjectsTable = () => {
         fetchProjects();
     }, [fetchProjects]);
 
+    // Fetch flags on load
+    useEffect(() => {
+        async function getFlags() {
+            const res = await getRequest<Flag[]>('/admin/flags', 'admin');
+            if (res.status !== 200) {
+                errorAlert(res);
+            }
+            setFlags(res.data as Flag[]);
+        }
+
+        getFlags();
+    }, []);
+
     // When projects change, update projects and sort
     useEffect(() => {
         setChecked(Array(unsortedProjects.length).fill(false));
@@ -63,6 +79,17 @@ const ProjectsTable = () => {
             case ProjectSortField.Name:
                 sortFunc = (a, b) => a.name.localeCompare(b.name) * asc;
                 break;
+            case ProjectSortField.Flagged:
+                sortFunc = (a, b) => {
+                    const flagsA = flags
+                        .filter((flag) => !flag.reason.includes('busy'))
+                        .filter((flag) => flag.project_id === a.id).length;
+                    const flagsB = flags
+                        .filter((flag) => !flag.reason.includes('busy'))
+                        .filter((flag) => flag.project_id === b.id).length;
+                    return (flagsB - flagsA) * asc;
+                };
+                break;
             case ProjectSortField.TableNumber:
                 sortFunc = (a, b) => (a.location - b.location) * asc;
                 break;
@@ -73,8 +100,7 @@ const ProjectsTable = () => {
                 sortFunc = (a, b) => (a.seen - b.seen) * asc;
                 break;
             case ProjectSortField.Updated:
-                sortFunc = (a, b) =>
-                    (a.last_activity - b.last_activity) * asc;
+                sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
         setProjects(unsortedProjects.sort(sortFunc));
@@ -91,7 +117,13 @@ const ProjectsTable = () => {
                             updateSort={updateSort}
                             sortField={ProjectSortField.Name}
                             sortState={sortState}
-                            align='left'
+                            align="left"
+                        />
+                        <HeaderEntry
+                            name="Flagged"
+                            updateSort={updateSort}
+                            sortField={ProjectSortField.Flagged}
+                            sortState={sortState}
                         />
                         <HeaderEntry
                             name="Table Number"
@@ -119,15 +151,22 @@ const ProjectsTable = () => {
                         />
                         <th className="text-right w-24">Actions</th>
                     </tr>
-                    {projects.map((project: Project, idx) => (
-                        <ProjectRow
-                            key={idx}
-                            idx={idx}
-                            project={project}
-                            checked={checked[idx]}
-                            handleCheckedChange={handleCheckedChange}
-                        />
-                    ))}
+                    {projects.map((project: Project, idx) => {
+                        const projectFlags = flags
+                            .filter((flag) => !flag.reason.includes('busy'))
+                            .filter((flag) => flag.project_id === project.id);
+
+                        return (
+                            <ProjectRow
+                                key={idx}
+                                idx={idx}
+                                project={project}
+                                flags={projectFlags}
+                                checked={checked[idx]}
+                                handleCheckedChange={handleCheckedChange}
+                            />
+                        );
+                    })}
                 </tbody>
             </table>
         </div>
