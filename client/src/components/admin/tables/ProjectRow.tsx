@@ -4,16 +4,22 @@ import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
 import { useAdminStore } from '../../../store';
 import { postRequest } from '../../../api';
+import FlagsPopup from '../FlagsPopup';
+import { twMerge } from 'tailwind-merge';
 
 interface ProjectRowProps {
     project: Project;
     idx: number;
+    flags: Flag[];
     checked: boolean;
     handleCheckedChange: (e: React.ChangeEvent<HTMLInputElement>, idx: number) => void;
 }
 
-const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowProps) => {
+const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: ProjectRowProps) => {
     const [popup, setPopup] = useState(false);
+    const [flagPopup, setflagPopup] = useState(false);
+    const [flagCount, setflagCount] = useState(0);
+    const [flagPopupProjectId, setflagPopupProjectId] = useState('');
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -67,18 +73,25 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
         }
     };
 
+    useEffect(() => {
+        if (flags.length > 0) {
+            setflagCount(flagCount);
+            setflagPopupProjectId(flags[0].project_id);
+        } else {
+            setflagPopupProjectId('');
+        }
+    }, [flags, project]);
+
     return (
         <>
             <tr
                 key={idx}
-                className={
-                    'border-t-2 border-backgroundDark duration-150 ' +
-                    (checked
-                        ? 'bg-primary/20'
-                        : !project.active
-                        ? 'bg-lightest'
-                        : 'bg-background')
-                }
+                className={twMerge(
+                    'border-t-2 border-backgroundDark duration-150 bg-background',
+                    flags.length >= 1 && 'bg-error/30',
+                    !project.active && 'bg-lightest',
+                    checked && 'bg-primary/20'
+                )}
             >
                 <td className="px-2">
                     <input
@@ -91,13 +104,35 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                     ></input>
                 </td>
                 <td>{project.name}</td>
+                <td className="flex justify-center">
+                    <button
+                        onClick={() => {
+                            setflagPopup(true);
+                        }}
+                    >
+                        {flags.length >= 1 && (
+                            <div className="flex items-center gap-1">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 -960 1000 1000"
+                                    className="h-[28px] w-[28px] fill-error mt-1 cursor-pointer hover:scale-110"
+                                >
+                                    <path d="M200-120v-680h360l16 80h224v400H520l-16-80H280v280h-80Zm300-440Zm86 160h134v-240H510l-16-80H280v240h290l16 80Z" />
+                                </svg>
+                                {flags.length > 1 && (
+                                    <h1 className="mt-1 text-error">({flags.length})</h1>
+                                )}
+                            </div>
+                        )}
+                    </button>
+                </td>
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
                 <td className="text-center">{project.score}</td>
                 <td className="text-center">{project.seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>
-                <td className="text-right font-bold flex align-center justify-end">
+                <td className="text-right align-center">
                     {popup && (
                         <div
                             className="absolute flex flex-col bg-background rounded-md border-lightest border-2 font-normal text-sm"
@@ -123,16 +158,17 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                             </div>
                         </div>
                     )}
-                    <span
-                        className="cursor-pointer px-1 hover:text-primary duration-150"
+                    <div
+                        className="cursor-pointer hover:text-primary duration-150 mr-2"
                         onClick={() => {
                             setPopup(!popup);
                         }}
                     >
                         ...
-                    </span>
+                    </div>
                 </td>
             </tr>
+            {flagPopup && <FlagsPopup close={setflagPopup} projectID={flagPopupProjectId} />}
             {deletePopup && <DeletePopup element={project} close={setDeletePopup} />}
             {editPopup && <EditProjectPopup project={project} close={setEditPopup} />}
         </>

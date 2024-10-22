@@ -49,17 +49,74 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter := router.Group("/api", AuthenticateAdmin())
 	defaultRouter := router.Group("/api")
 
-	// Add routes
-	judgeRouter.GET("/judge", GetJudge)
-	adminRouter.POST("/judge/new", AddJudge)
+	// ###############################
+	// ##### DEFINE ROUTES BELOW #####
+	// ###############################
+
+	defaultRouter.GET("/", Heartbeat)
+
+	// Login routes
 	defaultRouter.POST("/judge/login", LoginJudge)
+	defaultRouter.POST("/admin/login", LoginAdmin)
 	judgeRouter.POST("/judge/auth", JudgeAuthenticated)
+	adminRouter.POST("/admin/auth", AdminAuthenticated)
+
+	// Admin panel - judges
+	adminRouter.POST("/judge/new", AddJudge)
 	adminRouter.POST("/judge/csv", AddJudgesCsv)
+	adminRouter.GET("/judge/list", ListJudges)
+	adminRouter.DELETE("/judge/:id", DeleteJudge)
+	adminRouter.PUT("/judge/:id", EditJudge)
+
+	// Admin panel - projects
+	adminRouter.POST("/project/new", AddProject)
+	adminRouter.POST("/project/devpost", AddDevpostCsv)
+	adminRouter.POST("/project/csv", AddProjectsCsv)
+	adminRouter.GET("/project/list", ListProjects)
+	adminRouter.DELETE("/project/:id", DeleteProject)
+	// TODO: Add edit project route
+
+	// Admin panel - stats/data
+	adminRouter.GET("/admin/stats", GetAdminStats)
+	adminRouter.GET("/project/stats", ProjectStats)
+	adminRouter.GET("/judge/stats", JudgeStats)
+	adminRouter.GET("/admin/score", GetScores)
+	adminRouter.GET("/admin/flags", GetFlags)
+
+	// Admin panel - clock
+	adminRouter.GET("/admin/clock", GetClock)
+	adminRouter.POST("/admin/clock/pause", PauseClock)
+	adminRouter.POST("/admin/clock/unpause", UnpauseClock)
+	defaultRouter.GET("/admin/started", IsClockRunning)
+
+	// Admin panel - options/settings
+	adminRouter.POST("/admin/clock/reset", ResetClock)
+	adminRouter.POST("/admin/reset", ResetDatabase)
+	adminRouter.POST("/project/reassign", ReassignProjectNums)
+	judgeRouter.GET("/admin/timer", GetJudgingTimer)
+	adminRouter.POST("/admin/timer", SetJudgingTimer)
+	adminRouter.POST("/admin/categories", SetCategories)
+	adminRouter.POST("/admin/min-views", SetMinViews)
+	adminRouter.GET("/admin/options", GetOptions)
+
+	// Admin panel - exports
+	adminRouter.GET("/admin/export/judges", ExportJudges)
+	adminRouter.GET("/admin/export/projects", ExportProjects)
+	adminRouter.GET("/admin/export/challenges", ExportProjectsByChallenge)
+	adminRouter.GET("/admin/export/rankings", ExportRankings)
+
+	// Admin panel - table actions
+	adminRouter.POST("/judge/hide", HideJudge)
+	adminRouter.POST("/judge/unhide", UnhideJudge)
+	adminRouter.POST("/project/hide", HideProject)
+	adminRouter.POST("/project/unhide", UnhideProject)
+	adminRouter.POST("/project/prioritize", PrioritizeProject)
+	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
+
+	// Judging
+	judgeRouter.GET("/judge", GetJudge)
 	judgeRouter.GET("/judge/welcome", CheckJudgeReadWelcome)
 	judgeRouter.POST("/judge/welcome", SetJudgeReadWelcome)
-	adminRouter.GET("/judge/list", ListJudges)
-	adminRouter.GET("/judge/stats", JudgeStats)
-	adminRouter.DELETE("/judge/:id", DeleteJudge)
 	judgeRouter.GET("/judge/projects", GetJudgeProjects)
 	judgeRouter.POST("/judge/next", GetNextJudgeProject)
 	judgeRouter.POST("/judge/skip", JudgeSkip)
@@ -67,46 +124,18 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.POST("/judge/rank", JudgeRank)
 	judgeRouter.PUT("/judge/score", JudgeUpdateScore)
 	judgeRouter.POST("/judge/break", JudgeBreak)
-	adminRouter.POST("/project/devpost", AddDevpostCsv)
-	adminRouter.POST("/project/new", AddProject)
-	adminRouter.GET("/project/list", ListProjects)
-	defaultRouter.GET("/project/list/public", ListPublicProjects)
-	adminRouter.POST("/project/csv", AddProjectsCsv)
+	judgeRouter.POST("/judge/notes", JudgeUpdateNotes)
 	judgeRouter.GET("/project/:id", GetProject)
 	judgeRouter.GET("/project/count", GetProjectCount)
 	judgeRouter.GET("/judge/project/:id", GetJudgedProject)
-	adminRouter.DELETE("/project/:id", DeleteProject)
-	adminRouter.GET("/project/stats", ProjectStats)
-	defaultRouter.POST("/admin/login", LoginAdmin)
-	adminRouter.GET("/admin/stats", GetAdminStats)
-	adminRouter.GET("/admin/score", GetScores)
-	adminRouter.GET("/admin/clock", GetClock)
-	adminRouter.POST("/admin/clock/pause", PauseClock)
-	adminRouter.POST("/admin/clock/unpause", UnpauseClock)
-	adminRouter.POST("/admin/clock/reset", ResetClock)
-	adminRouter.POST("/admin/auth", AdminAuthenticated)
-	adminRouter.POST("/admin/reset", ResetDatabase)
-	adminRouter.POST("/judge/hide", HideJudge)
-	adminRouter.POST("/judge/unhide", UnhideJudge)
-	adminRouter.POST("/project/hide", HideProject)
-	adminRouter.POST("/project/unhide", UnhideProject)
-	adminRouter.POST("/project/prioritize", PrioritizeProject)
-	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
-	adminRouter.PUT("/judge/:id", EditJudge)
-	defaultRouter.GET("/admin/started", IsClockRunning)
-	adminRouter.GET("/admin/flags", GetFlags)
-	adminRouter.POST("/project/reassign", ReassignProjectNums)
-	adminRouter.GET("/admin/options", GetOptions)
-	adminRouter.GET("/admin/export/judges", ExportJudges)
-	adminRouter.GET("/admin/export/projects", ExportProjects)
-	adminRouter.GET("/admin/export/challenges", ExportProjectsByChallenge)
-	adminRouter.GET("/admin/export/rankings", ExportRankings)
-	judgeRouter.GET("/admin/timer", GetJudgingTimer)
-	adminRouter.POST("/admin/timer", SetJudgingTimer)
-	adminRouter.POST("/admin/categories", SetCategories)
-	adminRouter.POST("/admin/min-views", SetMinViews)
 	judgeRouter.GET("/categories", GetCategories)
-	judgeRouter.POST("/judge/notes", JudgeUpdateNotes)
+
+	// Project expo routes
+	defaultRouter.GET("/project/list/public", ListPublicProjects)
+
+	// ######################
+	// ##### END ROUTES #####
+	// ######################
 
 	// Serve frontend static files
 	router.Use(static.Serve("/assets", static.LocalFile("./public/assets", true)))
@@ -143,4 +172,9 @@ func getClockFromDb(db *mongo.Database) *models.SafeClock {
 	mut := models.NewSafeClock(&clock)
 
 	return mut
+}
+
+// Heartbeat is a simple endpoint to check if the server is running
+func Heartbeat(ctx *gin.Context) {
+	ctx.JSON(200, gin.H{"ok": 1})
 }

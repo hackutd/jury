@@ -8,7 +8,7 @@ The entire development environment is set up using [Docker Compose](https://docs
 
 ## With Docker (Recommended!)
 
-Copy `.env.template` into `.env` and fill in the environmental variables (see [environmental variables](/docs/intro#step-3-environmental-variables)). Simply run the following command to start up the dev server:
+Copy `.env.template` into `.env` and fill in the environmental variables (see [environmental variables](/docs/reference/envs) for more details). Once finished, run the following command to start up the dev server:
 
 ```bash
 docker compose -f docker-compose.dev.yml up
@@ -36,7 +36,16 @@ jury-dev-backend   | [GIN-debug] HEAD   /favicon.ico              --> github.com
 
 ### [Alternative] Offline database development
 
-If you don't want to create a MongoDB instance or don't want to work online (this only is viable if you've downloaded the packages before), you can use the offline development version. As with above, you will need to create your own `.env` file (again see [environmental variables](/docs/intro#step-3-environmental-variables)). Then, run the following command:
+If you don't want to create a MongoDB instance or don't want to work online (this only is viable if you've downloaded the packages before), you can use the offline development version.
+
+Copy `.env.template` into `.env` and fill in the environmental variables (see [environmental variables](/docs/reference/envs) for more details). Instead of defining `MONGODB_URI`, you should define the following variables:
+
+```
+MONGODB_USER=<username of the local mongodb instance>
+MONGODB_PASS=<password of the local mongodb instance>
+```
+
+Note that the above fields can be anything you want, but changing the user/password will break the docker compose script (you will need to reset the database or manually change the username/password of the saved instance). Then, run the following command:
 
 ```bash
 docker compose -f docker-compose-mongo.dev.yml up
@@ -100,6 +109,23 @@ yarn start
 :::warning[Troubleshooting]
 If you get the following warning: `error Error: EACCES: permission denied, unlink '<...>/jury/client/node_modules/.yarn-integrity'`, you will need to first remove the `node_modules` folder. Most likely you have run the docker instance before trying this. Docker will transfer ownership of the `node_modules` folder to itself. However, you can simply remove the folder to fix the issue (do `sudo rm -rf node_modules` on UNIX systems).
 :::
+
+## Testing
+
+A comprehensive framework for testing the backend is contained within the `tests` folder. Make sure you have your environmental variables defined as above. One extra environmental variable you can define is `LOG_LEVEL`, which defines what to output from the tests. The default level is `info`, but you can specify one of the following levels, in order of increasing verboseness:
+
+- error
+- warn
+- info
+- verbose
+
+To perform the tests, simply run the following:
+
+```
+docker compose -f docker-compose.test.yml up
+```
+
+This should run through all the tests and output results to `tests/test-log.txt`.
 
 ## Other Resources
 

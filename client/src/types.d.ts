@@ -105,6 +105,7 @@ interface Flag {
     judge_name: string;
     project_location: number;
     reason: string;
+    resolved: boolean;
 }
 
 interface Options {

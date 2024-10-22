@@ -9,6 +9,7 @@ export enum JudgeSortField {
 
 export enum ProjectSortField {
     Name,
+    Flagged,
     TableNumber,
     Score,
     Seen,

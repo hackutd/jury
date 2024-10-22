@@ -180,3 +180,26 @@ func UpdateJudgeSeenProjects(db *mongo.Database, judge *models.Judge) error {
 	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
 	return err
 }
+
+// Reset list of projects that judge skipped due to busy
+func ResetBusyProjectListForJudge(db *mongo.Database, judge *models.Judge) error {
+	_, err := db.Collection("flags").DeleteMany(context.Background(), gin.H{
+		"judge_id": judge.Id,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Reset project status to non-busy by deleting all "busy" flag for a project
+func ResetBusyStatusByProject(db *mongo.Database, project *models.Project) error {
+	_, err := db.Collection("flags").DeleteMany(context.Background(), gin.H{
+		"project_id": project.Id,
+		"reason":     "busy",
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
