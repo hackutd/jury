@@ -9,13 +9,20 @@ import { postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
+import { useAdminStore, useClockStore } from '../../store';
 
 // TODO: Add FAB to 'return to top'
 // TODO: Make pause button/settings have hover effects
 const Admin = () => {
     const navigate = useNavigate();
+    const fetchStats = useAdminStore((state) => state.fetchStats);
+    const fetchClock = useClockStore((state) => state.fetchClock);
+    const fetchProjects = useAdminStore((state) => state.fetchProjects);
+    const fetchJudges = useAdminStore((state) => state.fetchJudges);
+
     const [showProjects, setShowProjects] = useState(true);
     const [loading, setLoading] = useState(true);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
 
     useEffect(() => {
         // Check if user logged in
@@ -37,6 +44,20 @@ const Admin = () => {
         checkLoggedIn();
     }, []);
 
+    useEffect(() => {
+        // Set 15 seconds interval to refresh admin stats and clock
+        const refresh = setInterval(async () => {
+            // Fetch stats and clock
+            fetchStats();
+            fetchClock();
+            fetchProjects();
+            fetchJudges();
+            setLastUpdate(new Date());
+        }, 15000);
+
+        return () => clearInterval(refresh);
+    }, []);
+
     if (loading) {
         return <Loading disabled={!loading} />;
     }
@@ -52,7 +73,7 @@ const Admin = () => {
             >Settings</Button>
             <AdminStatsPanel />
             <AdminToggleSwitch state={showProjects} setState={setShowProjects} />
-            <AdminToolbar showProjects={showProjects} />
+            <AdminToolbar showProjects={showProjects} lastUpdate={lastUpdate} />
             <AdminTable showProjects={showProjects} />
         </>
     );
