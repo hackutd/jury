@@ -29,7 +29,7 @@ func (c *ClockState) Pause() {
 		return
 	}
 	c.Running = false
-	c.PauseTime = GetCurrTime() - c.StartTime
+	c.PauseTime = c.PauseTime + GetCurrTime() - c.StartTime
 }
 
 func (c *ClockState) Resume() {
