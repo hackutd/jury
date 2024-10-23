@@ -87,6 +87,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/admin/clock", GetClock)
 	adminRouter.POST("/admin/clock/pause", PauseClock)
 	adminRouter.POST("/admin/clock/unpause", UnpauseClock)
+	adminRouter.POST("/admin/clock/sync", SetClockSync)
+	adminRouter.POST("/admin/clock/backup", BackupClock)
 	defaultRouter.GET("/admin/started", IsClockRunning)
 
 	// Admin panel - options/settings
@@ -167,6 +169,11 @@ func getClockFromDb(db *mongo.Database) *models.SafeClock {
 		log.Fatalln("error getting options: " + err.Error())
 	}
 	clock := options.Clock
+
+	// If the sync clock option is not enabled, return 0 clock
+	if !options.ClockSync {
+		return models.NewSafeClock(models.NewClockState())
+	}
 
 	// Wrap the clock in a mutex
 	mut := models.NewSafeClock(&clock)

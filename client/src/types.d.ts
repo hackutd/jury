@@ -114,6 +114,7 @@ interface Options {
     judging_timer: number;
     categories: string[];
     min_views: number;
+    clock_sync: boolean;
 }
 
 interface FetchResponse<T> {
