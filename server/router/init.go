@@ -28,7 +28,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 
 	// Add shared variables to router
 	router.Use(useVar("db", db))
-	router.Use(useVar("clock", &clock))
+	router.Use(useVar("clock", clock))
 	router.Use(useVar("comps", comps))
 
 	// CORS
@@ -87,7 +87,9 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/admin/clock", GetClock)
 	adminRouter.POST("/admin/clock/pause", PauseClock)
 	adminRouter.POST("/admin/clock/unpause", UnpauseClock)
-	defaultRouter.GET("/admin/started", IsClockPaused)
+	adminRouter.POST("/admin/clock/sync", SetClockSync)
+	adminRouter.POST("/admin/clock/backup", BackupClock)
+	defaultRouter.GET("/admin/started", IsClockRunning)
 
 	// Admin panel - options/settings
 	adminRouter.POST("/admin/clock/reset", ResetClock)
@@ -160,7 +162,7 @@ func useVar(key string, v any) gin.HandlerFunc {
 
 // getClockFromDb gets the clock state from the database
 // and on init will pause the clock
-func getClockFromDb(db *mongo.Database) models.ClockState {
+func getClockFromDb(db *mongo.Database) *models.SafeClock {
 	// Get the clock state from the database
 	options, err := database.GetOptions(db)
 	if err != nil {
@@ -168,16 +170,15 @@ func getClockFromDb(db *mongo.Database) models.ClockState {
 	}
 	clock := options.Clock
 
-	// Pause the clock
-	clock.Pause()
-
-	// Update the clock in the database
-	err = database.UpdateClock(db, &clock)
-	if err != nil {
-		log.Fatalln("error updating clock: " + err.Error())
+	// If the sync clock option is not enabled, return 0 clock
+	if !options.ClockSync {
+		return models.NewSafeClock(models.NewClockState())
 	}
 
-	return clock
+	// Wrap the clock in a mutex
+	mut := models.NewSafeClock(&clock)
+
+	return mut
 }
 
 // Heartbeat is a simple endpoint to check if the server is running

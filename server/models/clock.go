@@ -1,17 +1,20 @@
 package models
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
 type ClockState struct {
 	StartTime int64 `json:"start_time" bson:"start_time"`
-	PauseTime      int64 `json:"pause_time" bson:"pause_time"`
+	PauseTime int64 `json:"pause_time" bson:"pause_time"`
 	Running   bool  `json:"running" bson:"running"`
 }
 
 func NewClockState() *ClockState {
 	return &ClockState{
 		StartTime: 0,
-		PauseTime:      0,
+		PauseTime: 0,
 		Running:   false,
 	}
 }
@@ -26,7 +29,7 @@ func (c *ClockState) Pause() {
 		return
 	}
 	c.Running = false
-	c.PauseTime = GetCurrTime()
+	c.PauseTime = c.PauseTime + GetCurrTime() - c.StartTime
 }
 
 func (c *ClockState) Resume() {
@@ -47,5 +50,18 @@ func (c *ClockState) GetDuration() int64 {
 	if !c.Running {
 		return c.PauseTime
 	}
-	return c.StartTime + GetCurrTime() - c.PauseTime
+	return c.PauseTime + GetCurrTime() - c.StartTime
+}
+
+// SafeClock wraps ClockState in a mutex so it can be used safely across threads
+type SafeClock struct {
+	Mutex sync.Mutex
+	Clock ClockState
+}
+
+func NewSafeClock(clock *ClockState) *SafeClock {
+	return &SafeClock{
+		Mutex: sync.Mutex{},
+		Clock: *clock,
+	}
 }

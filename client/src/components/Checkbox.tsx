@@ -1,3 +1,5 @@
+import { twMerge } from 'tailwind-merge';
+
 interface CheckboxProps {
     /* Label for the checkbox */
     children: React.ReactNode;
@@ -7,12 +9,18 @@ interface CheckboxProps {
 
     /* Function to set state variable */
     onChange: (checked: boolean) => void;
+
+    /* Optional class name */
+    className?: string;
 }
 
 const Checkbox = (props: CheckboxProps) => {
     return (
         <div
-            className="p-2 cursor-pointer text-light hover:text-black duration-200"
+            className={twMerge(
+                'p-2 cursor-pointer text-light hover:text-black duration-200',
+                props.className
+            )}
             onClick={() => props.onChange(!props.checked)}
         >
             <input

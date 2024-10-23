@@ -5,6 +5,7 @@ import JuryHeader from '../../components/JuryHeader';
 import { errorAlert } from '../../util';
 import TextPopup from '../../components/TextPopup';
 import Loading from '../../components/Loading';
+import Checkbox from '../../components/Checkbox';
 
 // Text components
 const Section = ({ children: c }: { children: React.ReactNode }) => (
@@ -23,6 +24,7 @@ const AdminSettings = () => {
     const [dropPopup, setDropPopup] = useState(false);
     const [judgingTimer, setJudgingTimer] = useState('');
     const [minViews, setMinViews] = useState('');
+    const [syncClock, setSyncClock] = useState(false);
     const [categories, setCategories] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -52,6 +54,9 @@ const AdminSettings = () => {
 
         // Set min views
         setMinViews(res.data.min_views.toString());
+
+        // Set sync clock
+        setSyncClock(res.data.clock_sync);
 
         setLoading(false);
     }
@@ -151,6 +156,28 @@ const AdminSettings = () => {
         setClockResetPopup(false);
     };
 
+    const toggleSyncClock = async () => {
+        const res = await postRequest<OkResponse>('/admin/clock/sync', 'admin', {
+            clock_sync: !syncClock,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        setSyncClock(!syncClock);
+    };
+
+    const backupClock = async () => {
+        const res = await postRequest<OkResponse>('/admin/clock/backup', 'admin', null);
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Clock data backed up!');
+    };
+
     const dropDatabase = async () => {
         const res = await postRequest<OkResponse>('/admin/reset', 'admin', null);
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -218,9 +245,30 @@ const AdminSettings = () => {
                     onClick={() => {
                         setClockResetPopup(true);
                     }}
-                    className="mt-4 w-auto md:w-auto px-4 py-2 mb-8"
+                    className="mt-2 w-auto md:w-auto px-4 py-2 mb-8"
                 >
                     Reset
+                </Button>
+
+                <SubSection>Sync Clock with Database Automatically</SubSection>
+                <Description>
+                    Backup clock data to database automatically -- note that this functionality
+                    won't work properly if you are using the database with multiple instances of
+                    Jury. This will save the clock state if the Jury backend server crashes for any
+                    reason. Automatic means every 10 minutes.
+                </Description>
+                <Checkbox checked={syncClock} onChange={toggleSyncClock} className="mb-4">
+                    Sync automatically
+                </Checkbox>
+
+                <SubSection>Backup Clock</SubSection>
+                <Description>Save clock state to database right now.</Description>
+                <Button
+                    type="primary"
+                    onClick={backupClock}
+                    className="mt-2 w-auto md:w-auto px-4 py-2 mb-8"
+                >
+                    Backup
                 </Button>
 
                 <SubSection>Set Judging Timer</SubSection>

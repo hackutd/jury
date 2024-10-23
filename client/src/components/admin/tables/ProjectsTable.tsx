@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import ProjectRow from './ProjectRow';
-import useAdminStore from '../../../store';
+import { useAdminStore } from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { ProjectSortField } from '../../../enums';
 import { getRequest } from '../../../api';

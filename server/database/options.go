@@ -23,13 +23,43 @@ func GetOptions(db *mongo.Database) (*models.Options, error) {
 	return &options, err
 }
 
-// UpdateOptions updates the current table number in the database
+// UpdateOptions updates the options in the database
+func UpdateOptions(db *mongo.Database, options *models.Options) error {
+	// Update the options
+	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": options})
+	return err
+}
+
+// UpdateCurrTableNum updates the current table number in the database
 func UpdateCurrTableNum(db *mongo.Database, ctx context.Context, currTableNum int64) error {
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"curr_table_num": currTableNum}})
 	return err
 }
 
-// UpdateOptions updates the clock in the database
+// UpdateClockSync updates the clock sync in the database
+func UpdateClockSync(db *mongo.Database, ctx context.Context, clockSync bool) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"clock_sync": clockSync}})
+	return err
+}
+
+// UpdateClockConditional updates the clock in the database if clock sync is enabled
+func UpdateClockConditional(db *mongo.Database, ctx context.Context, clock *models.ClockState) error {
+	// Get options
+	options, err := GetOptions(db)
+	if err != nil {
+		return err
+	}
+
+	// If clock sync is not enabled, don't sync the clock
+	if !options.ClockSync {
+		return nil
+	}
+
+	_, err = db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"clock": clock}})
+	return err
+}
+
+// UpdateClock updates the clock in the database
 func UpdateClock(db *mongo.Database, clock *models.ClockState) error {
 	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"clock": clock}})
 	return err

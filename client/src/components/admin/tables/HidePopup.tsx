@@ -1,5 +1,5 @@
 import { deleteRequest, postRequest } from '../../../api';
-import useAdminStore from '../../../store';
+import { useAdminStore } from '../../../store';
 import { errorAlert } from '../../../util';
 
 type HideElement = Project | Judge;

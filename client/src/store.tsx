@@ -64,7 +64,38 @@ const useAdminStore = create<AdminStore>()((set) => ({
             return;
         }
         set({ judges: judgeRes.data as Judge[] });
+    },
+}));
+
+interface ClockStore {
+    clock: ClockState;
+    fetchClock: () => Promise<void>;
+    setTime: (time: number) => void;
+}
+
+const useClockStore = create<ClockStore>()((set) => ({
+    clock: {
+        time: 0,
+        running: false,
+    },
+
+    fetchClock: async () => {
+        const clockRes = await getRequest<ClockState>('/admin/clock', 'admin');
+        if (clockRes.status !== 200) {
+            errorAlert(clockRes);
+            return;
+        }
+        set({ clock: clockRes.data as ClockState });
+    },
+
+    setTime: (time: number) => {
+        set((state) => ({
+            clock: {
+                ...state.clock,
+                time: time,
+            },
+        }));
     }
 }));
 
-export default useAdminStore;
+export { useAdminStore, useClockStore };
