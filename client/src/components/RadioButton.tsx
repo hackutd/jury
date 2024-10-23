@@ -36,7 +36,6 @@ const RadioButton = (props: RadioButtonProps) => {
         <Button
             type="outline"
             full
-            square
             className={twMerge(
                 'flex flex-col items-center py-2 px-4 my-2',
                 props.selected
