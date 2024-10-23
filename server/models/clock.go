@@ -29,7 +29,7 @@ func (c *ClockState) Pause() {
 		return
 	}
 	c.Running = false
-	c.PauseTime = GetCurrTime()
+	c.PauseTime = GetCurrTime() - c.StartTime
 }
 
 func (c *ClockState) Resume() {
@@ -50,7 +50,7 @@ func (c *ClockState) GetDuration() int64 {
 	if !c.Running {
 		return c.PauseTime
 	}
-	return c.StartTime + GetCurrTime() - c.PauseTime
+	return c.PauseTime + GetCurrTime() - c.StartTime
 }
 
 // SafeClock wraps ClockState in a mutex so it can be used safely across threads
