@@ -6,16 +6,34 @@ import { errorAlert } from '../../util';
 import TextPopup from '../../components/TextPopup';
 import Loading from '../../components/Loading';
 import Checkbox from '../../components/Checkbox';
+import RawTextInput from '../../components/RawTextInput';
 
 // Text components
 const Section = ({ children: c }: { children: React.ReactNode }) => (
-    <h2 className="text-4xl mt-8 mb-2 text-primary">{c}</h2>
+    <h2 className="text-4xl mt-8 text-primary">{c}</h2>
 );
 const SubSection = ({ children: c }: { children: React.ReactNode }) => (
-    <h3 className="text-xl font-bold">{c}</h3>
+    <h3 className="text-xl mt-4 mb-1 font-bold">{c}</h3>
 );
 const Description = ({ children: c }: { children: React.ReactNode }) => (
-    <p className="text-light">{c}</p>
+    <p className="text-light mb-[0.125rem]">{c}</p>
+);
+
+// Custom button to use on settings page
+const SettingsButton = ({
+    children,
+    onClick,
+    className,
+    type = 'primary',
+}: {
+    children: React.ReactNode;
+    onClick: () => void;
+    className?: string;
+    type?: 'primary' | 'error';
+}) => (
+    <Button type={type} onClick={onClick} small className={'my-2 ' + className}>
+        {children}
+    </Button>
 );
 
 const AdminSettings = () => {
@@ -240,36 +258,23 @@ const AdminSettings = () => {
 
                 <SubSection>Reset Main Clock</SubSection>
                 <Description>Reset the clock back to 00:00:00</Description>
-                <Button
-                    type="primary"
-                    onClick={() => {
-                        setClockResetPopup(true);
-                    }}
-                    className="mt-2 w-auto md:w-auto px-4 py-2 mb-8"
-                >
-                    Reset
-                </Button>
+                <SettingsButton onClick={() => setClockResetPopup(true)}>Reset</SettingsButton>
 
                 <SubSection>Sync Clock with Database Automatically</SubSection>
                 <Description>
                     Backup clock data to database automatically -- note that this functionality
                     won't work properly if you are using the database with multiple instances of
                     Jury. This will save the clock state if the Jury backend server crashes for any
-                    reason. Automatic means every 10 minutes.
+                    reason. Automatic means every 10 minutes, the clock state will be saved to the
+                    database, as well as whenever the clock is paused/unpaused/reset.
                 </Description>
-                <Checkbox checked={syncClock} onChange={toggleSyncClock} className="mb-4">
+                <Checkbox checked={syncClock} onChange={toggleSyncClock}>
                     Sync automatically
                 </Checkbox>
 
                 <SubSection>Backup Clock</SubSection>
                 <Description>Save clock state to database right now.</Description>
-                <Button
-                    type="primary"
-                    onClick={backupClock}
-                    className="mt-2 w-auto md:w-auto px-4 py-2 mb-8"
-                >
-                    Backup
-                </Button>
+                <SettingsButton onClick={backupClock}>Backup</SettingsButton>
 
                 <SubSection>Set Judging Timer</SubSection>
                 <Description>
@@ -277,44 +282,33 @@ const AdminSettings = () => {
                     that shows on the judging page. Leave this field blank (or 0) if you do not wish
                     to have a timer for each judge.
                 </Description>
-                <input
-                    className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
-                    type="string"
-                    placeholder="MM:SS"
-                    value={judgingTimer}
-                    onChange={(e) => {
-                        setJudgingTimer(e.target.value);
-                    }}
-                />
-                <Button
-                    type="primary"
-                    onClick={updateTimer}
-                    className="mt-4 w-auto md:w-auto px-4 py-2 mb-8"
-                >
-                    Update Timer
-                </Button>
+                <div className="flex flex-row">
+                    <RawTextInput
+                        name="judging-timer"
+                        text={judgingTimer}
+                        setText={setJudgingTimer}
+                        placeholder="MM:SS"
+                        large
+                        className="my-2 mr-4"
+                    />
+                    <SettingsButton onClick={updateTimer}>Update Timer</SettingsButton>
+                </div>
 
                 <SubSection>Set Categories</SubSection>
                 <Description>
                     Set the categories that the judges will be scoring each project on. Please
                     separate each category with a comma.
                 </Description>
-                <input
-                    className="w-full h-14 px-4 text-xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
-                    type="string"
+                <RawTextInput
+                    name="categories"
                     placeholder="Cat 1, Cat 2, Cat 3, ..."
-                    value={categories}
-                    onChange={(e) => {
-                        setCategories(e.target.value);
-                    }}
+                    text={categories}
+                    setText={setCategories}
+                    full
+                    large
+                    className="my-2"
                 />
-                <Button
-                    type="primary"
-                    onClick={updateCategories}
-                    className="mt-4 w-auto md:w-auto px-4 py-2"
-                >
-                    Update Categories
-                </Button>
+                <SettingsButton onClick={updateCategories}>Update Categories</SettingsButton>
 
                 <Section>Judging Parameters</Section>
 
@@ -323,15 +317,12 @@ const AdminSettings = () => {
                     Reassign all project numbers to the projects. This will keep the relative order
                     but reassign the project numbers starting from the first project.
                 </Description>
-                <Button
-                    type="primary"
-                    onClick={() => {
-                        setReassignPopup(true);
-                    }}
-                    className="mt-4 mb-8 w-auto md:w-auto px-4 py-2 bg-gold text-black"
+                <SettingsButton
+                    onClick={() => setReassignPopup(true)}
+                    className="bg-gold text-black hover:bg-goldDark hover:text-black"
                 >
                     Reassign
-                </Button>
+                </SettingsButton>
 
                 <SubSection>Set Minimum Project Views</SubSection>
                 <Description>
@@ -340,62 +331,35 @@ const AdminSettings = () => {
                     over to the optimal method of assigning projects. Set to 0 to ignore this
                     condition (recommended: 3-5).
                 </Description>
-                <input
-                    className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
-                    type="string"
-                    placeholder="Enter integer..."
-                    value={minViews}
-                    onChange={(e) => {
-                        setMinViews(e.target.value);
-                    }}
-                />
-                <Button
-                    type="primary"
-                    onClick={updateMinViews}
-                    className="mt-4 w-auto md:w-auto px-4 py-2 mb-8"
-                >
-                    Update Min Views
-                </Button>
+                <div className="flex flex-row">
+                    <RawTextInput
+                        name="min-views"
+                        text={minViews}
+                        setText={setMinViews}
+                        placeholder="Enter an integer..."
+                        large
+                        className="my-2 mr-4"
+                    />
+                    <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
+                </div>
 
                 <Section>Export Data</Section>
 
                 <SubSection>Export Collection</SubSection>
                 <Description>Export each collection individually as a CSV download.</Description>
                 <div className="flex">
-                    <Button
-                        type="primary"
-                        onClick={() => {
-                            exportCsv('judges');
-                        }}
-                        className="mt-4 w-auto md:w-auto px-4 py-2 mr-4"
-                    >
+                    <SettingsButton onClick={() => exportCsv('users')} className="mr-4">
                         Export Judges
-                    </Button>
-                    <Button
-                        type="primary"
-                        onClick={() => {
-                            exportCsv('projects');
-                        }}
-                        className="mt-4 w-auto md:w-auto px-4 py-2 mr-4"
-                    >
+                    </SettingsButton>
+                    <SettingsButton onClick={() => exportCsv('projects')} className="mr-4">
                         Export Projects
-                    </Button>
-                    <Button
-                        type="primary"
-                        onClick={exportByChallenge}
-                        className="mt-4 w-auto md:w-auto px-4 py-2 mr-4"
-                    >
+                    </SettingsButton>
+                    <SettingsButton onClick={exportByChallenge} className="mr-4">
                         Export by Challenges
-                    </Button>
-                    <Button
-                        type="primary"
-                        onClick={() => {
-                            exportCsv('rankings');
-                        }}
-                        className="mt-4 w-auto md:w-auto px-4 py-2"
-                    >
+                    </SettingsButton>
+                    <SettingsButton onClick={() => exportCsv('rankings')}>
                         Export Rankings
-                    </Button>
+                    </SettingsButton>
                 </div>
 
                 <Section>Reset Database</Section>
@@ -405,15 +369,9 @@ const AdminSettings = () => {
                     Mostly used for testing purposes/before the event if you want to reset
                     everything bc something got messed up. Do NOT use this during judging (duh).
                 </Description>
-                <Button
-                    type="error"
-                    onClick={() => {
-                        setDropPopup(true);
-                    }}
-                    className="mt-4 w-auto md:w-auto px-4 py-2"
-                >
+                <SettingsButton onClick={() => setDropPopup(true)} type="error">
                     Drop Database
-                </Button>
+                </SettingsButton>
             </div>
             <TextPopup
                 enabled={reassignPopup}

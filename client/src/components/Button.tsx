@@ -23,6 +23,9 @@ interface ButtonProps {
     /* Full width */
     full?: boolean;
 
+    /* Small width */
+    small?: boolean;
+
     /* Classname styling */
     className?: string;
 }
@@ -41,7 +44,8 @@ const Button = (props: ButtonProps) => {
     const borderFormat =
         props.type.indexOf('outline') !== -1 &&
         'border-lightest hover:bg-backgroundDark text-light hover:text-light';
-    const primaryBorderFormat = props.type === 'outline-primary' && 'border-primary text-primary hover:text-primary';
+    const primaryBorderFormat =
+        props.type === 'outline-primary' && 'border-primary text-primary hover:text-primary';
 
     // Format text
     const typeFormat =
@@ -54,7 +58,7 @@ const Button = (props: ButtonProps) => {
 
     // Format bold and width
     const boldFormat = props.bold ? 'font-bold' : 'font-normal';
-    const widthFormat = props.full ? 'w-full' : 'w-3/4 md:w-2/3';
+    const widthFormat = props.full ? 'w-full' : props.small ? 'w-auto px-6 py-1 rounded-md' : 'w-3/4 md:w-2/3';
 
     // Combine all formats
     const formatting = twMerge(
