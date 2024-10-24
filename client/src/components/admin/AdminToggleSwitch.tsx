@@ -6,19 +6,19 @@ const AdminToggleSwitch = (props: {
 }) => {
     return (
         <div className="w-full flex flex-row items-center justify-center my-10">
-            <div className="bg-primaryLight flex flex-row rounded-full relative">
+            <div className="bg-primaryLight flex flex-row rounded-xl relative">
                 <div
                     className={`absolute top-0 left-0 w-44 h-16 transition-transform duration-300 ease-in-out ${
                         !props.state ? 'transform translate-x-44' : ''
                     }`}
                 >
-                    <div className="flex flex-col items-center justify-center w-full h-full text-2xl rounded-full bg-primary text-white">
+                    <div className="flex flex-col items-center justify-center w-full h-full text-2xl rounded-xl bg-primary text-white">
                         {props.state ? 'Projects' : 'Judges'}
                     </div>
                 </div>
 
                 <button
-                    className={`block w-44 h-16 text-2xl rounded-full ${
+                    className={`block w-44 h-16 text-2xl rounded-xl ${
                         props.state ? '' : 'bg-transparent text-light'
                     }`}
                     onClick={() => {
@@ -28,7 +28,7 @@ const AdminToggleSwitch = (props: {
                     Projects
                 </button>
                 <button
-                    className={`block w-44 h-16 text-2xl rounded-full ${
+                    className={`block w-44 h-16 text-2xl rounded-xl ${
                         !props.state ? '' : 'bg-transparent text-light'
                     }`}
                     onClick={() => {
