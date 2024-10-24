@@ -36,12 +36,14 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
     return (
         <div className="flex items-center cursor-default">
             {ranking !== -1 && (
-                <p className={twMerge('font-bold text-xl text-center w-6 shrink-0', rankColor)}>{ranking}</p>
+                <p className={twMerge('font-bold text-xl text-center w-8 shrink-0', rankColor)}>
+                    {ranking}
+                </p>
             )}
             <div className="m-1 pl-2 py-1 bg-background border-solid border-2 border-lightest rounded-md grow">
                 <div className="flex flex-row">
                     <div>
-                        <h3 className="text-xl grow">
+                        <h3 className="text-lg leading-tight grow">
                             <a href={`/judge/project/${project.project_id}`}>
                                 <b>Table {project.location}</b>
                                 {': '}
@@ -62,9 +64,6 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
                     </div>
                     <div className="grow text-right flex items-center justify-end">
                         <DragHamburger />
-                        {/* <button onClick={openProject} className="text-3xl w-10 h-10 font-bold p-2 text-light duration-200 hover:text-primary leading-[0.5] rounded-full">
-                        +
-                    </button> */}
                     </div>
                 </div>
             </div>

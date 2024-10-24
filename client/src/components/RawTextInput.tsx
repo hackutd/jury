@@ -18,13 +18,21 @@ interface RawTextInputProps {
 
     /* Custom styling */
     className?: string;
+
+    /* Full Width */
+    full?: boolean;
+
+    /* Large text */
+    large?: boolean;
 }
 
 const RawTextInput = (props: RawTextInputProps) => {
     return (
         <input
             className={twMerge(
-                'w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none',
+                'w-auto h-10 px-2 text-md rounded-sm border-lightest border-2 focus:border-primary outline-none',
+                props.full && 'w-full',
+                props.large && 'text-xl h-12',
                 props.className
             )}
             placeholder={props.placeholder}

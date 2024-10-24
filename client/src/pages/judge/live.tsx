@@ -387,9 +387,9 @@ const JudgeLive = () => {
                     <RawTextInput
                         name="notes"
                         placeholder="Personal notes..."
-                        className="text-md h-10 px-2 w-auto grow"
                         text={notes}
                         setText={setNotes}
+                        className="grow"
                     />
                 </div>
                 <RatePopup

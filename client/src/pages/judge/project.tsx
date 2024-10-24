@@ -79,7 +79,7 @@ const Project = () => {
                     placeholder="Your notes..."
                     text={notes}
                     setText={setNotes}
-                    className="text-md h-10 px-2 w-auto mb-4"
+                    className="mb-4"
                 />
                 <Paragraph text={project.description} className="text-light" />
             </Container>
