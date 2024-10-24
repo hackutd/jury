@@ -12,13 +12,10 @@ interface ButtonProps {
     onClick?: (e: React.MouseEvent<Element>) => void;
 
     /* Type of the button */
-    type: 'primary' | 'outline' | 'text' | 'error';
+    type: 'primary' | 'outline' | 'text' | 'error' | 'outline-primary';
 
     /* If true, sets button as a disabled button */
     disabled?: boolean;
-
-    /* Square button */
-    square?: boolean;
 
     /* Bold button */
     bold?: boolean;
@@ -37,25 +34,34 @@ interface ButtonProps {
  */
 const Button = (props: ButtonProps) => {
     // Define formatting
-    const defaultFormat = 'py-4 text-center text-2xl no-underline outline-none ';
-    const borderFormat = props.type === 'outline' ? 'border-lightest border-[2.5px] hover:bg-backgroundDark' : 'border-none';
+    const defaultFormat =
+        'py-3 text-center text-2xl no-underline outline-none border-solid border-transparent border-[2.5px] bg-transparent text-primary hover:text-primaryDark rounded-xl';
+
+    // Format borders
+    const borderFormat =
+        props.type.indexOf('outline') !== -1 &&
+        'border-lightest hover:bg-backgroundDark text-light hover:text-light';
+    const primaryBorderFormat = props.type === 'outline-primary' && 'border-primary text-primary hover:text-primary';
+
+    // Format text
     const typeFormat =
         props.type === 'primary'
-            ? 'bg-primary text-background hover:bg-primaryDark'
-            : props.type === 'error'
-            ? 'bg-error text-background hover:bg-errorDark'
-            : 'bg-transparent text-primary hover:text-primaryDark';
-    const squareFormat = props.square ? 'rounded-2xl' : 'rounded-full';
+            ? 'bg-primary text-background hover:bg-primaryDark hover:text-background'
+            : props.type === 'error' && 'bg-error text-background hover:bg-errorDark';
     const varFormat = !props.disabled
         ? typeFormat + ' cursor-pointer duration-200'
-        : 'cursor-auto text-lighter bg-backgroundDark';
+        : 'cursor-auto text-lighter bg-backgroundDark hover:text-lighter';
+
+    // Format bold and width
     const boldFormat = props.bold ? 'font-bold' : 'font-normal';
     const widthFormat = props.full ? 'w-full' : 'w-3/4 md:w-2/3';
+
+    // Combine all formats
     const formatting = twMerge(
         defaultFormat,
         borderFormat,
+        primaryBorderFormat,
         varFormat,
-        squareFormat,
         boldFormat,
         widthFormat,
         props.className

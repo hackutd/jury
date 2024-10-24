@@ -240,11 +240,11 @@ const Judge = () => {
             <Container noCenter className="px-2 pb-4">
                 <h1 className="text-2xl my-2">Welcome, {judge?.name}!</h1>
                 <div className="w-full mb-6">
-                    <Button type="primary" full square href="/judge/live">
+                    <Button type="primary" full href="/judge/live">
                         Next Project
                     </Button>
                     <div className="flex align-center justify-center mt-4">
-                        <Button type="outline" square onClick={takeBreak} className="text-lg p-2">
+                        <Button type="outline" onClick={takeBreak} className="text-lg p-2">
                             I want to take a break!
                         </Button>
                     </div>

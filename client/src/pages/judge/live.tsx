@@ -331,7 +331,7 @@ const JudgeLive = () => {
                     ) : (
                         <div
                             className={twMerge(
-                                'py-5 mb-4 text-6xl rounded-xl w-full border-primary border-4 border-solid text-center cursor-pointer ',
+                                'py-6 mb-4 text-6xl rounded-xl w-full border-primary border-4 border-solid text-center cursor-pointer ',
                                 timesUp ? 'border-error bg-error/20' : '',
                                 paused ? 'bg-lighter/20' : ''
                             )}
@@ -350,7 +350,7 @@ const JudgeLive = () => {
                     <div className="flex items-center">
                         <Button
                             type="primary"
-                            className="bg-error mr-2 py-1 text-xl rounded-xl basis-2/5 disabled:bg-backgroundDark hover:bg-errorDark"
+                            className="bg-error mr-2 py-1 text-xl basis-2/5 disabled:bg-backgroundDark hover:bg-errorDark"
                             disabled={false}
                             onClick={() => {
                                 openPopup('flag');
@@ -360,7 +360,7 @@ const JudgeLive = () => {
                         </Button>
                         <Button
                             type="primary"
-                            className="bg-gold mx-2 py-1 text-xl rounded-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter hover:bg-goldDark"
+                            className="bg-gold mx-2 py-1 text-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter hover:bg-goldDark"
                             disabled={judge === null}
                             onClick={() => {
                                 openPopup('skip');

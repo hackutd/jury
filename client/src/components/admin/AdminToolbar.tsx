@@ -24,7 +24,6 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                 <div>
                     <Button
                         type="outline"
-                        square
                         bold
                         full
                         className="py-2 px-4 rounded-md"
@@ -37,7 +36,6 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                     {props.showProjects && (
                         <Button
                             type="outline"
-                            square
                             bold
                             full
                             className="py-2 px-4 rounded-md"

@@ -15,11 +15,11 @@ const App = () => {
             <Button href="/judge/login" type="primary">
                 Judging Portal
             </Button>
-            <Button href="/expo" type="outline" className="py-3 mt-4 mb-2">
-                Project Expo
-            </Button>
-            <Button href="/admin/login" type="text">
+            <Button href="/admin/login" type="primary" className="my-4 bg-primaryLight text-black hover:bg-primaryLight hover:brightness-95 hover:text-black">
                 Admin Portal
+            </Button>
+            <Button href="/expo" type="outline" className="py-2 w-3/5 md:w-1/2 text-xl">
+                Project Expo
             </Button>
         </Container>
     );

@@ -30,8 +30,7 @@ const PauseButton = () => {
 
     return clock.running ? (
         <Button
-            type="outline"
-            square
+            type="outline-primary"
             bold
             className={pauseButtonFormat}
             onClick={() => handleClick(true)}
@@ -41,7 +40,6 @@ const PauseButton = () => {
     ) : (
         <Button
             type="primary"
-            square
             bold
             className={pauseButtonFormat + " border-[2.5px] border-transparent border-solid"}
             onClick={() => handleClick(false)}
