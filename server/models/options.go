@@ -11,6 +11,17 @@ type Options struct {
 	MinViews     int64              `bson:"min_views" json:"min_views"`
 	ClockSync    bool               `bson:"clock_sync" json:"clock_sync"`
 	Categories   []string           `bson:"categories" json:"categories"`
+	MultiGroup   bool               `bson:"multi_group" json:"multi_group"`
+	MainGroup    GroupOptions       `bson:"main_group" json:"main_group"` // Group options for the general judging track
+}
+
+type GroupOptions struct {
+	SwitchingMode   string  `bson:"switching_mode" json:"switching_mode"`       // "auto" or "manual"
+	AutoSwitchSplit string  `bson:"auto_switch_split" json:"auto_switch_split"` // "counts" or "proportion"
+	AutoSwitchCount int64   `bson:"auto_switch_count" json:"auto_switch_count"` // Number of projects to view in each group
+	AutoSwitchProp  float64 `bson:"auto_switch_prop" json:"auto_switch_prop"`   // Proportion of projects to view in each group
+	SplitMode       string  `bson:"split_mode" json:"split_mode"`               // "counts" or "evenly"
+	SplitCounts     []int64 `bson:"split_counts" json:"split_counts"`           // Number of projects in each group (last group will be remainder)
 }
 
 func NewOptions() *Options {
@@ -22,5 +33,18 @@ func NewOptions() *Options {
 		Clock:        *NewClockState(),
 		ClockSync:    false,
 		Categories:   []string{"Creativity/Innovation", "Technical Competence/Execution", "Research/Design", "Presentation"},
+		MultiGroup:   false,
+		MainGroup:    *NewGroupOptions(),
+	}
+}
+
+func NewGroupOptions() *GroupOptions {
+	return &GroupOptions{
+		SwitchingMode:   "auto",
+		AutoSwitchSplit: "counts",
+		AutoSwitchCount: 3,
+		AutoSwitchProp:  0.1,
+		SplitMode:       "evenly",
+		SplitCounts:     []int64{},
 	}
 }
