@@ -1,7 +1,7 @@
 import Button from './Button';
 import Popup from './Popup';
 
-interface InfoPopupProps {
+interface PopupProps {
     /* State variable for open/closed */
     enabled: boolean;
 
@@ -14,14 +14,20 @@ interface InfoPopupProps {
     /* Submit Text */
     submitText: string;
 
+    /* On submit function */
+    onSubmit: () => void;
+
     /* React children, corresponds to the body content */
     children?: React.ReactNode;
 
-    /* If true, button is red */
+    /* If true, submit button is red */
     red?: boolean;
+
+    /* Disable the submit button */
+    disabledSubmit?: boolean;
 }
 
-const InfoPopup = (props: InfoPopupProps) => {
+const ConfirmPopup = (props: PopupProps) => {
     if (!props.enabled) {
         return null;
     }
@@ -30,12 +36,15 @@ const InfoPopup = (props: InfoPopupProps) => {
         <Popup enabled={props.enabled} setEnabled={props.setEnabled}>
             <h1 className="text-5xl font-bold mb-2 text-center">{props.title}</h1>
             <p className="text-xl">{props.children}</p>
-            <div className="flex justify-center">
+            <div className="flex flex-row justify-around mt-4">
+                <Button type="outline" onClick={() => props.setEnabled(false)} flat>
+                    Cancel
+                </Button>
                 <Button
                     type={props.red ? 'error' : 'primary'}
-                    onClick={() => props.setEnabled(false)}
+                    onClick={props.onSubmit}
+                    disabled={props.disabledSubmit}
                     flat
-                    className="mt-4"
                 >
                     {props.submitText}
                 </Button>
@@ -44,4 +53,4 @@ const InfoPopup = (props: InfoPopupProps) => {
     );
 };
 
-export default InfoPopup;
+export default ConfirmPopup;

@@ -51,7 +51,7 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                     Last Update: {dateToString(props.lastUpdate)}
                 </p>
             </div>
-            {showFlags && <FlagsPopup close={setShowFlags} />}
+            <FlagsPopup enabled={showFlags} setEnabled={setShowFlags} />
         </>
     );
 };

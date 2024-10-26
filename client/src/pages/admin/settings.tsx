@@ -3,7 +3,7 @@ import { createHeaders, getRequest, postRequest } from '../../api';
 import Button from '../../components/Button';
 import JuryHeader from '../../components/JuryHeader';
 import { errorAlert } from '../../util';
-import TextPopup from '../../components/TextPopup';
+import ConfirmPopup from '../../components/ConfirmPopup';
 import Loading from '../../components/Loading';
 import Checkbox from '../../components/Checkbox';
 import RawTextInput from '../../components/RawTextInput';
@@ -373,7 +373,7 @@ const AdminSettings = () => {
                     Drop Database
                 </SettingsButton>
             </div>
-            <TextPopup
+            <ConfirmPopup
                 enabled={reassignPopup}
                 setEnabled={setReassignPopup}
                 onSubmit={reassignTables}
@@ -383,8 +383,8 @@ const AdminSettings = () => {
             >
                 Are you sure you want to reassign project numbers? This should NOT be done DURING
                 judging; only beforehand!!
-            </TextPopup>
-            <TextPopup
+            </ConfirmPopup>
+            <ConfirmPopup
                 enabled={clockResetPopup}
                 setEnabled={setClockResetPopup}
                 onSubmit={resetClock}
@@ -393,8 +393,8 @@ const AdminSettings = () => {
                 red
             >
                 Are you sure you want to reset the main clock? This will reset the clock to 00:00:00
-            </TextPopup>
-            <TextPopup
+            </ConfirmPopup>
+            <ConfirmPopup
                 enabled={dropPopup}
                 setEnabled={setDropPopup}
                 onSubmit={dropDatabase}
@@ -404,7 +404,7 @@ const AdminSettings = () => {
             >
                 THIS WILL ACTUALLY DELETE ALL DATA!!!!! YOU NEED TO BE ABSOLUTELY SURE YOU WANT TO
                 DO THIS. THIS IS YOUR LAST WARNING!
-            </TextPopup>
+            </ConfirmPopup>
             <Loading disabled={!loading} />
         </>
     );
