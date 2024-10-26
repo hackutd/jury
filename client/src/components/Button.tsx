@@ -51,14 +51,19 @@ const Button = (props: ButtonProps) => {
     const typeFormat =
         props.type === 'primary'
             ? 'bg-primary text-background hover:bg-primaryDark hover:text-background'
-            : props.type === 'error' && 'bg-error text-background hover:bg-errorDark';
+            : props.type === 'error' &&
+              'bg-error text-background hover:bg-errorDark hover:text-background';
     const varFormat = !props.disabled
         ? typeFormat + ' cursor-pointer duration-200'
         : 'cursor-auto text-lighter bg-backgroundDark hover:text-lighter';
 
     // Format bold and width
     const boldFormat = props.bold ? 'font-bold' : 'font-normal';
-    const widthFormat = props.full ? 'w-full' : props.small ? 'w-auto px-6 py-1 rounded-md' : 'w-3/4 md:w-2/3';
+    const widthFormat = props.full
+        ? 'w-full'
+        : props.small
+        ? 'w-auto px-6 py-1 rounded-md'
+        : 'w-3/4 md:w-2/3';
 
     // Combine all formats
     const formatting = twMerge(

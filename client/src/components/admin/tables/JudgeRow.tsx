@@ -134,8 +134,8 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                     </span>
                 </td>
             </tr>
-            {deletePopup && <DeletePopup element={judge} close={setDeletePopup} />}
-            {editPopup && <EditJudgePopup judge={judge} close={setEditPopup} />}
+            <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={judge} />
+            <EditJudgePopup enabled={editPopup} setEnabled={setEditPopup} judge={judge} />
         </>
     );
 };

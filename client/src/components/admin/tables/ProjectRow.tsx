@@ -169,8 +169,8 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 </td>
             </tr>
             <FlagsPopup enabled={flagPopup} setEnabled={setFlagPopup} projectID={flagPopupProjectId} />
-            {deletePopup && <DeletePopup element={project} close={setDeletePopup} />}
-            {editPopup && <EditProjectPopup project={project} close={setEditPopup} />}
+            <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={project} />
+            <EditProjectPopup enabled={editPopup} setEnabled={setEditPopup} project={project} />
         </>
     );
 };
