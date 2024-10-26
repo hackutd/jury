@@ -17,7 +17,7 @@ interface ProjectRowProps {
 
 const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: ProjectRowProps) => {
     const [popup, setPopup] = useState(false);
-    const [flagPopup, setflagPopup] = useState(false);
+    const [flagPopup, setFlagPopup] = useState(false);
     const [flagCount, setflagCount] = useState(0);
     const [flagPopupProjectId, setflagPopupProjectId] = useState('');
     const [editPopup, setEditPopup] = useState(false);
@@ -107,7 +107,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 <td className="flex justify-center">
                     <button
                         onClick={() => {
-                            setflagPopup(true);
+                            setFlagPopup(true);
                         }}
                     >
                         {flags.length >= 1 && (
@@ -168,9 +168,9 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                     </div>
                 </td>
             </tr>
-            {flagPopup && <FlagsPopup close={setflagPopup} projectID={flagPopupProjectId} />}
-            {deletePopup && <DeletePopup element={project} close={setDeletePopup} />}
-            {editPopup && <EditProjectPopup project={project} close={setEditPopup} />}
+            <FlagsPopup enabled={flagPopup} setEnabled={setFlagPopup} projectID={flagPopupProjectId} />
+            <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={project} />
+            <EditProjectPopup enabled={editPopup} setEnabled={setEditPopup} project={project} />
         </>
     );
 };

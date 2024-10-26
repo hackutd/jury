@@ -31,7 +31,7 @@ const Popup = (props: PopupProps) => {
             ></div>
             <div
                 className={twMerge(
-                    'bg-background fixed z-30 left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] px-6 py-6 md:px-10 md:w-1/3 w-11/12 flex flex-col',
+                    'fixed z-30 left-1/2 top-1/2 translate-x-[-50%] translate-y-[-50%] px-6 py-6 md:px-10 md:w-1/3 w-11/12 rounded-md border-2 border-lighter border-solid flex flex-col bg-background',
                     props.className
                 )}
             >

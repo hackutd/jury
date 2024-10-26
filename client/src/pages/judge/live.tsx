@@ -349,8 +349,8 @@ const JudgeLive = () => {
                     )}
                     <div className="flex items-center">
                         <Button
-                            type="primary"
-                            className="bg-error mr-2 py-1 text-xl basis-2/5 disabled:bg-backgroundDark hover:bg-errorDark"
+                            type="error"
+                            className="mr-2 py-1 text-xl basis-2/5"
                             disabled={false}
                             onClick={() => {
                                 openPopup('flag');
@@ -360,7 +360,7 @@ const JudgeLive = () => {
                         </Button>
                         <Button
                             type="primary"
-                            className="bg-gold mx-2 py-1 text-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter hover:bg-goldDark"
+                            className="bg-gold mx-2 py-1 text-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter hover:bg-goldDark hover:text-black"
                             disabled={judge === null}
                             onClick={() => {
                                 openPopup('skip');
@@ -370,7 +370,7 @@ const JudgeLive = () => {
                         </Button>
                         <Button
                             type="primary"
-                            className="ml-2 py-1 text-xl rounded-xl"
+                            className="ml-2 py-1 text-xl"
                             disabled={judge === null || !started}
                             onClick={() => {
                                 openPopup('vote');

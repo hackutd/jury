@@ -145,6 +145,7 @@ const Ratings = (props: RatingsProps) => {
                         type="primary"
                         onClick={submit.bind(this, [])}
                         className={props.small ? 'p-1 mb-4' : 'mb-4'}
+                        flat
                     >
                         {props.submitText ?? 'Submit'}
                     </Button>
