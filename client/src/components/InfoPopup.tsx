@@ -1,3 +1,4 @@
+import Button from './Button';
 import Popup from './Popup';
 
 interface InfoPopupProps {
@@ -30,15 +31,14 @@ const InfoPopup = (props: InfoPopupProps) => {
             <h1 className="text-5xl font-bold mb-2 text-center">{props.title}</h1>
             <p className="text-xl">{props.children}</p>
             <div className="flex justify-center">
-                <button
-                    className={
-                        'text-white rounded-full px-4 py-2 mt-4 w-2/5 font-bold text-2xl hover:brightness-110 duration-200 ' +
-                        (props.red ? 'bg-error' : 'bg-primary')
-                    }
+                <Button
+                    type={props.red ? 'error' : 'primary'}
                     onClick={() => props.setEnabled(false)}
+                    flat
+                    className="mt-4"
                 >
                     {props.submitText}
-                </button>
+                </Button>
             </div>
         </Popup>
     );

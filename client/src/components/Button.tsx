@@ -26,6 +26,9 @@ interface ButtonProps {
     /* Small width */
     small?: boolean;
 
+    /* Flat and long */
+    flat?: boolean;
+
     /* Classname styling */
     className?: string;
 }
@@ -61,9 +64,11 @@ const Button = (props: ButtonProps) => {
     const boldFormat = props.bold ? 'font-bold' : 'font-normal';
     const widthFormat = props.full
         ? 'w-full'
-        : props.small
+        : props.small || props.flat
         ? 'w-auto px-6 py-1 rounded-md'
         : 'w-3/4 md:w-2/3';
+
+    const flatFormat = props.flat && 'px-16';
 
     // Combine all formats
     const formatting = twMerge(
@@ -73,6 +78,7 @@ const Button = (props: ButtonProps) => {
         varFormat,
         boldFormat,
         widthFormat,
+        flatFormat,
         props.className
     );
 

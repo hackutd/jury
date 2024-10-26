@@ -37,15 +37,14 @@ const ConfirmPopup = (props: PopupProps) => {
             <h1 className="text-5xl font-bold mb-2 text-center">{props.title}</h1>
             <p className="text-xl">{props.children}</p>
             <div className="flex flex-row justify-around mt-4">
-                <Button type="outline" onClick={() => props.setEnabled(false)} small className="px-16">
+                <Button type="outline" onClick={() => props.setEnabled(false)} flat>
                     Cancel
                 </Button>
                 <Button
                     type={props.red ? 'error' : 'primary'}
                     onClick={props.onSubmit}
                     disabled={props.disabledSubmit}
-                    small
-                    className="px-16"
+                    flat
                 >
                     {props.submitText}
                 </Button>
