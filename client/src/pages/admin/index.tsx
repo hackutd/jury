@@ -10,7 +10,7 @@ import { errorAlert } from '../../util';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
 import { useAdminStore, useClockStore } from '../../store';
-import Fab from '../../components/Fab';
+import ToTopButton from '../../components/ToTopButton';
 
 // TODO: Add FAB to 'return to top'
 // TODO: Make pause button/settings have hover effects
@@ -76,7 +76,7 @@ const Admin = () => {
             <AdminToggleSwitch state={showProjects} setState={setShowProjects} />
             <AdminToolbar showProjects={showProjects} lastUpdate={lastUpdate} />
             <AdminTable showProjects={showProjects} />
-            <Fab />
+            <ToTopButton />
         </>
     );
 };

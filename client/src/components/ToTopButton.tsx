@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import arrow from '../assets/arrow.svg';
 
-function Fab() {
+function ToTopButton() {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -22,14 +22,18 @@ function Fab() {
         });
     };
 
-    return isVisible ? (
+    if (!isVisible) {
+        return null;
+    }
+
+    return (
         <button
             onClick={scrollToTop}
             className="fixed bottom-8 right-8 w-12 h-12 border-2 border-primary rounded-md flex items-center justify-center shadow-md bg-white"
         >
             <img src={arrow} alt="arrow up" className="w-5 h-5" />
         </button>
-    ) : null;
+    );
 }
 
-export default Fab;
+export default ToTopButton;
