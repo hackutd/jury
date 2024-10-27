@@ -44,9 +44,9 @@ func ParseJudgeCSV(content string, hasHeader bool) ([]*models.Judge, error) {
 
 		// Make sure the record has 2-3 elements (name, email, notes [optional])
 		notes := ""
-		if len(record) == 3 {
+		if len(record) >= 3 {
 			notes = record[2]
-		} else if len(record) != 2 {
+		} else if len(record) < 2 {
 			return nil, fmt.Errorf("record does not contain 2-3 (name, email, notes [optional]) elements: '%s'", strings.Join(record, ","))
 		}
 
