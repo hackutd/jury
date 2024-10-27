@@ -78,3 +78,43 @@ func GetMinViews(db *mongo.Database) (int64, error) {
 	err := db.Collection("options").FindOne(context.Background(), gin.H{}).Decode(&options)
 	return options.MinViews, err
 }
+
+func UpdateMultiGroup(db *mongo.Database, ctx context.Context, multiGroup bool) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"multi_group": multiGroup}})
+	return err
+}
+
+func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.num_groups": numGroups}})
+	return err
+}
+
+func UpdateSwitchingMode(db *mongo.Database, ctx context.Context, switchingMode string) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.switching_mode": switchingMode}})
+	return err
+}
+
+func UpdateAutoSwitchMethod(db *mongo.Database, ctx context.Context, autoSwitchMethod string) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.auto_switch_method": autoSwitchMethod}})
+	return err
+}
+
+func UpdateAutoSwitchCount(db *mongo.Database, ctx context.Context, autoSwitchCount int64) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.auto_switch_count": autoSwitchCount}})
+	return err
+}
+
+func UpdateAutoSwitchProp(db *mongo.Database, ctx context.Context, autoSwitchProp float64) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.auto_switch_prop": autoSwitchProp}})
+	return err
+}
+
+func UpdateSplitMethod(db *mongo.Database, ctx context.Context, splitMethod string) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.split_method": splitMethod}})
+	return err
+}
+
+func UpdateSplitCounts(db *mongo.Database, ctx context.Context, splitCounts []int64) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.split_counts": splitCounts}})
+	return err
+}

@@ -16,12 +16,13 @@ type Options struct {
 }
 
 type GroupOptions struct {
+	NumGroups        int64   `bson:"num_groups" json:"num_groups"`                 // Number of groups to split projects into
 	SwitchingMode    string  `bson:"switching_mode" json:"switching_mode"`         // "auto" or "manual"
 	AutoSwitchMethod string  `bson:"auto_switch_method" json:"auto_switch_method"` // "counts" or "proportion"
 	AutoSwitchCount  int64   `bson:"auto_switch_count" json:"auto_switch_count"`   // Number of projects to view in each group
 	AutoSwitchProp   float64 `bson:"auto_switch_prop" json:"auto_switch_prop"`     // Proportion of projects to view in each group
-	SplitMode        string  `bson:"split_mode" json:"split_mode"`                 // "counts" or "evenly"
-	SplitCounts      []int64 `bson:"split_counts" json:"split_counts"`             // Number of projects in each group (last group will be remainder)
+	SplitMethod      string  `bson:"split_method" json:"split_method"`             // "counts" or "evenly"
+	SplitCounts      []int64 `bson:"split_counts" json:"split_counts"`             // Number of projects in each group (last group will be remainder, must be numGroups - 1 size)
 }
 
 func NewOptions() *Options {
@@ -44,7 +45,7 @@ func NewGroupOptions() *GroupOptions {
 		AutoSwitchMethod: "counts",
 		AutoSwitchCount:  3,
 		AutoSwitchProp:   0.1,
-		SplitMode:        "evenly",
+		SplitMethod:      "evenly",
 		SplitCounts:      []int64{},
 	}
 }

@@ -48,10 +48,13 @@ const AdminSettings = () => {
     const [categories, setCategories] = useState('');
     const [loading, setLoading] = useState(true);
     const [multiGroup, setMultiGroup] = useState(false);
+    const [numGroups, setNumGroups] = useState(3);
     const [switchingMode, setSwitchingMode] = useState('auto');
     const [autoSwitchMethod, setAutoSwitchMethod] = useState('count');
     const [autoSwitchCount, setAutoSwitchCount] = useState(3);
     const [autoSwitchProp, setAutoSwitchProp] = useState(0.1);
+    const [splitMethod, setSplitMethod] = useState('evenly');
+    const [splitCounts, setSplitCounts] = useState('30, 30');
 
     async function getOptions() {
         const res = await getRequest<Options>('/admin/options', 'admin');
@@ -82,6 +85,16 @@ const AdminSettings = () => {
 
         // Set sync clock
         setSyncClock(res.data.clock_sync);
+
+        // Set group options
+        setMultiGroup(res.data.multi_group);
+        setNumGroups(res.data.main_group.num_groups);
+        setSwitchingMode(res.data.main_group.switching_mode);
+        setAutoSwitchMethod(res.data.main_group.auto_switch_method);
+        setAutoSwitchCount(res.data.main_group.auto_switch_count);
+        setAutoSwitchProp(res.data.main_group.auto_switch_prop);
+        setSplitMethod(res.data.main_group.split_method);
+        setSplitCounts(res.data.main_group.split_counts.join(', '));
 
         setLoading(false);
     }
@@ -167,6 +180,130 @@ const AdminSettings = () => {
 
         alert('Categories updated!');
         getOptions();
+    };
+
+    const toggleMultiGroup = async () => {
+        const res = await postRequest<OkResponse>('/admin/groups/toggle', 'admin', {
+            multi_group: !multiGroup,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        setMultiGroup(!multiGroup);
+        alert('Multi-group judging toggled!');
+    };
+
+    const updateNumGroups = async () => {
+        if (isNaN(numGroups) || numGroups < 1) {
+            alert('Number of groups should be a positive integer!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/groups/num', 'admin', {
+            num_groups: numGroups,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Number of groups updated!');
+    };
+
+    const updateSwitchingMode = async (newMode: string) => {
+        const res = await postRequest<OkResponse>('/admin/groups/switch-mode', 'admin', {
+            switching_mode: newMode,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Switching method updated!');
+    };
+
+    const updateAutoSwitchMethod = async (newMethod: string) => {
+        const res = await postRequest<OkResponse>('/admin/groups/switch-method', 'admin', {
+            auto_switch_method: newMethod,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Auto switch method updated!');
+    };
+
+    const updateAutoSwitchCount = async () => {
+        if (isNaN(autoSwitchCount) || autoSwitchCount < 1) {
+            alert('Auto switch count should be a positive integer!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/groups/switch-count', 'admin', {
+            auto_switch_count: autoSwitchCount,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Auto switch count updated!');
+    };
+
+    const updateAutoSwitchProp = async () => {
+        if (isNaN(autoSwitchProp) || autoSwitchProp < 0 || autoSwitchProp > 1) {
+            alert('Auto switch proportion should be a decimal between 0 and 1!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/groups/auto-switch-prop', 'admin', {
+            auto_switch_prop: autoSwitchProp,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Auto switch proportion updated!');
+    };
+
+    const updateSplitMethod = async (newMethod: string) => {
+        const res = await postRequest<OkResponse>('/admin/groups/split-method', 'admin', {
+            split_method: newMethod,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Split method updated!');
+    };
+
+    const updateSplitCounts = async () => {
+        const counts = splitCounts.split(',').map((count) => parseInt(count.trim()));
+        if (counts.some((count) => isNaN(count) || count < 1)) {
+            alert('Split counts should be positive integers!');
+            return;
+        }
+
+        // Make sure number of counts is numGroups - 1
+        if (counts.length !== numGroups - 1) {
+            alert('Number of counts should be one less than the number of groups!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/groups/split-counts', 'admin', {
+            split_counts: counts,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Split counts updated!');
     };
 
     const resetClock = async () => {
@@ -363,56 +500,152 @@ const AdminSettings = () => {
                     different groups and score projects within their group only, switching after
                     either a certain number of projects or manually by admins.
                 </Description>
-                <Checkbox checked={multiGroup} onChange={() => {}}>
+                <Checkbox checked={multiGroup} onChange={toggleMultiGroup}>
                     Enable Multi-Group Judging
                 </Checkbox>
 
-                <SubSection>Switching Mode</SubSection>
-                <Description>
-                    Choose how judges will switch between projects. If set to "auto", judges will
-                    switch after a certain number/proportion of projects. If set to "manual", judges
-                    will switch after an admin manually presses a button to switch judges' groups.
-                </Description>
-                <SelectionButton
-                    selected={switchingMode}
-                    setSelected={setSwitchingMode}
-                    options={['auto', 'manual']}
-                    className="my-2"
-                />
-
-                {switchingMode && (
+                {multiGroup && (
                     <>
-                        <SubSection>Auto Switch Method</SubSection>
+                        <SubSection>Switching Mode</SubSection>
                         <Description>
-                            Choose when judges will automatically switch between projects. If set to
-                            "count", judges will switch after viewing a specific number of projects
-                            in the group. If set to "proportion", judges will switch after a certain
-                            proportion of projects in the group.
+                            Choose how judges will switch between projects. If set to "auto", judges
+                            will switch after a certain number/proportion of projects. If set to
+                            "manual", judges will switch after an admin manually presses a button to
+                            switch judges' groups.
                         </Description>
                         <SelectionButton
-                        disabled
-                            selected={autoSwitchMethod}
-                            setSelected={setAutoSwitchMethod}
-                            options={['count', 'proportion']}
+                            selected={switchingMode}
+                            setSelected={setSwitchingMode}
+                            onClick={updateSwitchingMode}
+                            options={['auto', 'manual']}
                             className="my-2"
                         />
 
-                        {autoSwitchMethod === 'count' ? <>
-                            <SubSection>Auto Switch Count</SubSection>
-                            <Description>
-                                Set how many projects judges will view before switching groups.
-                            </Description>
-                            <RawTextInput
-                                name="auto-switch-count"
-                                text={autoSwitchCount}
-                                setText={setAutoSwitchCount}
-                                placeholder="Enter an integer..."
-                                large
-                                className="my-2"
-                                number
-                            />
-                        
-                        </> : <></>}
+                        {switchingMode === 'auto' && (
+                            <>
+                                <SubSection>Number of Groups</SubSection>
+                                <Description>
+                                    Set the number of groups judges will be split into.
+                                </Description>
+                                <div className="flex flex-row">
+                                    <RawTextInput
+                                        name="num-groups"
+                                        text={numGroups}
+                                        setText={setNumGroups}
+                                        placeholder="Enter an integer..."
+                                        large
+                                        number
+                                        className="my-2 mr-4"
+                                    />
+                                    <SettingsButton onClick={updateNumGroups}>
+                                        Update Number of Groups
+                                    </SettingsButton>
+                                </div>
+
+                                <SubSection>Auto Switch Method</SubSection>
+                                <Description>
+                                    Choose when judges will automatically switch between projects.
+                                    If set to "count", judges will switch after viewing a specific
+                                    number of projects in the group. If set to "proportion", judges
+                                    will switch after a certain proportion of projects in the group.
+                                </Description>
+                                <SelectionButton
+                                    selected={autoSwitchMethod}
+                                    setSelected={setAutoSwitchMethod}
+                                    onClick={updateAutoSwitchMethod}
+                                    options={['count', 'proportion']}
+                                    className="my-2"
+                                />
+
+                                {autoSwitchMethod === 'count' ? (
+                                    <>
+                                        <SubSection>Auto Switch Count</SubSection>
+                                        <Description>
+                                            Set how many projects judges will view before switching
+                                            groups.
+                                        </Description>
+                                        <div className="flex flex-row">
+                                            <RawTextInput
+                                                name="auto-switch-count"
+                                                text={autoSwitchCount}
+                                                setText={setAutoSwitchCount}
+                                                placeholder="Enter an integer..."
+                                                large
+                                                number
+                                                className="my-2 mr-4"
+                                            />
+                                            <SettingsButton onClick={updateAutoSwitchCount}>
+                                                Update Count
+                                            </SettingsButton>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <SubSection>Auto Switch Proportion</SubSection>
+                                        <Description>
+                                            Set the proportion of projects judges will view before
+                                            switching groups. This should be a decimal between 0 and
+                                            1.
+                                        </Description>
+                                        <div className="flex flex-row">
+                                            <RawTextInput
+                                                name="auto-switch-prop"
+                                                text={autoSwitchProp}
+                                                setText={setAutoSwitchProp}
+                                                placeholder="Enter a decimal..."
+                                                large
+                                                number
+                                                className="my-2 mr-4"
+                                            />
+                                            <SettingsButton onClick={updateAutoSwitchProp}>
+                                                Update Proportion
+                                            </SettingsButton>
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        )}
+
+                        <SubSection>Split Method</SubSection>
+                        <Description>
+                            Choose how projects will be split between groups. If set to "evenly",
+                            projects will be split evenly between groups. If set to "counts", you
+                            can specify how many projects each group will get. This will be a
+                            comma-separated list of projects in each group. The last group will
+                            contain the remainder of the projects and thus should not have a count
+                            specified.
+                        </Description>
+
+                        <SelectionButton
+                            selected={splitMethod}
+                            setSelected={setSplitMethod}
+                            onClick={updateSplitMethod}
+                            options={['evenly', 'counts']}
+                            className="my-2"
+                        />
+
+                        {splitMethod === 'counts' && (
+                            <>
+                                <SubSection>Split Counts</SubSection>
+                                <Description>
+                                    Set how many projects each group will get. Please separate each
+                                    count with a comma. This list should contain one less than the
+                                    total number of groups (eg. 3 groups: "30, 30").
+                                </Description>
+                                <RawTextInput
+                                    name="split-counts"
+                                    placeholder="30, 30, 30, ..."
+                                    text={splitCounts}
+                                    setText={setSplitCounts}
+                                    full
+                                    large
+                                    className="my-2 mr-4"
+                                />
+                                <SettingsButton onClick={updateSplitCounts}>
+                                    Update Counts
+                                </SettingsButton>
+                            </>
+                        )}
                     </>
                 )}
 

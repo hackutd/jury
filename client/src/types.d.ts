@@ -115,6 +115,18 @@ interface Options {
     categories: string[];
     min_views: number;
     clock_sync: boolean;
+    multi_group: boolean;
+    main_group: GroupOptions;
+}
+
+interface GroupOptions {
+    num_groups: number;
+    switching_mode: string;
+    auto_switch_method: string;
+    auto_switch_count: number;
+    auto_switch_prop: number;
+    split_method: string;
+    split_counts: number[];
 }
 
 interface FetchResponse<T> {
