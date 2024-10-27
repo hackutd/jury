@@ -42,13 +42,16 @@ func ParseJudgeCSV(content string, hasHeader bool) ([]*models.Judge, error) {
 			return nil, err
 		}
 
-		// Make sure the record has 3 elements (name, email, notes)
-		if len(record) != 3 {
-			return nil, fmt.Errorf("record does not contain 3 elements: '%s'", strings.Join(record, ","))
+		// Make sure the record has 2-3 elements (name, email, notes [optional])
+		notes := ""
+		if len(record) == 3 {
+			notes = record[2]
+		} else if len(record) != 2 {
+			return nil, fmt.Errorf("record does not contain 2-3 (name, email, notes [optional]) elements: '%s'", strings.Join(record, ","))
 		}
 
 		// Add judge to slice
-		judges = append(judges, models.NewJudge(record[0], record[1], record[2]))
+		judges = append(judges, models.NewJudge(record[0], record[1], notes, -1))
 	}
 
 	return judges, nil
