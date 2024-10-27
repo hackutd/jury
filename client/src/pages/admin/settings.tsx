@@ -506,6 +506,25 @@ const AdminSettings = () => {
 
                 {multiGroup && (
                     <>
+                        <SubSection>Number of Groups</SubSection>
+                        <Description>
+                            Set the number of groups judges will be split into.
+                        </Description>
+                        <div className="flex flex-row">
+                            <RawTextInput
+                                name="num-groups"
+                                text={numGroups}
+                                setText={setNumGroups}
+                                placeholder="Enter an integer..."
+                                large
+                                number
+                                className="my-2 mr-4"
+                            />
+                            <SettingsButton onClick={updateNumGroups}>
+                                Update Number of Groups
+                            </SettingsButton>
+                        </div>
+
                         <SubSection>Switching Mode</SubSection>
                         <Description>
                             Choose how judges will switch between projects. If set to "auto", judges
@@ -523,25 +542,6 @@ const AdminSettings = () => {
 
                         {switchingMode === 'auto' && (
                             <>
-                                <SubSection>Number of Groups</SubSection>
-                                <Description>
-                                    Set the number of groups judges will be split into.
-                                </Description>
-                                <div className="flex flex-row">
-                                    <RawTextInput
-                                        name="num-groups"
-                                        text={numGroups}
-                                        setText={setNumGroups}
-                                        placeholder="Enter an integer..."
-                                        large
-                                        number
-                                        className="my-2 mr-4"
-                                    />
-                                    <SettingsButton onClick={updateNumGroups}>
-                                        Update Number of Groups
-                                    </SettingsButton>
-                                </div>
-
                                 <SubSection>Auto Switch Method</SubSection>
                                 <Description>
                                     Choose when judges will automatically switch between projects.
