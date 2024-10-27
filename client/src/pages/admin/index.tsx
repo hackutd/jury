@@ -10,6 +10,7 @@ import { errorAlert } from '../../util';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
 import { useAdminStore, useClockStore } from '../../store';
+import Fab from '../../components/Fab';
 
 // TODO: Add FAB to 'return to top'
 // TODO: Make pause button/settings have hover effects
@@ -61,14 +62,6 @@ const Admin = () => {
     if (loading) {
         return <Loading disabled={!loading} />;
     }
-
-    const scrollToTop = () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        });
-    };
-
     return (
         <>
             <JuryHeader withLogout isAdmin />
@@ -83,12 +76,7 @@ const Admin = () => {
             <AdminToggleSwitch state={showProjects} setState={setShowProjects} />
             <AdminToolbar showProjects={showProjects} lastUpdate={lastUpdate} />
             <AdminTable showProjects={showProjects} />
-            <button
-                onClick={scrollToTop}
-                className="fixed bottom-8 right-8 w-12 h-12 border-2 border-primaryLight rounded-full flex items-center justify-center shadow-md bg-white"
-            >
-                <span className="text-light text-xl">↑</span>
-            </button>
+            <Fab />
         </>
     );
 };
