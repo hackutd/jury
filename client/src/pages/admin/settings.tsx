@@ -7,6 +7,8 @@ import ConfirmPopup from '../../components/ConfirmPopup';
 import Loading from '../../components/Loading';
 import Checkbox from '../../components/Checkbox';
 import RawTextInput from '../../components/RawTextInput';
+import SelectionButton from '../../components/SelectionButton';
+import { twMerge } from 'tailwind-merge';
 
 // Text components
 const Section = ({ children: c }: { children: React.ReactNode }) => (
@@ -41,10 +43,15 @@ const AdminSettings = () => {
     const [clockResetPopup, setClockResetPopup] = useState(false);
     const [dropPopup, setDropPopup] = useState(false);
     const [judgingTimer, setJudgingTimer] = useState('');
-    const [minViews, setMinViews] = useState('');
+    const [minViews, setMinViews] = useState(3);
     const [syncClock, setSyncClock] = useState(false);
     const [categories, setCategories] = useState('');
     const [loading, setLoading] = useState(true);
+    const [multiGroup, setMultiGroup] = useState(false);
+    const [switchingMode, setSwitchingMode] = useState('auto');
+    const [autoSwitchMethod, setAutoSwitchMethod] = useState('count');
+    const [autoSwitchCount, setAutoSwitchCount] = useState(3);
+    const [autoSwitchProp, setAutoSwitchProp] = useState(0.1);
 
     async function getOptions() {
         const res = await getRequest<Options>('/admin/options', 'admin');
@@ -71,7 +78,7 @@ const AdminSettings = () => {
         setCategories(cats ?? '');
 
         // Set min views
-        setMinViews(res.data.min_views.toString());
+        setMinViews(res.data.min_views);
 
         // Set sync clock
         setSyncClock(res.data.clock_sync);
@@ -124,15 +131,14 @@ const AdminSettings = () => {
 
     const updateMinViews = async () => {
         // Convert minViews to integer
-        const v = parseInt(minViews);
-        if (isNaN(v)) {
+        if (isNaN(minViews) || minViews < 0) {
             alert('Minimum views should be a positive integer!');
             return;
         }
 
         // Update min views
         const res = await postRequest<OkResponse>('/admin/min-views', 'admin', {
-            min_views: v,
+            min_views: minViews,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
             errorAlert(res);
@@ -254,11 +260,66 @@ const AdminSettings = () => {
             <JuryHeader withBack withLogout isAdmin />
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
-                <Section>Judging Settings</Section>
+                <Section>Judging Parameters</Section>
+
+                <SubSection>Reassign Project Numbers</SubSection>
+                <Description>
+                    Reassign all project numbers to the projects. This will keep the relative order
+                    but reassign the project numbers starting from the first project.
+                </Description>
+                <SettingsButton
+                    onClick={() => setReassignPopup(true)}
+                    className="bg-gold text-black hover:bg-goldDark hover:text-black"
+                >
+                    Reassign
+                </SettingsButton>
+
+                <SubSection>Set Minimum Project Views</SubSection>
+                <Description>
+                    Set the minimum amount of times that a project should be seen during judging.
+                    This will ensure all projects get seen at LEAST this many times before switching
+                    over to the optimal method of assigning projects. Set to 0 to ignore this
+                    condition (recommended: 3-5).
+                </Description>
+                <div className="flex flex-row">
+                    <RawTextInput
+                        name="min-views"
+                        text={minViews}
+                        setText={setMinViews}
+                        placeholder="Enter an integer..."
+                        large
+                        className="my-2 mr-4"
+                        number
+                    />
+                    <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
+                </div>
+
+                <SubSection>Set Categories</SubSection>
+                <Description>
+                    Set the categories that the judges will be scoring each project on. Please
+                    separate each category with a comma.
+                </Description>
+                <RawTextInput
+                    name="categories"
+                    placeholder="Cat 1, Cat 2, Cat 3, ..."
+                    text={categories}
+                    setText={setCategories}
+                    full
+                    large
+                    className="my-2"
+                />
+                <SettingsButton onClick={updateCategories}>Update Categories</SettingsButton>
+
+                <Section>Judging Clock and Timer</Section>
 
                 <SubSection>Reset Main Clock</SubSection>
                 <Description>Reset the clock back to 00:00:00</Description>
-                <SettingsButton onClick={() => setClockResetPopup(true)}>Reset</SettingsButton>
+                <SettingsButton
+                    onClick={() => setClockResetPopup(true)}
+                    className="bg-gold text-black hover:bg-goldDark hover:text-black"
+                >
+                    Reset
+                </SettingsButton>
 
                 <SubSection>Sync Clock with Database Automatically</SubSection>
                 <Description>
@@ -294,54 +355,66 @@ const AdminSettings = () => {
                     <SettingsButton onClick={updateTimer}>Update Timer</SettingsButton>
                 </div>
 
-                <SubSection>Set Categories</SubSection>
+                <Section>Multi-Group Judging</Section>
+
+                <SubSection>Enable Multiple Groups</SubSection>
                 <Description>
-                    Set the categories that the judges will be scoring each project on. Please
-                    separate each category with a comma.
+                    Enable multiple groups for judging. This will allow judges to be assigned to
+                    different groups and score projects within their group only, switching after
+                    either a certain number of projects or manually by admins.
                 </Description>
-                <RawTextInput
-                    name="categories"
-                    placeholder="Cat 1, Cat 2, Cat 3, ..."
-                    text={categories}
-                    setText={setCategories}
-                    full
-                    large
+                <Checkbox checked={multiGroup} onChange={() => {}}>
+                    Enable Multi-Group Judging
+                </Checkbox>
+
+                <SubSection>Switching Mode</SubSection>
+                <Description>
+                    Choose how judges will switch between projects. If set to "auto", judges will
+                    switch after a certain number/proportion of projects. If set to "manual", judges
+                    will switch after an admin manually presses a button to switch judges' groups.
+                </Description>
+                <SelectionButton
+                    selected={switchingMode}
+                    setSelected={setSwitchingMode}
+                    options={['auto', 'manual']}
                     className="my-2"
                 />
-                <SettingsButton onClick={updateCategories}>Update Categories</SettingsButton>
 
-                <Section>Judging Parameters</Section>
+                {switchingMode && (
+                    <>
+                        <SubSection>Auto Switch Method</SubSection>
+                        <Description>
+                            Choose when judges will automatically switch between projects. If set to
+                            "count", judges will switch after viewing a specific number of projects
+                            in the group. If set to "proportion", judges will switch after a certain
+                            proportion of projects in the group.
+                        </Description>
+                        <SelectionButton
+                        disabled
+                            selected={autoSwitchMethod}
+                            setSelected={setAutoSwitchMethod}
+                            options={['count', 'proportion']}
+                            className="my-2"
+                        />
 
-                <SubSection>Reassign Project Numbers</SubSection>
-                <Description>
-                    Reassign all project numbers to the projects. This will keep the relative order
-                    but reassign the project numbers starting from the first project.
-                </Description>
-                <SettingsButton
-                    onClick={() => setReassignPopup(true)}
-                    className="bg-gold text-black hover:bg-goldDark hover:text-black"
-                >
-                    Reassign
-                </SettingsButton>
-
-                <SubSection>Set Minimum Project Views</SubSection>
-                <Description>
-                    Set the minimum amount of times that a project should be seen during judging.
-                    This will ensure all projects get seen at LEAST this many times before switching
-                    over to the optimal method of assigning projects. Set to 0 to ignore this
-                    condition (recommended: 3-5).
-                </Description>
-                <div className="flex flex-row">
-                    <RawTextInput
-                        name="min-views"
-                        text={minViews}
-                        setText={setMinViews}
-                        placeholder="Enter an integer..."
-                        large
-                        className="my-2 mr-4"
-                    />
-                    <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
-                </div>
+                        {autoSwitchMethod === 'count' ? <>
+                            <SubSection>Auto Switch Count</SubSection>
+                            <Description>
+                                Set how many projects judges will view before switching groups.
+                            </Description>
+                            <RawTextInput
+                                name="auto-switch-count"
+                                text={autoSwitchCount}
+                                setText={setAutoSwitchCount}
+                                placeholder="Enter an integer..."
+                                large
+                                className="my-2"
+                                number
+                            />
+                        
+                        </> : <></>}
+                    </>
+                )}
 
                 <Section>Export Data</Section>
 
@@ -392,7 +465,8 @@ const AdminSettings = () => {
                 title="Heads Up!"
                 red
             >
-                Are you sure you want to reset the main clock? This will reset the clock to 00:00:00
+                Are you sure you want to reset the main clock? This will reset the main clock to
+                00:00:00.
             </ConfirmPopup>
             <ConfirmPopup
                 enabled={dropPopup}
