@@ -6,6 +6,7 @@ data
 .vscode
 server/tmp
 test-log.txt
+.hintrc
 
 # If someone accidentally makes these in root
 node_modules
