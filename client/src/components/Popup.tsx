@@ -20,22 +20,20 @@ interface PopupProps {
  * Clicking on the backdrop will close the popup.
  */
 const Popup = (props: PopupProps) => {
-    const { enabled, setEnabled, children, className } = props;
-
     useEffect(() => {
         // handle esc key press
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                setEnabled(false);
+                props.setEnabled(false);
             }
         };
 
-        if (enabled) {
+        if (props.enabled) {
             window.addEventListener('keydown', handleKeyDown);
         }
 
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [enabled, setEnabled]);
+    }, [props.enabled, props.setEnabled]);
 
     if (!props.enabled) {
         return null;
@@ -45,7 +43,7 @@ const Popup = (props: PopupProps) => {
         <>
             <div
                 className="fixed left-0 top-0 z-20 w-screen h-screen bg-black/30"
-                onClick={() => setEnabled(false)}
+                onClick={() => props.setEnabled(false)}
             ></div>
             <div
                 className={twMerge(
@@ -55,8 +53,8 @@ const Popup = (props: PopupProps) => {
             >
                 {/* x to close the popup */}
                 <button
-                    onClick={() => setEnabled(false)}
-                    className="absolute top-2 left-2 text-gray-500 hover:text-gray-700 text-2xl"
+                    onClick={() => props.setEnabled(false)}
+                    className="absolute top-1 left-3 text-lightest text-3xl text-lightest hover:text-black"
                     aria-label="Close popup"
                 >
                     &times;
