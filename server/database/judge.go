@@ -203,3 +203,105 @@ func ResetBusyStatusByProject(db *mongo.Database, project *models.Project) error
 	}
 	return nil
 }
+
+func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
+	cursor, err := db.Collection("judges").Aggregate(context.Background(), []gin.H{
+		{"$group": gin.H{
+			"_id":   "$group",
+			"count": gin.H{"$sum": 1},
+		}},
+	})
+	if err != nil {
+		return -1, err
+	}
+
+	groupCounts := make(map[int64]int64)
+	for cursor.Next(context.Background()) {
+		var result map[string]interface{}
+		err := cursor.Decode(&result)
+		if err != nil {
+			return -1, err
+		}
+		groupCounts[result["_id"].(int64)] = int64(result["count"].(int32))
+	}
+
+	// Sort by count in ascending order
+	minGroups := util.SortMapByValue(groupCounts)
+
+	// Get options
+	options, err := GetOptions(db)
+	if err != nil {
+		return -1, err
+	}
+
+	// Find all groups that aren't in minGroups
+	group := int64(-1)
+	for i := int64(0); i < options.MainGroup.NumGroups; i++ {
+		if _, ok := groupCounts[i]; !ok {
+			group = i
+			break
+		}
+	}
+
+	// If there are no groups that aren't in minGroups, use the first group
+	if group == -1 {
+		group = minGroups[0]
+	}
+
+	return group, nil
+}
+
+// GetNextNJudgeGroups returns the next n groups to assign new judges to
+// The groups are chosen based on the current number of judges in each group,
+// with the goal to balance the number of judges in each group
+func GetNextNJudgeGroups(db *mongo.Database, n int) ([]int64, error) {
+	cursor, err := db.Collection("judges").Aggregate(context.Background(), []gin.H{
+		{"$group": gin.H{
+			"_id":   "$group",
+			"count": gin.H{"$sum": 1},
+		}},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	groupCounts := make(map[int64]int64)
+	for cursor.Next(context.Background()) {
+		var result map[string]interface{}
+		err := cursor.Decode(&result)
+		if err != nil {
+			return nil, err
+		}
+		groupCounts[result["_id"].(int64)] = int64(result["count"].(int32))
+	}
+
+	// Get options
+	options, err := GetOptions(db)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find all groups that aren't in groups
+	for i := int64(0); i < options.MainGroup.NumGroups; i++ {
+		if _, ok := groupCounts[i]; !ok {
+			groupCounts[i] = 0
+		}
+	}
+
+	// Keep looping until we have enough groups
+	groupList := make([]int64, n)
+	for i := 0; i < n; i++ {
+		min := groupCounts[0]
+		minGroup := int64(0)
+		for group, count := range groupCounts {
+			if count < min {
+				min = count
+				minGroup = group
+			}
+		}
+		groupList[i] = minGroup
+		groupCounts[minGroup] -= 1
+	}
+
+	return groupList, nil
+}

@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -46,10 +45,15 @@ func AddJudge(ctx *gin.Context) {
 		return
 	}
 
-	// Create the judge
-	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes)
+	// Determine group judge should go in
+	group, err := database.GetMinJudgeGroup(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+		return
+	}
 
-	fmt.Println(judgeReq.NoSend)
+	// Create the judge
+	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes, group)
 
 	// Send email if no_send is false
 	if !judgeReq.NoSend {
@@ -190,6 +194,18 @@ func AddJudgesCsv(ctx *gin.Context) {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge " + judge.Name + " email: " + err.Error()})
 			return
 		}
+	}
+
+	// Determine group numbers for the new judges
+	groups, err := database.GetNextNJudgeGroups(db, len(judges))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge groups: " + err.Error()})
+		return
+	}
+
+	// Assign group numbers to the new judges
+	for i, judge := range judges {
+		judge.Group = groups[i]
 	}
 
 	// Insert judges into the database

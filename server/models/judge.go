@@ -15,6 +15,7 @@ type Judge struct {
 	Name         string               `bson:"name" json:"name"`
 	Email        string               `bson:"email" json:"email"`
 	Active       bool                 `bson:"active" json:"active"`
+	Group        int64                `bson:"group" json:"group"`
 	ReadWelcome  bool                 `bson:"read_welcome" json:"read_welcome"`
 	Notes        string               `bson:"notes" json:"notes"`
 	Current      *primitive.ObjectID  `bson:"current" json:"current"`
@@ -33,13 +34,14 @@ type JudgedProject struct {
 	Description string             `bson:"description" json:"description"`
 }
 
-func NewJudge(name string, email string, notes string) *Judge {
+func NewJudge(name string, email string, notes string, group int64) *Judge {
 	return &Judge{
 		Token:        "",
 		Code:         fmt.Sprintf("%d", rand.Intn(900000)+100000), // Generates a num between 100000 and 999999
 		Name:         name,
 		Email:        email,
 		Active:       true,
+		Group:        group,
 		ReadWelcome:  false,
 		Notes:        notes,
 		Current:      nil,

@@ -515,6 +515,8 @@ func SetNumGroups(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
+	// TODO: Wrap in transaction, need to reset groups of everything if changing this
+
 	// Get the request
 	var req models.GroupOptions
 	err := ctx.BindJSON(&req)
@@ -635,6 +637,8 @@ func SetSplitMethod(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
+	// TODO: Wrap in transaction, need to reset groups of everything if changing this
+
 	// Get the request
 	var req models.GroupOptions
 	err := ctx.BindJSON(&req)
@@ -658,6 +662,8 @@ func SetSplitMethod(ctx *gin.Context) {
 func SetSplitCounts(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// TODO: Wrap in transaction, need to reset groups of everything if changing this
 
 	// Get the request
 	var req models.GroupOptions

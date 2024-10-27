@@ -17,6 +17,7 @@ type Project struct {
 	ChallengeList []string           `bson:"challenge_list" json:"challenge_list"`
 	Seen          int64              `bson:"seen" json:"seen"`
 	Active        bool               `bson:"active" json:"active"`
+	Group         int64              `bson:"group" json:"group"`
 	LastActivity  primitive.DateTime `bson:"last_activity" json:"last_activity"`
 }
 

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"sort"
 	"strconv"
 
 	"golang.org/x/exp/constraints"
@@ -57,4 +58,46 @@ func IntToString[T constraints.Integer](arr []T) []string {
 		out[i] = strconv.Itoa(int(v))
 	}
 	return out
+}
+
+// SortMapByValue sorts a map by its values and returns the keys in descending order
+func SortMapByValue(m map[int64]int64) []int64 {
+	type kv struct {
+		Key   int64
+		Value int64
+	}
+
+	var ss []kv
+	for k, v := range m {
+		ss = append(ss, kv{k, v})
+	}
+
+	// Sort by value
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Value > ss[j].Value
+	})
+
+	var keys []int64
+	for _, kv := range ss {
+		keys = append(keys, kv.Key)
+	}
+
+	return keys
+}
+
+// SetDiff returns the set difference between two slices
+func SetDiff[T comparable](a, b []T) []T {
+	m := make(map[T]bool)
+	for _, item := range b {
+		m[item] = true
+	}
+
+	var diff []T
+	for _, item := range a {
+		if _, ok := m[item]; !ok {
+			diff = append(diff, item)
+		}
+	}
+
+	return diff
 }
