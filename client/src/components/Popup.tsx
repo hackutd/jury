@@ -54,7 +54,7 @@ const Popup = (props: PopupProps) => {
                 {/* x to close the popup */}
                 <button
                     onClick={() => props.setEnabled(false)}
-                    className="absolute top-1 left-3 text-lightest text-3xl text-lightest hover:text-black"
+                    className="absolute top-1 left-3 text-3xl text-lightest hover:text-black duration-150"
                     aria-label="Close popup"
                 >
                     &times;
