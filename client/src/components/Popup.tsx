@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 interface PopupProps {
@@ -19,6 +20,25 @@ interface PopupProps {
  * Clicking on the backdrop will close the popup.
  */
 const Popup = (props: PopupProps) => {
+    const { enabled, setEnabled, children, className } = props;
+
+    useEffect(() => {
+        // handle esc key press
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setEnabled(false);
+            }
+        };
+
+        // Attach the event listener when the popup is enabled
+        if (enabled) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+
+        // Cleanup event listener on component unmount or when popup is disabled
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [enabled, setEnabled]);
+
     if (!props.enabled) {
         return null;
     }
@@ -27,7 +47,7 @@ const Popup = (props: PopupProps) => {
         <>
             <div
                 className="fixed left-0 top-0 z-20 w-screen h-screen bg-black/30"
-                onClick={() => props.setEnabled(false)}
+                onClick={() => setEnabled(false)}
             ></div>
             <div
                 className={twMerge(
@@ -35,6 +55,14 @@ const Popup = (props: PopupProps) => {
                     props.className
                 )}
             >
+                {/* x to close the popup */}
+                <button
+                    onClick={() => setEnabled(false)}
+                    className="absolute top-2 left-2 text-gray-500 hover:text-gray-700 text-2xl"
+                    aria-label="Close popup"
+                >
+                    &times;
+                </button>
                 {props.children}
             </div>
         </>
