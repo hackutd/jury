@@ -30,12 +30,10 @@ const Popup = (props: PopupProps) => {
             }
         };
 
-        // Attach the event listener when the popup is enabled
         if (enabled) {
             window.addEventListener('keydown', handleKeyDown);
         }
 
-        // Cleanup event listener on component unmount or when popup is disabled
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [enabled, setEnabled]);
 
