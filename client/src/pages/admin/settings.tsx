@@ -53,8 +53,7 @@ const AdminSettings = () => {
     const [autoSwitchMethod, setAutoSwitchMethod] = useState('count');
     const [autoSwitchCount, setAutoSwitchCount] = useState(3);
     const [autoSwitchProp, setAutoSwitchProp] = useState(0.1);
-    const [splitMethod, setSplitMethod] = useState('evenly');
-    const [splitCounts, setSplitCounts] = useState('30, 30');
+    const [groupSizes, setGroupSizes] = useState('30, 30');
 
     async function getOptions() {
         const res = await getRequest<Options>('/admin/options', 'admin');
@@ -88,13 +87,12 @@ const AdminSettings = () => {
 
         // Set group options
         setMultiGroup(res.data.multi_group);
-        setNumGroups(res.data.main_group.num_groups);
+        setNumGroups(res.data.num_groups);
+        setGroupSizes(res.data.group_sizes.join(', '));
         setSwitchingMode(res.data.main_group.switching_mode);
         setAutoSwitchMethod(res.data.main_group.auto_switch_method);
         setAutoSwitchCount(res.data.main_group.auto_switch_count);
         setAutoSwitchProp(res.data.main_group.auto_switch_prop);
-        setSplitMethod(res.data.main_group.split_method);
-        setSplitCounts(res.data.main_group.split_counts.join(', '));
 
         setLoading(false);
     }
@@ -213,7 +211,7 @@ const AdminSettings = () => {
     };
 
     const updateSwitchingMode = async (newMode: string) => {
-        const res = await postRequest<OkResponse>('/admin/groups/switch-mode', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
             switching_mode: newMode,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -225,7 +223,7 @@ const AdminSettings = () => {
     };
 
     const updateAutoSwitchMethod = async (newMethod: string) => {
-        const res = await postRequest<OkResponse>('/admin/groups/switch-method', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
             auto_switch_method: newMethod,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -242,7 +240,7 @@ const AdminSettings = () => {
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/switch-count', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
             auto_switch_count: autoSwitchCount,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -259,7 +257,7 @@ const AdminSettings = () => {
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/auto-switch-prop', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
             auto_switch_prop: autoSwitchProp,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -270,33 +268,21 @@ const AdminSettings = () => {
         alert('Auto switch proportion updated!');
     };
 
-    const updateSplitMethod = async (newMethod: string) => {
-        const res = await postRequest<OkResponse>('/admin/groups/split-method', 'admin', {
-            split_method: newMethod,
-        });
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('Split method updated!');
-    };
-
-    const updateSplitCounts = async () => {
-        const counts = splitCounts.split(',').map((count) => parseInt(count.trim()));
-        if (counts.some((count) => isNaN(count) || count < 1)) {
-            alert('Split counts should be positive integers!');
+    const updateGroupSizes = async () => {
+        const sizes = groupSizes.split(',').map((size) => parseInt(size.trim()));
+        if (sizes.some((size) => isNaN(size) || size < 1)) {
+            alert('Group sizes should be positive integers!');
             return;
         }
 
         // Make sure number of counts is numGroups - 1
-        if (counts.length !== numGroups - 1) {
-            alert('Number of counts should be one less than the number of groups!');
+        if (sizes.length !== numGroups - 1) {
+            alert('Number of sizes should be one less than the number of groups!');
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/split-counts', 'admin', {
-            split_counts: counts,
+        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
+            group_sizes: sizes,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
             errorAlert(res);
@@ -525,6 +511,23 @@ const AdminSettings = () => {
                             </SettingsButton>
                         </div>
 
+                        <SubSection>Group Sizes</SubSection>
+                        <Description>
+                            Set how many projects each group will get. Please separate each count
+                            with a comma. This list should contain one less than the total number of
+                            groups (eg. 3 groups: "30, 30").
+                        </Description>
+                        <RawTextInput
+                            name="group-sizes"
+                            placeholder="30, 30, 30, ..."
+                            text={groupSizes}
+                            setText={setGroupSizes}
+                            full
+                            large
+                            className="my-2 mr-4"
+                        />
+                        <SettingsButton onClick={updateGroupSizes}>Update Sizes</SettingsButton>
+
                         <SubSection>Switching Mode</SubSection>
                         <Description>
                             Choose how judges will switch between projects. If set to "auto", judges
@@ -548,6 +551,8 @@ const AdminSettings = () => {
                                     If set to "count", judges will switch after viewing a specific
                                     number of projects in the group. If set to "proportion", judges
                                     will switch after a certain proportion of projects in the group.
+                                    Note that when using "count" switching, rooms must contain
+                                    approximately the same number of projects.
                                 </Description>
                                 <SelectionButton
                                     selected={autoSwitchMethod}
@@ -603,47 +608,6 @@ const AdminSettings = () => {
                                         </div>
                                     </>
                                 )}
-                            </>
-                        )}
-
-                        <SubSection>Split Method</SubSection>
-                        <Description>
-                            Choose how projects will be split between groups. If set to "evenly",
-                            projects will be split evenly between groups. If set to "counts", you
-                            can specify how many projects each group will get. This will be a
-                            comma-separated list of projects in each group. The last group will
-                            contain the remainder of the projects and thus should not have a count
-                            specified.
-                        </Description>
-
-                        <SelectionButton
-                            selected={splitMethod}
-                            setSelected={setSplitMethod}
-                            onClick={updateSplitMethod}
-                            options={['evenly', 'counts']}
-                            className="my-2"
-                        />
-
-                        {splitMethod === 'counts' && (
-                            <>
-                                <SubSection>Split Counts</SubSection>
-                                <Description>
-                                    Set how many projects each group will get. Please separate each
-                                    count with a comma. This list should contain one less than the
-                                    total number of groups (eg. 3 groups: "30, 30").
-                                </Description>
-                                <RawTextInput
-                                    name="split-counts"
-                                    placeholder="30, 30, 30, ..."
-                                    text={splitCounts}
-                                    setText={setSplitCounts}
-                                    full
-                                    large
-                                    className="my-2 mr-4"
-                                />
-                                <SettingsButton onClick={updateSplitCounts}>
-                                    Update Counts
-                                </SettingsButton>
                             </>
                         )}
                     </>

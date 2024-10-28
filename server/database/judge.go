@@ -236,7 +236,7 @@ func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
 
 	// Find all groups that aren't in minGroups
 	group := int64(-1)
-	for i := int64(0); i < options.MainGroup.NumGroups; i++ {
+	for i := int64(0); i < options.NumGroups; i++ {
 		if _, ok := groupCounts[i]; !ok {
 			group = i
 			break
@@ -282,7 +282,7 @@ func GetNextNJudgeGroups(db *mongo.Database, n int) ([]int64, error) {
 	}
 
 	// Find all groups that aren't in groups
-	for i := int64(0); i < options.MainGroup.NumGroups; i++ {
+	for i := int64(0); i < options.NumGroups; i++ {
 		if _, ok := groupCounts[i]; !ok {
 			groupCounts[i] = 0
 		}

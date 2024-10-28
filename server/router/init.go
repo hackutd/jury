@@ -102,12 +102,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/admin/options", GetOptions)
 	adminRouter.POST("/admin/groups/toggle", ToggleGroups)
 	adminRouter.POST("/admin/groups/num", SetNumGroups)
-	adminRouter.POST("/admin/groups/switch-mode", SetSwitchingMode)
-	adminRouter.POST("/admin/groups/switch-method", SetAutoSwitchMethod)
-	adminRouter.POST("/admin/groups/switch-count", SetAutoSwitchCount)
-	adminRouter.POST("/admin/groups/switch-prop", SetAutoSwitchProp)
-	adminRouter.POST("/admin/groups/split-method", SetSplitMethod)
-	adminRouter.POST("/admin/groups/split-counts", SetSplitCounts)
+	adminRouter.POST("/admin/groups/options", SetGroupOptions)
 
 	// Admin panel - exports
 	adminRouter.GET("/admin/export/judges", ExportJudges)

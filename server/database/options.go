@@ -85,36 +85,47 @@ func UpdateMultiGroup(db *mongo.Database, ctx context.Context, multiGroup bool) 
 }
 
 func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.num_groups": numGroups}})
+	// Get options
+	options, err := GetOptions(db)
+	if err != nil {
+		return err
+	}
+
+	// Resize group sizes if necessary
+	if numGroups < options.NumGroups {
+		options.GroupSizes = options.GroupSizes[:numGroups-1]
+	} else if numGroups > options.NumGroups {
+		for i := options.NumGroups; i < numGroups-1; i++ {
+			options.GroupSizes = append(options.GroupSizes, 30)
+		}
+	}
+
+	_, err = db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"num_groups": numGroups, "group_sizes": options.GroupSizes}})
 	return err
 }
 
-func UpdateSwitchingMode(db *mongo.Database, ctx context.Context, switchingMode string) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.switching_mode": switchingMode}})
+func UpdateGroupSizes(db *mongo.Database, ctx context.Context, groupSizes []int64) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"group_sizes": groupSizes}})
 	return err
 }
 
-func UpdateAutoSwitchMethod(db *mongo.Database, ctx context.Context, autoSwitchMethod string) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.auto_switch_method": autoSwitchMethod}})
-	return err
-}
+// UpdateGroupOptions will update the group options based on the given options
+func UpdateGroupOptions(db *mongo.Database, ctx context.Context, groupOptions models.OptionalGroupOptions) error {
+	update := gin.H{}
 
-func UpdateAutoSwitchCount(db *mongo.Database, ctx context.Context, autoSwitchCount int64) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.auto_switch_count": autoSwitchCount}})
-	return err
-}
+	if groupOptions.SwitchingMode != nil {
+		update["main_group.switching_mode"] = *groupOptions.SwitchingMode
+	}
+	if groupOptions.AutoSwitchMethod != nil {
+		update["main_group.auto_switch_method"] = *groupOptions.AutoSwitchMethod
+	}
+	if groupOptions.AutoSwitchCount != nil {
+		update["main_group.auto_switch_count"] = *groupOptions.AutoSwitchCount
+	}
+	if groupOptions.AutoSwitchProp != nil {
+		update["main_group.auto_switch_prop"] = *groupOptions.AutoSwitchProp
+	}
 
-func UpdateAutoSwitchProp(db *mongo.Database, ctx context.Context, autoSwitchProp float64) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.auto_switch_prop": autoSwitchProp}})
-	return err
-}
-
-func UpdateSplitMethod(db *mongo.Database, ctx context.Context, splitMethod string) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.split_method": splitMethod}})
-	return err
-}
-
-func UpdateSplitCounts(db *mongo.Database, ctx context.Context, splitCounts []int64) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"main_group.split_counts": splitCounts}})
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
 	return err
 }
