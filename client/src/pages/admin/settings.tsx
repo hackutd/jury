@@ -207,6 +207,9 @@ const AdminSettings = () => {
             return;
         }
 
+        // Refreah options
+        await getOptions();
+
         alert('Number of groups updated!');
     };
 
