@@ -1,6 +1,7 @@
 package judging
 
 import (
+	"context"
 	"server/database"
 	"server/models"
 	"sync"
@@ -60,7 +61,7 @@ func LoadComparisons(db *mongo.Database) (*Comparisons, error) {
 	}
 
 	// Get all project
-	projects, err := database.FindAllProjects(db)
+	projects, err := database.FindAllProjects(db, context.Background())
 	if err != nil {
 		return nil, err
 	}

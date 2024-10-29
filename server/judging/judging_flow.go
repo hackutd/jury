@@ -22,19 +22,19 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 	}
 
 	// Run rest of DB operations in a transaction
-	err = database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
+	err = database.WithTransaction(db, func(ctx mongo.SessionContext) error {
 		// If skipping for any reason other than wanting a break, add the project to the skipped list
 		if reason != "break" {
 			// Create a new skip object
 			skip, err := models.NewFlag(skippedProject, judge, reason)
 			if err != nil {
-				return nil, errors.New("error creating flag object: " + err.Error())
+				return errors.New("error creating flag object: " + err.Error())
 			}
 
 			// Add skipped project to flags database
 			err = database.InsertFlag(db, ctx, skip)
 			if err != nil {
-				return nil, errors.New("error inserting flag into database: " + err.Error())
+				return errors.New("error inserting flag into database: " + err.Error())
 			}
 		}
 
@@ -45,14 +45,14 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 			gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
 		)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// Check to see how many times the project has been marked absent
 		active := true
 		absentCount, err := database.GetProjectAbsentCount(db, skippedProject, ctx)
 		if err != nil {
-			return nil, errors.New("error checking for project flags: " + err.Error())
+			return errors.New("error checking for project flags: " + err.Error())
 		}
 		// Hide project if it's been absent more than 3 times
 		if reason == "absent" && absentCount >= 2 {
@@ -61,29 +61,29 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 			// Also remove all absent flags for the project
 			err = database.DeleteAbsentFlags(db, skippedProject, ctx)
 			if err != nil {
-				return nil, errors.New("error deleting absent flags: " + err.Error())
+				return errors.New("error deleting absent flags: " + err.Error())
 			}
 		}
 
 		// Update the project
 		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}, "$set": gin.H{"active": active}})
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// Don't get a new project if we're not supposed to
 		if !getNew {
-			return nil, nil
+			return nil
 		}
 
 		// Get a new project
 		project, err := PickNextProject(db, judge, ctx, comps)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if project == nil {
-			return nil, nil
+			return nil
 		}
 
 		// Update the judge

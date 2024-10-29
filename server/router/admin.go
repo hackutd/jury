@@ -5,6 +5,7 @@ import (
 	"server/config"
 	"server/database"
 	"server/funcs"
+	"server/judging"
 	"server/models"
 	"server/ranking"
 
@@ -234,7 +235,7 @@ func GetOptions(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the options
-	options, err := database.GetOptions(db)
+	options, err := database.GetOptions(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -269,7 +270,7 @@ func ExportProjects(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get all the projects
-	projects, err := database.FindAllProjects(db)
+	projects, err := database.FindAllProjects(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
 		return
@@ -289,7 +290,7 @@ func ExportProjectsByChallenge(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get all the projects
-	projects, err := database.FindAllProjects(db)
+	projects, err := database.FindAllProjects(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
 		return
@@ -331,7 +332,7 @@ func GetJudgingTimer(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the options
-	options, err := database.GetOptions(db)
+	options, err := database.GetOptions(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -359,7 +360,7 @@ func SetJudgingTimer(ctx *gin.Context) {
 	}
 
 	// Get the options
-	options, err := database.GetOptions(db)
+	options, err := database.GetOptions(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -439,7 +440,7 @@ func GetScores(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get all the projects
-	projects, err := database.FindAllProjects(db)
+	projects, err := database.FindAllProjects(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
 		return
@@ -497,6 +498,21 @@ func ToggleGroups(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
 		return
+	}
+
+	// Reassign table numbers based on groups
+	if req.MultiGroup {
+		err = judging.ReassignNumsByGroup(db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning table numbers: " + err.Error()})
+			return
+		}
+	} else {
+		err = judging.ReassignNumsInOrder(db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning table numbers (no groups): " + err.Error()})
+			return
+		}
 	}
 
 	// Save the options in the database

@@ -9,9 +9,9 @@ import (
 )
 
 // GetOptions gets the options from the database
-func GetOptions(db *mongo.Database) (*models.Options, error) {
+func GetOptions(db *mongo.Database, ctx context.Context) (*models.Options, error) {
 	var options models.Options
-	err := db.Collection("options").FindOne(context.Background(), gin.H{}).Decode(&options)
+	err := db.Collection("options").FindOne(ctx, gin.H{}).Decode(&options)
 
 	// If options does not exist, create it
 	if err == mongo.ErrNoDocuments {
@@ -45,7 +45,7 @@ func UpdateClockSync(db *mongo.Database, ctx context.Context, clockSync bool) er
 // UpdateClockConditional updates the clock in the database if clock sync is enabled
 func UpdateClockConditional(db *mongo.Database, ctx context.Context, clock *models.ClockState) error {
 	// Get options
-	options, err := GetOptions(db)
+	options, err := GetOptions(db, ctx)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func UpdateMultiGroup(db *mongo.Database, ctx context.Context, multiGroup bool) 
 
 func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) error {
 	// Get options
-	options, err := GetOptions(db)
+	options, err := GetOptions(db, ctx)
 	if err != nil {
 		return err
 	}

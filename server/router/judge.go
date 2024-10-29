@@ -330,17 +330,14 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	}
 
 	// Otherwise, get the next project for the judge
-	// TODO: This wrapping is a little ridiculous...
-	var project *models.Project
-	err := database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
-		var err error
-		project, err = judging.PickNextProject(db, judge, ctx, comps)
-		return nil, err
+	project_int, err := database.WithTransactionItem(db, func(sc mongo.SessionContext) (interface{}, error) {
+		return judging.PickNextProject(db, judge, sc, comps)
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 		return
 	}
+	project := project_int.(*models.Project)
 
 	// If there is no next project, return an empty object
 	if project == nil {

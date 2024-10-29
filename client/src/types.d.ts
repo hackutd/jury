@@ -118,10 +118,11 @@ interface Options {
     multi_group: boolean;
     num_groups: number;
     group_sizes: number[];
-    main_group: GroupOptions;
+    group_table_nums: number[][];
+    main_group: GroupsSwitchOps;
 }
 
-interface GroupOptions {
+interface GroupsSwitchOps {
     switching_mode: string;
     auto_switch_method: string;
     auto_switch_count: number;

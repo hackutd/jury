@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"log"
 	"server/database"
 	"server/judging"
@@ -167,7 +168,7 @@ func useVar(key string, v any) gin.HandlerFunc {
 // and on init will pause the clock
 func getClockFromDb(db *mongo.Database) *models.SafeClock {
 	// Get the clock state from the database
-	options, err := database.GetOptions(db)
+	options, err := database.GetOptions(db, context.Background())
 	if err != nil {
 		log.Fatalln("error getting options: " + err.Error())
 	}

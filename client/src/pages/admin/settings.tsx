@@ -487,7 +487,8 @@ const AdminSettings = () => {
                 <Description>
                     Enable multiple groups for judging. This will allow judges to be assigned to
                     different groups and score projects within their group only, switching after
-                    either a certain number of projects or manually by admins.
+                    either a certain number of projects or manually by admins. Note that toggling
+                    this option <span className="font-bold">will reassign project numbers</span>.
                 </Description>
                 <Checkbox checked={multiGroup} onChange={toggleMultiGroup}>
                     Enable Multi-Group Judging

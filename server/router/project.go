@@ -1,12 +1,11 @@
 package router
 
 import (
-	"context"
 	"net/http"
 	"server/database"
 	"server/funcs"
+	"server/judging"
 	"server/models"
-	"sort"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -88,7 +87,7 @@ func AddProject(ctx *gin.Context) {
 	}
 
 	// Get the options from the database
-	options, err := database.GetOptions(db)
+	options, err := database.GetOptions(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
 		return
@@ -104,22 +103,22 @@ func AddProject(ctx *gin.Context) {
 	}
 
 	// Increment table num
-	database.GetNextTableNum(options)
+	options.GetNextIncrTableNum()
 
 	// Create the project
 	project := models.NewProject(projectReq.Name, options.CurrTableNum, projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
 
 	// Insert project and update the next table num field in options
-	err = database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
+	err = database.WithTransaction(db, func(ctx mongo.SessionContext) error {
 		// Insert project
 		err := database.InsertProject(db, ctx, project)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// Update next table num in options doc
 		err = database.UpdateCurrTableNum(db, ctx, options.CurrTableNum)
-		return nil, err
+		return err
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting project into database: " + err.Error()})
@@ -136,7 +135,7 @@ func ListProjects(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the projects from the database
-	projects, err := database.FindAllProjects(db)
+	projects, err := database.FindAllProjects(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects from database: " + err.Error()})
 		return
@@ -161,7 +160,7 @@ func ListPublicProjects(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the projects from the database
-	projects, err := database.FindAllProjects(db)
+	projects, err := database.FindAllProjects(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects from database: " + err.Error()})
 		return
@@ -449,51 +448,12 @@ func ReassignProjectNums(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
-	// Get all the projects from the database
-	projects, err := database.FindAllProjects(db)
+	// Reassign project numbers
+	err := judging.ReassignNumsInOrder(db)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects from database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
 		return
 	}
 
-	// If projects is empty, send OK
-	if len(projects) == 0 {
-		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-		return
-	}
-
-	// Sort projets by table num
-	sort.Sort(models.ByTableNumber(projects))
-
-	// Get the options from the database
-	options, err := database.GetOptions(db)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
-		return
-	}
-
-	// Set init table num to 0
-	options.CurrTableNum = 0
-
-	// Loop through all projects
-	for _, project := range projects {
-		project.Location = database.GetNextTableNum(options)
-	}
-
-	// Update the options in the database
-	err = database.UpdateCurrTableNum(db, context.Background(), options.CurrTableNum)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating options in database: " + err.Error()})
-		return
-	}
-
-	// Update all projects in the database
-	err = database.UpdateProjects(db, projects)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating projects in database: " + err.Error()})
-		return
-	}
-
-	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }

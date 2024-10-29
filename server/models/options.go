@@ -3,21 +3,22 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Options struct {
-	Id           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Ref          int64              `bson:"ref" json:"ref"`
-	CurrTableNum int64              `bson:"curr_table_num" json:"curr_table_num"`
-	Clock        ClockState         `bson:"clock" json:"clock"`
-	JudgingTimer int64              `bson:"judging_timer" json:"judging_timer"`
-	MinViews     int64              `bson:"min_views" json:"min_views"`
-	ClockSync    bool               `bson:"clock_sync" json:"clock_sync"`
-	Categories   []string           `bson:"categories" json:"categories"`
-	MultiGroup   bool               `bson:"multi_group" json:"multi_group"`
-	NumGroups    int64              `bson:"num_groups" json:"num_groups"`   // Number of groups to split projects into
-	GroupSizes   []int64            `bson:"group_sizes" json:"group_sizes"` // Number of projects in each group except last (last group will be remainder, size = numGroups - 1)
-	MainGroup    GroupOptions       `bson:"main_group" json:"main_group"`   // Group options for the general judging track
+	Id             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Ref            int64              `bson:"ref" json:"ref"`
+	CurrTableNum   int64              `bson:"curr_table_num" json:"curr_table_num"`
+	Clock          ClockState         `bson:"clock" json:"clock"`
+	JudgingTimer   int64              `bson:"judging_timer" json:"judging_timer"`
+	MinViews       int64              `bson:"min_views" json:"min_views"`
+	ClockSync      bool               `bson:"clock_sync" json:"clock_sync"`
+	Categories     []string           `bson:"categories" json:"categories"`
+	MultiGroup     bool               `bson:"multi_group" json:"multi_group"`
+	NumGroups      int64              `bson:"num_groups" json:"num_groups"`             // Number of groups to split projects into
+	GroupSizes     []int64            `bson:"group_sizes" json:"group_sizes"`           // Number of projects in each group except last (last group will be remainder, size = numGroups - 1)
+	GroupTableNums []int64            `bson:"group_table_nums" json:"group_table_nums"` // Table number assignments to each group -- this will be round-robin due to the way groups are split
+	MainGroup      GroupSwitchOps     `bson:"main_group" json:"main_group"`             // Group options for the general judging track
 }
 
-type GroupOptions struct {
+type GroupSwitchOps struct {
 	SwitchingMode    string  `bson:"switching_mode" json:"switching_mode"`         // "auto" or "manual"
 	AutoSwitchMethod string  `bson:"auto_switch_method" json:"auto_switch_method"` // "count" or "proportion"
 	AutoSwitchCount  int64   `bson:"auto_switch_count" json:"auto_switch_count"`   // Number of projects to view in each group
@@ -40,13 +41,28 @@ func NewOptions() *Options {
 	}
 }
 
-func NewGroupOptions() *GroupOptions {
-	return &GroupOptions{
+func NewGroupOptions() *GroupSwitchOps {
+	return &GroupSwitchOps{
 		SwitchingMode:    "auto",
 		AutoSwitchMethod: "count",
 		AutoSwitchCount:  3,
 		AutoSwitchProp:   0.1,
 	}
+}
+
+// GetNextIncrTableNum increments the current table number and returns the new value.
+// This is used for in-order project number assignment
+func (o *Options) GetNextIncrTableNum() int64 {
+	o.CurrTableNum++
+	return o.CurrTableNum
+}
+
+// GetNextGroupTableNum returns the next group table number to assign a project.
+// Since this is done round-robin, we will use the current table number to determine the group.
+func (o *Options) GetNextGroupTableNum() int64 {
+	group := o.CurrTableNum % o.NumGroups
+	o.GroupTableNums[group]++
+	return o.GroupTableNums[group]
 }
 
 // OptionalGroupOptions is a struct that will be used to update the group options.

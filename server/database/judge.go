@@ -229,7 +229,7 @@ func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
 	minGroups := util.SortMapByValue(groupCounts)
 
 	// Get options
-	options, err := GetOptions(db)
+	options, err := GetOptions(db, context.Background())
 	if err != nil {
 		return -1, err
 	}
@@ -276,7 +276,7 @@ func GetNextNJudgeGroups(db *mongo.Database, n int) ([]int64, error) {
 	}
 
 	// Get options
-	options, err := GetOptions(db)
+	options, err := GetOptions(db, context.Background())
 	if err != nil {
 		return nil, err
 	}
