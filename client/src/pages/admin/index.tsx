@@ -12,6 +12,7 @@ import Button from '../../components/Button';
 import { useAdminStore, useClockStore, useFlagsStore, useOptionsStore } from '../../store';
 import PauseButton from '../../components/admin/PauseButton';
 import ConfirmPopup from '../../components/ConfirmPopup';
+import ToTopButton from '../../components/ToTopButton';
 
 const Admin = () => {
     const navigate = useNavigate();
@@ -135,6 +136,7 @@ const Admin = () => {
                 Are you sure you want to swap judge groups? This will increment the group number of
                 every judge.
             </ConfirmPopup>
+            <ToTopButton />
         </>
     );
 };
