@@ -47,7 +47,7 @@ const NewProjectForm = () => {
                     <TextInput name="name" placeholder="Name" register={register} />
                     <TextArea
                         name="description"
-                        placeholder="Description (optional)"
+                        placeholder="Description"
                         register={register}
                     />
                     <TextInput name="url" placeholder="URL" register={register} />
