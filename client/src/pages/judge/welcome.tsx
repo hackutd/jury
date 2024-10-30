@@ -13,6 +13,7 @@ const JudgeWelcome = () => {
     const [judge, setJudge] = useState<Judge | null>(null);
     const [checkRead, setCheckRead] = useState(false);
     const [checkEmail, setCheckEmail] = useState(false);
+    const [checkTrack, setCheckTrack] = useState(false);
 
     // Verify user is logged in and read welcome before proceeding
     useEffect(() => {
@@ -99,10 +100,20 @@ const JudgeWelcome = () => {
                     I certify that my email is <span className="text-primary">[{judge.email}]</span>
                     . If this is not your email, contact an organizer immediately.
                 </Checkbox>
+                {judge.track !== '' && (
+                    <Checkbox checked={checkTrack} onChange={setCheckTrack}>
+                        I am judging for the{' '}
+                        <span className="text-primary">
+                            {judge.track === '' ? 'general' : judge.track}
+                        </span>{' '}
+                        track. Make sure you are judging the correct track as this cannot be changed
+                        later.
+                    </Checkbox>
+                )}
                 <div className="flex justify-center py-4">
                     <Button
                         type="primary"
-                        disabled={!checkRead || !checkEmail}
+                        disabled={!checkRead || !checkEmail || !checkTrack}
                         onClick={readWelcome}
                         className="my-2"
                     >
