@@ -9,7 +9,6 @@ import (
 	"server/ranking"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -452,34 +451,39 @@ func GetScores(ctx *gin.Context) {
 		return
 	}
 
-	// Create judge ranking objects
-	// Create an array of {Rankings: [], Unranked: []}
-	judgeRankings := make([]ranking.JudgeRanking, 0)
-	for _, judge := range judges {
-		unranked := make([]primitive.ObjectID, 0)
-		for _, proj := range judge.SeenProjects {
-			if !contains(judge.Rankings, proj.ProjectId) {
-				unranked = append(unranked, proj.ProjectId)
-			}
-		}
-
-		judgeRankings = append(judgeRankings, ranking.JudgeRanking{
-			Rankings: judge.Rankings,
-			Unranked: unranked,
-		})
-	}
-
-	// Map all projects to their object IDs
-	projectIds := make([]primitive.ObjectID, 0)
-	for _, proj := range projects {
-		projectIds = append(projectIds, proj.Id)
-	}
-
-	// Calculate the scores
-	scores := ranking.CalcBordaRanking(judgeRankings, projectIds)
+	scores := ranking.CalculateScores(judges, projects)
 
 	// Send OK
 	ctx.JSON(http.StatusOK, scores)
+}
+
+// /GET /admin/score/<track> - GetTrackScores returns the calculated scores of all projects in a track
+func GetTrackScores(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Get all the projects
+	projects, err := database.FindProjectsByTrack(db, ctx, track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
+		return
+	}
+
+	// Get all the judges
+	judges, err := database.FindJudgesByTrack(db, ctx, track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
+		return
+	}
+
+	scores := ranking.CalculateScores(judges, projects)
+
+	// Send OK
+	ctx.JSON(http.StatusOK, scores)
+
 }
 
 type ToggleTracksRequest struct {
@@ -649,14 +653,4 @@ func SwapJudgeGroups(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// contains checks if a string is in a list of strings
-func contains(list []primitive.ObjectID, str primitive.ObjectID) bool {
-	for _, s := range list {
-		if s == str {
-			return true
-		}
-	}
-	return false
 }

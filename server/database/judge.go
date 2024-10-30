@@ -56,6 +56,19 @@ func FindJudgeByCode(db *mongo.Database, code string) (*models.Judge, error) {
 	return &judge, err
 }
 
+func FindJudgesByTrack(db *mongo.Database, ctx context.Context, track string) ([]*models.Judge, error) {
+	judges := make([]*models.Judge, 0)
+	cursor, err := db.Collection("judges").Find(ctx, gin.H{"track": track})
+	if err != nil {
+		return nil, err
+	}
+	err = cursor.All(ctx, &judges)
+	if err != nil {
+		return nil, err
+	}
+	return judges, nil
+}
+
 // UpdateJudge updates a judge in the database
 func UpdateJudge(db *mongo.Database, judge *models.Judge, ctx context.Context) error {
 	judge.LastActivity = util.Now()

@@ -101,6 +101,7 @@ const useClockStore = create<ClockStore>()((set) => ({
 interface OptionsStore {
     options: Options;
     selectedTrack: string;
+    currTrackScores: ScoredItem[];
     fetchOptions: () => Promise<void>;
     setSelectedTrack: (track: string) => void;
 }
@@ -133,6 +134,8 @@ const useOptionsStore = create<OptionsStore>((set) => ({
 
     selectedTrack: 'Main Judging',
 
+    currTrackScores: [],
+
     fetchOptions: async () => {
         const optionsRes = await getRequest<Options>('/admin/options', 'admin');
         if (optionsRes.status !== 200) {
@@ -142,8 +145,16 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         set({ options: optionsRes.data as Options });
     },
 
-    setSelectedTrack: (track: string) => {
+    setSelectedTrack: async (track: string) => {
+        // Get scores for selected track
+        const scoresRes = await getRequest<ScoredItem[]>(`/admin/score/${track}`, 'admin');
+        if (scoresRes.status !== 200) {
+            errorAlert(scoresRes);
+            return;
+        }
+
         set({ selectedTrack: track });
+        set({ currTrackScores: scoresRes.data as ScoredItem[] });
     },
 }));
 
