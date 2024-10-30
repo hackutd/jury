@@ -60,7 +60,6 @@ func FindProjectsByTrack(db *mongo.Database, ctx context.Context, track string) 
 	if err != nil {
 		return nil, err
 	}
-	println(len(projects))
 	return projects, nil
 }
 

@@ -11,6 +11,9 @@ interface DropdownProps {
     /* State function to set the selected option */
     setSelected: React.Dispatch<React.SetStateAction<string>> | ((selected: string) => void);
 
+    /* OnChange function */
+    onChange?: () => void;
+
     /* Classname styling */
     className?: string;
 }
@@ -22,7 +25,10 @@ const Dropdown = (props: DropdownProps) => {
                 'border-[2.5px] border-solid border-lightest outline-none focus:outline-none rounded-md bg-background cursor-pointer hover:bg-backgroundDark duration-150 text-xl text-center text-light',
                 props.className
             )}
-            onChange={(e) => props.setSelected(e.target.value)}
+            onChange={(e) => {
+                props.setSelected(e.target.value);
+                if (props.onChange) props.onChange();
+            }}
         >
             {props.options.map((option) => (
                 <option key={option} value={option}>

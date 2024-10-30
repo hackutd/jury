@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '../Button';
 import FlagsPopup from './FlagsPopup';
 import Dropdown from '../Dropdown';
-import { useOptionsStore } from '../../store';
+import { useAdminStore, useOptionsStore } from '../../store';
 
 const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
     const [showFlags, setShowFlags] = useState(false);
     const options = useOptionsStore((state) => state.options);
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
     const setSelectedTrack = useOptionsStore((state) => state.setSelectedTrack);
+    const fetchStats = useAdminStore((state) => state.fetchStats);
 
     // Convert date to string
     const dateToString = (date: Date) => {
@@ -22,6 +23,11 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
             timeZoneName: 'short',
         });
     };
+
+    // Fetch stats when track changes
+    useEffect(() => {
+        fetchStats();
+    }, [selectedTrack]);
 
     return (
         <>

@@ -53,7 +53,26 @@ func GetAdminStats(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Aggregate the stats
-	stats, err := database.AggregateStats(db)
+	stats, err := database.AggregateStats(db, "")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating stats: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, stats)
+}
+
+// GET /admin/stats/:track - GetAdminStats returns stats about the system
+func GetAdminTrackStats(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Aggregate the stats
+	stats, err := database.AggregateStats(db, track)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating stats: " + err.Error()})
 		return

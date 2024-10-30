@@ -20,7 +20,12 @@ const useAdminStore = create<AdminStore>()((set) => ({
     },
 
     fetchStats: async () => {
-        const statsRes = await getRequest<Stats>('/admin/stats', 'admin');
+        const selectedTrack = useOptionsStore.getState().selectedTrack;
+        let track = selectedTrack;
+        if (track === 'Main Judging') {
+            track = '';
+        }
+        const statsRes = await getRequest<Stats>(`/admin/stats/${track}`, 'admin');
         if (statsRes.status !== 200) {
             errorAlert(statsRes);
             return;
