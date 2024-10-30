@@ -721,7 +721,7 @@ const AdminSettings = () => {
                 <SubSection>Export Collection</SubSection>
                 <Description>Export each collection individually as a CSV download.</Description>
                 <div className="flex">
-                    <SettingsButton onClick={() => exportCsv('users')} className="mr-4">
+                    <SettingsButton onClick={() => exportCsv('judges')} className="mr-4">
                         Export Judges
                     </SettingsButton>
                     <SettingsButton onClick={() => exportCsv('projects')} className="mr-4">
