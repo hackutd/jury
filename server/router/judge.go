@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -399,7 +400,7 @@ func GetJudgedProject(ctx *gin.Context) {
 	for _, p := range judge.SeenProjects {
 		if p.ProjectId.Hex() == projectId {
 			// Add URL to judged project
-			proj, err := database.FindProjectById(db, &p.ProjectId)
+			proj, err := database.FindProjectById(db, ctx, &p.ProjectId)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project url: " + err.Error()})
 				return
@@ -567,37 +568,55 @@ func JudgeScore(ctx *gin.Context) {
 		return
 	}
 
-	// Get the project from the database
-	project, err := database.FindProjectById(db, judge.Current)
+	// Wrap the database transaction
+	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get the options
+		options, err := database.GetOptions(db, sc)
+		if err != nil {
+			return errors.New("error getting options: " + err.Error())
+		}
+
+		// Get the project from the database
+		project, err := database.FindProjectById(db, sc, judge.Current)
+		if err != nil {
+			return errors.New("error finding project in database: " + err.Error())
+		}
+
+		// Create the judged project object
+		judgedProject := models.JudgeProjectFromProject(project, scoreReq.Categories)
+
+		// If groups are enabled, move the judge to the next group conditionally
+		if options.MultiGroup && options.MainGroup.SwitchingMode == "auto" {
+			err = judging.MoveJudgeGroup(db, sc, judge, options)
+			if err != nil {
+				return errors.New("error moving judge group: " + err.Error())
+			}
+		}
+
+		// Update the project with the score
+		err = database.UpdateAfterSeen(db, sc, judge, judgedProject)
+		if err != nil {
+			return errors.New("error storing scores in database: " + err.Error())
+		}
+
+		// Reset list of skipped projects due to busy status
+		err = database.ResetBusyProjectListForJudge(db, sc, judge)
+		if err != nil {
+			return errors.New("error resetting busy project list in database: " + err.Error())
+		}
+
+		// "Remove" busy status from current project so that other judges can come back to that project
+		// TODO: Do we have to do this?
+		err = database.ResetBusyStatusByProject(db, sc, project)
+		if err != nil {
+			return errors.New("error resetting busy project status in database: " + err.Error())
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding project in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
-
-	// Create the judged project object
-	judgedProject := models.JudgeProjectFromProject(project, scoreReq.Categories)
-
-	// Update the project with the score
-	err = database.UpdateAfterSeen(db, judge, judgedProject)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error storing scores in database: " + err.Error()})
-		return
-	}
-
-	// Reset list of skipped projects due to busy status
-	err = database.ResetBusyProjectListForJudge(db, judge)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": "error resetting busy project list in database: " + err.Error(),
-		})
-	}
-
-	// "Remove" busy status from current project so that other judges can come back to that project
-	err = database.ResetBusyStatusByProject(db, project)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": "error resetting busy project status in database: " + err.Error(),
-		})
 	}
 
 	// Send OK

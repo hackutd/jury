@@ -32,6 +32,7 @@ interface Judge {
     notes: string;
     read_welcome: boolean;
     seen: number;
+    group_seen: number;
     seen_projects: JudgedProject[];
     rankings: string[];
     active: boolean;

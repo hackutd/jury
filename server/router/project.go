@@ -289,7 +289,7 @@ func GetProject(ctx *gin.Context) {
 	}
 
 	// Get the project from the database
-	project, err := database.FindProjectById(db, &projectObjectId)
+	project, err := database.FindProjectById(db, ctx, &projectObjectId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project from database: " + err.Error()})
 		return

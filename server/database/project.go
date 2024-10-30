@@ -141,9 +141,9 @@ func FindBusyProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*primitiv
 }
 
 // FindProjectById returns a project from the database by id
-func FindProjectById(db *mongo.Database, id *primitive.ObjectID) (*models.Project, error) {
+func FindProjectById(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) (*models.Project, error) {
 	var project models.Project
-	err := db.Collection("projects").FindOne(context.Background(), gin.H{"_id": id}).Decode(&project)
+	err := db.Collection("projects").FindOne(ctx, gin.H{"_id": id}).Decode(&project)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	}
@@ -214,4 +214,10 @@ func UpdateProjects(db *mongo.Database, projects []*models.Project) error {
 func DecrementProjectSeenCount(db *mongo.Database, ctx context.Context, project *models.Project) error {
 	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": project.Id}, gin.H{"$inc": gin.H{"seen": -1}})
 	return err
+}
+
+// GetNumProjectsInGroup returns the number of projects in a group
+// TODO: Can we pre-aggregate this value?
+func GetNumProjectsInGroup(db *mongo.Database, ctx context.Context, group int64) (int64, error) {
+	return db.Collection("projects").CountDocuments(ctx, gin.H{"group": group})
 }

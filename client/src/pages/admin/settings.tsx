@@ -599,7 +599,12 @@ const AdminSettings = () => {
                                         <Description>
                                             Set the proportion of projects judges will view before
                                             switching groups. This should be a decimal between 0 and
-                                            1.
+                                            1. All numbers will be rounded up, with a minimum of 1
+                                            view per group. Note that too low of values may cause
+                                            judges to experience a marathon, especially if your
+                                            rooms/groups are far apart. However, too high of values
+                                            may bias the aggregated ranking results if judges do not
+                                            visit enough different groups.
                                         </Description>
                                         <div className="flex flex-row">
                                             <RawTextInput

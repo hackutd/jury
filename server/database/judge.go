@@ -149,7 +149,7 @@ func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
 }
 
 // UpdateAfterSeen updates the judge's seen projects and increments the seen count
-func UpdateAfterSeen(db *mongo.Database, judge *models.Judge, seenProject *models.JudgedProject) error {
+func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judge, seenProject *models.JudgedProject) error {
 	// Update the judge's seen projects
 	_, err := db.Collection("judges").UpdateOne(
 		context.Background(),
@@ -157,7 +157,7 @@ func UpdateAfterSeen(db *mongo.Database, judge *models.Judge, seenProject *model
 		gin.H{
 			"$push": gin.H{"seen_projects": seenProject},
 			"$inc":  gin.H{"seen": 1},
-			"$set":  gin.H{"current": nil, "last_activity": util.Now()},
+			"$set":  gin.H{"current": nil, "group": judge.Group, "group_seen": judge.GroupSeen, "last_activity": util.Now()},
 		},
 	)
 	return err
@@ -200,9 +200,10 @@ func UpdateJudgeSeenProjects(db *mongo.Database, judge *models.Judge) error {
 }
 
 // Reset list of projects that judge skipped due to busy
-func ResetBusyProjectListForJudge(db *mongo.Database, judge *models.Judge) error {
-	_, err := db.Collection("flags").DeleteMany(context.Background(), gin.H{
+func ResetBusyProjectListForJudge(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
+	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{
 		"judge_id": judge.Id,
+		"reason":   "busy",
 	})
 	if err != nil {
 		return err
@@ -211,8 +212,8 @@ func ResetBusyProjectListForJudge(db *mongo.Database, judge *models.Judge) error
 }
 
 // Reset project status to non-busy by deleting all "busy" flag for a project
-func ResetBusyStatusByProject(db *mongo.Database, project *models.Project) error {
-	_, err := db.Collection("flags").DeleteMany(context.Background(), gin.H{
+func ResetBusyStatusByProject(db *mongo.Database, ctx context.Context, project *models.Project) error {
+	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{
 		"project_id": project.Id,
 		"reason":     "busy",
 	})
