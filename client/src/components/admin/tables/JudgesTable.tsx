@@ -14,6 +14,7 @@ const JudgesTable = () => {
         ascending: true,
     });
     const options = useOptionsStore((state) => state.options);
+    const selectedTrack = useOptionsStore((state) => state.selectedTrack);
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
         setChecked({
@@ -57,6 +58,15 @@ const JudgesTable = () => {
     useEffect(() => {
         setChecked(Array(unsortedJudges.length).fill(false));
 
+        // Filter by track
+        const filteredJudges = options.judge_tracks
+            ? unsortedJudges.filter(
+                  (j) =>
+                      j.track === selectedTrack ||
+                      (j.track === '' && selectedTrack === 'Main Judging')
+              )
+            : unsortedJudges;
+
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let sortFunc = (a: Judge, b: Judge) => 0;
         const asc = sortState.ascending ? 1 : -1;
@@ -66,6 +76,9 @@ const JudgesTable = () => {
                 break;
             case JudgeSortField.Code:
                 sortFunc = (a, b) => a.code.localeCompare(b.code) * asc;
+                break;
+            case JudgeSortField.Track:
+                sortFunc = (a, b) => a.track.localeCompare(b.track) * asc;
                 break;
             case JudgeSortField.Group:
                 sortFunc = (a, b) => (a.group - b.group) * asc;
@@ -80,8 +93,8 @@ const JudgesTable = () => {
                 sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
-        setJudges(unsortedJudges.sort(sortFunc));
-    }, [unsortedJudges, sortState]);
+        setJudges(filteredJudges.sort(sortFunc));
+    }, [unsortedJudges, sortState, selectedTrack]);
 
     return (
         <div className="w-full px-8 pb-4">
@@ -102,6 +115,14 @@ const JudgesTable = () => {
                             sortField={JudgeSortField.Code}
                             sortState={sortState}
                         />
+                        {options.judge_tracks && (
+                            <HeaderEntry
+                                name="Track"
+                                updateSort={updateSort}
+                                sortField={JudgeSortField.Track}
+                                sortState={sortState}
+                            />
+                        )}
                         {options.multi_group && (
                             <HeaderEntry
                                 name="Group"

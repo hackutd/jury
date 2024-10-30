@@ -29,6 +29,7 @@ interface Judge {
     name: string;
     code: string;
     email: string;
+    track: string;
     notes: string;
     read_welcome: boolean;
     seen: number;
@@ -118,6 +119,8 @@ interface Options {
     categories: string[];
     min_views: number;
     clock_sync: boolean;
+    judge_tracks: boolean;
+    tracks: string[];
     multi_group: boolean;
     num_groups: number;
     group_sizes: number[];

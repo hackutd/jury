@@ -9,7 +9,6 @@ import (
 	"server/ranking"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -54,7 +53,26 @@ func GetAdminStats(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Aggregate the stats
-	stats, err := database.AggregateStats(db)
+	stats, err := database.AggregateStats(db, "")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating stats: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, stats)
+}
+
+// GET /admin/stats/:track - GetAdminStats returns stats about the system
+func GetAdminTrackStats(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Aggregate the stats
+	stats, err := database.AggregateStats(db, track)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating stats: " + err.Error()})
 		return
@@ -452,34 +470,95 @@ func GetScores(ctx *gin.Context) {
 		return
 	}
 
-	// Create judge ranking objects
-	// Create an array of {Rankings: [], Unranked: []}
-	judgeRankings := make([]ranking.JudgeRanking, 0)
-	for _, judge := range judges {
-		unranked := make([]primitive.ObjectID, 0)
-		for _, proj := range judge.SeenProjects {
-			if !contains(judge.Rankings, proj.ProjectId) {
-				unranked = append(unranked, proj.ProjectId)
-			}
-		}
-
-		judgeRankings = append(judgeRankings, ranking.JudgeRanking{
-			Rankings: judge.Rankings,
-			Unranked: unranked,
-		})
-	}
-
-	// Map all projects to their object IDs
-	projectIds := make([]primitive.ObjectID, 0)
-	for _, proj := range projects {
-		projectIds = append(projectIds, proj.Id)
-	}
-
-	// Calculate the scores
-	scores := ranking.CalcBordaRanking(judgeRankings, projectIds)
+	scores := ranking.CalculateScores(judges, projects)
 
 	// Send OK
 	ctx.JSON(http.StatusOK, scores)
+}
+
+// /GET /admin/score/<track> - GetTrackScores returns the calculated scores of all projects in a track
+func GetTrackScores(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Get all the projects
+	projects, err := database.FindProjectsByTrack(db, ctx, track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
+		return
+	}
+
+	// Get all the judges
+	judges, err := database.FindJudgesByTrack(db, ctx, track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
+		return
+	}
+
+	scores := ranking.CalculateScores(judges, projects)
+
+	// Send OK
+	ctx.JSON(http.StatusOK, scores)
+
+}
+
+type ToggleTracksRequest struct {
+	JudgeTracks bool `json:"judge_tracks"`
+}
+
+// POST /admin/tracks/toggle - Toggles the track setting
+func ToggleTracks(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the request
+	var req ToggleTracksRequest
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Save the options in the database
+	err = database.UpdateJudgeTracks(db, ctx, req.JudgeTracks)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+type SetTracksRequest struct {
+	Tracks []string `json:"tracks"`
+}
+
+// POST /admin/tracks - SetTracks sets the tracks
+func SetTracks(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the tracks
+	var tracksReq SetTracksRequest
+	err := ctx.BindJSON(&tracksReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Save the tracks in the database
+	err = database.UpdateTracks(db, ctx, tracksReq.Tracks)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving tracks: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 type ToggleGroupsRequest struct {
@@ -593,14 +672,4 @@ func SwapJudgeGroups(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// contains checks if a string is in a list of strings
-func contains(list []primitive.ObjectID, str primitive.ObjectID) bool {
-	for _, s := range list {
-		if s == str {
-			return true
-		}
-	}
-	return false
 }

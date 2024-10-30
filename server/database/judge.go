@@ -56,6 +56,19 @@ func FindJudgeByCode(db *mongo.Database, code string) (*models.Judge, error) {
 	return &judge, err
 }
 
+func FindJudgesByTrack(db *mongo.Database, ctx context.Context, track string) ([]*models.Judge, error) {
+	judges := make([]*models.Judge, 0)
+	cursor, err := db.Collection("judges").Find(ctx, gin.H{"track": track})
+	if err != nil {
+		return nil, err
+	}
+	err = cursor.All(ctx, &judges)
+	if err != nil {
+		return nil, err
+	}
+	return judges, nil
+}
+
 // UpdateJudge updates a judge in the database
 func UpdateJudge(db *mongo.Database, judge *models.Judge, ctx context.Context) error {
 	judge.LastActivity = util.Now()
@@ -223,13 +236,16 @@ func ResetBusyStatusByProject(db *mongo.Database, ctx context.Context, project *
 	return nil
 }
 
-func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
-	cursor, err := db.Collection("judges").Aggregate(context.Background(), []gin.H{
-		{"$group": gin.H{
-			"_id":   "$group",
-			"count": gin.H{"$sum": 1},
-		}},
-	})
+func GetMinJudgeGroup(db *mongo.Database, track string) (int64, error) {
+	pipe := []gin.H{{"$group": gin.H{
+		"_id":   "$group",
+		"count": gin.H{"$sum": 1},
+	}}}
+	if track != "" {
+		pipe = append([]gin.H{{"$match": gin.H{"track": track}}}, pipe...)
+	}
+
+	cursor, err := db.Collection("judges").Aggregate(context.Background(), pipe)
 	if err != nil {
 		return -1, err
 	}

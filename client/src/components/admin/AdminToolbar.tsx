@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '../Button';
 import FlagsPopup from './FlagsPopup';
+import Dropdown from '../Dropdown';
+import { useAdminStore, useOptionsStore } from '../../store';
 
 const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
     const [showFlags, setShowFlags] = useState(false);
+    const options = useOptionsStore((state) => state.options);
+    const selectedTrack = useOptionsStore((state) => state.selectedTrack);
+    const setSelectedTrack = useOptionsStore((state) => state.setSelectedTrack);
+    const fetchStats = useAdminStore((state) => state.fetchStats);
 
     // Convert date to string
     const dateToString = (date: Date) => {
@@ -18,35 +24,45 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
         });
     };
 
+    // Fetch stats when track changes
+    useEffect(() => {
+        fetchStats();
+    }, [selectedTrack]);
+
     return (
         <>
             <div className="flex flex-row px-8 py-4">
-                <div>
+                <Button
+                    type="outline"
+                    bold
+                    small
+                    className="py-2 px-4 rounded-md"
+                    href={props.showProjects ? '/admin/add-projects' : '/admin/add-judges'}
+                >
+                    Add {props.showProjects ? 'Projects' : 'Judges'}
+                </Button>
+                {props.showProjects && (
                     <Button
                         type="outline"
                         bold
-                        full
-                        className="py-2 px-4 rounded-md"
-                        href={props.showProjects ? '/admin/add-projects' : '/admin/add-judges'}
+                        small
+                        className="py-2 px-4 rounded-md ml-4"
+                        onClick={() => {
+                            setShowFlags(true);
+                        }}
                     >
-                        Add {props.showProjects ? 'Projects' : 'Judges'}
+                        See All Flags
                     </Button>
-                </div>
-                <div className="ml-4">
-                    {props.showProjects && (
-                        <Button
-                            type="outline"
-                            bold
-                            full
-                            className="py-2 px-4 rounded-md"
-                            onClick={() => {
-                                setShowFlags(true);
-                            }}
-                        >
-                            See All Flags
-                        </Button>
-                    )}
-                </div>
+                )}
+                {options && options.judge_tracks && (
+                    <Dropdown
+                        options={['Main Judging', ...options.tracks]}
+                        selected={selectedTrack}
+                        setSelected={setSelectedTrack}
+                        className="ml-4"
+                    />
+                )}
+
                 <p className="grow self-end text-right text-lighter">
                     Last Update: {dateToString(props.lastUpdate)}
                 </p>

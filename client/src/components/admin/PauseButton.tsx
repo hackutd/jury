@@ -30,13 +30,19 @@ const PauseButton = () => {
             type="outline-primary"
             bold
             small
-            className="w-56 ml-4"
+            className="w-56 ml-4 py-2"
             onClick={() => handleClick(true)}
         >
             Pause Judging
         </Button>
     ) : (
-        <Button type="primary" bold small className="w-56 ml-4" onClick={() => handleClick(false)}>
+        <Button
+            type="primary"
+            bold
+            small
+            className="w-56 ml-4 py-2"
+            onClick={() => handleClick(false)}
+        >
             {resumeText} Judging
         </Button>
     );

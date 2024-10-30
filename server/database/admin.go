@@ -8,29 +8,27 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type AvgSeenAgg struct {
+type StatsAgg struct {
 	AvgSeen float64 `bson:"avgSeen"`
+	Count   int64   `bson:"count"`
 }
 
 // AggregateStats aggregates all stats from the database.
-func AggregateStats(db *mongo.Database) (*models.Stats, error) {
-	// Get the total number of projects and judges
-	totalProjects, err := db.Collection("projects").EstimatedDocumentCount(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	totalJudges, err := db.Collection("judges").EstimatedDocumentCount(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
+func AggregateStats(db *mongo.Database, track string) (*models.Stats, error) {
 	// Get the average project seen using an aggregation pipeline
+	matchObj := gin.H{"active": true}
+	if track != "" {
+		matchObj["challenge_list"] = track
+	}
 	projCursor, err := db.Collection("projects").Aggregate(context.Background(), []gin.H{
-		{"$match": gin.H{"active": true}},
+		{"$match": matchObj},
 		{"$group": gin.H{
 			"_id": nil,
 			"avgSeen": gin.H{
 				"$avg": "$seen",
+			},
+			"count": gin.H{
+				"$sum": 1,
 			},
 		}},
 	})
@@ -39,25 +37,32 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 	}
 
 	// Get the first document from the cursor
-	var projAvgSeen AvgSeenAgg
+	var projStatAgg StatsAgg
 	projCursor.Next(context.Background())
-	err = projCursor.Decode(&projAvgSeen)
+	err = projCursor.Decode(&projStatAgg)
 	if err != nil {
 		// This means no documents were found
 		if err.Error() == "EOF" {
-			projAvgSeen = AvgSeenAgg{AvgSeen: 0}
+			projStatAgg = StatsAgg{AvgSeen: 0, Count: 0}
 		} else {
 			return nil, err
 		}
 	}
 
 	// Get the average judge seen using an aggregation pipeline
+	matchObj = gin.H{"active": true, "track": ""}
+	if track != "" {
+		matchObj["track"] = track
+	}
 	judgeCursor, err := db.Collection("judges").Aggregate(context.Background(), []gin.H{
-		{"$match": gin.H{"active": true}},
+		{"$match": matchObj},
 		{"$group": gin.H{
 			"_id": nil,
 			"avgSeen": gin.H{
 				"$avg": "$seen",
+			},
+			"count": gin.H{
+				"$sum": 1,
 			},
 		}},
 	})
@@ -66,12 +71,12 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 	}
 
 	// Get the first document from the cursor
-	var judgeAvgSeen AvgSeenAgg
+	var judgeStatAgg StatsAgg
 	judgeCursor.Next(context.Background())
-	err = judgeCursor.Decode(&judgeAvgSeen)
+	err = judgeCursor.Decode(&judgeStatAgg)
 	if err != nil {
 		if err.Error() == "EOF" {
-			judgeAvgSeen = AvgSeenAgg{AvgSeen: 0}
+			judgeStatAgg = StatsAgg{AvgSeen: 0, Count: 0}
 		} else {
 			return nil, err
 		}
@@ -81,10 +86,16 @@ func AggregateStats(db *mongo.Database) (*models.Stats, error) {
 	var stats models.Stats
 
 	// Set stats from aggregations
-	stats.Projects = totalProjects
-	stats.Judges = totalJudges
-	stats.AvgProjectSeen = projAvgSeen.AvgSeen
-	stats.AvgJudgeSeen = judgeAvgSeen.AvgSeen
+	// stats.Projects = totalProjects
+	// stats.Judges = totalJudges
+	stats.AvgProjectSeen = projStatAgg.AvgSeen
+	stats.AvgJudgeSeen = judgeStatAgg.AvgSeen
+
+	// Get count if track
+	// if track != "" {
+	stats.Projects = projStatAgg.Count
+	stats.Judges = judgeStatAgg.Count
+	// }
 
 	return &stats, nil
 }
@@ -112,7 +123,6 @@ func UpdateCategories(db *mongo.Database, categories []string) error {
 // UpdateMinViews will update the min views setting
 func UpdateMinViews(db *mongo.Database, minViews int) error {
 	// Update the min views
-	println(minViews)
 	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"min_views": minViews}})
 	return err
 }

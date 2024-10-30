@@ -47,14 +47,14 @@ func AddJudge(ctx *gin.Context) {
 	}
 
 	// Determine group judge should go in
-	group, err := database.GetMinJudgeGroup(db)
+	group, err := database.GetMinJudgeGroup(db, judgeReq.Track)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
 		return
 	}
 
 	// Create the judge
-	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes, group)
+	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Track, judgeReq.Notes, group)
 
 	// Send email if no_send is false
 	if !judgeReq.NoSend {
@@ -321,8 +321,14 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
-	// Get the comparisons from the context
-	comps := ctx.MustGet("comps").(*judging.Comparisons)
+	// Get the comparisons object
+	var comps *judging.Comparisons
+	if judge.Track == "" {
+		comps = ctx.MustGet("comps").(*judging.Comparisons)
+	} else {
+		trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
+		comps = trackComps[judge.Track]
+	}
 
 	// If the judge already has a next project, return that project
 	if judge.Current != nil {
@@ -430,7 +436,13 @@ func JudgeSkip(ctx *gin.Context) {
 	judge := ctx.MustGet("judge").(*models.Judge)
 
 	// Get the comparisons object
-	comps := ctx.MustGet("comps").(*judging.Comparisons)
+	var comps *judging.Comparisons
+	if judge.Track == "" {
+		comps = ctx.MustGet("comps").(*judging.Comparisons)
+	} else {
+		trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
+		comps = trackComps[judge.Track]
+	}
 
 	// Get the skip reason from the request
 	var skipReq SkipRequest

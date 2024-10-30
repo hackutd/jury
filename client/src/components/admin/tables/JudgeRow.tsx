@@ -56,7 +56,11 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
     };
 
     const hideJudge = async () => {
-        const res = await postRequest<OkResponse>(judge.active ? '/judge/hide' : '/judge/unhide', 'admin', { id: judge.id });
+        const res = await postRequest<OkResponse>(
+            judge.active ? '/judge/hide' : '/judge/unhide',
+            'admin',
+            { id: judge.id }
+        );
         if (res.status === 200) {
             alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
             fetchJudges();
@@ -69,11 +73,11 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
         if (judge.rankings.length === 0) {
             return 'N/A';
         }
-        
+
         const best = judge.rankings[0];
         const bestName = judge.seen_projects.find((p) => p.project_id === best)?.name;
         return bestName ? bestName : best;
-    }
+    };
 
     return (
         <>
@@ -96,6 +100,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 </td>
                 <td>{judge.name}</td>
                 <td className="text-center">{judge.code}</td>
+                {options.judge_tracks && <td className="text-center">{judge.track}</td>}
                 {options.multi_group && <td className="text-center">{judge.group}</td>}
                 <td className="text-center">{judge.seen}</td>
                 <td className="text-center">{getBestRanked(judge)}</td>

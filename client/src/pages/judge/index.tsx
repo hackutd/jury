@@ -122,8 +122,13 @@ const Judge = () => {
 
     // Lets the user take a break
     const takeBreak = async () => {
+        if (!judge) {
+            alert('You are not logged in!');
+            return;
+        }
+
         // Check if the user is allowed to take a break
-        if (judge?.current == null) {
+        if (judge.current == null) {
             alert('You are already taking a break!');
             return;
         }
@@ -234,11 +239,16 @@ const Judge = () => {
         }
     };
 
+    if (!judge) return <Loading disabled={!judge} />;
+
     return (
         <>
             <JuryHeader withLogout />
             <Container noCenter className="px-2 pb-4">
-                <h1 className="text-2xl my-2">Welcome, {judge?.name}!</h1>
+                <h1 className="text-2xl mt-2">Welcome, {judge.name}!</h1>
+                {judge.track !== '' && (
+                    <p className="text-lighter font-bold mb-2">Track: {judge.track}</p>
+                )}
                 <div className="w-full mb-6">
                     <Button type="primary" full href="/judge/live">
                         Next Project
@@ -250,7 +260,7 @@ const Judge = () => {
                     </div>
                 </div>
                 <div className="flex justify-evenly">
-                    <StatBlock name="Seen" value={judge?.seen_projects.length as number} />
+                    <StatBlock name="Seen" value={judge.seen_projects.length as number} />
                     <StatBlock name="Total Projects" value={projCount} />
                 </div>
                 <DndContext

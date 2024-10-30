@@ -27,10 +27,17 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 		log.Fatalf("error loading projects from the database: %s\n", err.Error())
 	}
 
+	// Create track comparisons array
+	trackComps, err := judging.LoadTrackComparisons(db)
+	if err != nil {
+		log.Fatalf("error loading track comparisons from the database: %s\n", err.Error())
+	}
+
 	// Add shared variables to router
 	router.Use(useVar("db", db))
 	router.Use(useVar("clock", clock))
 	router.Use(useVar("comps", comps))
+	router.Use(useVar("trackComps", trackComps))
 
 	// CORS
 	router.Use(cors.New(cors.Config{
@@ -80,9 +87,11 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 
 	// Admin panel - stats/data
 	adminRouter.GET("/admin/stats", GetAdminStats)
+	adminRouter.GET("/admin/stats/:track", GetAdminTrackStats)
 	adminRouter.GET("/project/stats", ProjectStats)
 	adminRouter.GET("/judge/stats", JudgeStats)
 	adminRouter.GET("/admin/score", GetScores)
+	adminRouter.GET("/admin/score/:track", GetTrackScores)
 	adminRouter.GET("/admin/flags", GetFlags)
 
 	// Admin panel - clock
@@ -103,6 +112,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/categories", SetCategories)
 	adminRouter.POST("/admin/min-views", SetMinViews)
 	adminRouter.GET("/admin/options", GetOptions)
+	adminRouter.POST("/admin/tracks/toggle", ToggleTracks)
+	adminRouter.POST("/admin/tracks", SetTracks)
 	adminRouter.POST("/admin/groups/toggle", ToggleGroups)
 	adminRouter.POST("/admin/groups/num", SetNumGroups)
 	adminRouter.POST("/admin/groups/options", SetGroupOptions)

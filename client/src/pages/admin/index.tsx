@@ -95,7 +95,7 @@ const Admin = () => {
                     }}
                     small
                     bold
-                    className="ml-4"
+                    className="ml-4 py-2"
                 >
                     Settings
                 </Button>
@@ -114,7 +114,7 @@ const Admin = () => {
                                 tooltip="Groups can only be swapped when judging is paused"
                                 small
                                 bold
-                                className="mr-36"
+                                className="mr-36 py-2"
                             >
                                 Swap Judge Groups
                             </Button>

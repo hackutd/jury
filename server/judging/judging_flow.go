@@ -153,6 +153,11 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 		items[i], items[j] = items[j], items[i]
 	}
 
+	// If judging a track, ignore seen
+	if judge.Track != "" {
+		return comps.FindLeastCompared(items, judge.SeenProjects, judge.Track), nil
+	}
+
 	// Stable sort by the number of views
 	slices.SortStableFunc(items, func(a, b *models.Project) int {
 		return int(a.Seen - b.Seen)
@@ -165,7 +170,7 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 	}
 
 	// Otherwise, pick the project that has been compared to other projects the least
-	return comps.FindLeastCompared(items, judge.SeenProjects), nil
+	return comps.FindLeastCompared(items, judge.SeenProjects, ""), nil
 }
 
 // FindPreferredItems - List of projects to pick from for the judge.
@@ -173,6 +178,7 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 //  1. Ignore all projects that are inactive
 //  2. Filter out all projects that the judge has already seen
 //  3. Filter out all projects that the judge has flagged (except for busy projects)
+//  4. Filter out all projects that is not in the judge's track (if tracks are enabled and the user has a track)
 //  4. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
 //  5. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
 //  6. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
@@ -217,6 +223,17 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.Sessi
 		}
 	}
 	projects = filteredProjects
+
+	// Filter out all projects that are not in the judge's track
+	if options.JudgeTracks && judge.Track != "" {
+		var trackProjects []*models.Project
+		for _, proj := range projects {
+			if slices.Contains(proj.ChallengeList, judge.Track) {
+				trackProjects = append(trackProjects, proj)
+			}
+		}
+		projects = trackProjects
+	}
 
 	// If there are no projects, return an empty list
 	// This means that the judge has seen or skipped (except for busy reason) all projects
