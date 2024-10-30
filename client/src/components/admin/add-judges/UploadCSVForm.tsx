@@ -85,7 +85,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
     const displayText =
         props.format === 'project'
             ? 'name, description, url, "Try It" link, video link, and a comma separated challenge list (in quotes)'
-            : 'name, email, and notes';
+            : 'name, email, track (optional), and notes (optional)';
 
     return (
         <>
