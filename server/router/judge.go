@@ -47,7 +47,7 @@ func AddJudge(ctx *gin.Context) {
 	}
 
 	// Determine group judge should go in
-	group, err := database.GetMinJudgeGroup(db)
+	group, err := database.GetMinJudgeGroup(db, judgeReq.Track)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
 		return

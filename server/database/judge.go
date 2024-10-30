@@ -223,13 +223,16 @@ func ResetBusyStatusByProject(db *mongo.Database, ctx context.Context, project *
 	return nil
 }
 
-func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
-	cursor, err := db.Collection("judges").Aggregate(context.Background(), []gin.H{
-		{"$group": gin.H{
-			"_id":   "$group",
-			"count": gin.H{"$sum": 1},
-		}},
-	})
+func GetMinJudgeGroup(db *mongo.Database, track string) (int64, error) {
+	pipe := []gin.H{{"$group": gin.H{
+		"_id":   "$group",
+		"count": gin.H{"$sum": 1},
+	}}}
+	if track != "" {
+		pipe = append([]gin.H{{"$match": gin.H{"track": track}}}, pipe...)
+	}
+
+	cursor, err := db.Collection("judges").Aggregate(context.Background(), pipe)
 	if err != nil {
 		return -1, err
 	}
