@@ -3,7 +3,7 @@ import { errorAlert, showTopFive, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditJudgePopup from './EditJudgePopup';
 import { postRequest } from '../../../api';
-import { useAdminStore } from '../../../store';
+import { useAdminStore, useOptionsStore } from '../../../store';
 import { twMerge } from 'tailwind-merge';
 
 interface JudgeRowProps {
@@ -19,6 +19,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
+    const options = useOptionsStore((state) => state.options);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -95,7 +96,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 </td>
                 <td>{judge.name}</td>
                 <td className="text-center">{judge.code}</td>
-                <td className='text-center'>{judge.group}</td>
+                {options.multi_group && <td className="text-center">{judge.group}</td>}
                 <td className="text-center">{judge.seen}</td>
                 <td className="text-center">{getBestRanked(judge)}</td>
                 <td className="text-center">{timeSince(judge.last_activity)}</td>

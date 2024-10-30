@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { errorAlert, fixIfFloatDigits, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
-import { useAdminStore } from '../../../store';
+import { useAdminStore, useOptionsStore } from '../../../store';
 import { postRequest } from '../../../api';
 import FlagsPopup from '../FlagsPopup';
 import { twMerge } from 'tailwind-merge';
@@ -24,6 +24,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
+    const options = useOptionsStore((state) => state.options);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -129,7 +130,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
-                <td className="text-center">{project.group}</td>
+                {options.multi_group && <td className="text-center">{project.group}</td>}
                 <td className="text-center">{project.score}</td>
                 <td className="text-center">{project.seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>
@@ -169,7 +170,11 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                     </div>
                 </td>
             </tr>
-            <FlagsPopup enabled={flagPopup} setEnabled={setFlagPopup} projectID={flagPopupProjectId} />
+            <FlagsPopup
+                enabled={flagPopup}
+                setEnabled={setFlagPopup}
+                projectID={flagPopupProjectId}
+            />
             <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={project} />
             <EditProjectPopup enabled={editPopup} setEnabled={setEditPopup} project={project} />
         </>

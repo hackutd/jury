@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import ProjectRow from './ProjectRow';
-import { useAdminStore } from '../../../store';
+import { useAdminStore, useOptionsStore } from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { ProjectSortField } from '../../../enums';
 import { getRequest } from '../../../api';
@@ -16,6 +16,7 @@ const ProjectsTable = () => {
         field: ProjectSortField.None,
         ascending: true,
     });
+    const options = useOptionsStore((state) => state.options);
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
         setChecked({
@@ -134,12 +135,14 @@ const ProjectsTable = () => {
                             sortField={ProjectSortField.TableNumber}
                             sortState={sortState}
                         />
-                        <HeaderEntry
-                            name="Group"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Group}
-                            sortState={sortState}
-                        />
+                        {options.multi_group && (
+                            <HeaderEntry
+                                name="Group"
+                                updateSort={updateSort}
+                                sortField={ProjectSortField.Group}
+                                sortState={sortState}
+                            />
+                        )}
                         <HeaderEntry
                             name="Score"
                             updateSort={updateSort}
