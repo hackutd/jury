@@ -27,10 +27,17 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 		log.Fatalf("error loading projects from the database: %s\n", err.Error())
 	}
 
+	// Create track comparisons array
+	trackComps, err := judging.LoadTrackComparisons(db)
+	if err != nil {
+		log.Fatalf("error loading track comparisons from the database: %s\n", err.Error())
+	}
+
 	// Add shared variables to router
 	router.Use(useVar("db", db))
 	router.Use(useVar("clock", clock))
 	router.Use(useVar("comps", comps))
+	router.Use(useVar("trackComps", trackComps))
 
 	// CORS
 	router.Use(cors.New(cors.Config{

@@ -153,6 +153,11 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 		items[i], items[j] = items[j], items[i]
 	}
 
+	// If judging a track, ignore seen
+	if judge.Track != "" {
+		return comps.FindLeastCompared(items, judge.SeenProjects, judge.Track), nil
+	}
+
 	// Stable sort by the number of views
 	slices.SortStableFunc(items, func(a, b *models.Project) int {
 		return int(a.Seen - b.Seen)
@@ -165,7 +170,7 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 	}
 
 	// Otherwise, pick the project that has been compared to other projects the least
-	return comps.FindLeastCompared(items, judge.SeenProjects), nil
+	return comps.FindLeastCompared(items, judge.SeenProjects, ""), nil
 }
 
 // FindPreferredItems - List of projects to pick from for the judge.
@@ -223,7 +228,7 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.Sessi
 	if options.JudgeTracks && judge.Track != "" {
 		var trackProjects []*models.Project
 		for _, proj := range projects {
-			if slices.Contains(options.Tracks, judge.Track) {
+			if slices.Contains(proj.ChallengeList, judge.Track) {
 				trackProjects = append(trackProjects, proj)
 			}
 		}
