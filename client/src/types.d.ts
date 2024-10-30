@@ -29,6 +29,7 @@ interface Judge {
     name: string;
     code: string;
     email: string;
+    track: string;
     notes: string;
     read_welcome: boolean;
     seen: number;
