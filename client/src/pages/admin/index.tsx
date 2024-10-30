@@ -9,7 +9,7 @@ import { postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button';
-import { useAdminStore, useClockStore, useOptionsStore } from '../../store';
+import { useAdminStore, useClockStore, useFlagsStore, useOptionsStore } from '../../store';
 import PauseButton from '../../components/admin/PauseButton';
 import ConfirmPopup from '../../components/ConfirmPopup';
 
@@ -22,6 +22,7 @@ const Admin = () => {
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
     const options = useOptionsStore((state) => state.options);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
+    const fetchFlags = useFlagsStore((state) => state.fetchFlags);
 
     const [showProjects, setShowProjects] = useState(true);
     const [loading, setLoading] = useState(true);
@@ -47,6 +48,7 @@ const Admin = () => {
 
         checkLoggedIn();
         fetchOptions();
+        fetchFlags();
     }, []);
 
     useEffect(() => {
@@ -58,6 +60,7 @@ const Admin = () => {
             fetchProjects();
             fetchJudges();
             fetchOptions();
+            fetchFlags();
             setLastUpdate(new Date());
         }, 15000);
 

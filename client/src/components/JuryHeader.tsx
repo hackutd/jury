@@ -38,7 +38,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
             <a
                 href="/"
                 className={twMerge(
-                    'font-bold hover:text-primary duration-200 block max-w-fit',
+                    'font-bold hover:text-primary duration-200 block max-w-fit z-10',
                     props.isAdmin ? 'text-5xl' : 'text-4xl',
                     adminCenter
                 )}
@@ -47,7 +47,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
             </a>
             <div
                 className={twMerge(
-                    'font-bold text-primary',
+                    'font-bold text-primary z-10',
                     props.isAdmin && 'text-[1.5rem]',
                     adminCenter
                 )}

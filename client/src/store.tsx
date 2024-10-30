@@ -137,4 +137,22 @@ const useOptionsStore = create<OptionsStore>((set) => ({
     },
 }));
 
-export { useAdminStore, useClockStore, useOptionsStore };
+interface FlagsStore {
+    flags: Flag[];
+    fetchFlags: () => Promise<void>;
+}
+
+const useFlagsStore = create<FlagsStore>((set) => ({
+    flags: [],
+
+    fetchFlags: async () => {
+        const flagsRes = await getRequest<Flag[]>('/admin/flags', 'admin');
+        if (flagsRes.status !== 200) {
+            errorAlert(flagsRes);
+            return;
+        }
+        set({ flags: flagsRes.data as Flag[] });
+    },
+}));
+
+export { useAdminStore, useClockStore, useOptionsStore, useFlagsStore };

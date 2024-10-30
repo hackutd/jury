@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getRequest } from '../../api';
-import { errorAlert, timeSince } from '../../util';
+import { timeSince } from '../../util';
 import Popup from '../Popup';
+import { useFlagsStore } from '../../store';
 
 interface FlagsPopupProps {
     /* State variable for open/closed */
@@ -15,7 +15,7 @@ interface FlagsPopupProps {
 }
 
 const FlagsPopup = (props: FlagsPopupProps) => {
-    const [flags, setFlags] = useState<Flag[]>([]);
+    const flags = useFlagsStore((state) => state.flags);
     const [sortedFlags, setSortedFlags] = useState<Flag[]>([]);
     const [sortMethod, setSortMethod] = useState(3);
     const [displayedFlags, setDisplayedFlags] = useState<Flag[]>([]);
@@ -34,18 +34,6 @@ const FlagsPopup = (props: FlagsPopupProps) => {
 
         setDisplayedFlags(filteredFlags);
     }, [props.projectID, sortedFlags]);
-
-    useEffect(() => {
-        async function getFlags() {
-            const res = await getRequest<Flag[]>('/admin/flags', 'admin');
-            if (res.status !== 200) {
-                errorAlert(res);
-            }
-            setFlags(res.data as Flag[]);
-        }
-
-        getFlags();
-    }, []);
 
     useEffect(() => {
         switch (sortMethod) {
