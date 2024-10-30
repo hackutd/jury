@@ -57,14 +57,32 @@ func FindJudgeByCode(db *mongo.Database, code string) (*models.Judge, error) {
 }
 
 // UpdateJudge updates a judge in the database
-func UpdateJudge(db *mongo.Database, judge *models.Judge) error {
+func UpdateJudge(db *mongo.Database, judge *models.Judge, ctx context.Context) error {
 	judge.LastActivity = util.Now()
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": judge})
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": judge})
 	return err
 }
 
+// UpdateJudges updates multiple judges in the database
+func UpdateJudges(db *mongo.Database, sc, judges []*models.Judge) error {
+	return WithTransaction(db, func(sc mongo.SessionContext) error {
+		return UpdateJudgesWithTx(db, sc, judges)
+	})
+}
+
+// UpdateJudgesWithTx updates multiple judges in the database with a transaction
+func UpdateJudgesWithTx(db *mongo.Database, sc mongo.SessionContext, judges []*models.Judge) error {
+	for _, judge := range judges {
+		err := UpdateJudge(db, judge, sc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // FindAllJudges returns a list of all judges in the database
-func FindAllJudges(db *mongo.Database) ([]*models.Judge, error) {
+func FindAllJudges(db *mongo.Database, ctx context.Context) ([]*models.Judge, error) {
 	judges := make([]*models.Judge, 0)
 	cursor, err := db.Collection("judges").Find(context.Background(), gin.H{})
 	if err != nil {
@@ -131,7 +149,7 @@ func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
 }
 
 // UpdateAfterSeen updates the judge's seen projects and increments the seen count
-func UpdateAfterSeen(db *mongo.Database, judge *models.Judge, seenProject *models.JudgedProject) error {
+func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judge, seenProject *models.JudgedProject) error {
 	// Update the judge's seen projects
 	_, err := db.Collection("judges").UpdateOne(
 		context.Background(),
@@ -139,7 +157,7 @@ func UpdateAfterSeen(db *mongo.Database, judge *models.Judge, seenProject *model
 		gin.H{
 			"$push": gin.H{"seen_projects": seenProject},
 			"$inc":  gin.H{"seen": 1},
-			"$set":  gin.H{"current": nil, "last_activity": util.Now()},
+			"$set":  gin.H{"current": nil, "group": judge.Group, "group_seen": judge.GroupSeen, "last_activity": util.Now()},
 		},
 	)
 	return err
@@ -182,9 +200,10 @@ func UpdateJudgeSeenProjects(db *mongo.Database, judge *models.Judge) error {
 }
 
 // Reset list of projects that judge skipped due to busy
-func ResetBusyProjectListForJudge(db *mongo.Database, judge *models.Judge) error {
-	_, err := db.Collection("flags").DeleteMany(context.Background(), gin.H{
+func ResetBusyProjectListForJudge(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
+	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{
 		"judge_id": judge.Id,
+		"reason":   "busy",
 	})
 	if err != nil {
 		return err
@@ -193,8 +212,8 @@ func ResetBusyProjectListForJudge(db *mongo.Database, judge *models.Judge) error
 }
 
 // Reset project status to non-busy by deleting all "busy" flag for a project
-func ResetBusyStatusByProject(db *mongo.Database, project *models.Project) error {
-	_, err := db.Collection("flags").DeleteMany(context.Background(), gin.H{
+func ResetBusyStatusByProject(db *mongo.Database, ctx context.Context, project *models.Project) error {
+	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{
 		"project_id": project.Id,
 		"reason":     "busy",
 	})
@@ -202,4 +221,140 @@ func ResetBusyStatusByProject(db *mongo.Database, project *models.Project) error
 		return err
 	}
 	return nil
+}
+
+func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
+	cursor, err := db.Collection("judges").Aggregate(context.Background(), []gin.H{
+		{"$group": gin.H{
+			"_id":   "$group",
+			"count": gin.H{"$sum": 1},
+		}},
+	})
+	if err != nil {
+		return -1, err
+	}
+
+	groupCounts := make(map[int64]int64)
+	for cursor.Next(context.Background()) {
+		var result map[string]interface{}
+		err := cursor.Decode(&result)
+		if err != nil {
+			return -1, err
+		}
+		groupCounts[result["_id"].(int64)] = int64(result["count"].(int32))
+	}
+
+	// Sort by count in ascending order
+	minGroups := util.SortMapByValue(groupCounts)
+
+	// Get options
+	options, err := GetOptions(db, context.Background())
+	if err != nil {
+		return -1, err
+	}
+
+	// Find all groups that aren't in minGroups
+	group := int64(-1)
+	for i := int64(0); i < options.NumGroups; i++ {
+		if _, ok := groupCounts[i]; !ok {
+			group = i
+			break
+		}
+	}
+
+	// If there are no groups that aren't in minGroups, use the first group
+	if group == -1 {
+		group = minGroups[0]
+	}
+
+	return group, nil
+}
+
+// GetNextNJudgeGroups returns the next n groups to assign new judges to
+// The groups are chosen based on the current number of judges in each group,
+// with the goal to balance the number of judges in each group
+func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset bool) ([]int64, error) { // Get options
+	// Get options
+	options, err := GetOptions(db, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the current number of judges in each group
+	var groupCounts map[int64]int64
+	if reset {
+		// Simply set all group counts to 0
+		groupCounts = make(map[int64]int64, options.NumGroups)
+	} else {
+		groupCounts = make(map[int64]int64)
+		cursor, err := db.Collection("judges").Aggregate(ctx, []gin.H{
+			{"$group": gin.H{
+				"_id":   "$group",
+				"count": gin.H{"$sum": 1},
+			}},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		for cursor.Next(ctx) {
+			var result map[string]interface{}
+			err := cursor.Decode(&result)
+			if err != nil {
+				return nil, err
+			}
+			groupCounts[result["_id"].(int64)] = int64(result["count"].(int32))
+		}
+
+		// Find all groups that aren't in groups
+		for i := int64(0); i < options.NumGroups; i++ {
+			if _, ok := groupCounts[i]; !ok {
+				groupCounts[i] = 0
+			}
+		}
+	}
+
+	// Keep looping until we have enough groups
+	groupList := make([]int64, n)
+	for i := 0; i < n; i++ {
+		min := groupCounts[0]
+		minGroup := int64(0)
+		for group, count := range groupCounts {
+			if count < min {
+				min = count
+				minGroup = group
+			}
+		}
+		groupList[i] = minGroup
+		groupCounts[minGroup] -= 1
+	}
+
+	return groupList, nil
+}
+
+// PutJudgesInGroups assigns judges to groups
+func PutJudgesInGroups(db *mongo.Database) error {
+	return WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get all judges
+		judges, err := FindAllJudges(db, sc)
+		if err != nil {
+			return err
+		}
+
+		// Get the next n groups to assign judges to
+		groups, err := GetNextNJudgeGroups(db, sc, len(judges), true)
+		if err != nil {
+			return err
+		}
+
+		// Assign each judge to a group
+		for i, judge := range judges {
+			judge.Group = groups[i]
+			judge.GroupSeen = 0
+		}
+
+		// Update the judges in the database
+		err = UpdateJudgesWithTx(db, sc, judges)
+		return err
+	})
 }

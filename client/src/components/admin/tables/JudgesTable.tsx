@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAdminStore } from '../../../store';
+import { useAdminStore, useOptionsStore } from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { JudgeSortField } from '../../../enums';
 import JudgeRow from './JudgeRow';
@@ -13,6 +13,7 @@ const JudgesTable = () => {
         field: JudgeSortField.None,
         ascending: true,
     });
+    const options = useOptionsStore((state) => state.options);
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
         setChecked({
@@ -66,6 +67,9 @@ const JudgesTable = () => {
             case JudgeSortField.Code:
                 sortFunc = (a, b) => a.code.localeCompare(b.code) * asc;
                 break;
+            case JudgeSortField.Group:
+                sortFunc = (a, b) => (a.group - b.group) * asc;
+                break;
             case JudgeSortField.Seen:
                 sortFunc = (a, b) => (a.seen - b.seen) * asc;
                 break;
@@ -98,6 +102,14 @@ const JudgesTable = () => {
                             sortField={JudgeSortField.Code}
                             sortState={sortState}
                         />
+                        {options.multi_group && (
+                            <HeaderEntry
+                                name="Group"
+                                updateSort={updateSort}
+                                sortField={JudgeSortField.Group}
+                                sortState={sortState}
+                            />
+                        )}
                         <HeaderEntry
                             name="Seen"
                             updateSort={updateSort}

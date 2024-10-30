@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"log"
 	"server/database"
 	"server/judging"
@@ -67,6 +68,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/judge/list", ListJudges)
 	adminRouter.DELETE("/judge/:id", DeleteJudge)
 	adminRouter.PUT("/judge/:id", EditJudge)
+	adminRouter.POST("/admin/groups/swap", SwapJudgeGroups)
 
 	// Admin panel - projects
 	adminRouter.POST("/project/new", AddProject)
@@ -95,11 +97,15 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/clock/reset", ResetClock)
 	adminRouter.POST("/admin/reset", ResetDatabase)
 	adminRouter.POST("/project/reassign", ReassignProjectNums)
+	adminRouter.POST("/judge/reassign", ReassignJudgeGroups)
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.POST("/admin/timer", SetJudgingTimer)
 	adminRouter.POST("/admin/categories", SetCategories)
 	adminRouter.POST("/admin/min-views", SetMinViews)
 	adminRouter.GET("/admin/options", GetOptions)
+	adminRouter.POST("/admin/groups/toggle", ToggleGroups)
+	adminRouter.POST("/admin/groups/num", SetNumGroups)
+	adminRouter.POST("/admin/groups/options", SetGroupOptions)
 
 	// Admin panel - exports
 	adminRouter.GET("/admin/export/judges", ExportJudges)
@@ -164,7 +170,7 @@ func useVar(key string, v any) gin.HandlerFunc {
 // and on init will pause the clock
 func getClockFromDb(db *mongo.Database) *models.SafeClock {
 	// Get the clock state from the database
-	options, err := database.GetOptions(db)
+	options, err := database.GetOptions(db, context.Background())
 	if err != nil {
 		log.Fatalln("error getting options: " + err.Error())
 	}

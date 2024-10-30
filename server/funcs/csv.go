@@ -42,13 +42,16 @@ func ParseJudgeCSV(content string, hasHeader bool) ([]*models.Judge, error) {
 			return nil, err
 		}
 
-		// Make sure the record has 3 elements (name, email, notes)
-		if len(record) != 3 {
-			return nil, fmt.Errorf("record does not contain 3 elements: '%s'", strings.Join(record, ","))
+		// Make sure the record has 2-3 elements (name, email, notes [optional])
+		notes := ""
+		if len(record) >= 3 {
+			notes = record[2]
+		} else if len(record) < 2 {
+			return nil, fmt.Errorf("record does not contain 2-3 (name, email, notes [optional]) elements: '%s'", strings.Join(record, ","))
 		}
 
 		// Add judge to slice
-		judges = append(judges, models.NewJudge(record[0], record[1], record[2]))
+		judges = append(judges, models.NewJudge(record[0], record[1], notes, -1))
 	}
 
 	return judges, nil
@@ -64,7 +67,7 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 	}
 
 	// Get the options from the database
-	options, err := database.GetOptions(db)
+	options, err := database.GetOptions(db, context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -110,14 +113,14 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 		}
 
 		// Increment the table number
-		database.GetNextTableNum(options)
+		group, num := GetNextTableNum(db, options)
 
 		// Add project to slice
-		projects = append(projects, models.NewProject(record[0], options.CurrTableNum, record[1], record[2], tryLink, videoLink, challengeList))
+		projects = append(projects, models.NewProject(record[0], num, group, record[1], record[2], tryLink, videoLink, challengeList))
 	}
 
 	// Update the options table number in the database
-	err = database.UpdateCurrTableNum(db, context.Background(), options.CurrTableNum)
+	err = database.UpdateCurrTableNum(db, context.Background(), options)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +158,7 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 	r.Read()
 
 	// Get the options from the database
-	options, err := database.GetOptions(db)
+	options, err := database.GetOptions(db, context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -191,12 +194,13 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 		}
 
 		// Increment table number
-		database.GetNextTableNum(options)
+		group, num := GetNextTableNum(db, options)
 
 		// Add project to slice
 		projects = append(projects, models.NewProject(
 			record[0],
-			options.CurrTableNum,
+			num,
+			group,
 			record[6],
 			record[1],
 			record[7],
@@ -206,7 +210,7 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 	}
 
 	// Update the options table number in the database
-	err = database.UpdateCurrTableNum(db, context.Background(), options.CurrTableNum)
+	err = database.UpdateCurrTableNum(db, context.Background(), options)
 	if err != nil {
 		return nil, err
 	}

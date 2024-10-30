@@ -54,7 +54,6 @@ const AdminStatsPanel = () => {
 
     return (
         <div className="flex flex-row mt-8 w-full">
-            <PauseButton />
             <div className="flex justify-evenly basis-2/5">
                 <StatBlock name="Projects" value={stats.projects} />
                 <StatBlock name="Avg Project Seen" value={stats.avg_project_seen} />

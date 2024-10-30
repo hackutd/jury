@@ -98,4 +98,61 @@ const useClockStore = create<ClockStore>()((set) => ({
     }
 }));
 
-export { useAdminStore, useClockStore };
+interface OptionsStore {
+    options: Options;
+    fetchOptions: () => Promise<void>;
+}
+
+const useOptionsStore = create<OptionsStore>((set) => ({
+    options: {
+        curr_table_num: 0,
+        clock: {
+            time: 0,
+            running: false,
+        },
+        judging_timer: 0,
+        categories: [],
+        min_views: 0,
+        clock_sync: false,
+        multi_group: false,
+        num_groups: 0,
+        group_sizes: [],
+        group_table_nums: [],
+        main_group: {
+            switching_mode: '',
+            auto_switch_method: '',
+            auto_switch_count: 0,
+            auto_switch_prop: 0,
+            manual_switches: 0,
+        },
+    },
+
+    fetchOptions: async () => {
+        const optionsRes = await getRequest<Options>('/admin/options', 'admin');
+        if (optionsRes.status !== 200) {
+            errorAlert(optionsRes);
+            return;
+        }
+        set({ options: optionsRes.data as Options });
+    },
+}));
+
+interface FlagsStore {
+    flags: Flag[];
+    fetchFlags: () => Promise<void>;
+}
+
+const useFlagsStore = create<FlagsStore>((set) => ({
+    flags: [],
+
+    fetchFlags: async () => {
+        const flagsRes = await getRequest<Flag[]>('/admin/flags', 'admin');
+        if (flagsRes.status !== 200) {
+            errorAlert(flagsRes);
+            return;
+        }
+        set({ flags: flagsRes.data as Flag[] });
+    },
+}));
+
+export { useAdminStore, useClockStore, useOptionsStore, useFlagsStore };

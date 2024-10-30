@@ -31,18 +31,18 @@ func InsertProjects(db *mongo.Database, projects []*models.Project) error {
 
 // InsertProject inserts a project into the database
 func InsertProject(db *mongo.Database, ctx context.Context, project *models.Project) error {
-	_, err := db.Collection("projects").InsertOne(context.Background(), project)
+	_, err := db.Collection("projects").InsertOne(ctx, project)
 	return err
 }
 
 // FindAllProjects returns a list of all projects in the database
-func FindAllProjects(db *mongo.Database) ([]*models.Project, error) {
+func FindAllProjects(db *mongo.Database, ctx context.Context) ([]*models.Project, error) {
 	projects := make([]*models.Project, 0)
-	cursor, err := db.Collection("projects").Find(context.Background(), gin.H{})
+	cursor, err := db.Collection("projects").Find(ctx, gin.H{})
 	if err != nil {
 		return nil, err
 	}
-	err = cursor.All(context.Background(), &projects)
+	err = cursor.All(ctx, &projects)
 	if err != nil {
 		return nil, err
 	}
@@ -141,9 +141,9 @@ func FindBusyProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*primitiv
 }
 
 // FindProjectById returns a project from the database by id
-func FindProjectById(db *mongo.Database, id *primitive.ObjectID) (*models.Project, error) {
+func FindProjectById(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) (*models.Project, error) {
 	var project models.Project
-	err := db.Collection("projects").FindOne(context.Background(), gin.H{"_id": id}).Decode(&project)
+	err := db.Collection("projects").FindOne(ctx, gin.H{"_id": id}).Decode(&project)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	}
@@ -155,14 +155,14 @@ func FindProjectById(db *mongo.Database, id *primitive.ObjectID) (*models.Projec
 
 // UpdateAfterPicked updates the seen value of the new project picked and the judge's current project
 func UpdateAfterPicked(db *mongo.Database, project *models.Project, judge *models.Judge) error {
-	err := WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
+	err := WithTransaction(db, func(ctx mongo.SessionContext) error {
 		return UpdateAfterPickedWithTx(db, project, judge, ctx)
 	})
 	return err
 }
 
 // UpdateAfterPickedWithTx updates the seen value of the new project picked and the judge's current project
-func UpdateAfterPickedWithTx(db *mongo.Database, project *models.Project, judge *models.Judge, ctx mongo.SessionContext) (interface{}, error) {
+func UpdateAfterPickedWithTx(db *mongo.Database, project *models.Project, judge *models.Judge, ctx mongo.SessionContext) error {
 	// Update the project's seen value and de-prioritize it
 	_, err := db.Collection("projects").UpdateOne(
 		ctx,
@@ -170,7 +170,7 @@ func UpdateAfterPickedWithTx(db *mongo.Database, project *models.Project, judge 
 		gin.H{"$inc": gin.H{"seen": 1}, "$set": gin.H{"prioritized": false, "last_activity": util.Now()}},
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// Set the judge's current project
 	_, err = db.Collection("judges").UpdateOne(
@@ -178,7 +178,7 @@ func UpdateAfterPickedWithTx(db *mongo.Database, project *models.Project, judge 
 		gin.H{"_id": judge.Id},
 		gin.H{"$set": gin.H{"current": project.Id, "last_activity": util.Now()}},
 	)
-	return nil, err
+	return err
 }
 
 // CountProjectDocuments returns the number of documents in the projects collection
@@ -214,4 +214,10 @@ func UpdateProjects(db *mongo.Database, projects []*models.Project) error {
 func DecrementProjectSeenCount(db *mongo.Database, ctx context.Context, project *models.Project) error {
 	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": project.Id}, gin.H{"$inc": gin.H{"seen": -1}})
 	return err
+}
+
+// GetNumProjectsInGroup returns the number of projects in a group
+// TODO: Can we pre-aggregate this value?
+func GetNumProjectsInGroup(db *mongo.Database, ctx context.Context, group int64) (int64, error) {
+	return db.Collection("projects").CountDocuments(ctx, gin.H{"group": group})
 }

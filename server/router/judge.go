@@ -1,7 +1,7 @@
 package router
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -46,10 +46,15 @@ func AddJudge(ctx *gin.Context) {
 		return
 	}
 
-	// Create the judge
-	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes)
+	// Determine group judge should go in
+	group, err := database.GetMinJudgeGroup(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+		return
+	}
 
-	fmt.Println(judgeReq.NoSend)
+	// Create the judge
+	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes, group)
 
 	// Send email if no_send is false
 	if !judgeReq.NoSend {
@@ -118,7 +123,7 @@ func LoginJudge(ctx *gin.Context) {
 
 	// Update judge in database with new token
 	judge.Token = token
-	err = database.UpdateJudge(db, judge)
+	err = database.UpdateJudge(db, judge, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
@@ -192,6 +197,18 @@ func AddJudgesCsv(ctx *gin.Context) {
 		}
 	}
 
+	// Determine group numbers for the new judges
+	groups, err := database.GetNextNJudgeGroups(db, ctx, len(judges), false)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge groups: " + err.Error()})
+		return
+	}
+
+	// Assign group numbers to the new judges
+	for i, judge := range judges {
+		judge.Group = groups[i]
+	}
+
 	// Insert judges into the database
 	err = database.InsertJudges(db, judges)
 	if err != nil {
@@ -228,7 +245,7 @@ func SetJudgeReadWelcome(ctx *gin.Context) {
 	judge.ReadWelcome = true
 
 	// Update judge in database
-	err := database.UpdateJudge(db, judge)
+	err := database.UpdateJudge(db, judge, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
@@ -244,7 +261,7 @@ func ListJudges(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get judges from database
-	judges, err := database.FindAllJudges(db)
+	judges, err := database.FindAllJudges(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judges in database: " + err.Error()})
 		return
@@ -314,17 +331,14 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	}
 
 	// Otherwise, get the next project for the judge
-	// TODO: This wrapping is a little ridiculous...
-	var project *models.Project
-	err := database.WithTransaction(db, func(ctx mongo.SessionContext) (interface{}, error) {
-		var err error
-		project, err = judging.PickNextProject(db, judge, ctx, comps)
-		return nil, err
+	project_int, err := database.WithTransactionItem(db, func(sc mongo.SessionContext) (interface{}, error) {
+		return judging.PickNextProject(db, judge, sc, comps)
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 		return
 	}
+	project := project_int.(*models.Project)
 
 	// If there is no next project, return an empty object
 	if project == nil {
@@ -386,7 +400,7 @@ func GetJudgedProject(ctx *gin.Context) {
 	for _, p := range judge.SeenProjects {
 		if p.ProjectId.Hex() == projectId {
 			// Add URL to judged project
-			proj, err := database.FindProjectById(db, &p.ProjectId)
+			proj, err := database.FindProjectById(db, ctx, &p.ProjectId)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project url: " + err.Error()})
 				return
@@ -554,37 +568,55 @@ func JudgeScore(ctx *gin.Context) {
 		return
 	}
 
-	// Get the project from the database
-	project, err := database.FindProjectById(db, judge.Current)
+	// Wrap the database transaction
+	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get the options
+		options, err := database.GetOptions(db, sc)
+		if err != nil {
+			return errors.New("error getting options: " + err.Error())
+		}
+
+		// Get the project from the database
+		project, err := database.FindProjectById(db, sc, judge.Current)
+		if err != nil {
+			return errors.New("error finding project in database: " + err.Error())
+		}
+
+		// Create the judged project object
+		judgedProject := models.JudgeProjectFromProject(project, scoreReq.Categories)
+
+		// If groups are enabled, move the judge to the next group conditionally
+		if options.MultiGroup && options.MainGroup.SwitchingMode == "auto" {
+			err = judging.MoveJudgeGroup(db, sc, judge, options)
+			if err != nil {
+				return errors.New("error moving judge group: " + err.Error())
+			}
+		}
+
+		// Update the project with the score
+		err = database.UpdateAfterSeen(db, sc, judge, judgedProject)
+		if err != nil {
+			return errors.New("error storing scores in database: " + err.Error())
+		}
+
+		// Reset list of skipped projects due to busy status
+		err = database.ResetBusyProjectListForJudge(db, sc, judge)
+		if err != nil {
+			return errors.New("error resetting busy project list in database: " + err.Error())
+		}
+
+		// "Remove" busy status from current project so that other judges can come back to that project
+		// TODO: Do we have to do this?
+		err = database.ResetBusyStatusByProject(db, sc, project)
+		if err != nil {
+			return errors.New("error resetting busy project status in database: " + err.Error())
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding project in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
-
-	// Create the judged project object
-	judgedProject := models.JudgeProjectFromProject(project, scoreReq.Categories)
-
-	// Update the project with the score
-	err = database.UpdateAfterSeen(db, judge, judgedProject)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error storing scores in database: " + err.Error()})
-		return
-	}
-
-	// Reset list of skipped projects due to busy status
-	err = database.ResetBusyProjectListForJudge(db, judge)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": "error resetting busy project list in database: " + err.Error(),
-		})
-	}
-
-	// "Remove" busy status from current project so that other judges can come back to that project
-	err = database.ResetBusyStatusByProject(db, project)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": "error resetting busy project status in database: " + err.Error(),
-		})
 	}
 
 	// Send OK
@@ -767,6 +799,35 @@ func JudgeUpdateNotes(ctx *gin.Context) {
 	err = database.UpdateJudgeSeenProjects(db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /judge/reassign - Reassigns judge numbers to all judges
+func ReassignJudgeGroups(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get options from database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Don't do if not enabled
+	if !options.MultiGroup {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "multi-group not enabled"})
+		return
+	}
+
+	// Reassign judge groups
+	err = database.PutJudgesInGroups(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning judge groups: " + err.Error()})
 		return
 	}
 

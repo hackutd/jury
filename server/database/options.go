@@ -9,9 +9,9 @@ import (
 )
 
 // GetOptions gets the options from the database
-func GetOptions(db *mongo.Database) (*models.Options, error) {
+func GetOptions(db *mongo.Database, ctx context.Context) (*models.Options, error) {
 	var options models.Options
-	err := db.Collection("options").FindOne(context.Background(), gin.H{}).Decode(&options)
+	err := db.Collection("options").FindOne(ctx, gin.H{}).Decode(&options)
 
 	// If options does not exist, create it
 	if err == mongo.ErrNoDocuments {
@@ -31,8 +31,8 @@ func UpdateOptions(db *mongo.Database, options *models.Options) error {
 }
 
 // UpdateCurrTableNum updates the current table number in the database
-func UpdateCurrTableNum(db *mongo.Database, ctx context.Context, currTableNum int64) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"curr_table_num": currTableNum}})
+func UpdateCurrTableNum(db *mongo.Database, ctx context.Context, options *models.Options) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"curr_table_num": options.CurrTableNum, "group_table_nums": options.GroupTableNums}})
 	return err
 }
 
@@ -45,7 +45,7 @@ func UpdateClockSync(db *mongo.Database, ctx context.Context, clockSync bool) er
 // UpdateClockConditional updates the clock in the database if clock sync is enabled
 func UpdateClockConditional(db *mongo.Database, ctx context.Context, clock *models.ClockState) error {
 	// Get options
-	options, err := GetOptions(db)
+	options, err := GetOptions(db, ctx)
 	if err != nil {
 		return err
 	}
@@ -77,4 +77,61 @@ func GetMinViews(db *mongo.Database) (int64, error) {
 	var options models.Options
 	err := db.Collection("options").FindOne(context.Background(), gin.H{}).Decode(&options)
 	return options.MinViews, err
+}
+
+func UpdateMultiGroup(db *mongo.Database, ctx context.Context, multiGroup bool) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"multi_group": multiGroup}})
+	return err
+}
+
+func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) error {
+	// Get options
+	options, err := GetOptions(db, ctx)
+	if err != nil {
+		return err
+	}
+
+	// Resize group sizes if necessary
+	if numGroups < options.NumGroups {
+		options.GroupSizes = options.GroupSizes[:numGroups-1]
+	} else if numGroups > options.NumGroups {
+		for i := options.NumGroups; i < numGroups-1; i++ {
+			options.GroupSizes = append(options.GroupSizes, 30)
+		}
+	}
+
+	_, err = db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"num_groups": numGroups, "group_sizes": options.GroupSizes}})
+	return err
+}
+
+func UpdateGroupSizes(db *mongo.Database, ctx context.Context, groupSizes []int64) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"group_sizes": groupSizes}})
+	return err
+}
+
+// UpdateGroupOptions will update the group options based on the given options
+func UpdateGroupOptions(db *mongo.Database, ctx context.Context, groupOptions models.OptionalGroupOptions) error {
+	update := gin.H{}
+
+	if groupOptions.SwitchingMode != nil {
+		update["main_group.switching_mode"] = *groupOptions.SwitchingMode
+	}
+	if groupOptions.AutoSwitchMethod != nil {
+		update["main_group.auto_switch_method"] = *groupOptions.AutoSwitchMethod
+	}
+	if groupOptions.AutoSwitchCount != nil {
+		update["main_group.auto_switch_count"] = *groupOptions.AutoSwitchCount
+	}
+	if groupOptions.AutoSwitchProp != nil {
+		update["main_group.auto_switch_prop"] = *groupOptions.AutoSwitchProp
+	}
+
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
+	return err
+}
+
+// IncrementManualSwitches increments the manual switches in the database
+func IncrementManualSwitches(db *mongo.Database, ctx context.Context) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$inc": gin.H{"main_group.manual_switches": 1}})
+	return err
 }
