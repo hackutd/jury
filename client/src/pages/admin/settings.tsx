@@ -56,6 +56,8 @@ const AdminSettings = () => {
     const [autoSwitchCount, setAutoSwitchCount] = useState(3);
     const [autoSwitchProp, setAutoSwitchProp] = useState(0.1);
     const [groupSizes, setGroupSizes] = useState('30, 30');
+    const [judgeTracks, setJudgeTracks] = useState(false);
+    const [tracks, setTracks] = useState<string>('');
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
 
     async function getOptions() {
@@ -123,7 +125,7 @@ const AdminSettings = () => {
         }
         alert('Judges reassigned!');
         setJudgeReassignPopup(false);
-    }
+    };
 
     const updateTimer = async () => {
         // Convert judging timer to time
@@ -191,6 +193,37 @@ const AdminSettings = () => {
 
         alert('Categories updated!');
         getOptions();
+    };
+
+    const toggleJudgeTracks = async () => {
+        const res = await postRequest<OkResponse>('/admin/tracks/toggle', 'admin', {
+            judgeTracks: !judgeTracks,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        setJudgeTracks(!judgeTracks);
+        alert('Track judging toggled!');
+    };
+
+    const updateTracks = async () => {
+        // Split tracks by comma and remove empty strings
+        const filteredTracks = tracks
+            .split(',')
+            .map((track) => track.trim())
+            .filter((track) => track !== '');
+
+        const res = await postRequest<OkResponse>('/admin/tracks', 'admin', {
+            tracks: filteredTracks,
+        });
+        if (res.status !== 200 || !res.data) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Tracks updated!');
     };
 
     const toggleMultiGroup = async () => {
@@ -506,7 +539,42 @@ const AdminSettings = () => {
                     <SettingsButton onClick={updateTimer}>Update Timer</SettingsButton>
                 </div>
 
-                <Section>Multi-Group Judging</Section>
+                <Section>Multi-Group and Track Judging</Section>
+
+                <SubSection>Enable Track Judging</SubSection>
+                <Description>
+                    Enable judging for individual tracks. This allows judges to be assigned to a
+                    specific track and ONLY judge projects that have submitted to that track. This
+                    does not affect the main general judging, and all projects will still be
+                    considered for the main judging. However, if you have a different track (eg.
+                    design), this feature will allow that track's judges to only see projects that
+                    have submitted to that track. Note that toggling this option during judging{' '}
+                    <span className="font-bold">is very very bad</span>.
+                </Description>
+                <Checkbox checked={judgeTracks} onChange={toggleJudgeTracks}>
+                    Enable Track Judging
+                </Checkbox>
+
+                {judgeTracks && (
+                    <>
+                        <SubSection>Set Tracks</SubSection>
+                        <Description>
+                            Set the tracks that will be judged. Note this should match the name
+                            under the 'Opt-In Prizes' category. Only the tracks listed here will be
+                            judged! As with the previous setting, DO NOT CHANGE THIS DURING JUDGING.
+                        </Description>
+                        <RawTextInput
+                            name="tracks"
+                            text={tracks}
+                            setText={setTracks}
+                            placeholder="Track 1, Track 2, ..."
+                            large
+                            full
+                            className="my-2"
+                        />
+                        <SettingsButton onClick={updateTracks}>Update Tracks</SettingsButton>
+                    </>
+                )}
 
                 <SubSection>Enable Multiple Groups</SubSection>
                 <Description>

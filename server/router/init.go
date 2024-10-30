@@ -103,6 +103,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/categories", SetCategories)
 	adminRouter.POST("/admin/min-views", SetMinViews)
 	adminRouter.GET("/admin/options", GetOptions)
+	adminRouter.POST("/admin/tracks/toggle", ToggleTracks)
+	adminRouter.POST("/admin/tracks", SetTracks)
 	adminRouter.POST("/admin/groups/toggle", ToggleGroups)
 	adminRouter.POST("/admin/groups/num", SetNumGroups)
 	adminRouter.POST("/admin/groups/options", SetGroupOptions)

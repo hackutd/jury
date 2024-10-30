@@ -79,6 +79,16 @@ func GetMinViews(db *mongo.Database) (int64, error) {
 	return options.MinViews, err
 }
 
+func UpdateJudgeTracks(db *mongo.Database, ctx context.Context, judgeTracks bool) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"judge_tracks": judgeTracks}})
+	return err
+}
+
+func UpdateTracks(db *mongo.Database, ctx context.Context, tracks []string) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"tracks": tracks}})
+	return err
+}
+
 func UpdateMultiGroup(db *mongo.Database, ctx context.Context, multiGroup bool) error {
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"multi_group": multiGroup}})
 	return err

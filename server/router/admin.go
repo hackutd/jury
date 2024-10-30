@@ -482,6 +482,62 @@ func GetScores(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, scores)
 }
 
+type ToggleTracksRequest struct {
+	JudgeTracks bool `json:"judge_tracks"`
+}
+
+// POST /admin/tracks/toggle - Toggles the track setting
+func ToggleTracks(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the request
+	var req ToggleTracksRequest
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Save the options in the database
+	err = database.UpdateJudgeTracks(db, ctx, req.JudgeTracks)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+type SetTracksRequest struct {
+	Tracks []string `json:"tracks"`
+}
+
+// POST /admin/tracks - SetTracks sets the tracks
+func SetTracks(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the tracks
+	var tracksReq SetTracksRequest
+	err := ctx.BindJSON(&tracksReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Save the tracks in the database
+	err = database.UpdateTracks(db, ctx, tracksReq.Tracks)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving tracks: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
 type ToggleGroupsRequest struct {
 	MultiGroup bool `json:"multi_group"`
 }
