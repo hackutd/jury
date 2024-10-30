@@ -55,7 +55,7 @@ func CreateComparisons(projects []*models.Project, judges []*models.Judge) *Comp
 // LoadComparisons will create the comparisons from the database
 func LoadComparisons(db *mongo.Database) (*Comparisons, error) {
 	// Get all judges
-	judges, err := database.FindAllJudges(db)
+	judges, err := database.FindAllJudges(db, context.Background())
 	if err != nil {
 		return nil, err
 	}

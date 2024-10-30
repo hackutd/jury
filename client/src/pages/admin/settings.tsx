@@ -9,6 +9,7 @@ import Checkbox from '../../components/Checkbox';
 import RawTextInput from '../../components/RawTextInput';
 import SelectionButton from '../../components/SelectionButton';
 import { twMerge } from 'tailwind-merge';
+import { useOptionsStore } from '../../store';
 
 // Text components
 const Section = ({ children: c }: { children: React.ReactNode }) => (
@@ -54,6 +55,7 @@ const AdminSettings = () => {
     const [autoSwitchCount, setAutoSwitchCount] = useState(3);
     const [autoSwitchProp, setAutoSwitchProp] = useState(0.1);
     const [groupSizes, setGroupSizes] = useState('30, 30');
+    const fetchOptions = useOptionsStore((state) => state.fetchOptions);
 
     async function getOptions() {
         const res = await getRequest<Options>('/admin/options', 'admin');
@@ -222,6 +224,7 @@ const AdminSettings = () => {
             return;
         }
 
+        fetchOptions();
         alert('Switching method updated!');
     };
 

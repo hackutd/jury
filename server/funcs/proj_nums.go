@@ -127,3 +127,42 @@ func GetNextTableNum(db *mongo.Database, op *models.Options) (int64, int64) {
 		return 0, table
 	}
 }
+
+// IncrementJudgeGroupNum increments every single judges' group number.
+func IncrementJudgeGroupNum(db *mongo.Database) error {
+	err := database.WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get the options from the database
+		options, err := database.GetOptions(db, sc)
+		if err != nil {
+			return errors.New("error getting options from database: " + err.Error())
+		}
+
+		// Get the judges from the database
+		judges, err := database.FindAllJudges(db, sc)
+		if err != nil {
+			return errors.New("error getting judges from database: " + err.Error())
+		}
+
+		// Increment the group number for each judge
+		for _, judge := range judges {
+			judge.Group = (judge.Group + 1) % options.NumGroups
+		}
+
+		// Update all judges in the database
+		// TODO: Can we write a function that will only update that field instead of have to pass ALL the judge data to the db :(
+		err = database.UpdateJudgesWithTx(db, sc, judges)
+		if err != nil {
+			return errors.New("error updating judges in database: " + err.Error())
+		}
+
+		// Increment the manual switch count in the database
+		err = database.IncrementManualSwitches(db, sc)
+		if err != nil {
+			return errors.New("error incrementing manual switches in database: " + err.Error())
+		}
+
+		return nil
+	})
+
+	return err
+}

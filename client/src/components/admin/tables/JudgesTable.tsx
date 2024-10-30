@@ -66,6 +66,9 @@ const JudgesTable = () => {
             case JudgeSortField.Code:
                 sortFunc = (a, b) => a.code.localeCompare(b.code) * asc;
                 break;
+            case JudgeSortField.Group:
+                sortFunc = (a, b) => (a.group - b.group) * asc;
+                break;
             case JudgeSortField.Seen:
                 sortFunc = (a, b) => (a.seen - b.seen) * asc;
                 break;
@@ -96,6 +99,12 @@ const JudgesTable = () => {
                             name="Code"
                             updateSort={updateSort}
                             sortField={JudgeSortField.Code}
+                            sortState={sortState}
+                        />
+                        <HeaderEntry
+                            name="Group"
+                            updateSort={updateSort}
+                            sortField={JudgeSortField.Group}
                             sortState={sortState}
                         />
                         <HeaderEntry

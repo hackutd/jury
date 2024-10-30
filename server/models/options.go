@@ -23,6 +23,7 @@ type GroupSwitchOps struct {
 	AutoSwitchMethod string  `bson:"auto_switch_method" json:"auto_switch_method"` // "count" or "proportion"
 	AutoSwitchCount  int64   `bson:"auto_switch_count" json:"auto_switch_count"`   // Number of projects to view in each group
 	AutoSwitchProp   float64 `bson:"auto_switch_prop" json:"auto_switch_prop"`     // Proportion of projects to view in each group
+	ManualSwitches   int64   `bson:"manual_switches" json:"manual_switches"`       // Number of manual switches that have happened
 }
 
 func NewOptions() *Options {
@@ -48,6 +49,7 @@ func NewGroupOptions() *GroupSwitchOps {
 		AutoSwitchMethod: "count",
 		AutoSwitchCount:  3,
 		AutoSwitchProp:   0.1,
+		ManualSwitches:   0,
 	}
 }
 

@@ -250,7 +250,7 @@ func ExportJudges(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get all the judges
-	judges, err := database.FindAllJudges(db)
+	judges, err := database.FindAllJudges(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
 		return
@@ -312,7 +312,7 @@ func ExportRankings(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get all the judges
-	judges, err := database.FindAllJudges(db)
+	judges, err := database.FindAllJudges(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
 		return
@@ -446,7 +446,7 @@ func GetScores(ctx *gin.Context) {
 	}
 
 	// Get all the judges
-	judges, err := database.FindAllJudges(db)
+	judges, err := database.FindAllJudges(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
 		return
@@ -572,6 +572,22 @@ func SetGroupOptions(ctx *gin.Context) {
 	err = database.UpdateGroupOptions(db, ctx, req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /admin/groups/swap - SwapJudgeGroups increments the group numbers of all judges
+func SwapJudgeGroups(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Swap the groups (increment the group number of each judge)
+	err := funcs.IncrementJudgeGroupNum(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error swapping groups: " + err.Error()})
 		return
 	}
 

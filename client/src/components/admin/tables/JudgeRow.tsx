@@ -95,6 +95,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 </td>
                 <td>{judge.name}</td>
                 <td className="text-center">{judge.code}</td>
+                <td className='text-center'>{judge.group}</td>
                 <td className="text-center">{judge.seen}</td>
                 <td className="text-center">{getBestRanked(judge)}</td>
                 <td className="text-center">{timeSince(judge.last_activity)}</td>

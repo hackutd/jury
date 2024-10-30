@@ -57,14 +57,32 @@ func FindJudgeByCode(db *mongo.Database, code string) (*models.Judge, error) {
 }
 
 // UpdateJudge updates a judge in the database
-func UpdateJudge(db *mongo.Database, judge *models.Judge) error {
+func UpdateJudge(db *mongo.Database, judge *models.Judge, ctx context.Context) error {
 	judge.LastActivity = util.Now()
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": judge})
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": judge})
 	return err
 }
 
+// UpdateJudges updates multiple judges in the database
+func UpdateJudges(db *mongo.Database, sc, judges []*models.Judge) error {
+	return WithTransaction(db, func(sc mongo.SessionContext) error {
+		return UpdateJudgesWithTx(db, sc, judges)
+	})
+}
+
+// UpdateJudgesWithTx updates multiple judges in the database with a transaction
+func UpdateJudgesWithTx(db *mongo.Database, sc mongo.SessionContext, judges []*models.Judge) error {
+	for _, judge := range judges {
+		err := UpdateJudge(db, judge, sc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // FindAllJudges returns a list of all judges in the database
-func FindAllJudges(db *mongo.Database) ([]*models.Judge, error) {
+func FindAllJudges(db *mongo.Database, ctx context.Context) ([]*models.Judge, error) {
 	judges := make([]*models.Judge, 0)
 	cursor, err := db.Collection("judges").Find(context.Background(), gin.H{})
 	if err != nil {

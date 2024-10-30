@@ -12,10 +12,13 @@ interface ButtonProps {
     onClick?: (e: React.MouseEvent<Element>) => void;
 
     /* Type of the button */
-    type: 'primary' | 'outline' | 'text' | 'error' | 'outline-primary';
+    type: 'primary' | 'outline' | 'text' | 'error' | 'outline-primary' | 'gold';
 
     /* If true, sets button as a disabled button */
     disabled?: boolean;
+
+    /* Show tooltip on hover */
+    tooltip?: string;
 
     /* Bold button */
     bold?: boolean;
@@ -48,12 +51,13 @@ const Button = (props: ButtonProps) => {
         props.type.indexOf('outline') !== -1 &&
         'border-lightest hover:bg-backgroundDark text-light hover:text-light';
     const primaryBorderFormat =
-        props.type === 'outline-primary' && 'border-primary text-primary hover:text-primary';
+        props.type === 'outline-primary' && 'border-primary text-primary hover:text-primary hover:bg-primary/20';
 
     // Format text
     const typeFormat =
         props.type === 'primary'
             ? 'bg-primary text-background hover:bg-primaryDark hover:text-background'
+            : props.type === 'gold' ? 'bg-gold text-black hover:bg-goldDark hover:text-black'
             : props.type === 'error' &&
               'bg-error text-background hover:bg-errorDark hover:text-background';
     const varFormat = !props.disabled
@@ -61,7 +65,7 @@ const Button = (props: ButtonProps) => {
         : 'cursor-auto text-lighter bg-backgroundDark hover:text-lighter';
 
     // Format bold and width
-    const boldFormat = props.bold ? 'font-bold' : 'font-normal';
+    const boldFormat = props.bold && 'font-bold text-xl';
     const widthFormat = props.full
         ? 'w-full'
         : props.small || props.flat
@@ -84,15 +88,15 @@ const Button = (props: ButtonProps) => {
 
     // Disable button bc links cannot be disabled
     return props.disabled ? (
-        <button disabled className={formatting}>
+        <button disabled className={formatting} title={props.tooltip}>
             {props.children}
         </button>
     ) : props.href ? (
-        <a href={props.href || ''} className={formatting + ' block'}>
+        <a href={props.href || ''} className={formatting + ' block'} title={props.tooltip}>
             {props.children}
         </a>
     ) : (
-        <button className={formatting} onClick={props.onClick}>
+        <button className={formatting} onClick={props.onClick} title={props.tooltip}>
             {props.children}
         </button>
     );

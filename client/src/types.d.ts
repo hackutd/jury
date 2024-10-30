@@ -35,6 +35,7 @@ interface Judge {
     seen_projects: JudgedProject[];
     rankings: string[];
     active: boolean;
+    group: number;
     current: string;
     last_activity: number;
 }
@@ -128,6 +129,7 @@ interface GroupsSwitchOps {
     auto_switch_method: string;
     auto_switch_count: number;
     auto_switch_prop: number;
+    manual_switches: number;
 }
 
 interface FetchResponse<T> {

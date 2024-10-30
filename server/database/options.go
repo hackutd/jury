@@ -129,3 +129,9 @@ func UpdateGroupOptions(db *mongo.Database, ctx context.Context, groupOptions mo
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
 	return err
 }
+
+// IncrementManualSwitches increments the manual switches in the database
+func IncrementManualSwitches(db *mongo.Database, ctx context.Context) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$inc": gin.H{"main_group.manual_switches": 1}})
+	return err
+}

@@ -1,6 +1,7 @@
 export enum JudgeSortField {
     Name,
     Code,
+    Group,
     Seen,
     Top,
     Updated,

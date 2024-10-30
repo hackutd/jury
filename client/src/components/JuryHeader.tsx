@@ -64,7 +64,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
             )}
             {props.withLogout && (
                 <div
-                    className="absolute top-6 right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200"
+                    className="absolute top-6 right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 z-10"
                     onClick={logout}
                 >
                     <div className="text-light text-xl mr-2">Logout</div>

@@ -68,6 +68,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/judge/list", ListJudges)
 	adminRouter.DELETE("/judge/:id", DeleteJudge)
 	adminRouter.PUT("/judge/:id", EditJudge)
+	adminRouter.POST("/admin/groups/swap", SwapJudgeGroups)
 
 	// Admin panel - projects
 	adminRouter.POST("/project/new", AddProject)

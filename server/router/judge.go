@@ -122,7 +122,7 @@ func LoginJudge(ctx *gin.Context) {
 
 	// Update judge in database with new token
 	judge.Token = token
-	err = database.UpdateJudge(db, judge)
+	err = database.UpdateJudge(db, judge, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
@@ -244,7 +244,7 @@ func SetJudgeReadWelcome(ctx *gin.Context) {
 	judge.ReadWelcome = true
 
 	// Update judge in database
-	err := database.UpdateJudge(db, judge)
+	err := database.UpdateJudge(db, judge, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
@@ -260,7 +260,7 @@ func ListJudges(ctx *gin.Context) {
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get judges from database
-	judges, err := database.FindAllJudges(db)
+	judges, err := database.FindAllJudges(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judges in database: " + err.Error()})
 		return
