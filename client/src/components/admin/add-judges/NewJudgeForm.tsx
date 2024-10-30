@@ -10,6 +10,7 @@ import Loading from '../../Loading';
 interface NewJudgeData {
     name: string;
     email: string;
+    track: string;
     notes: string;
 }
 
@@ -46,6 +47,11 @@ const NewJudgeForm = () => {
                         <TextInput name="name" placeholder="Name" register={register} required />
                         <TextInput name="email" placeholder="Email" register={register} required />
                     </div>
+                    <TextInput
+                        name="track"
+                        placeholder="Track (optional, general judge if not specified)"
+                        register={register}
+                    />
                     <TextArea name="notes" placeholder="Notes (optional)" register={register} />
                     <Checkbox checked={noSend} onChange={setNoSend}>
                         Do not send an email

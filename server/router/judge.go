@@ -54,7 +54,7 @@ func AddJudge(ctx *gin.Context) {
 	}
 
 	// Create the judge
-	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Notes, group)
+	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Track, judgeReq.Notes, group)
 
 	// Send email if no_send is false
 	if !judgeReq.NoSend {
