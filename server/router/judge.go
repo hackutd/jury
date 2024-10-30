@@ -198,7 +198,7 @@ func AddJudgesCsv(ctx *gin.Context) {
 	}
 
 	// Determine group numbers for the new judges
-	groups, err := database.GetNextNJudgeGroups(db, len(judges))
+	groups, err := database.GetNextNJudgeGroups(db, ctx, len(judges), false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge groups: " + err.Error()})
 		return
@@ -799,6 +799,35 @@ func JudgeUpdateNotes(ctx *gin.Context) {
 	err = database.UpdateJudgeSeenProjects(db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /judge/reassign - Reassigns judge numbers to all judges
+func ReassignJudgeGroups(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get options from database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Don't do if not enabled
+	if !options.MultiGroup {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "multi-group not enabled"})
+		return
+	}
+
+	// Reassign judge groups
+	err = database.PutJudgesInGroups(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning judge groups: " + err.Error()})
 		return
 	}
 

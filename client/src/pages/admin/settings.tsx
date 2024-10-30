@@ -32,7 +32,7 @@ const SettingsButton = ({
     children: React.ReactNode;
     onClick: () => void;
     className?: string;
-    type?: 'primary' | 'error';
+    type?: 'primary' | 'error' | 'gold';
 }) => (
     <Button type={type} onClick={onClick} small className={'my-2 ' + className}>
         {children}
@@ -41,6 +41,7 @@ const SettingsButton = ({
 
 const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
+    const [judgeReassignPopup, setJudgeReassignPopup] = useState(false);
     const [clockResetPopup, setClockResetPopup] = useState(false);
     const [dropPopup, setDropPopup] = useState(false);
     const [judgingTimer, setJudgingTimer] = useState('');
@@ -113,6 +114,16 @@ const AdminSettings = () => {
         alert('Table numbers reassigned!');
         setReassignPopup(false);
     };
+
+    const reassignJudges = async () => {
+        const res = await postRequest<OkResponse>('/judge/reassign', 'admin', null);
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+        alert('Judges reassigned!');
+        setJudgeReassignPopup(false);
+    }
 
     const updateTimer = async () => {
         // Convert judging timer to time
@@ -405,6 +416,15 @@ const AdminSettings = () => {
                     Reassign
                 </SettingsButton>
 
+                <SubSection>Reassign Judge Groups</SubSection>
+                <Description>
+                    Reassigns all judges to groups. The number of judges in each group will be kept
+                    as even as possible.
+                </Description>
+                <SettingsButton onClick={() => setJudgeReassignPopup(true)} type="gold">
+                    Reassign
+                </SettingsButton>
+
                 <SubSection>Set Minimum Project Views</SubSection>
                 <Description>
                     Set the minimum amount of times that a project should be seen during judging.
@@ -666,6 +686,17 @@ const AdminSettings = () => {
                 red
             >
                 Are you sure you want to reassign project numbers? This should NOT be done DURING
+                judging; only beforehand!!
+            </ConfirmPopup>
+            <ConfirmPopup
+                enabled={judgeReassignPopup}
+                setEnabled={setJudgeReassignPopup}
+                onSubmit={reassignJudges}
+                submitText="Reassign"
+                title="Heads Up!"
+                red
+            >
+                Are you sure you want to judge group numbers? This should NOT be done DURING
                 judging; only beforehand!!
             </ConfirmPopup>
             <ConfirmPopup

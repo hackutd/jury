@@ -273,37 +273,44 @@ func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
 // GetNextNJudgeGroups returns the next n groups to assign new judges to
 // The groups are chosen based on the current number of judges in each group,
 // with the goal to balance the number of judges in each group
-func GetNextNJudgeGroups(db *mongo.Database, n int) ([]int64, error) {
-	cursor, err := db.Collection("judges").Aggregate(context.Background(), []gin.H{
-		{"$group": gin.H{
-			"_id":   "$group",
-			"count": gin.H{"$sum": 1},
-		}},
-	})
+func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset bool) ([]int64, error) { // Get options
+	// Get options
+	options, err := GetOptions(db, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	groupCounts := make(map[int64]int64)
-	for cursor.Next(context.Background()) {
-		var result map[string]interface{}
-		err := cursor.Decode(&result)
+	// Get the current number of judges in each group
+	var groupCounts map[int64]int64
+	if reset {
+		// Simply set all group counts to 0
+		groupCounts = make(map[int64]int64, options.NumGroups)
+	} else {
+		groupCounts = make(map[int64]int64)
+		cursor, err := db.Collection("judges").Aggregate(ctx, []gin.H{
+			{"$group": gin.H{
+				"_id":   "$group",
+				"count": gin.H{"$sum": 1},
+			}},
+		})
 		if err != nil {
 			return nil, err
 		}
-		groupCounts[result["_id"].(int64)] = int64(result["count"].(int32))
-	}
 
-	// Get options
-	options, err := GetOptions(db, context.Background())
-	if err != nil {
-		return nil, err
-	}
+		for cursor.Next(ctx) {
+			var result map[string]interface{}
+			err := cursor.Decode(&result)
+			if err != nil {
+				return nil, err
+			}
+			groupCounts[result["_id"].(int64)] = int64(result["count"].(int32))
+		}
 
-	// Find all groups that aren't in groups
-	for i := int64(0); i < options.NumGroups; i++ {
-		if _, ok := groupCounts[i]; !ok {
-			groupCounts[i] = 0
+		// Find all groups that aren't in groups
+		for i := int64(0); i < options.NumGroups; i++ {
+			if _, ok := groupCounts[i]; !ok {
+				groupCounts[i] = 0
+			}
 		}
 	}
 
@@ -323,4 +330,31 @@ func GetNextNJudgeGroups(db *mongo.Database, n int) ([]int64, error) {
 	}
 
 	return groupList, nil
+}
+
+// PutJudgesInGroups assigns judges to groups
+func PutJudgesInGroups(db *mongo.Database) error {
+	return WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get all judges
+		judges, err := FindAllJudges(db, sc)
+		if err != nil {
+			return err
+		}
+
+		// Get the next n groups to assign judges to
+		groups, err := GetNextNJudgeGroups(db, sc, len(judges), true)
+		if err != nil {
+			return err
+		}
+
+		// Assign each judge to a group
+		for i, judge := range judges {
+			judge.Group = groups[i]
+			judge.GroupSeen = 0
+		}
+
+		// Update the judges in the database
+		err = UpdateJudgesWithTx(db, sc, judges)
+		return err
+	})
 }

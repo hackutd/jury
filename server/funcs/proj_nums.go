@@ -71,14 +71,14 @@ func ReassignNumsByGroup(db *mongo.Database) error {
 			return errors.New("error getting options from database: " + err.Error())
 		}
 
+		// Sort projets by table num
+		sort.Sort(models.ByTableNumber(projects))
+
 		// Set init table num to 0
 		options.CurrTableNum = 0
 
 		// Create group table numbers slice
 		options.GroupTableNums = make([]int64, options.NumGroups)
-
-		// Sort projets by table num
-		sort.Sort(models.ByTableNumber(projects))
 
 		// Fill group table numbers slice with numbers corresponding to the group
 		for i := range options.GroupTableNums {
