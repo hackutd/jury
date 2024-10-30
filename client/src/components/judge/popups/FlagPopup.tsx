@@ -96,8 +96,11 @@ const FlagPopup = (props: FlagPopupProps) => {
             <Button type="primary" onClick={handleClick} className="mt-4" flat>
                 Submit
             </Button>
-            <div className="hidden text-gold bg-gold/10 border-gold text-error bg-error/10 border-error">
+            <div className="hidden text-gold bg-gold/10 border-gold">
                 Dummy div to get the tailwind colors loaded
+            </div>
+            <div className='hidden text-error bg-error/10 border-error'>
+                Dummy div 2 to get the tailwind colors loaded
             </div>
         </Popup>
     );
