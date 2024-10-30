@@ -173,6 +173,7 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 //  1. Ignore all projects that are inactive
 //  2. Filter out all projects that the judge has already seen
 //  3. Filter out all projects that the judge has flagged (except for busy projects)
+//  4. Filter out all projects that is not in the judge's track (if tracks are enabled and the user has a track)
 //  4. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
 //  5. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
 //  6. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
@@ -217,6 +218,17 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.Sessi
 		}
 	}
 	projects = filteredProjects
+
+	// Filter out all projects that are not in the judge's track
+	if options.JudgeTracks && judge.Track != "" {
+		var trackProjects []*models.Project
+		for _, proj := range projects {
+			if slices.Contains(options.Tracks, judge.Track) {
+				trackProjects = append(trackProjects, proj)
+			}
+		}
+		projects = trackProjects
+	}
 
 	// If there are no projects, return an empty list
 	// This means that the judge has seen or skipped (except for busy reason) all projects
