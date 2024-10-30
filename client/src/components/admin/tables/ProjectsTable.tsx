@@ -17,6 +17,7 @@ const ProjectsTable = () => {
         ascending: true,
     });
     const options = useOptionsStore((state) => state.options);
+    const selectedTrack = useOptionsStore((state) => state.selectedTrack);
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
         setChecked({
@@ -73,6 +74,16 @@ const ProjectsTable = () => {
     useEffect(() => {
         setChecked(Array(unsortedProjects.length).fill(false));
 
+        // Filter by track if enabled
+        const filteredProjects =
+            options.judge_tracks && selectedTrack !== 'Main Judging'
+                ? unsortedProjects.filter(
+                      (project) => project.challenge_list.indexOf(selectedTrack) !== -1
+                  )
+                : unsortedProjects;
+
+        console.log(unsortedProjects.length, filteredProjects.length);
+
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let sortFunc = (_: Project, b: Project) => 0;
         const asc = sortState.ascending ? 1 : -1;
@@ -107,8 +118,8 @@ const ProjectsTable = () => {
                 sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
-        setProjects(unsortedProjects.sort(sortFunc));
-    }, [unsortedProjects, sortState]);
+        setProjects(filteredProjects.sort(sortFunc));
+    }, [unsortedProjects, sortState, selectedTrack]);
 
     return (
         <div className="w-full px-8 pb-4">

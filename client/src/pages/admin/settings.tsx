@@ -98,6 +98,8 @@ const AdminSettings = () => {
         setAutoSwitchMethod(res.data.main_group.auto_switch_method);
         setAutoSwitchCount(res.data.main_group.auto_switch_count);
         setAutoSwitchProp(res.data.main_group.auto_switch_prop);
+        setJudgeTracks(res.data.judge_tracks);
+        setTracks(res.data.tracks.join(', '));
 
         setLoading(false);
     }
@@ -197,7 +199,7 @@ const AdminSettings = () => {
 
     const toggleJudgeTracks = async () => {
         const res = await postRequest<OkResponse>('/admin/tracks/toggle', 'admin', {
-            judgeTracks: !judgeTracks,
+            judge_tracks: !judgeTracks,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
             errorAlert(res);
