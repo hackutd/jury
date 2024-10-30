@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"server/database"
 	"server/funcs"
-	"server/judging"
 	"server/models"
 	"strings"
 
@@ -103,10 +102,10 @@ func AddProject(ctx *gin.Context) {
 	}
 
 	// Increment table num
-	options.GetNextIncrTableNum()
+	group, num := funcs.GetNextTableNum(db, options)
 
 	// Create the project
-	project := models.NewProject(projectReq.Name, options.CurrTableNum, projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
+	project := models.NewProject(projectReq.Name, num, group, projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
 
 	// Insert project and update the next table num field in options
 	err = database.WithTransaction(db, func(ctx mongo.SessionContext) error {
@@ -117,7 +116,7 @@ func AddProject(ctx *gin.Context) {
 		}
 
 		// Update next table num in options doc
-		err = database.UpdateCurrTableNum(db, ctx, options.CurrTableNum)
+		err = database.UpdateCurrTableNum(db, ctx, options)
 		return err
 	})
 	if err != nil {
@@ -448,11 +447,26 @@ func ReassignProjectNums(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
-	// Reassign project numbers
-	err := judging.ReassignNumsInOrder(db)
+	// Get the options
+	options, err := database.GetOptions(db, ctx)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
 		return
+	}
+
+	// Reassign project numbers by group or in order based on options
+	if options.MultiGroup {
+		err = funcs.ReassignNumsByGroup(db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
+			return
+		}
+	} else {
+		err = funcs.ReassignNumsInOrder(db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
+			return
+		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})

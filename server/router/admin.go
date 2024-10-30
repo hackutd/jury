@@ -5,7 +5,6 @@ import (
 	"server/config"
 	"server/database"
 	"server/funcs"
-	"server/judging"
 	"server/models"
 	"server/ranking"
 
@@ -502,13 +501,13 @@ func ToggleGroups(ctx *gin.Context) {
 
 	// Reassign table numbers based on groups
 	if req.MultiGroup {
-		err = judging.ReassignNumsByGroup(db)
+		err = funcs.ReassignNumsByGroup(db)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning table numbers: " + err.Error()})
 			return
 		}
 	} else {
-		err = judging.ReassignNumsInOrder(db)
+		err = funcs.ReassignNumsInOrder(db)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning table numbers (no groups): " + err.Error()})
 			return

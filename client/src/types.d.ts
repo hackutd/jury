@@ -10,6 +10,7 @@ interface Project {
     seen: number;
     active: boolean;
     score: number;
+    group: number;
     last_activity: number;
 }
 

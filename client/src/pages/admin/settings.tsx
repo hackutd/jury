@@ -195,7 +195,7 @@ const AdminSettings = () => {
 
     const updateNumGroups = async () => {
         if (isNaN(numGroups) || numGroups < 1) {
-            alert('Number of groups should be a positive integer!');
+            alert('Number of groups should be an integer greater than 0!');
             return;
         }
 
@@ -391,7 +391,9 @@ const AdminSettings = () => {
                 <SubSection>Reassign Project Numbers</SubSection>
                 <Description>
                     Reassign all project numbers to the projects. This will keep the relative order
-                    but reassign the project numbers starting from the first project.
+                    but reassign the project numbers starting from the first project. If groups are
+                    enabled, projects will be assigned round-robin into groups. Otherwise, projects
+                    will be assigned in order.
                 </Description>
                 <SettingsButton
                     onClick={() => setReassignPopup(true)}

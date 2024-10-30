@@ -129,6 +129,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
+                <td className="text-center">{project.group}</td>
                 <td className="text-center">{project.score}</td>
                 <td className="text-center">{project.seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>

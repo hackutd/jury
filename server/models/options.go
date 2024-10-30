@@ -27,17 +27,18 @@ type GroupSwitchOps struct {
 
 func NewOptions() *Options {
 	return &Options{
-		Ref:          0,
-		CurrTableNum: 0,
-		JudgingTimer: 300,
-		MinViews:     3,
-		Clock:        *NewClockState(),
-		ClockSync:    false,
-		Categories:   []string{"Creativity/Innovation", "Technical Competence/Execution", "Research/Design", "Presentation"},
-		MultiGroup:   false,
-		NumGroups:    3,
-		GroupSizes:   []int64{30, 30},
-		MainGroup:    *NewGroupOptions(),
+		Ref:            0,
+		CurrTableNum:   0,
+		JudgingTimer:   300,
+		MinViews:       3,
+		Clock:          *NewClockState(),
+		ClockSync:      false,
+		Categories:     []string{"Creativity/Innovation", "Technical Competence/Execution", "Research/Design", "Presentation"},
+		MultiGroup:     false,
+		NumGroups:      3,
+		GroupSizes:     []int64{30, 30},
+		GroupTableNums: []int64{0, 30, 60},
+		MainGroup:      *NewGroupOptions(),
 	}
 }
 
@@ -57,12 +58,14 @@ func (o *Options) GetNextIncrTableNum() int64 {
 	return o.CurrTableNum
 }
 
-// GetNextGroupTableNum returns the next group table number to assign a project.
+// GetNextGroupTableNum returns the next group and table number for a project.
 // Since this is done round-robin, we will use the current table number to determine the group.
-func (o *Options) GetNextGroupTableNum() int64 {
+// The return values are (group, table number)
+func (o *Options) GetNextGroupTableNum() (int64, int64) {
 	group := o.CurrTableNum % o.NumGroups
 	o.GroupTableNums[group]++
-	return o.GroupTableNums[group]
+	o.CurrTableNum++
+	return group, o.GroupTableNums[group]
 }
 
 // OptionalGroupOptions is a struct that will be used to update the group options.

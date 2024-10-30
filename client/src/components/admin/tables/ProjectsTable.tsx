@@ -93,6 +93,9 @@ const ProjectsTable = () => {
             case ProjectSortField.TableNumber:
                 sortFunc = (a, b) => (a.location - b.location) * asc;
                 break;
+            case ProjectSortField.Group:
+                sortFunc = (a, b) => (a.group - b.group) * asc;
+                break;
             case ProjectSortField.Score:
                 sortFunc = (a, b) => (a.score - b.score) * asc;
                 break;
@@ -129,6 +132,12 @@ const ProjectsTable = () => {
                             name="Table Number"
                             updateSort={updateSort}
                             sortField={ProjectSortField.TableNumber}
+                            sortState={sortState}
+                        />
+                        <HeaderEntry
+                            name="Group"
+                            updateSort={updateSort}
+                            sortField={ProjectSortField.Group}
                             sortState={sortState}
                         />
                         <HeaderEntry

@@ -113,14 +113,14 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 		}
 
 		// Increment the table number
-		options.GetNextIncrTableNum()
+		group, num := GetNextTableNum(db, options)
 
 		// Add project to slice
-		projects = append(projects, models.NewProject(record[0], options.CurrTableNum, record[1], record[2], tryLink, videoLink, challengeList))
+		projects = append(projects, models.NewProject(record[0], num, group, record[1], record[2], tryLink, videoLink, challengeList))
 	}
 
 	// Update the options table number in the database
-	err = database.UpdateCurrTableNum(db, context.Background(), options.CurrTableNum)
+	err = database.UpdateCurrTableNum(db, context.Background(), options)
 	if err != nil {
 		return nil, err
 	}
@@ -194,12 +194,13 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 		}
 
 		// Increment table number
-		options.GetNextIncrTableNum()
+		group, num := GetNextTableNum(db, options)
 
 		// Add project to slice
 		projects = append(projects, models.NewProject(
 			record[0],
-			options.CurrTableNum,
+			num,
+			group,
 			record[6],
 			record[1],
 			record[7],
@@ -209,7 +210,7 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 	}
 
 	// Update the options table number in the database
-	err = database.UpdateCurrTableNum(db, context.Background(), options.CurrTableNum)
+	err = database.UpdateCurrTableNum(db, context.Background(), options)
 	if err != nil {
 		return nil, err
 	}

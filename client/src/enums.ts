@@ -11,6 +11,7 @@ export enum ProjectSortField {
     Name,
     Flagged,
     TableNumber,
+    Group,
     Score,
     Seen,
     Updated,
