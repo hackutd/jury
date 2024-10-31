@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createHeaders } from '../../../api';
 import Loading from '../../Loading';
+import { useAdminStore } from '../../../store';
 
 interface UploadCSVFormProps {
     /* The format of the CSV file */
@@ -14,6 +15,8 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
     const [error, setError] = useState<string | null>();
     const [msg, setMsg] = useState<string | null>();
     const [isUploading, setIsUploading] = useState<boolean>(false);
+    const fetchJudgeStats = useAdminStore((state) => state.fetchJudgeStats);
+    const fetchProjectStats = useAdminStore((state) => state.fetchProjectStats);
 
     // Handle file drag and drop
     const handleDrop: React.DragEventHandler<HTMLDivElement> = (e) => {
@@ -79,6 +82,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
             setIsUploading(false);
         }
 
+        props.format === 'judge' ? fetchJudgeStats() : fetchProjectStats();
         setIsUploading(false);
     };
 
@@ -106,7 +110,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                             onDragOver={(e) => e.preventDefault()}
                         >
                             <label
-                                htmlFor={"dropzone-file-"+props.format}
+                                htmlFor={'dropzone-file-' + props.format}
                                 className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-sm cursor-pointer 
                                 ${
                                     error
@@ -126,7 +130,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                                     </p>
                                 </div>
                                 <input
-                                    id={"dropzone-file-"+props.format}
+                                    id={'dropzone-file-' + props.format}
                                     type="file"
                                     className="hidden"
                                     onChange={(e) => {
@@ -135,8 +139,8 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                                             setFileName(e.target.files[0].name);
                                             setError(null);
                                             setMsg(null);
-                                            
-                                            console.log(props.format)
+
+                                            console.log(props.format);
                                         }
                                     }}
                                 />

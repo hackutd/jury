@@ -9,6 +9,10 @@ interface AdminStore {
     fetchProjects: () => Promise<void>;
     judges: Judge[];
     fetchJudges: () => Promise<void>;
+    judgeStats: JudgeStats;
+    fetchJudgeStats: () => Promise<void>;
+    projectStats: ProjectStats;
+    fetchProjectStats: () => Promise<void>;
 }
 
 const useAdminStore = create<AdminStore>()((set) => ({
@@ -69,6 +73,36 @@ const useAdminStore = create<AdminStore>()((set) => ({
             return;
         }
         set({ judges: judgeRes.data as Judge[] });
+    },
+
+    judgeStats: {
+        num: 0,
+        avg_seen: 0,
+        num_active: 0,
+    },
+
+    fetchJudgeStats: async () => {
+        const statsRes = await getRequest<JudgeStats>('/judge/stats', 'admin');
+        if (statsRes.status !== 200) {
+            errorAlert(statsRes);
+            return;
+        }
+        set({ judgeStats: statsRes.data as JudgeStats });
+    },
+
+    projectStats: {
+        num: 0,
+        avg_seen: 0,
+        avg_votes: 0,
+    },
+
+    fetchProjectStats: async () => {
+        const statsRes = await getRequest<ProjectStats>('/project/stats', 'admin');
+        if (statsRes.status !== 200) {
+            errorAlert(statsRes);
+            return;
+        }
+        set({ projectStats: statsRes.data as ProjectStats });
     },
 }));
 

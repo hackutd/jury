@@ -4,6 +4,7 @@ import TextArea from '../../TextArea';
 import { useState } from 'react';
 import { postRequest } from '../../../api';
 import { errorAlert } from '../../../util';
+import { useAdminStore } from '../../../store';
 
 interface NewProjectData {
     name: string;
@@ -17,6 +18,7 @@ interface NewProjectData {
 const NewProjectForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { register, handleSubmit, reset } = useForm<NewProjectData>();
+    const fetchProjectStats = useAdminStore((state) => state.fetchProjectStats);
 
     const onSubmit: SubmitHandler<NewProjectData> = async (data) => {
         // Upload project
@@ -36,6 +38,7 @@ const NewProjectForm = () => {
 
         alert('Project added successfully!');
         reset();
+        fetchProjectStats();
         setIsSubmitting(false);
     };
 

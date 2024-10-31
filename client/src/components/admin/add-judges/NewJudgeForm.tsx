@@ -6,6 +6,7 @@ import { postRequest } from '../../../api';
 import { errorAlert } from '../../../util';
 import Checkbox from '../../Checkbox';
 import Loading from '../../Loading';
+import { useAdminStore } from '../../../store';
 
 interface NewJudgeData {
     name: string;
@@ -20,6 +21,7 @@ const NewJudgeForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { register, handleSubmit, reset } = useForm<NewJudgeData>();
     const [noSend, setNoSend] = useState(false);
+    const fetchJudgeStats = useAdminStore((state) => state.fetchJudgeStats);
 
     const onSubmit: SubmitHandler<NewJudgeData> = async (data) => {
         setIsSubmitting(true);
@@ -35,6 +37,7 @@ const NewJudgeForm = () => {
 
         alert('Judge added successfully!');
         reset();
+        fetchJudgeStats();
         setIsSubmitting(false);
     };
 
