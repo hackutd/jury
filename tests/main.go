@@ -38,6 +38,7 @@ func apiEndpointTests(logger *src.Logger) {
 	}
 
 	// Invalid login to admin account
+	// TODO: Move this to login stress tests
 	res = src.PostRequest(logger, "/admin/login", src.H{"password": "THIS IS DEFINITELY THE WRONG PASSWORD"}, src.DefaultAuth())
 	if src.IsOk(res) {
 		logger.LogLn(src.Error, "Invalid login to admin account should not be successful")
@@ -65,6 +66,15 @@ func apiEndpointTests(logger *src.Logger) {
 		logger.LogLn(src.Error, "Error checking if admin is authenticated")
 		return
 	}
+
+	// Add a judge
+	res = src.PostRequest(logger, "/admin/judge/new", src.H{"name": "Test Judge", "email": "test@gmail.com", "track": "", "notes": "test", "no_send": true}, src.AdminAuth())
+	if !src.IsOk(res) {
+		logger.LogLn(src.Error, "Error adding a judge")
+		return
+	}
+
+	// TODO: Add all routes eventually
 
 	// Get the clock
 	res = src.GetRequest(logger, "/admin/clock", src.AdminAuth())
