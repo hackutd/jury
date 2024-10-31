@@ -1,29 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import StatBlock from '../../StatBlock';
-import { getRequest } from '../../../api';
-import { errorAlert } from '../../../util';
-
-interface JudgeStats {
-    num: number;
-    avg_seen: number;
-    num_active: number;
-}
+import { useAdminStore } from '../../../store';
 
 const AddJudgeStatsPanel = () => {
-    const [stats, setStats] = useState<JudgeStats>({ num: 0, avg_seen: 0, num_active: 0 });
-    useEffect(() => {
-        const fetchStats = async () => {
-            const res = await getRequest('/judge/stats', 'admin');
-            if (res.status === 500) {
-                return;
-            }
-            if (res.status !== 200) {
-                errorAlert(res);
-                return;
-            }
-            setStats(res.data as JudgeStats);
-        };
+    const stats = useAdminStore((state) => state.judgeStats);
+    const fetchStats = useAdminStore((state) => state.fetchJudgeStats);
 
+    useEffect(() => {
         fetchStats();
     }, []);
 

@@ -154,3 +154,15 @@ interface ScoredItem {
     id: string;
     score: number;
 }
+
+interface JudgeStats {
+    num: number;
+    avg_seen: number;
+    num_active: number;
+}
+
+interface ProjectStats {
+    num: number;
+    avg_votes: number;
+    avg_seen: number;
+}

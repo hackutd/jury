@@ -1,29 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import StatBlock from '../../StatBlock';
-import { getRequest } from '../../../api';
-import { errorAlert } from '../../../util';
-
-interface ProjectStats {
-    num: number;
-    avg_votes: number;
-    avg_seen: number;
-}
+import { useAdminStore } from '../../../store';
 
 const AddProjectsStatsPanel = () => {
-    const [stats, setStats] = useState<ProjectStats>({ num: 0, avg_votes: 0, avg_seen: 0 });
-    useEffect(() => {
-        const fetchStats = async () => {
-            const res = await getRequest('/project/stats', 'admin');
-            if (res.status === 500) {
-                return;
-            }
-            if (res.status !== 200) {
-                errorAlert(res);
-                return;
-            }
-            setStats(res.data as ProjectStats);
-        };
+    const stats = useAdminStore((state) => state.projectStats);
+    const fetchStats = useAdminStore((state) => state.fetchProjectStats);
 
+    useEffect(() => {
         fetchStats();
     }, []);
 
