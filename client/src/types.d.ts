@@ -76,8 +76,8 @@ interface TokenResponse {
 
 interface JudgedProject {
     project_id: string;
-    categories: { [name: string]: number };
     notes: string;
+    starred: boolean;
     name: string;
     location: number;
     description: string;

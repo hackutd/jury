@@ -1,5 +1,9 @@
 import { twMerge } from 'tailwind-merge';
 import DragHamburger from './dnd/DragHamburger';
+import Star from './Star';
+import { useEffect, useState } from 'react';
+import { putRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 interface ProjectEntryProps {
     project: SortableJudgedProject;
@@ -7,16 +11,17 @@ interface ProjectEntryProps {
 }
 
 const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
+    const [starred, setStarred] = useState(project.starred);
+
+    useEffect(() => {
+        if (!project) return;
+
+        setStarred(project.starred);
+    }, [project]);
+
     if (!project) {
         return null;
     }
-
-    // Will truncate a string to 8 characters,
-    // adding a dot at the end if the length is > than 8 chars
-    const truncate = (s: string) => {
-        if (s.length <= 8) return s;
-        return s.substring(0, 4) + '.';
-    };
 
     let rankColor = 'text-lightest';
     switch (ranking) {
@@ -33,6 +38,16 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
             break;
     }
 
+    const updateStar = async () => {
+        const res = await putRequest<OkResponse>('/judge/star', 'judge', {
+            project: project.project_id,
+            starred: !starred,
+        });
+        if (res.status !== 200) {
+            errorAlert(res);
+        }
+    }
+
     return (
         <div className="flex items-center cursor-default">
             {ranking !== -1 && (
@@ -42,7 +57,7 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
             )}
             <div className="m-1 pl-2 py-1 bg-background border-solid border-2 border-lightest rounded-md grow">
                 <div className="flex flex-row">
-                    <div>
+                    <div className="grow">
                         <h3 className="text-lg leading-tight grow">
                             <a href={`/judge/project/${project.project_id}`}>
                                 <b>Table {project.location}</b>
@@ -51,18 +66,9 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
                             </a>
                         </h3>
                         <p className="text-light text-xs line-clamp-1">{project.notes}</p>
-                        <div className="text-light flex flex-row">
-                            {Object.entries(project.categories).map(([name, score], i) => (
-                                <div key={i}>
-                                    <span className="text-lighter text-xs mr-1">
-                                        {truncate(name)}
-                                    </span>
-                                    <span className="mr-2">{score}</span>
-                                </div>
-                            ))}
-                        </div>
                     </div>
-                    <div className="grow text-right flex items-center justify-end">
+                    <Star small active={starred} setActive={setStarred} onClick={updateStar} />
+                    <div className="text-right flex items-center justify-end">
                         <DragHamburger />
                     </div>
                 </div>
