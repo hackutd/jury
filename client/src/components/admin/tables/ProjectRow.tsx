@@ -132,6 +132,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 </td>
                 {options.multi_group && <td className="text-center">{project.group}</td>}
                 <td className="text-center">{project.score}</td>
+                <td className="text-center">{project.stars}</td>
                 <td className="text-center">{project.seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>
                 <td className="text-right align-center">

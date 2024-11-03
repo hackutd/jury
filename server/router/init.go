@@ -92,6 +92,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/judge/stats", JudgeStats)
 	adminRouter.GET("/admin/score", GetScores)
 	adminRouter.GET("/admin/score/:track", GetTrackScores)
+	adminRouter.GET("/admin/stars", GetStars)
+	adminRouter.GET("/admin/stars/:track", GetTrackStars)
 	adminRouter.GET("/admin/flags", GetFlags)
 
 	// Admin panel - clock
@@ -142,6 +144,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.POST("/judge/skip", JudgeSkip)
 	judgeRouter.POST("/judge/score", JudgeScore)
 	judgeRouter.POST("/judge/rank", JudgeRank)
+	judgeRouter.PUT("/judge/star", JudgeStar)
 	judgeRouter.PUT("/judge/score", JudgeUpdateScore)
 	judgeRouter.POST("/judge/break", JudgeBreak)
 	judgeRouter.POST("/judge/notes", JudgeUpdateNotes)

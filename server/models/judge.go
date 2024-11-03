@@ -29,7 +29,7 @@ type Judge struct {
 
 type JudgedProject struct {
 	ProjectId   primitive.ObjectID `bson:"project_id" json:"project_id"`
-	Categories  map[string]int     `bson:"categories" json:"categories"`
+	Starred     bool               `bson:"starred" json:"starred"`
 	Notes       string             `bson:"notes" json:"notes"`
 	Name        string             `bson:"name" json:"name"`
 	Location    int64              `bson:"location" json:"location"`
@@ -56,14 +56,14 @@ func NewJudge(name string, email string, track string, notes string, group int64
 	}
 }
 
-func JudgeProjectFromProject(project *Project, categories map[string]int) *JudgedProject {
+func JudgeProjectFromProject(project *Project, notes string, starred bool) *JudgedProject {
 	return &JudgedProject{
 		ProjectId:   project.Id,
-		Categories:  categories,
 		Name:        project.Name,
 		Location:    project.Location,
 		Description: project.Description,
-		Notes:       "",
+		Notes:       notes,
+		Starred:     starred,
 	}
 }
 
