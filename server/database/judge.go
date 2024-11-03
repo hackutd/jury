@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // UpdateJudgeLastActivity to the current time
@@ -85,13 +86,13 @@ func UpdateJudges(db *mongo.Database, sc, judges []*models.Judge) error {
 
 // UpdateJudgesWithTx updates multiple judges in the database with a transaction
 func UpdateJudgesWithTx(db *mongo.Database, sc mongo.SessionContext, judges []*models.Judge) error {
+	models := make([]mongo.WriteModel, 0, len(judges))
 	for _, judge := range judges {
-		err := UpdateJudge(db, judge, sc)
-		if err != nil {
-			return err
-		}
+		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": judge.Id}).SetUpdate(gin.H{"$set": judge}))
 	}
-	return nil
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := db.Collection("judges").BulkWrite(context.Background(), models, opts)
+	return err
 }
 
 // FindAllJudges returns a list of all judges in the database
