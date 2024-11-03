@@ -365,6 +365,29 @@ func GetProjectCount(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the options from the database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+		return
+	}
+
+	if options.JudgeTracks && judge.Track != "" {
+		// Get the project from the database
+		count, err := database.CountTrackProjects(db, judge.Track)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
+			return
+		}
+
+		// Send OK
+		ctx.JSON(http.StatusOK, gin.H{"count": count})
+		return
+	}
+
 	// Get the project from the database
 	count, err := database.CountProjectDocuments(db)
 	if err != nil {
