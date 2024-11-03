@@ -46,7 +46,6 @@ const AdminSettings = () => {
     const [judgingTimer, setJudgingTimer] = useState('');
     const [minViews, setMinViews] = useState(3);
     const [syncClock, setSyncClock] = useState(false);
-    const [categories, setCategories] = useState('');
     const [loading, setLoading] = useState(true);
     const [multiGroup, setMultiGroup] = useState(false);
     const [numGroups, setNumGroups] = useState(3);
@@ -78,10 +77,6 @@ const AdminSettings = () => {
             const timerStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             setJudgingTimer(timerStr);
         }
-
-        // Set categories
-        const cats = res.data.categories.join(', ');
-        setCategories(cats ?? '');
 
         // Set min views
         setMinViews(res.data.min_views);
@@ -173,26 +168,6 @@ const AdminSettings = () => {
         }
 
         alert('Min views updated!');
-        getOptions();
-    };
-
-    const updateCategories = async () => {
-        // Split categories by comma and remove empty strings
-        const filteredCats = categories
-            .split(',')
-            .map((cat) => cat.trim())
-            .filter((cat) => cat !== '');
-
-        // Post the new categories
-        const res = await postRequest<OkResponse>('/admin/categories', 'admin', {
-            categories: filteredCats,
-        });
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('Categories updated!');
         getOptions();
     };
 
@@ -483,22 +458,6 @@ const AdminSettings = () => {
                     />
                     <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
                 </div>
-
-                <SubSection>Set Categories</SubSection>
-                <Description>
-                    Set the categories that the judges will be scoring each project on. Please
-                    separate each category with a comma.
-                </Description>
-                <RawTextInput
-                    name="categories"
-                    placeholder="Cat 1, Cat 2, Cat 3, ..."
-                    text={categories}
-                    setText={setCategories}
-                    full
-                    large
-                    className="my-2"
-                />
-                <SettingsButton onClick={updateCategories}>Update Categories</SettingsButton>
 
                 <Section>Judging Clock and Timer</Section>
 
