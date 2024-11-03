@@ -116,6 +116,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/tracks", SetTracks)
 	adminRouter.POST("/admin/groups/toggle", ToggleGroups)
 	adminRouter.POST("/admin/groups/num", SetNumGroups)
+	adminRouter.POST("/admin/groups/sizes", SetGroupSizes)
 	adminRouter.POST("/admin/groups/options", SetGroupOptions)
 
 	// Admin panel - exports
