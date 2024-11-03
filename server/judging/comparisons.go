@@ -216,3 +216,47 @@ func (c *Comparisons) FindLeastCompared(projects []*models.Project, prevSeen []m
 
 	return minProj
 }
+
+// ReloadComparisons will reload the comparisons from the database
+func ReloadComparisons(db *mongo.Database, comparisons *Comparisons) error {
+	new_comps, err := LoadComparisons(db)
+	if err != nil {
+		return err
+	}
+
+	// Remove all old comparisons
+	comparisons.Arr = make([][]int, len(new_comps.Arr))
+	comparisons.IdNumMap = make(map[primitive.ObjectID]int)
+
+	// Add all new comparisons
+	for k, v := range new_comps.IdNumMap {
+		comparisons.IdNumMap[k] = v
+	}
+	for i, v := range new_comps.Arr {
+		comparisons.Arr[i] = make([]int, len(v))
+		copy(comparisons.Arr[i], v)
+	}
+
+	return nil
+}
+
+// ReloadTrackComparisons will reload the track comparisons from the database
+// TODO: What is this pointer spaghetti
+func ReloadTrackComparisons(db *mongo.Database, comparisons *map[string]*Comparisons) error {
+	new_comps, err := LoadTrackComparisons(db)
+	if err != nil {
+		return err
+	}
+
+	// Remove all old comparisons
+	for k := range *comparisons {
+		delete(*comparisons, k)
+	}
+
+	// Add all new comparisons
+	for k, v := range new_comps {
+		(*comparisons)[k] = v
+	}
+
+	return nil
+}
