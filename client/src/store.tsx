@@ -40,6 +40,8 @@ const useAdminStore = create<AdminStore>()((set) => ({
     projects: [],
 
     fetchProjects: async () => {
+        const selectedTrack = useOptionsStore.getState().selectedTrack;
+
         const projRes = await getRequest<Project[]>('/project/list', 'admin');
         if (projRes.status !== 200) {
             errorAlert(projRes);
@@ -54,10 +56,25 @@ const useAdminStore = create<AdminStore>()((set) => ({
         }
         const scores = scoreRes.data as ScoredItem[];
 
+        let track = selectedTrack;
+        if (track === 'Main Judging') {
+            track = '';
+        }
+        const starsRes = await getRequest<StarredItem[]>(`/admin/stars/${track}`, 'admin');
+        if (starsRes.status !== 200) {
+            errorAlert(starsRes);
+            return;
+        }
+        const stars = starsRes.data as StarredItem[];
+
         projects.forEach((project) => {
             const score = scores.find((s) => s.id === project.id);
+            const star = stars.find((s) => s.id === project.id);
             if (score) {
                 project.score = score.score;
+            }
+            if (star) {
+                project.stars = star.stars;
             }
         });
 
@@ -141,6 +158,7 @@ interface OptionsStore {
     options: Options;
     selectedTrack: string;
     currTrackScores: ScoredItem[];
+    currTrackStars: StarredItem[];
     fetchOptions: () => Promise<void>;
     setSelectedTrack: (track: string) => void;
 }
@@ -174,6 +192,7 @@ const useOptionsStore = create<OptionsStore>((set) => ({
     selectedTrack: 'Main Judging',
 
     currTrackScores: [],
+    currTrackStars: [],
 
     fetchOptions: async () => {
         const optionsRes = await getRequest<Options>('/admin/options', 'admin');
@@ -185,6 +204,15 @@ const useOptionsStore = create<OptionsStore>((set) => ({
     },
 
     setSelectedTrack: async (track: string) => {
+        const fetchProjects = useAdminStore.getState().fetchProjects;
+
+        // Get stars for selected track
+        if (track === 'Main Judging') {
+            set({ selectedTrack: track });
+            await fetchProjects();
+            return;
+        }
+
         // Get scores for selected track
         const scoresRes = await getRequest<ScoredItem[]>(`/admin/score/${track}`, 'admin');
         if (scoresRes.status !== 200) {
@@ -192,8 +220,16 @@ const useOptionsStore = create<OptionsStore>((set) => ({
             return;
         }
 
+        // Get stars for selected track
+        const starsRes = await getRequest<StarredItem[]>(`/admin/stars/${track}`, 'admin');
+        if (starsRes.status !== 200) {
+            errorAlert(starsRes);
+            return;
+        }
+
         set({ selectedTrack: track });
         set({ currTrackScores: scoresRes.data as ScoredItem[] });
+        set({ currTrackStars: starsRes.data as StarredItem[] });
     },
 }));
 

@@ -34,3 +34,33 @@ func CalculateScores(judges []*models.Judge, projects []*models.Project) []Ranke
 	// Calculate the scores
 	return CalcBordaRanking(judgeRankings, projectIds)
 }
+
+type ProjectStars struct {
+	Id    primitive.ObjectID `json:"id" bson:"_id"`
+	Stars int                `json:"stars" bson:"stars"`
+}
+
+func CalculateStars(judges []*models.Judge, projects []*models.Project) []ProjectStars {
+	// Create a list of project stars
+	projectStars := make([]ProjectStars, len(projects))
+	for i, proj := range projects {
+		projectStars[i] = ProjectStars{
+			Id:    proj.Id,
+			Stars: 0,
+		}
+	}
+
+	for _, judge := range judges {
+		for i, proj := range projects {
+			idx := slices.IndexFunc(judge.SeenProjects, func(p models.JudgedProject) bool {
+				return p.ProjectId == proj.Id
+			})
+			if idx != -1 && judge.SeenProjects[idx].Starred {
+				projectStars[i].Stars += 1
+			}
+		}
+	}
+
+	// Return the project stars
+	return projectStars
+}

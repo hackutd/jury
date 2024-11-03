@@ -10,6 +10,7 @@ interface Project {
     seen: number;
     active: boolean;
     score: number;
+    stars: number;
     group: number;
     last_activity: number;
 }
@@ -153,6 +154,11 @@ interface NextJudgeProject {
 interface ScoredItem {
     id: string;
     score: number;
+}
+
+interface StarredItem {
+    id: string;
+    stars: number;
 }
 
 interface JudgeStats {

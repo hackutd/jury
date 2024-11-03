@@ -476,6 +476,31 @@ func GetScores(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, scores)
 }
 
+// /GET /admin/stars - GetStars returns the stars of all projects
+func GetStars(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get all the projects
+	projects, err := database.FindAllProjects(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
+		return
+	}
+
+	// Get all the judges
+	judges, err := database.FindJudgesByTrack(db, ctx, "")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
+		return
+	}
+
+	stars := ranking.CalculateStars(judges, projects)
+
+	// Send OK
+	ctx.JSON(http.StatusOK, stars)
+}
+
 // /GET /admin/score/<track> - GetTrackScores returns the calculated scores of all projects in a track
 func GetTrackScores(ctx *gin.Context) {
 	// Get the database from the context
@@ -502,7 +527,34 @@ func GetTrackScores(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, scores)
+}
 
+// /GET /admin/stars/<track> - GetTrackStars returns the stars of all projects in a track
+func GetTrackStars(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Get all the projects
+	projects, err := database.FindProjectsByTrack(db, ctx, track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
+		return
+	}
+
+	// Get all the judges
+	judges, err := database.FindJudgesByTrack(db, ctx, track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
+		return
+	}
+
+	stars := ranking.CalculateStars(judges, projects)
+
+	// Send OK
+	ctx.JSON(http.StatusOK, stars)
 }
 
 type ToggleTracksRequest struct {

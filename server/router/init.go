@@ -92,6 +92,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/judge/stats", JudgeStats)
 	adminRouter.GET("/admin/score", GetScores)
 	adminRouter.GET("/admin/score/:track", GetTrackScores)
+	adminRouter.GET("/admin/stars", GetStars)
+	adminRouter.GET("/admin/stars/:track", GetTrackStars)
 	adminRouter.GET("/admin/flags", GetFlags)
 
 	// Admin panel - clock
