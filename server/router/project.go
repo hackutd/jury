@@ -185,6 +185,7 @@ func ListProjects(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, projects)
 }
 
+// TODO: Why is the other things not underscore case
 type PublicProject struct {
 	Name          string `json:"name"`
 	Location      int64  `json:"location"`
@@ -192,7 +193,7 @@ type PublicProject struct {
 	Url           string `json:"url"`
 	TryLink       string `json:"tryLink"`
 	VideoLink     string `json:"videoLink"`
-	ChallengeList string `json:"challengeList"`
+	ChallengeList string `json:"challenge_list"`
 }
 
 func ListPublicProjects(ctx *gin.Context) {
@@ -554,4 +555,20 @@ func ReassignProjectNums(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// GetChallenges returns the set of all challenges from the database
+func GetChallenges(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the challenges from the database
+	challenges, err := database.GetChallenges(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting challenges from database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, challenges)
 }

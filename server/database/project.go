@@ -240,3 +240,28 @@ func DecrementProjectSeenCount(db *mongo.Database, ctx context.Context, project 
 func GetNumProjectsInGroup(db *mongo.Database, ctx context.Context, group int64) (int64, error) {
 	return db.Collection("projects").CountDocuments(ctx, gin.H{"group": group})
 }
+
+// GetChallenges gets the list of all challenges from the database
+func GetChallenges(db *mongo.Database, ctx context.Context) ([]string, error) {
+	// Get all projects
+	projects, err := FindAllProjects(db, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract the challenges from the projects
+	challenges := make(map[string]bool)
+	for _, project := range projects {
+		for _, challenge := range project.ChallengeList {
+			challenges[challenge] = true
+		}
+	}
+
+	// Convert the map to a list
+	var challengeList []string
+	for challenge := range challenges {
+		challengeList = append(challengeList, challenge)
+	}
+
+	return challengeList, nil
+}
