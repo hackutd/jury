@@ -57,7 +57,7 @@ func ReassignNumsInOrder(db *mongo.Database) error {
 	return err
 }
 
-func ReassignNumsByGroupRoundRobin(db *mongo.Database) error {
+func ReassignNumsByGroup(db *mongo.Database) error {
 	err := database.WithTransaction(db, func(sc mongo.SessionContext) error {
 		// Get all the projects from the database
 		projects, err := database.FindAllProjects(db, sc)
@@ -114,15 +114,6 @@ func ReassignNumsByGroupRoundRobin(db *mongo.Database) error {
 	})
 
 	return err
-}
-
-// ReassignNumsByGroupOptimally assigns project numbers in the most optimal way,
-// which will be a greedy algorithm that will assign the tracks with the least amount of projects to
-// the groups with the most number of slots. This will be done by sorting the projects by the number of
-// projects in each track and then assigning them to the groups with the most number of slots.
-func ReassignNumsByGroupOptimally(db *mongo.Database) error {
-
-	return nil
 }
 
 // GetNextTableNum gets the group and table number for the next project added.

@@ -40,7 +40,6 @@ const SettingsButton = ({
 
 const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
-    const [reassignRoundPopup, setReassignRoundPopup] = useState(false);
     const [judgeReassignPopup, setJudgeReassignPopup] = useState(false);
     const [clockResetPopup, setClockResetPopup] = useState(false);
     const [dropPopup, setDropPopup] = useState(false);
@@ -59,7 +58,6 @@ const AdminSettings = () => {
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
-    const options = useOptionsStore((state) => state.options);
 
     async function getOptions() {
         const res = await getRequest<Options>('/admin/options', 'admin');
@@ -118,16 +116,6 @@ const AdminSettings = () => {
         }
         alert('Table numbers reassigned!');
         setReassignPopup(false);
-    };
-
-    const reassignTablesRound = async () => {
-        const res = await postRequest<OkResponse>('/project/reassign/round', 'admin', null);
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-        alert('Table numbers reassigned!');
-        setReassignRoundPopup(false);
     };
 
     const reassignJudges = async () => {
@@ -465,11 +453,6 @@ const AdminSettings = () => {
                     >
                         Reassign
                     </SettingsButton>
-                    {options.judge_tracks && (
-                        <SettingsButton type="outline" onClick={() => setReassignRoundPopup(true)}>
-                            Reassign Round Robin
-                        </SettingsButton>
-                    )}
                 </div>
 
                 <SubSection>Reassign Judge Groups</SubSection>
@@ -779,18 +762,6 @@ const AdminSettings = () => {
             >
                 Are you sure you want to reassign project numbers? This should NOT be done DURING
                 judging; only beforehand!!
-            </ConfirmPopup>
-            <ConfirmPopup
-                enabled={reassignRoundPopup}
-                setEnabled={setReassignRoundPopup}
-                onSubmit={reassignTablesRound}
-                submitText="Reassign"
-                title="Heads Up!"
-                red
-            >
-                Are you sure you want to reassign project numbers? Note that you are using the
-                round-robin group assignment method -- this is NOT the most optimal assignment. This
-                should also NOT be done DURING judging; only beforehand!!
             </ConfirmPopup>
             <ConfirmPopup
                 enabled={judgeReassignPopup}

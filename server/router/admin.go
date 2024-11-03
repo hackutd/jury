@@ -580,7 +580,7 @@ func ToggleGroups(ctx *gin.Context) {
 
 	// Reassign table numbers based on groups
 	if req.MultiGroup {
-		err = funcs.ReassignNumsByGroupRoundRobin(db)
+		err = funcs.ReassignNumsByGroup(db)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning table numbers: " + err.Error()})
 			return
