@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"server/database"
 	"server/funcs"
+	"server/judging"
 	"server/models"
 	"strings"
 
@@ -16,6 +17,12 @@ import (
 func AddDevpostCsv(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get comparison from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
+	// Get track comparisons from the context
+	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
 
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
@@ -53,6 +60,20 @@ func AddDevpostCsv(ctx *gin.Context) {
 		return
 	}
 
+	// Reload comparisons
+	err = judging.ReloadComparisons(db, comps)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
+		return
+	}
+
+	// Reload track comparisons
+	err = judging.ReloadTrackComparisons(db, &trackComps)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
+		return
+	}
+
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
@@ -70,6 +91,12 @@ type AddProjectRequest struct {
 func AddProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get comparison from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
+	// Get track comparisons from the context
+	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
 
 	// Get the projectReq from the request
 	var projectReq AddProjectRequest
@@ -124,6 +151,20 @@ func AddProject(ctx *gin.Context) {
 		return
 	}
 
+	// Reload comparisons
+	err = judging.ReloadComparisons(db, comps)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
+		return
+	}
+
+	// Reload track comparisons
+	err = judging.ReloadTrackComparisons(db, &trackComps)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
+		return
+	}
+
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
@@ -144,6 +185,7 @@ func ListProjects(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, projects)
 }
 
+// TODO: Why is the other things not underscore case
 type PublicProject struct {
 	Name          string `json:"name"`
 	Location      int64  `json:"location"`
@@ -151,7 +193,7 @@ type PublicProject struct {
 	Url           string `json:"url"`
 	TryLink       string `json:"tryLink"`
 	VideoLink     string `json:"videoLink"`
-	ChallengeList string `json:"challengeList"`
+	ChallengeList string `json:"challenge_list"`
 }
 
 func ListPublicProjects(ctx *gin.Context) {
@@ -187,6 +229,12 @@ func ListPublicProjects(ctx *gin.Context) {
 func AddProjectsCsv(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get comparison from the context
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
+	// Get track comparisons from the context
+	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
 
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
@@ -224,6 +272,20 @@ func AddProjectsCsv(ctx *gin.Context) {
 	err = database.InsertProjects(db, projects)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting projects into database: " + err.Error()})
+		return
+	}
+
+	// Reload comparisons
+	err = judging.ReloadComparisons(db, comps)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
+		return
+	}
+
+	// Reload track comparisons
+	err = judging.ReloadTrackComparisons(db, &trackComps)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
 		return
 	}
 
@@ -303,6 +365,29 @@ func GetProject(ctx *gin.Context) {
 func GetProjectCount(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the options from the database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+		return
+	}
+
+	if options.JudgeTracks && judge.Track != "" {
+		// Get the project from the database
+		count, err := database.CountTrackProjects(db, judge.Track)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
+			return
+		}
+
+		// Send OK
+		ctx.JSON(http.StatusOK, gin.H{"count": count})
+		return
+	}
 
 	// Get the project from the database
 	count, err := database.CountProjectDocuments(db)
@@ -470,4 +555,20 @@ func ReassignProjectNums(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// GetChallenges returns the set of all challenges from the database
+func GetChallenges(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the challenges from the database
+	challenges, err := database.GetChallenges(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting challenges from database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, challenges)
 }

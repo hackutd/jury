@@ -200,6 +200,11 @@ func CountProjectDocuments(db *mongo.Database) (int64, error) {
 	return db.Collection("projects").EstimatedDocumentCount(context.Background())
 }
 
+// CountTrackProjects returns the number of projects in a specific track
+func CountTrackProjects(db *mongo.Database, track string) (int64, error) {
+	return db.Collection("projects").CountDocuments(context.Background(), gin.H{"challenge_list": track})
+}
+
 // SetProjectHidden sets the active field of a project
 func SetProjectHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
 	_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"active": !hidden}})
@@ -234,4 +239,29 @@ func DecrementProjectSeenCount(db *mongo.Database, ctx context.Context, project 
 // TODO: Can we pre-aggregate this value?
 func GetNumProjectsInGroup(db *mongo.Database, ctx context.Context, group int64) (int64, error) {
 	return db.Collection("projects").CountDocuments(ctx, gin.H{"group": group})
+}
+
+// GetChallenges gets the list of all challenges from the database
+func GetChallenges(db *mongo.Database, ctx context.Context) ([]string, error) {
+	// Get all projects
+	projects, err := FindAllProjects(db, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract the challenges from the projects
+	challenges := make(map[string]bool)
+	for _, project := range projects {
+		for _, challenge := range project.ChallengeList {
+			challenges[challenge] = true
+		}
+	}
+
+	// Convert the map to a list
+	var challengeList []string
+	for challenge := range challenges {
+		challengeList = append(challengeList, challenge)
+	}
+
+	return challengeList, nil
 }

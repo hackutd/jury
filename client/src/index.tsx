@@ -58,6 +58,10 @@ const router = createBrowserRouter([
         element: <Expo />,
     },
     {
+        path: '/expo/:track',
+        element: <Expo />,
+    },
+    {
         path: '/admin/add-projects',
         element: <AddProjects />,
     },

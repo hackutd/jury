@@ -92,6 +92,8 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/judge/stats", JudgeStats)
 	adminRouter.GET("/admin/score", GetScores)
 	adminRouter.GET("/admin/score/:track", GetTrackScores)
+	adminRouter.GET("/admin/stars", GetStars)
+	adminRouter.GET("/admin/stars/:track", GetTrackStars)
 	adminRouter.GET("/admin/flags", GetFlags)
 
 	// Admin panel - clock
@@ -116,6 +118,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/tracks", SetTracks)
 	adminRouter.POST("/admin/groups/toggle", ToggleGroups)
 	adminRouter.POST("/admin/groups/num", SetNumGroups)
+	adminRouter.POST("/admin/groups/sizes", SetGroupSizes)
 	adminRouter.POST("/admin/groups/options", SetGroupOptions)
 
 	// Admin panel - exports
@@ -141,6 +144,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.POST("/judge/skip", JudgeSkip)
 	judgeRouter.POST("/judge/score", JudgeScore)
 	judgeRouter.POST("/judge/rank", JudgeRank)
+	judgeRouter.PUT("/judge/star", JudgeStar)
 	judgeRouter.PUT("/judge/score", JudgeUpdateScore)
 	judgeRouter.POST("/judge/break", JudgeBreak)
 	judgeRouter.POST("/judge/notes", JudgeUpdateNotes)
@@ -151,6 +155,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 
 	// Project expo routes
 	defaultRouter.GET("/project/list/public", ListPublicProjects)
+	defaultRouter.GET("/challenges", GetChallenges)
 
 	// ######################
 	// ##### END ROUTES #####

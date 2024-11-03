@@ -6,7 +6,7 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import ProjectDisplay from '../../components/judge/ProjectDisplay';
 import Button from '../../components/Button';
-import RatePopup from '../../components/judge/popups/RatePopup';
+import FinishPopup from '../../components/judge/popups/VotePopup';
 import Back from '../../components/Back';
 import JudgeInfoPage from '../../components/judge/JudgeInfoPage';
 import InfoPopup from '../../components/InfoPopup';
@@ -32,7 +32,7 @@ const JudgeLive = () => {
     const navigate = useNavigate();
     const [verified, setVerified] = useState(false);
     const [judge, setJudge] = useState<Judge | null>(null);
-    const [votePopup, setVotePopup] = useState<boolean>(false);
+    const [finishPopup, setFinishPopup] = useState<boolean>(false);
     const [flagPopup, setFlagPopup] = useState<boolean>(false);
     const [skipPopup, setSkipPopup] = useState<boolean>(false);
     const [infoPage, setInfoPage] = useState<string>('');
@@ -47,6 +47,7 @@ const JudgeLive = () => {
     const [audioPopupOpen, setAudioPopupOpen] = useState(false);
     const [paused, setPaused] = useState(false);
     const [notes, setNotes] = useState('');
+    const [starred, setStarred] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
@@ -226,14 +227,14 @@ const JudgeLive = () => {
         setPaused(true);
     };
 
-    const flagCallback = async (isVote?: boolean) => {
+    const actionCallback = async (isVote?: boolean) => {
         setJudge(null);
 
-        // Update notes if voting
+        // Call update endpoint if voting
         if (isVote) {
-            const res = await postRequest<OkResponse>('/judge/notes', 'judge', {
+            const res = await postRequest<OkResponse>('/judge/score', 'judge', {
                 notes,
-                project: judge?.current,
+                starred,
             });
             if (res.status !== 200) {
                 errorAlert(res);
@@ -275,7 +276,7 @@ const JudgeLive = () => {
         // Open specified popup
         switch (pop) {
             case 'vote':
-                setVotePopup(true);
+                setFinishPopup(true);
                 break;
             case 'flag':
                 setFlagPopup(true);
@@ -392,17 +393,25 @@ const JudgeLive = () => {
                         className="grow"
                     />
                 </div>
-                <RatePopup
-                    enabled={votePopup}
-                    setEnabled={setVotePopup}
+                <FinishPopup
+                    enabled={finishPopup}
+                    setEnabled={setFinishPopup}
                     judge={judge}
-                    callback={flagCallback.bind(this, true)}
+                    callback={actionCallback.bind(this, true)}
+                    notes={notes}
+                    setNotes={setNotes}
+                    starred={starred}
+                    setStarred={setStarred}
                 />
-                <FlagPopup enabled={flagPopup} setEnabled={setFlagPopup} onSubmit={flagCallback} />
+                <FlagPopup
+                    enabled={flagPopup}
+                    setEnabled={setFlagPopup}
+                    onSubmit={actionCallback}
+                />
                 <FlagPopup
                     enabled={skipPopup}
                     setEnabled={setSkipPopup}
-                    onSubmit={flagCallback}
+                    onSubmit={actionCallback}
                     isSkip
                 />
                 <InfoPopup

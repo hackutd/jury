@@ -381,11 +381,11 @@ func addUrlToJudgedProject(project *models.JudgedProject, url string) *JudgedPro
 	return &JudgedProjectWithUrl{
 		JudgedProject: models.JudgedProject{
 			ProjectId:   project.ProjectId,
-			Categories:  project.Categories,
 			Name:        project.Name,
 			Location:    project.Location,
 			Description: project.Description,
 			Notes:       project.Notes,
+			Starred:     project.Starred,
 		},
 		Url: url,
 	}
@@ -561,10 +561,11 @@ func EditJudge(ctx *gin.Context) {
 }
 
 type JudgeScoreRequest struct {
-	Categories map[string]int `json:"categories"`
+	Notes   string `json:"notes"`
+	Starred bool   `json:"starred"`
 }
 
-// POST /judge/score - Endpoint to finish judging a project (give it a score in categories)
+// POST /judge/score - Endpoint to finish judging a project
 func JudgeScore(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -595,7 +596,7 @@ func JudgeScore(ctx *gin.Context) {
 		}
 
 		// Create the judged project object
-		judgedProject := models.JudgeProjectFromProject(project, scoreReq.Categories)
+		judgedProject := models.JudgeProjectFromProject(project, scoreReq.Notes, scoreReq.Starred)
 
 		// If groups are enabled, move the judge to the next group conditionally
 		if options.MultiGroup && options.MainGroup.SwitchingMode == "auto" {
@@ -659,6 +660,56 @@ func JudgeRank(ctx *gin.Context) {
 	err = database.UpdateJudgeRanking(db, judge, rankReq.Ranking)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge ranking in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+type JudgeStarRequest struct {
+	Starred bool               `json:"starred"`
+	Project primitive.ObjectID `json:"project"`
+}
+
+// PUT /judge/star - Update the judge's star status on a judged project
+func JudgeStar(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the judge from the context
+	judge := ctx.MustGet("judge").(*models.Judge)
+
+	// Get the request object
+	var starReq JudgeStarRequest
+	err := ctx.BindJSON(&starReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Find the index of the project in the judge's seen projects
+	index := -1
+	for i, p := range judge.SeenProjects {
+		if p.ProjectId == starReq.Project {
+			index = i
+			break
+		}
+	}
+
+	// If the project isn't in the judge's seen projects, return an error
+	if index == -1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
+		return
+	}
+
+	// Update that specific index of the seen projects array
+	judge.SeenProjects[index].Starred = starReq.Starred
+
+	// Update the judge's object for the project
+	err = database.UpdateJudgeSeenProjects(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
 		return
 	}
 
@@ -749,9 +800,6 @@ func JudgeUpdateScore(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
 		return
 	}
-
-	// Update that specific index of the seen projects array
-	judge.SeenProjects[index].Categories = scoreReq.Categories
 
 	// Update the judge's score for the project
 	err = database.UpdateJudgeSeenProjects(db, judge)

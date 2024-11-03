@@ -114,6 +114,7 @@ func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) e
 	return err
 }
 
+// UpdateGroupSizes will update the group sizes based on the given sizes
 func UpdateGroupSizes(db *mongo.Database, ctx context.Context, groupSizes []int64) error {
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"group_sizes": groupSizes}})
 	return err

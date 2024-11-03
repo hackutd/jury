@@ -5,6 +5,7 @@ import (
 	"server/config"
 	"server/database"
 	"server/funcs"
+	"server/judging"
 	"server/models"
 	"server/ranking"
 
@@ -476,6 +477,31 @@ func GetScores(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, scores)
 }
 
+// /GET /admin/stars - GetStars returns the stars of all projects
+func GetStars(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get all the projects
+	projects, err := database.FindAllProjects(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
+		return
+	}
+
+	// Get all the judges
+	judges, err := database.FindJudgesByTrack(db, ctx, "")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
+		return
+	}
+
+	stars := ranking.CalculateStars(judges, projects)
+
+	// Send OK
+	ctx.JSON(http.StatusOK, stars)
+}
+
 // /GET /admin/score/<track> - GetTrackScores returns the calculated scores of all projects in a track
 func GetTrackScores(ctx *gin.Context) {
 	// Get the database from the context
@@ -502,7 +528,34 @@ func GetTrackScores(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, scores)
+}
 
+// /GET /admin/stars/<track> - GetTrackStars returns the stars of all projects in a track
+func GetTrackStars(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Get all the projects
+	projects, err := database.FindProjectsByTrack(db, ctx, track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
+		return
+	}
+
+	// Get all the judges
+	judges, err := database.FindJudgesByTrack(db, ctx, track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
+		return
+	}
+
+	stars := ranking.CalculateStars(judges, projects)
+
+	// Send OK
+	ctx.JSON(http.StatusOK, stars)
 }
 
 type ToggleTracksRequest struct {
@@ -513,6 +566,9 @@ type ToggleTracksRequest struct {
 func ToggleTracks(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the track comparisons from the context
+	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
 
 	// Get the request
 	var req ToggleTracksRequest
@@ -529,6 +585,15 @@ func ToggleTracks(ctx *gin.Context) {
 		return
 	}
 
+	// Create track comparison objects
+	if req.JudgeTracks {
+		err = judging.ReloadTrackComparisons(db, &trackComps)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
+			return
+		}
+	}
+
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
@@ -542,6 +607,9 @@ func SetTracks(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
+	// Get the track comparisons from the context
+	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
+
 	// Get the tracks
 	var tracksReq SetTracksRequest
 	err := ctx.BindJSON(&tracksReq)
@@ -554,6 +622,13 @@ func SetTracks(ctx *gin.Context) {
 	err = database.UpdateTracks(db, ctx, tracksReq.Tracks)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving tracks: " + err.Error()})
+		return
+	}
+
+	// Create track comparison objects
+	err = judging.ReloadTrackComparisons(db, &trackComps)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
 		return
 	}
 
@@ -625,6 +700,34 @@ func SetNumGroups(ctx *gin.Context) {
 
 	// Save the options in the database
 	err = database.UpdateNumGroups(db, ctx, req.NumGroups)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+type SetGroupSizesRequest struct {
+	GroupSizes []int64 `json:"group_sizes"`
+}
+
+// POST /admin/groups/sizes - SetGroupSizes sets the group sizes
+func SetGroupSizes(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the request
+	var req SetGroupSizesRequest
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Save the options in the database
+	err = database.UpdateGroupSizes(db, ctx, req.GroupSizes)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
 		return

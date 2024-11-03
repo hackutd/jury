@@ -19,6 +19,7 @@ const ProjectsTable = () => {
     const options = useOptionsStore((state) => state.options);
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
     const currTrackScores = useOptionsStore((state) => state.currTrackScores);
+    const currTrackStars = useOptionsStore((state) => state.currTrackStars);
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
         setChecked({
@@ -87,10 +88,16 @@ const ProjectsTable = () => {
             // Add scores to project
             filteredProjects.forEach((project) => {
                 const score = currTrackScores.find((s) => s.id === project.id);
+                const star = currTrackStars.find((s) => s.id === project.id);
                 if (score) {
                     project.score = score.score;
                 } else {
                     console.error('No track score found for project', project);
+                }
+                if (star) {
+                    project.stars = star.stars;
+                } else {
+                    console.error('No track star found for project', project);
                 }
             });
         }
@@ -121,6 +128,9 @@ const ProjectsTable = () => {
                 break;
             case ProjectSortField.Score:
                 sortFunc = (a, b) => (a.score - b.score) * asc;
+                break;
+            case ProjectSortField.Stars:
+                sortFunc = (a, b) => (a.stars - b.stars) * asc;
                 break;
             case ProjectSortField.Seen:
                 sortFunc = (a, b) => (a.seen - b.seen) * asc;
@@ -169,6 +179,12 @@ const ProjectsTable = () => {
                             name="Score"
                             updateSort={updateSort}
                             sortField={ProjectSortField.Score}
+                            sortState={sortState}
+                        />
+                        <HeaderEntry
+                            name="Stars"
+                            updateSort={updateSort}
+                            sortField={ProjectSortField.Stars}
                             sortState={sortState}
                         />
                         <HeaderEntry

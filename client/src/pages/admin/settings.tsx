@@ -31,7 +31,7 @@ const SettingsButton = ({
     children: React.ReactNode;
     onClick: () => void;
     className?: string;
-    type?: 'primary' | 'error' | 'gold';
+    type?: 'primary' | 'error' | 'gold' | 'outline';
 }) => (
     <Button type={type} onClick={onClick} small className={'my-2 ' + className}>
         {children}
@@ -46,7 +46,6 @@ const AdminSettings = () => {
     const [judgingTimer, setJudgingTimer] = useState('');
     const [minViews, setMinViews] = useState(3);
     const [syncClock, setSyncClock] = useState(false);
-    const [categories, setCategories] = useState('');
     const [loading, setLoading] = useState(true);
     const [multiGroup, setMultiGroup] = useState(false);
     const [numGroups, setNumGroups] = useState(3);
@@ -78,10 +77,6 @@ const AdminSettings = () => {
             const timerStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             setJudgingTimer(timerStr);
         }
-
-        // Set categories
-        const cats = res.data.categories.join(', ');
-        setCategories(cats ?? '');
 
         // Set min views
         setMinViews(res.data.min_views);
@@ -176,26 +171,6 @@ const AdminSettings = () => {
         getOptions();
     };
 
-    const updateCategories = async () => {
-        // Split categories by comma and remove empty strings
-        const filteredCats = categories
-            .split(',')
-            .map((cat) => cat.trim())
-            .filter((cat) => cat !== '');
-
-        // Post the new categories
-        const res = await postRequest<OkResponse>('/admin/categories', 'admin', {
-            categories: filteredCats,
-        });
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('Categories updated!');
-        getOptions();
-    };
-
     const toggleJudgeTracks = async () => {
         const res = await postRequest<OkResponse>('/admin/tracks/toggle', 'admin', {
             judge_tracks: !judgeTracks,
@@ -237,6 +212,7 @@ const AdminSettings = () => {
         }
 
         setMultiGroup(!multiGroup);
+        fetchOptions();
         alert('Multi-group judging toggled!');
     };
 
@@ -326,13 +302,15 @@ const AdminSettings = () => {
             return;
         }
 
-        // Make sure number of counts is numGroups - 1
-        if (sizes.length !== numGroups - 1) {
-            alert('Number of sizes should be one less than the number of groups!');
+        // Make sure number of counts is numGroups
+        if (sizes.length !== numGroups) {
+            alert(
+                'Number of sizes should be the same as number of groups (you need a size for each group)!'
+            );
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/groups/sizes', 'admin', {
             group_sizes: sizes,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -340,7 +318,7 @@ const AdminSettings = () => {
             return;
         }
 
-        alert('Split counts updated!');
+        alert('Group sizes updated!');
     };
 
     const resetClock = async () => {
@@ -443,12 +421,14 @@ const AdminSettings = () => {
                     enabled, projects will be assigned round-robin into groups. Otherwise, projects
                     will be assigned in order.
                 </Description>
-                <SettingsButton
-                    onClick={() => setReassignPopup(true)}
-                    className="bg-gold text-black hover:bg-goldDark hover:text-black"
-                >
-                    Reassign
-                </SettingsButton>
+                <div className="flex flex-row">
+                    <SettingsButton
+                        onClick={() => setReassignPopup(true)}
+                        className="bg-gold text-black hover:bg-goldDark hover:text-black mr-4"
+                    >
+                        Reassign
+                    </SettingsButton>
+                </div>
 
                 <SubSection>Reassign Judge Groups</SubSection>
                 <Description>
@@ -478,22 +458,6 @@ const AdminSettings = () => {
                     />
                     <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
                 </div>
-
-                <SubSection>Set Categories</SubSection>
-                <Description>
-                    Set the categories that the judges will be scoring each project on. Please
-                    separate each category with a comma.
-                </Description>
-                <RawTextInput
-                    name="categories"
-                    placeholder="Cat 1, Cat 2, Cat 3, ..."
-                    text={categories}
-                    setText={setCategories}
-                    full
-                    large
-                    className="my-2"
-                />
-                <SettingsButton onClick={updateCategories}>Update Categories</SettingsButton>
 
                 <Section>Judging Clock and Timer</Section>
 
@@ -612,8 +576,9 @@ const AdminSettings = () => {
                         <SubSection>Group Sizes</SubSection>
                         <Description>
                             Set how many projects each group will get. Please separate each count
-                            with a comma. This list should contain one less than the total number of
-                            groups (eg. 3 groups: "30, 30").
+                            with a comma. This list should be exactly the same length as the number
+                            of groups (eg. 3 groups: "30, 30, 40"). Note that the last group will be
+                            used as overflow if all groups fill up.
                         </Description>
                         <RawTextInput
                             name="group-sizes"

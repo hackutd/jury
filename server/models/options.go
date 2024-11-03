@@ -41,7 +41,7 @@ func NewOptions() *Options {
 		Tracks:         []string{},
 		MultiGroup:     false,
 		NumGroups:      3,
-		GroupSizes:     []int64{30, 30},
+		GroupSizes:     []int64{30, 30, 30},
 		GroupTableNums: []int64{0, 30, 60},
 		MainGroup:      *NewGroupOptions(),
 	}

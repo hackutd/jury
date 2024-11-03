@@ -10,6 +10,7 @@ interface Project {
     seen: number;
     active: boolean;
     score: number;
+    stars: number;
     group: number;
     last_activity: number;
 }
@@ -76,8 +77,8 @@ interface TokenResponse {
 
 interface JudgedProject {
     project_id: string;
-    categories: { [name: string]: number };
     notes: string;
+    starred: boolean;
     name: string;
     location: number;
     description: string;
@@ -153,6 +154,11 @@ interface NextJudgeProject {
 interface ScoredItem {
     id: string;
     score: number;
+}
+
+interface StarredItem {
+    id: string;
+    stars: number;
 }
 
 interface JudgeStats {
