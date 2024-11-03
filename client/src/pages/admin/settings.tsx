@@ -31,7 +31,7 @@ const SettingsButton = ({
     children: React.ReactNode;
     onClick: () => void;
     className?: string;
-    type?: 'primary' | 'error' | 'gold';
+    type?: 'primary' | 'error' | 'gold' | 'outline';
 }) => (
     <Button type={type} onClick={onClick} small className={'my-2 ' + className}>
         {children}
@@ -40,6 +40,7 @@ const SettingsButton = ({
 
 const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
+    const [reassignRoundPopup, setReassignRoundPopup] = useState(false);
     const [judgeReassignPopup, setJudgeReassignPopup] = useState(false);
     const [clockResetPopup, setClockResetPopup] = useState(false);
     const [dropPopup, setDropPopup] = useState(false);
@@ -58,6 +59,7 @@ const AdminSettings = () => {
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
+    const options = useOptionsStore((state) => state.options);
 
     async function getOptions() {
         const res = await getRequest<Options>('/admin/options', 'admin');
@@ -116,6 +118,16 @@ const AdminSettings = () => {
         }
         alert('Table numbers reassigned!');
         setReassignPopup(false);
+    };
+
+    const reassignTablesRound = async () => {
+        const res = await postRequest<OkResponse>('/project/reassign/round', 'admin', null);
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+        alert('Table numbers reassigned!');
+        setReassignRoundPopup(false);
     };
 
     const reassignJudges = async () => {
@@ -237,6 +249,7 @@ const AdminSettings = () => {
         }
 
         setMultiGroup(!multiGroup);
+        fetchOptions();
         alert('Multi-group judging toggled!');
     };
 
@@ -326,13 +339,15 @@ const AdminSettings = () => {
             return;
         }
 
-        // Make sure number of counts is numGroups - 1
-        if (sizes.length !== numGroups - 1) {
-            alert('Number of sizes should be one less than the number of groups!');
+        // Make sure number of counts is numGroups
+        if (sizes.length !== numGroups) {
+            alert(
+                'Number of sizes should be the same as number of groups (you need a size for each group)!'
+            );
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/groups/sizes', 'admin', {
             group_sizes: sizes,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -340,7 +355,7 @@ const AdminSettings = () => {
             return;
         }
 
-        alert('Split counts updated!');
+        alert('Group sizes updated!');
     };
 
     const resetClock = async () => {
@@ -443,12 +458,19 @@ const AdminSettings = () => {
                     enabled, projects will be assigned round-robin into groups. Otherwise, projects
                     will be assigned in order.
                 </Description>
-                <SettingsButton
-                    onClick={() => setReassignPopup(true)}
-                    className="bg-gold text-black hover:bg-goldDark hover:text-black"
-                >
-                    Reassign
-                </SettingsButton>
+                <div className="flex flex-row">
+                    <SettingsButton
+                        onClick={() => setReassignPopup(true)}
+                        className="bg-gold text-black hover:bg-goldDark hover:text-black mr-4"
+                    >
+                        Reassign
+                    </SettingsButton>
+                    {options.judge_tracks && (
+                        <SettingsButton type="outline" onClick={() => setReassignRoundPopup(true)}>
+                            Reassign Round Robin
+                        </SettingsButton>
+                    )}
+                </div>
 
                 <SubSection>Reassign Judge Groups</SubSection>
                 <Description>
@@ -612,8 +634,9 @@ const AdminSettings = () => {
                         <SubSection>Group Sizes</SubSection>
                         <Description>
                             Set how many projects each group will get. Please separate each count
-                            with a comma. This list should contain one less than the total number of
-                            groups (eg. 3 groups: "30, 30").
+                            with a comma. This list should be exactly the same length as the number
+                            of groups (eg. 3 groups: "30, 30, 40"). Note that the last group will be
+                            used as overflow if all groups fill up.
                         </Description>
                         <RawTextInput
                             name="group-sizes"
@@ -756,6 +779,18 @@ const AdminSettings = () => {
             >
                 Are you sure you want to reassign project numbers? This should NOT be done DURING
                 judging; only beforehand!!
+            </ConfirmPopup>
+            <ConfirmPopup
+                enabled={reassignRoundPopup}
+                setEnabled={setReassignRoundPopup}
+                onSubmit={reassignTablesRound}
+                submitText="Reassign"
+                title="Heads Up!"
+                red
+            >
+                Are you sure you want to reassign project numbers? Note that you are using the
+                round-robin group assignment method -- this is NOT the most optimal assignment. This
+                should also NOT be done DURING judging; only beforehand!!
             </ConfirmPopup>
             <ConfirmPopup
                 enabled={judgeReassignPopup}

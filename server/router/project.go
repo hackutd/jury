@@ -456,7 +456,7 @@ func ReassignProjectNums(ctx *gin.Context) {
 
 	// Reassign project numbers by group or in order based on options
 	if options.MultiGroup {
-		err = funcs.ReassignNumsByGroup(db)
+		err = funcs.ReassignNumsByGroupOptimally(db)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
 			return
@@ -467,6 +467,34 @@ func ReassignProjectNums(ctx *gin.Context) {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
 			return
 		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /project/reassign/round - reassigns project numbers round robin
+func ReassignProjectNumsRoundRobin(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get options
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+		return
+	}
+
+	// If no multi group, throw error
+	if !options.MultiGroup {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "multi group option must be enabled to use round robin reassignment"})
+		return
+	}
+
+	// Reassign project numbers by group in round robin order
+	err = funcs.ReassignNumsByGroupRoundRobin(db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})

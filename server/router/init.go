@@ -106,6 +106,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/clock/reset", ResetClock)
 	adminRouter.POST("/admin/reset", ResetDatabase)
 	adminRouter.POST("/project/reassign", ReassignProjectNums)
+	adminRouter.POST("/project/reassign/round", ReassignProjectNumsRoundRobin)
 	adminRouter.POST("/judge/reassign", ReassignJudgeGroups)
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.POST("/admin/timer", SetJudgingTimer)
@@ -116,6 +117,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/tracks", SetTracks)
 	adminRouter.POST("/admin/groups/toggle", ToggleGroups)
 	adminRouter.POST("/admin/groups/num", SetNumGroups)
+	adminRouter.POST("/admin/groups/sizes", SetGroupSizes)
 	adminRouter.POST("/admin/groups/options", SetGroupOptions)
 
 	// Admin panel - exports

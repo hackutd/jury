@@ -580,7 +580,7 @@ func ToggleGroups(ctx *gin.Context) {
 
 	// Reassign table numbers based on groups
 	if req.MultiGroup {
-		err = funcs.ReassignNumsByGroup(db)
+		err = funcs.ReassignNumsByGroupRoundRobin(db)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning table numbers: " + err.Error()})
 			return
@@ -625,6 +625,34 @@ func SetNumGroups(ctx *gin.Context) {
 
 	// Save the options in the database
 	err = database.UpdateNumGroups(db, ctx, req.NumGroups)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+type SetGroupSizesRequest struct {
+	GroupSizes []int64 `json:"group_sizes"`
+}
+
+// POST /admin/groups/sizes - SetGroupSizes sets the group sizes
+func SetGroupSizes(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the request
+	var req SetGroupSizesRequest
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Save the options in the database
+	err = database.UpdateGroupSizes(db, ctx, req.GroupSizes)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
 		return
