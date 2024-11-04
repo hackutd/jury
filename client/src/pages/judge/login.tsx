@@ -128,7 +128,7 @@ const JudgeLogin = () => {
                     error={error}
                     setError={setError}
                     errorMessage="Invalid judging code"
-                    className="text-8xl text-center w-4/5"
+                    className="text-8xl text-center w-full"
                 />
                 <p className="text-2xl text-light text-center mx-4 my-12">
                     If you did not get a code, check your email or contact an organizer.
