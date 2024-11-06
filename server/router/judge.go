@@ -695,16 +695,8 @@ func JudgeStar(ctx *gin.Context) {
 		return
 	}
 
-	// Find the index of the project in the judge's seen projects
-	index := -1
-	for i, p := range judge.SeenProjects {
-		if p.ProjectId == projectId {
-			index = i
-			break
-		}
-	}
-
 	// If the project isn't in the judge's seen projects, return an error
+	index := util.FindSeenProjectIndex(judge, projectId)
 	if index == -1 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
 		return
@@ -815,16 +807,8 @@ func JudgeUpdateScore(ctx *gin.Context) {
 		return
 	}
 
-	// Find the index of the project in the judge's seen projects
-	index := -1
-	for i, p := range judge.SeenProjects {
-		if p.ProjectId == scoreReq.Project {
-			index = i
-			break
-		}
-	}
-
 	// If the project isn't in the judge's seen projects, return an error
+	index := util.FindSeenProjectIndex(judge, scoreReq.Project)
 	if index == -1 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
 		return
@@ -845,12 +829,10 @@ func JudgeUpdateScore(ctx *gin.Context) {
 }
 
 type UpdateNotesRequest struct {
-	Notes   string             `json:"notes"`
-	Project primitive.ObjectID `json:"project"`
+	Notes string `json:"notes"`
 }
 
-// POST /judge/notes - Update the notes of a judge
-// TODO: Make this a PUT
+// PUT /judge/notes/:id - Update the notes of a judge
 func JudgeUpdateNotes(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -858,32 +840,31 @@ func JudgeUpdateNotes(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Get the project ID from the URL
+	rawProjectId := ctx.Param("id")
+	projectId, err := primitive.ObjectIDFromHex(rawProjectId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
 	// Get the request object
-	var scoreReq UpdateNotesRequest
-	err := ctx.BindJSON(&scoreReq)
+	var notesReq UpdateNotesRequest
+	err = ctx.BindJSON(&notesReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
 
-	// Find the index of the project in the judge's seen projects
-	// TODO: Extract to diff function to get rid of repeated code from JudgeUpdateScore
-	index := -1
-	for i, p := range judge.SeenProjects {
-		if p.ProjectId == scoreReq.Project {
-			index = i
-			break
-		}
-	}
-
 	// If the project isn't in the judge's seen projects, return an error
+	index := util.FindSeenProjectIndex(judge, projectId)
 	if index == -1 {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
 		return
 	}
 
 	// Update that specific index of the seen projects array
-	judge.SeenProjects[index].Notes = scoreReq.Notes
+	judge.SeenProjects[index].Notes = notesReq.Notes
 
 	// Update the judge's object for the project
 	err = database.UpdateJudgeSeenProjects(db, ctx, judge)

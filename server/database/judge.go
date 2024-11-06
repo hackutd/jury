@@ -213,6 +213,13 @@ func UpdateJudgeSeenProjects(db *mongo.Database, ctx context.Context, judge *mod
 	return err
 }
 
+// UpdateJudgeNotes updates the notes of a single seen project for a judge
+func UpdateJudgeNotes(db *mongo.Database, ctx context.Context, judgeId *primitive.ObjectID, projIndex int, notes string) error {
+	notesKey := "seen_projects." + strconv.Itoa(projIndex) + ".notes"
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{notesKey: notes}})
+	return err
+}
+
 // UpdateJudgeStars updates the star value of a single seen project for a judge
 func UpdateJudgeStars(db *mongo.Database, ctx context.Context, judgeId primitive.ObjectID, projIndex int, starred bool) error {
 	starredKey := "seen_projects." + strconv.Itoa(projIndex) + ".starred"

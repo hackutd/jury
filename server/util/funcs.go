@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/rand"
 	"math/big"
+	"server/models"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -36,4 +37,15 @@ func GetFullHostname(ctx *gin.Context) string {
 // Now returns the current time as a primitive.DateTime
 func Now() primitive.DateTime {
 	return primitive.NewDateTimeFromTime(time.Now())
+}
+
+// FindSeenProjectIndex finds the index of a project in a judge's seen projects.
+// Will return -1 if the project is not found.
+func FindSeenProjectIndex(judge *models.Judge, projectId primitive.ObjectID) int {
+	for i, seen := range judge.SeenProjects {
+		if seen.ProjectId == projectId {
+			return i
+		}
+	}
+	return -1
 }
