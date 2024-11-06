@@ -39,14 +39,13 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
     }
 
     const updateStar = async () => {
-        const res = await putRequest<OkResponse>('/judge/star', 'judge', {
-            project: project.project_id,
+        const res = await putRequest<OkResponse>(`/judge/star/${project.project_id}`, 'judge', {
             starred: !starred,
         });
         if (res.status !== 200) {
             errorAlert(res);
         }
-    }
+    };
 
     return (
         <div className="flex items-center cursor-default">

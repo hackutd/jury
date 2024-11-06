@@ -265,3 +265,26 @@ func GetChallenges(db *mongo.Database, ctx context.Context) ([]string, error) {
 
 	return challengeList, nil
 }
+
+// UpdateProjectStars updates the starred count of a project, incrementing or decrementing it
+func UpdateProjectStars(db *mongo.Database, ctx context.Context, projId primitive.ObjectID, increment bool) error {
+	change := -1
+	if increment {
+		change = 1
+	}
+
+	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": projId}, gin.H{"$inc": gin.H{"stars": change}})
+	return err
+}
+
+// UpdateProjectTrackStars updates the starred count of a project in a specific track, incrementing or decrementing it
+func UpdateProjectTrackStars(db *mongo.Database, ctx context.Context, projId primitive.ObjectID, track string, increment bool) error {
+	change := -1
+	if increment {
+		change = 1
+	}
+	track_str := "track_stars." + track
+
+	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": projId}, gin.H{"$inc": gin.H{track_str: change}})
+	return err
+}

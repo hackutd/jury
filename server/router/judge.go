@@ -668,11 +668,10 @@ func JudgeRank(ctx *gin.Context) {
 }
 
 type JudgeStarRequest struct {
-	Starred bool               `json:"starred"`
-	Project primitive.ObjectID `json:"project"`
+	Starred bool `json:"starred"`
 }
 
-// PUT /judge/star - Update the judge's star status on a judged project
+// PUT /judge/star/:id - Update the judge's star status on a judged project
 func JudgeStar(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -680,9 +679,17 @@ func JudgeStar(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
+	// Get the project id from the URL
+	rawProjectId := ctx.Param("id")
+	projectId, err := primitive.ObjectIDFromHex(rawProjectId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
 	// Get the request object
 	var starReq JudgeStarRequest
-	err := ctx.BindJSON(&starReq)
+	err = ctx.BindJSON(&starReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
@@ -691,7 +698,7 @@ func JudgeStar(ctx *gin.Context) {
 	// Find the index of the project in the judge's seen projects
 	index := -1
 	for i, p := range judge.SeenProjects {
-		if p.ProjectId == starReq.Project {
+		if p.ProjectId == projectId {
 			index = i
 			break
 		}
@@ -703,13 +710,35 @@ func JudgeStar(ctx *gin.Context) {
 		return
 	}
 
-	// Update that specific index of the seen projects array
-	judge.SeenProjects[index].Starred = starReq.Starred
+	// Wrap in transaction
+	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get the options
+		options, err := database.GetOptions(db, sc)
+		if err != nil {
+			return errors.New("error getting options: " + err.Error())
+		}
 
-	// Update the judge's object for the project
-	err = database.UpdateJudgeSeenProjects(db, judge)
+		// Update the judge's object for the project
+		err = database.UpdateJudgeStars(db, sc, judge.Id, index, starReq.Starred)
+		if err != nil {
+			return errors.New("error updating judge starred in database: " + err.Error())
+		}
+
+		// If the judge is in a track, update that track's comparisons
+		// Otherwise, update the project's starred status
+		if options.JudgeTracks && judge.Track != "" {
+			err = database.UpdateProjectTrackStars(db, sc, projectId, judge.Track, starReq.Starred)
+		} else {
+			err = database.UpdateProjectStars(db, sc, projectId, starReq.Starred)
+		}
+		if err != nil {
+			return errors.New("error updating project starred status in database: " + err.Error())
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -802,7 +831,7 @@ func JudgeUpdateScore(ctx *gin.Context) {
 	}
 
 	// Update the judge's score for the project
-	err = database.UpdateJudgeSeenProjects(db, judge)
+	err = database.UpdateJudgeSeenProjects(db, ctx, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
 		return
@@ -821,6 +850,7 @@ type UpdateNotesRequest struct {
 }
 
 // POST /judge/notes - Update the notes of a judge
+// TODO: Make this a PUT
 func JudgeUpdateNotes(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -856,7 +886,7 @@ func JudgeUpdateNotes(ctx *gin.Context) {
 	judge.SeenProjects[index].Notes = scoreReq.Notes
 
 	// Update the judge's object for the project
-	err = database.UpdateJudgeSeenProjects(db, judge)
+	err = database.UpdateJudgeSeenProjects(db, ctx, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
 		return

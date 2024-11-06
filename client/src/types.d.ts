@@ -11,6 +11,7 @@ interface Project {
     active: boolean;
     score: number;
     stars: number;
+    trackStars: Map<string, number>;
     group: number;
     last_activity: number;
 }
@@ -154,11 +155,6 @@ interface NextJudgeProject {
 interface ScoredItem {
     id: string;
     score: number;
-}
-
-interface StarredItem {
-    id: string;
-    stars: number;
 }
 
 interface JudgeStats {

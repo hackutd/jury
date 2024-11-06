@@ -60,21 +60,11 @@ const useAdminStore = create<AdminStore>()((set) => ({
         if (track === 'Main Judging') {
             track = '';
         }
-        const starsRes = await getRequest<StarredItem[]>(`/admin/stars/${track}`, 'admin');
-        if (starsRes.status !== 200) {
-            errorAlert(starsRes);
-            return;
-        }
-        const stars = starsRes.data as StarredItem[];
 
         projects.forEach((project) => {
             const score = scores.find((s) => s.id === project.id);
-            const star = stars.find((s) => s.id === project.id);
             if (score) {
                 project.score = score.score;
-            }
-            if (star) {
-                project.stars = star.stars;
             }
         });
 
@@ -158,7 +148,6 @@ interface OptionsStore {
     options: Options;
     selectedTrack: string;
     currTrackScores: ScoredItem[];
-    currTrackStars: StarredItem[];
     fetchOptions: () => Promise<void>;
     setSelectedTrack: (track: string) => void;
 }
@@ -192,7 +181,6 @@ const useOptionsStore = create<OptionsStore>((set) => ({
     selectedTrack: 'Main Judging',
 
     currTrackScores: [],
-    currTrackStars: [],
 
     fetchOptions: async () => {
         const optionsRes = await getRequest<Options>('/admin/options', 'admin');
@@ -206,7 +194,7 @@ const useOptionsStore = create<OptionsStore>((set) => ({
     setSelectedTrack: async (track: string) => {
         const fetchProjects = useAdminStore.getState().fetchProjects;
 
-        // Get stars for selected track
+        // TODO: This string jankasf
         if (track === 'Main Judging') {
             set({ selectedTrack: track });
             await fetchProjects();
@@ -220,16 +208,8 @@ const useOptionsStore = create<OptionsStore>((set) => ({
             return;
         }
 
-        // Get stars for selected track
-        const starsRes = await getRequest<StarredItem[]>(`/admin/stars/${track}`, 'admin');
-        if (starsRes.status !== 200) {
-            errorAlert(starsRes);
-            return;
-        }
-
         set({ selectedTrack: track });
         set({ currTrackScores: scoresRes.data as ScoredItem[] });
-        set({ currTrackStars: starsRes.data as StarredItem[] });
     },
 }));
 

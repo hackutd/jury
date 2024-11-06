@@ -16,6 +16,9 @@ type Project struct {
 	VideoLink     string             `bson:"video_link" json:"video_link"`
 	ChallengeList []string           `bson:"challenge_list" json:"challenge_list"`
 	Seen          int64              `bson:"seen" json:"seen"`
+	Score         int64              `bson:"score" json:"score"`
+	Stars         int64              `bson:"stars" json:"stars"`
+	TrackStars    map[string]int64   `bson:"track_stars" json:"track_stars"`
 	Active        bool               `bson:"active" json:"active"`
 	Group         int64              `bson:"group" json:"group"`
 	LastActivity  primitive.DateTime `bson:"last_activity" json:"last_activity"`
@@ -32,6 +35,9 @@ func NewProject(name string, location int64, group int64, description string, ur
 		VideoLink:     videoLink,
 		ChallengeList: challengeList,
 		Seen:          0,
+		Score:         0,
+		Stars:         0,
+		TrackStars:    make(map[string]int64),
 		Active:        true,
 		LastActivity:  primitive.DateTime(0),
 	}

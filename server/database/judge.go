@@ -4,6 +4,7 @@ import (
 	"context"
 	"server/models"
 	"server/util"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -206,10 +207,18 @@ func UpdateJudgeRanking(db *mongo.Database, judge *models.Judge, rankings []prim
 	return err
 }
 
-// TODO: Move the stuff from UpdateJudgeRankings to here
-func UpdateJudgeSeenProjects(db *mongo.Database, judge *models.Judge) error {
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
+// TODO: Can we separate all the functionality out of this?
+func UpdateJudgeSeenProjects(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
 	return err
+}
+
+// UpdateJudgeStars updates the star value of a single seen project for a judge
+func UpdateJudgeStars(db *mongo.Database, ctx context.Context, judgeId primitive.ObjectID, projIndex int, starred bool) error {
+	starredKey := "seen_projects." + strconv.Itoa(projIndex) + ".starred"
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{starredKey: starred}})
+	return err
+
 }
 
 // Reset list of projects that judge skipped due to busy
