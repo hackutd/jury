@@ -7,6 +7,7 @@ import (
 	"server/funcs"
 	"server/judging"
 	"server/models"
+	"server/ranking"
 	"server/util"
 
 	"github.com/gin-gonic/gin"
@@ -656,10 +657,27 @@ func JudgeRank(ctx *gin.Context) {
 		return
 	}
 
-	// Update the judge's ranking
-	err = database.UpdateJudgeRanking(db, judge, rankReq.Ranking)
+	// Calculate diff of scores
+	diff := ranking.CalculateScoreDiff(rankReq.Ranking, judge.Rankings)
+
+	// Wrap in transaction
+	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Update the judge's ranking
+		err = database.UpdateJudgeRanking(db, judge, rankReq.Ranking)
+		if err != nil {
+			return errors.New("error updating judge ranking in database: " + err.Error())
+		}
+
+		// Update projects based on diff
+		err = database.UpdateProjectScores(db, sc, diff)
+		if err != nil {
+			return errors.New("error updating project scores in database: " + err.Error())
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge ranking in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

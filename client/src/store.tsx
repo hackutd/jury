@@ -136,7 +136,6 @@ const useClockStore = create<ClockStore>()((set) => ({
 interface OptionsStore {
     options: Options;
     selectedTrack: string;
-    currTrackScores: ScoredItem[];
     fetchOptions: () => Promise<void>;
     setSelectedTrack: (track: string) => void;
 }
@@ -169,8 +168,6 @@ const useOptionsStore = create<OptionsStore>((set) => ({
 
     selectedTrack: '',
 
-    currTrackScores: [],
-
     fetchOptions: async () => {
         const optionsRes = await getRequest<Options>('/admin/options', 'admin');
         if (optionsRes.status !== 200) {
@@ -180,26 +177,14 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         set({ options: optionsRes.data as Options });
     },
 
-    // TODO: Fix this
     setSelectedTrack: async (track: string) => {
-        const fetchProjects = useAdminStore.getState().fetchProjects;
-
         // If main judging selected, reset selected track
         if (track === 'Main Judging') {
             set({ selectedTrack: '' });
-            await fetchProjects();
-            return;
-        }
-
-        // Get scores for selected track
-        const scoresRes = await getRequest<ScoredItem[]>(`/admin/score/${track}`, 'admin');
-        if (scoresRes.status !== 200) {
-            errorAlert(scoresRes);
             return;
         }
 
         set({ selectedTrack: track });
-        set({ currTrackScores: scoresRes.data as ScoredItem[] });
     },
 }));
 

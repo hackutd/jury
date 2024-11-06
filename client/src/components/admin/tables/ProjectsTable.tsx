@@ -18,7 +18,6 @@ const ProjectsTable = () => {
     });
     const options = useOptionsStore((state) => state.options);
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
-    const currTrackScores = useOptionsStore((state) => state.currTrackScores);
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
         setChecked({
@@ -82,18 +81,6 @@ const ProjectsTable = () => {
                       (project) => project.challenge_list.indexOf(selectedTrack) !== -1
                   )
                 : unsortedProjects;
-
-        if (options.judge_tracks && selectedTrack !== '') {
-            // Add scores to project
-            filteredProjects.forEach((project) => {
-                const score = currTrackScores.find((s) => s.id === project.id);
-                if (score) {
-                    project.score = score.score;
-                } else {
-                    console.error('No track score found for project', project);
-                }
-            });
-        }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let sortFunc = (_: Project, b: Project) => 0;

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"server/models"
 	"server/util"
 
@@ -287,4 +288,20 @@ func UpdateProjectTrackStars(db *mongo.Database, ctx context.Context, projId pri
 
 	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": projId}, gin.H{"$inc": gin.H{track_str: change}})
 	return err
+}
+
+// UpdateProjectScores updates the scores of the projects given the diff
+func UpdateProjectScores(db *mongo.Database, ctx context.Context, scoreDiff *map[primitive.ObjectID]int) error {
+	models := make([]mongo.WriteModel, 0, len(*scoreDiff))
+	for id, diff := range *scoreDiff {
+		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": id}).SetUpdate(gin.H{"$inc": gin.H{"score": diff}}))
+	}
+
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := db.Collection("projects").BulkWrite(ctx, models, opts)
+	if err != nil {
+		return errors.New("error updating projects in database: " + err.Error())
+	}
+
+	return nil
 }
