@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -48,27 +49,10 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 			return err
 		}
 
-		// Check to see how many times the project has been marked absent
-		active := true
-		absentCount, err := database.GetProjectAbsentCount(db, skippedProject, ctx)
+		// Hide the project if it has been skipped more than 3 times
+		err = HideAbsentProject(db, ctx, judge.Current)
 		if err != nil {
-			return errors.New("error checking for project flags: " + err.Error())
-		}
-		// Hide project if it's been absent more than 3 times
-		if reason == "absent" && absentCount >= 2 {
-			active = false
-
-			// Also remove all absent flags for the project
-			err = database.DeleteAbsentFlags(db, skippedProject, ctx)
-			if err != nil {
-				return errors.New("error deleting absent flags: " + err.Error())
-			}
-		}
-
-		// Update the project
-		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}, "$set": gin.H{"active": active}})
-		if err != nil {
-			return err
+			return errors.New("error hiding absent project: " + err.Error())
 		}
 
 		// Don't get a new project if we're not supposed to
@@ -87,8 +71,36 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 		}
 
 		// Update the judge
-		return database.UpdateAfterPickedWithTx(db, project, judge, ctx)
+		return database.UpdateAfterPickedWithTx(db, ctx, &project.Id, &judge.Id)
 	})
+}
+
+// HideAbsentProject hides a project if it has been absent more than 3 times.
+func HideAbsentProject(db *mongo.Database, ctx mongo.SessionContext, projectId *primitive.ObjectID) error {
+	// Get absent count
+	absent, err := database.GetProjectAbsentCount(db, ctx, projectId)
+	if err != nil {
+		return errors.New("Error getting absent count: " + err.Error())
+	}
+
+	// If no more than 3 absences, ignore
+	if absent < 3 {
+		return nil
+	}
+
+	// Hide the project
+	err = database.SetProjectHidden(db, ctx, projectId, true)
+	if err != nil {
+		return errors.New("Error hiding project: " + err.Error())
+	}
+
+	// Delete all absent flags
+	err = database.DeleteAbsentFlags(db, projectId, ctx)
+	if err != nil {
+		return errors.New("Error deleting absent flags: " + err.Error())
+	}
+
+	return nil
 }
 
 // MoveJudgeGroup will increment the count of projects they've seen in the current group,

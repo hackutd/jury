@@ -422,7 +422,7 @@ func HideProject(ctx *gin.Context) {
 	}
 
 	// Update the project in the database
-	err = database.SetProjectHidden(db, &projectObjectId, true)
+	err = database.SetProjectHidden(db, ctx, &projectObjectId, true)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
 		return
@@ -454,7 +454,7 @@ func UnhideProject(ctx *gin.Context) {
 	}
 
 	// Update the project in the database
-	err = database.SetProjectHidden(db, &projectObjectId, false)
+	err = database.SetProjectHidden(db, ctx, &projectObjectId, false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
 		return

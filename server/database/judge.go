@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"server/models"
 	"server/util"
 	"strconv"
@@ -166,7 +167,7 @@ func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
 func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judge, seenProject *models.JudgedProject) error {
 	// Update the judge's seen projects
 	_, err := db.Collection("judges").UpdateOne(
-		context.Background(),
+		ctx,
 		gin.H{"_id": judge.Id},
 		gin.H{
 			"$push": gin.H{"seen_projects": seenProject},
@@ -174,7 +175,26 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 			"$set":  gin.H{"current": nil, "group": judge.Group, "group_seen": judge.GroupSeen, "last_activity": util.Now()},
 		},
 	)
-	return err
+	if err != nil {
+		return errors.New("error updating judge: " + err.Error())
+	}
+
+	star := 0
+	if seenProject.Starred {
+		star = 1
+	}
+
+	// Update the project's seen count
+	_, err = db.Collection("projects").UpdateOne(
+		ctx,
+		gin.H{"_id": seenProject.ProjectId},
+		gin.H{"$inc": gin.H{"seen": 1, "stars": star}, "$set": gin.H{"last_activity": util.Now()}},
+	)
+	if err != nil {
+		return errors.New("error updating project: " + err.Error())
+	}
+
+	return nil
 }
 
 // SetJudgeHidden sets the active field of a judge
@@ -240,18 +260,7 @@ func ResetBusyProjectListForJudge(db *mongo.Database, ctx context.Context, judge
 	return nil
 }
 
-// Reset project status to non-busy by deleting all "busy" flag for a project
-func ResetBusyStatusByProject(db *mongo.Database, ctx context.Context, project *models.Project) error {
-	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{
-		"project_id": project.Id,
-		"reason":     "busy",
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
+// GetMinJudgeGroup returns the group with the fewest judges
 func GetMinJudgeGroup(db *mongo.Database, track string) (int64, error) {
 	pipe := []gin.H{{"$group": gin.H{
 		"_id":   "$group",

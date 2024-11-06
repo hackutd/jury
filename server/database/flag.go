@@ -5,6 +5,7 @@ import (
 	"server/models"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -42,22 +43,33 @@ func FindFlagsByJudge(db *mongo.Database, judge *models.Judge, ctx mongo.Session
 	return flags, nil
 }
 
-// GetProjectAbsentCount finds the number of times that a specified project has been skipped
-func GetProjectAbsentCount(db *mongo.Database, project *models.Project, ctx mongo.SessionContext) (int, error) {
-	flags := make([]*models.Flag, 0)
-	cursor, err := db.Collection("flags").Find(ctx, gin.H{"project_id": project.Id, "reason": "absent"})
+// GetProjectAbsentCount finds the number of times that a specified project has been skipped.
+func GetProjectAbsentCount(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID) (int, error) {
+	// Use an aggregation pipeline to count projects with the reason "absent"
+	cursor, err := db.Collection("flags").Aggregate(ctx, []gin.H{
+		{"$match": gin.H{"project_id": projectId, "reason": "absent"}},
+		{"$count": "absent_count"},
+	})
 	if err != nil {
 		return 0, err
 	}
-	err = cursor.All(context.Background(), &flags)
-	if err != nil {
-		return 0, err
+
+	// Get the count from the cursor
+	var result struct {
+		AbsentCount int `bson:"absent_count"`
 	}
-	return len(flags), nil
+	if cursor.Next(ctx) {
+		err = cursor.Decode(&result)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return result.AbsentCount, nil
 }
 
 // DeleteAbsentFlags deletes all flags with the reason "absent" for a given project ID
-func DeleteAbsentFlags(db *mongo.Database, project *models.Project, ctx mongo.SessionContext) error {
-	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{"project_id": project.Id, "reason": "absent"})
+func DeleteAbsentFlags(db *mongo.Database, projectId *primitive.ObjectID, ctx mongo.SessionContext) error {
+	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{"project_id": projectId, "reason": "absent"})
 	return err
 }

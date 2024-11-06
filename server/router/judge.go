@@ -354,7 +354,7 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	}
 
 	// Update judge and project
-	err = database.UpdateAfterPicked(db, project, judge)
+	err = database.UpdateAfterPicked(db, &project.Id, &judge.Id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating next project in database: " + err.Error()})
 		return
@@ -607,7 +607,7 @@ func JudgeScore(ctx *gin.Context) {
 			}
 		}
 
-		// Update the project with the score
+		// Update the judge and project
 		err = database.UpdateAfterSeen(db, sc, judge, judgedProject)
 		if err != nil {
 			return errors.New("error storing scores in database: " + err.Error())
@@ -617,13 +617,6 @@ func JudgeScore(ctx *gin.Context) {
 		err = database.ResetBusyProjectListForJudge(db, sc, judge)
 		if err != nil {
 			return errors.New("error resetting busy project list in database: " + err.Error())
-		}
-
-		// "Remove" busy status from current project so that other judges can come back to that project
-		// TODO: Do we have to do this?
-		err = database.ResetBusyStatusByProject(db, sc, project)
-		if err != nil {
-			return errors.New("error resetting busy project status in database: " + err.Error())
 		}
 
 		return nil

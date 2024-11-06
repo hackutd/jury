@@ -169,29 +169,30 @@ func FindProjectById(db *mongo.Database, ctx context.Context, id *primitive.Obje
 }
 
 // UpdateAfterPicked updates the seen value of the new project picked and the judge's current project
-func UpdateAfterPicked(db *mongo.Database, project *models.Project, judge *models.Judge) error {
+func UpdateAfterPicked(db *mongo.Database, projectId *primitive.ObjectID, judgeId *primitive.ObjectID) error {
 	err := WithTransaction(db, func(ctx mongo.SessionContext) error {
-		return UpdateAfterPickedWithTx(db, project, judge, ctx)
+		return UpdateAfterPickedWithTx(db, ctx, projectId, judgeId)
 	})
 	return err
 }
 
 // UpdateAfterPickedWithTx updates the seen value of the new project picked and the judge's current project
-func UpdateAfterPickedWithTx(db *mongo.Database, project *models.Project, judge *models.Judge, ctx mongo.SessionContext) error {
-	// Update the project's seen value and de-prioritize it
+func UpdateAfterPickedWithTx(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID, judgeId *primitive.ObjectID) error {
+	// De-prioritize project
 	_, err := db.Collection("projects").UpdateOne(
 		ctx,
-		gin.H{"_id": project.Id},
-		gin.H{"$inc": gin.H{"seen": 1}, "$set": gin.H{"prioritized": false, "last_activity": util.Now()}},
+		gin.H{"_id": projectId},
+		gin.H{"$set": gin.H{"prioritized": false}},
 	)
 	if err != nil {
 		return err
 	}
+
 	// Set the judge's current project
 	_, err = db.Collection("judges").UpdateOne(
 		ctx,
-		gin.H{"_id": judge.Id},
-		gin.H{"$set": gin.H{"current": project.Id, "last_activity": util.Now()}},
+		gin.H{"_id": judgeId},
+		gin.H{"$set": gin.H{"current": projectId, "last_activity": util.Now()}},
 	)
 	return err
 }
@@ -206,8 +207,8 @@ func CountTrackProjects(db *mongo.Database, track string) (int64, error) {
 	return db.Collection("projects").CountDocuments(context.Background(), gin.H{"challenge_list": track})
 }
 
-// SetProjectHidden sets the active field of a project
-func SetProjectHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
+// SetProjectHidden sets the active field of a project (hide or unhide project)
+func SetProjectHidden(db *mongo.Database, ctx context.Context, id *primitive.ObjectID, hidden bool) error {
 	_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"active": !hidden}})
 	return err
 }
