@@ -247,9 +247,9 @@ const Judge = () => {
             <Container noCenter className="px-2 pb-4">
                 <h1 className="text-2xl mt-2">Welcome, {judge.name}!</h1>
                 {judge.track !== '' && (
-                    <p className="text-lighter font-bold mb-2">Track: {judge.track}</p>
+                    <p className="text-lighter font-bold">Track: {judge.track}</p>
                 )}
-                <div className="w-full mb-6">
+                <div className="w-full mb-6 mt-2">
                     <Button type="primary" full href="/judge/live">
                         Next Project
                     </Button>
