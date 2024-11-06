@@ -57,7 +57,7 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                 {options && options.judge_tracks && (
                     <Dropdown
                         options={['Main Judging', ...options.tracks]}
-                        selected={selectedTrack}
+                        selected={selectedTrack === '' ? 'Main Judging' : selectedTrack}
                         setSelected={setSelectedTrack}
                         className="ml-4"
                     />

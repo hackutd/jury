@@ -77,13 +77,13 @@ const ProjectsTable = () => {
 
         // Filter by track if enabled
         const filteredProjects =
-            options.judge_tracks && selectedTrack !== 'Main Judging'
+            options.judge_tracks && selectedTrack !== ''
                 ? unsortedProjects.filter(
                       (project) => project.challenge_list.indexOf(selectedTrack) !== -1
                   )
                 : unsortedProjects;
 
-        if (options.judge_tracks && selectedTrack !== 'Main Judging') {
+        if (options.judge_tracks && selectedTrack !== '') {
             // Add scores to project
             filteredProjects.forEach((project) => {
                 const score = currTrackScores.find((s) => s.id === project.id);

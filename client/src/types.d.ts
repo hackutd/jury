@@ -11,7 +11,7 @@ interface Project {
     active: boolean;
     score: number;
     stars: number;
-    trackStars: Map<string, number>;
+    track_stars: { [track: string]: number };
     group: number;
     last_activity: number;
 }

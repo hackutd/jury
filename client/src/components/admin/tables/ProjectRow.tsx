@@ -25,6 +25,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
     const ref = useRef<HTMLDivElement>(null);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const options = useOptionsStore((state) => state.options);
+    const track = useOptionsStore((state) => state.selectedTrack);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -83,6 +84,11 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
         }
     }, [flags, project]);
 
+    let stars = project.stars;
+    if (options.judge_tracks && track !== '') {
+        stars = project.track_stars[track] || 0;
+    }
+
     return (
         <>
             <tr
@@ -132,7 +138,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 </td>
                 {options.multi_group && <td className="text-center">{project.group}</td>}
                 <td className="text-center">{project.score}</td>
-                <td className="text-center">{project.stars}</td>
+                <td className="text-center">{stars}</td>
                 <td className="text-center">{project.seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>
                 <td className="text-right align-center">

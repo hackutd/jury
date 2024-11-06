@@ -59,11 +59,10 @@ const JudgesTable = () => {
         setChecked(Array(unsortedJudges.length).fill(false));
 
         // Filter by track
+        // TODO: lowk this looks like hot garbage
         const filteredJudges = options.judge_tracks
             ? unsortedJudges.filter(
-                  (j) =>
-                      j.track === selectedTrack ||
-                      (j.track === '' && selectedTrack === 'Main Judging')
+                  (j) => j.track === selectedTrack || (j.track === '' && selectedTrack === '')
               )
             : unsortedJudges;
 

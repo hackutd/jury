@@ -25,11 +25,7 @@ const useAdminStore = create<AdminStore>()((set) => ({
 
     fetchStats: async () => {
         const selectedTrack = useOptionsStore.getState().selectedTrack;
-        let track = selectedTrack;
-        if (track === 'Main Judging') {
-            track = '';
-        }
-        const statsRes = await getRequest<Stats>(`/admin/stats/${track}`, 'admin');
+        const statsRes = await getRequest<Stats>(`/admin/stats/${selectedTrack}`, 'admin');
         if (statsRes.status !== 200) {
             errorAlert(statsRes);
             return;
@@ -40,8 +36,6 @@ const useAdminStore = create<AdminStore>()((set) => ({
     projects: [],
 
     fetchProjects: async () => {
-        const selectedTrack = useOptionsStore.getState().selectedTrack;
-
         const projRes = await getRequest<Project[]>('/project/list', 'admin');
         if (projRes.status !== 200) {
             errorAlert(projRes);
@@ -55,11 +49,6 @@ const useAdminStore = create<AdminStore>()((set) => ({
             return;
         }
         const scores = scoreRes.data as ScoredItem[];
-
-        let track = selectedTrack;
-        if (track === 'Main Judging') {
-            track = '';
-        }
 
         projects.forEach((project) => {
             const score = scores.find((s) => s.id === project.id);
@@ -178,7 +167,7 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         },
     },
 
-    selectedTrack: 'Main Judging',
+    selectedTrack: '',
 
     currTrackScores: [],
 
@@ -191,12 +180,13 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         set({ options: optionsRes.data as Options });
     },
 
+    // TODO: Fix this
     setSelectedTrack: async (track: string) => {
         const fetchProjects = useAdminStore.getState().fetchProjects;
 
-        // TODO: This string jankasf
+        // If main judging selected, reset selected track
         if (track === 'Main Judging') {
-            set({ selectedTrack: track });
+            set({ selectedTrack: '' });
             await fetchProjects();
             return;
         }
