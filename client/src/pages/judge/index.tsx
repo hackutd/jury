@@ -33,6 +33,7 @@ const Judge = () => {
     const [projCount, setProjCount] = useState(0);
     const [activeId, setActiveId] = useState<number | null>(null);
     const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
+    const [disabled, setDisabled] = useState(false);
     const sensors = useSensors(
         useSensor(CustomPointerSensor, {
             activationConstraint: {
@@ -162,6 +163,13 @@ const Judge = () => {
 
         setActiveDropzone(overRanked ? 'ranked' : 'unranked');
 
+        // If dragging from unranked to ranked and ranked has 5 items already, don't allow
+        if (!activeRanked && overRanked && ranked.length >= 5) {
+            setDisabled(true);
+            return;
+        }
+        setDisabled(false);
+
         // If moving to new container, swap the item to the new list
         if (activeRanked !== overRanked) {
             const activeContainer = activeRanked ? ranked : unranked;
@@ -210,6 +218,7 @@ const Judge = () => {
 
         setActiveDropzone(null);
         setActiveId(null);
+        setDisabled(false);
     };
 
     // dnd-kit is strange. For active/over ids, it is a number most of the time,
@@ -272,10 +281,15 @@ const Judge = () => {
                 >
                     <h2 className="text-primary text-xl font-bold mt-4">Ranked Projects</h2>
                     <p className="text-light text-sm">
-                        Click on titles to edit scores and see details.
+                        Rank at most 5 projects. Click on titles to edit scores and see details.
                     </p>
                     <div className="h-[1px] w-full bg-light my-2"></div>
-                    <Droppable id="ranked" projects={ranked} active={activeDropzone} />
+                    <Droppable
+                        id="ranked"
+                        projects={ranked}
+                        active={activeDropzone}
+                        disabled={disabled}
+                    />
 
                     <h2 className="text-primary text-xl font-bold mt-4">Unranked Projects</h2>
                     <p className="text-light text-sm">
