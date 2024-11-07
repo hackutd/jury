@@ -49,3 +49,17 @@ func FindSeenProjectIndex(judge *models.Judge, projectId primitive.ObjectID) int
 	}
 	return -1
 }
+
+// Gets the group from the table number
+func GroupFromTable(op *models.Options, table int64) int64 {
+	if !op.MultiGroup {
+		return 0
+	}
+
+	group := int64(0)
+	for group < int64(len(op.GroupSizes)) && table >= op.GroupSizes[group] {
+		table -= op.GroupSizes[group]
+		group++
+	}
+	return group
+}

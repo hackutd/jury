@@ -84,6 +84,12 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 		return nil, err
 	}
 
+	// Get options from the database
+	options, err := database.GetOptions(db, context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	// Read the CSV file, looping through each record
 	var projects []*models.Project
 	for {
@@ -123,7 +129,7 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 		tableNum++
 
 		// Add project to slice
-		projects = append(projects, models.NewProject(record[0], tableNum, 0, record[1], record[2], tryLink, videoLink, challengeList))
+		projects = append(projects, models.NewProject(record[0], tableNum, util.GroupFromTable(options, tableNum), record[1], record[2], tryLink, videoLink, challengeList))
 	}
 
 	return projects, nil
@@ -160,6 +166,12 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 
 	// Get the starting table number
 	tableNum, err := database.GetMaxTableNum(db, context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	// Get options from the database
+	options, err := database.GetOptions(db, context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +214,7 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 		projects = append(projects, models.NewProject(
 			record[0],
 			tableNum,
-			0,
+			util.GroupFromTable(options, tableNum),
 			record[6],
 			record[1],
 			record[7],

@@ -99,7 +99,8 @@ func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) e
 		}
 	}
 
-	// TODO: Reassign project groups too
+	// Reassign group numbers to all projects
+	ReassignAllGroupNums(db, ctx, options)
 
 	_, err = db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"num_groups": numGroups, "group_sizes": options.GroupSizes}})
 	return err

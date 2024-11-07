@@ -6,6 +6,7 @@ import (
 	"server/funcs"
 	"server/judging"
 	"server/models"
+	"server/util"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -115,8 +116,15 @@ func AddProject(ctx *gin.Context) {
 		return
 	}
 
+	// Get the options from the database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+		return
+	}
+
 	// Create the project
-	project := models.NewProject(projectReq.Name, tableNum+1, 0, projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
+	project := models.NewProject(projectReq.Name, tableNum+1, util.GroupFromTable(options, tableNum+1), projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
 
 	// Insert project
 	err = database.InsertProject(db, ctx, project)

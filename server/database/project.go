@@ -326,3 +326,34 @@ func GetMaxTableNum(db *mongo.Database, ctx context.Context) (int64, error) {
 
 	return project.Location, nil
 }
+
+func ReassignAllGroupNums(db *mongo.Database, ctx context.Context, op *models.Options) error {
+	// If multi-group is not enabled, set all projects to group 0
+	if !op.MultiGroup {
+		return nil
+	}
+
+	// Get all projects
+	projects, err := FindAllProjects(db, ctx)
+	if err != nil {
+		return err
+	}
+
+	// Create bulk write
+	models := make([]mongo.WriteModel, 0, len(projects))
+
+	// Reassign group numbers to all projects
+	for _, project := range projects {
+		group := util.GroupFromTable(op, project.Location)
+		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": project.Id}).SetUpdate(gin.H{"$set": gin.H{"group": group}}))
+	}
+
+	// Bulk write
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err = db.Collection("projects").BulkWrite(ctx, models, opts)
+	if err != nil {
+		return errors.New("error updating projects in database: " + err.Error())
+	}
+
+	return nil
+}
