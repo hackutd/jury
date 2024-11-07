@@ -6,7 +6,6 @@ import (
 	"server/database"
 	"server/funcs"
 	"server/models"
-	"server/ranking"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -94,6 +93,21 @@ func GetClock(ctx *gin.Context) {
 	sc.Mutex.Unlock()
 }
 
+// GET /admin/started - Returns true if the clock is running (NOT paused)
+func IsClockRunning(ctx *gin.Context) {
+	// Get the clock from the context
+	sc := ctx.MustGet("clock").(*models.SafeClock)
+	sc.Mutex.Lock()
+	defer sc.Mutex.Unlock()
+
+	// Send OK
+	if sc.Clock.Running {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
+}
+
 // POST /admin/clock/pause - PauseClock pauses the clock
 func PauseClock(ctx *gin.Context) {
 	// Get the clock from the context
@@ -173,46 +187,28 @@ func BackupClock(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock, "ok": 1})
 }
 
-type SetClockSyncRequest struct {
-	ClockSync bool `json:"clock_sync"`
-}
-
-func SetClockSync(ctx *gin.Context) {
+// POST /admin/options - sets the options (except for clock and num groups)
+func SetOptions(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
-	// Get request
-	var req SetClockSyncRequest
-	err := ctx.BindJSON(&req)
+	// Get the options
+	var options models.OptionalOptions
+	err := ctx.BindJSON(&options)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
 		return
 	}
 
-	// Update the clock sync in options
-	err = database.UpdateClockSync(db, ctx, req.ClockSync)
+	// Save the options in the database
+	err = database.UpdateOptions(db, ctx, &options)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating clock sync: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
 		return
 	}
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// GET /admin/started - Returns true if the clock is running (NOT paused)
-func IsClockRunning(ctx *gin.Context) {
-	// Get the clock from the context
-	sc := ctx.MustGet("clock").(*models.SafeClock)
-	sc.Mutex.Lock()
-	defer sc.Mutex.Unlock()
-
-	// Send OK
-	if sc.Clock.Running {
-		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-	} else {
-		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
-	}
 }
 
 // POST /admin/reset - ResetDatabase resets the database
@@ -231,7 +227,7 @@ func ResetDatabase(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// GET /admin/flags - GetFlags returns all flags
+// GET /admin/flags - returns all flags
 func GetFlags(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -247,6 +243,7 @@ func GetFlags(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, flags)
 }
 
+// GET /admin/options - returns all options
 func GetOptions(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -359,288 +356,6 @@ func GetJudgingTimer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"judging_timer": options.JudgingTimer})
 }
 
-type SetJudgingTimerRequest struct {
-	JudgingTimer int64 `json:"judging_timer"`
-}
-
-// POST /admin/timer - SetJudgingTimer sets the judging timer
-func SetJudgingTimer(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get request
-	var req SetJudgingTimerRequest
-	err := ctx.BindJSON(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-		return
-	}
-
-	// Get the options
-	options, err := database.GetOptions(db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	options.JudgingTimer = req.JudgingTimer
-
-	// Save the options in the database
-	err = database.UpdateOptions(db, options)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-type SetCategoriesRequest struct {
-	Categories []string `json:"categories"`
-}
-
-// POST /admin/categories - sets the categories
-func SetCategories(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the categories
-	var categoriesReq SetCategoriesRequest
-	err := ctx.BindJSON(&categoriesReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-		return
-	}
-
-	// Save the categories in the database
-	err = database.UpdateCategories(db, categoriesReq.Categories)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving categories: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-type MinViewsRequest struct {
-	MinViews int `json:"min_views"`
-}
-
-// POST /admin/min-views - sets the min views
-func SetMinViews(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the views
-	var minViewsReq MinViewsRequest
-	err := ctx.BindJSON(&minViewsReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-	}
-
-	// Save the min views in the db
-	err = database.UpdateMinViews(db, minViewsReq.MinViews)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving min views: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// /GET /admin/score - GetScores returns the calculated scores of all projects
-func GetScores(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get all the projects
-	projects, err := database.FindAllProjects(db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
-		return
-	}
-
-	// Get all the judges
-	judges, err := database.FindAllJudges(db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
-		return
-	}
-
-	scores := ranking.CalculateScores(judges, projects)
-
-	// Send OK
-	ctx.JSON(http.StatusOK, scores)
-}
-
-// /GET /admin/stars - GetStars returns the stars of all projects
-func GetStars(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get all the projects
-	projects, err := database.FindAllProjects(db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
-		return
-	}
-
-	// Get all the judges
-	judges, err := database.FindJudgesByTrack(db, ctx, "")
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
-		return
-	}
-
-	stars := ranking.CalculateStars(judges, projects)
-
-	// Send OK
-	ctx.JSON(http.StatusOK, stars)
-}
-
-// /GET /admin/score/<track> - GetTrackScores returns the calculated scores of all projects in a track
-func GetTrackScores(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the track from the URL
-	track := ctx.Param("track")
-
-	// Get all the projects
-	projects, err := database.FindProjectsByTrack(db, ctx, track)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
-		return
-	}
-
-	// Get all the judges
-	judges, err := database.FindJudgesByTrack(db, ctx, track)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
-		return
-	}
-
-	scores := ranking.CalculateScores(judges, projects)
-
-	// Send OK
-	ctx.JSON(http.StatusOK, scores)
-}
-
-// /GET /admin/stars/<track> - GetTrackStars returns the stars of all projects in a track
-func GetTrackStars(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the track from the URL
-	track := ctx.Param("track")
-
-	// Get all the projects
-	projects, err := database.FindProjectsByTrack(db, ctx, track)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
-		return
-	}
-
-	// Get all the judges
-	judges, err := database.FindJudgesByTrack(db, ctx, track)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
-		return
-	}
-
-	stars := ranking.CalculateStars(judges, projects)
-
-	// Send OK
-	ctx.JSON(http.StatusOK, stars)
-}
-
-type ToggleTracksRequest struct {
-	JudgeTracks bool `json:"judge_tracks"`
-}
-
-// POST /admin/tracks/toggle - Toggles the track setting
-func ToggleTracks(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the request
-	var req ToggleTracksRequest
-	err := ctx.BindJSON(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-		return
-	}
-
-	// Save the options in the database
-	err = database.UpdateJudgeTracks(db, ctx, req.JudgeTracks)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-type SetTracksRequest struct {
-	Tracks []string `json:"tracks"`
-}
-
-// POST /admin/tracks - SetTracks sets the tracks
-func SetTracks(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the tracks
-	var tracksReq SetTracksRequest
-	err := ctx.BindJSON(&tracksReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-		return
-	}
-
-	// Save the tracks in the database
-	err = database.UpdateTracks(db, ctx, tracksReq.Tracks)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving tracks: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-type ToggleGroupsRequest struct {
-	MultiGroup bool `json:"multi_group"`
-}
-
-// POST /admin/groups/toggle - ToggleGroups toggles the multi-group setting
-func ToggleGroups(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the request
-	var req ToggleGroupsRequest
-	err := ctx.BindJSON(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-		return
-	}
-
-	// Save the options in the database
-	err = database.UpdateMultiGroup(db, ctx, req.MultiGroup)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
 type SetNumGroupsRequest struct {
 	NumGroups int64 `json:"num_groups"`
 }
@@ -650,8 +365,6 @@ func SetNumGroups(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
-	// TODO: Wrap in transaction, need to reset groups of everything if changing this
-
 	// Get the request
 	var req SetNumGroupsRequest
 	err := ctx.BindJSON(&req)
@@ -660,62 +373,12 @@ func SetNumGroups(ctx *gin.Context) {
 		return
 	}
 
-	// Save the options in the database
-	err = database.UpdateNumGroups(db, ctx, req.NumGroups)
+	// Update number of groups in the database
+	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+		return database.UpdateNumGroups(db, sc, req.NumGroups)
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-type SetGroupSizesRequest struct {
-	GroupSizes []int64 `json:"group_sizes"`
-}
-
-// POST /admin/groups/sizes - SetGroupSizes sets the group sizes
-func SetGroupSizes(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the request
-	var req SetGroupSizesRequest
-	err := ctx.BindJSON(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-		return
-	}
-
-	// Save the options in the database
-	err = database.UpdateGroupSizes(db, ctx, req.GroupSizes)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// POST /admin/groups/options - SetGroupOptions sets the group options based on the request
-func SetGroupOptions(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the request
-	var req models.OptionalGroupOptions
-	err := ctx.BindJSON(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
-		return
-	}
-
-	// Save the options in the database
-	err = database.UpdateGroupOptions(db, ctx, req)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving num groups to options: " + err.Error()})
 		return
 	}
 

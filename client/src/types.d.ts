@@ -119,7 +119,6 @@ interface Options {
     curr_table_num: number;
     clock: ClockState;
     judging_timer: number;
-    categories: string[];
     min_views: number;
     clock_sync: boolean;
     judge_tracks: boolean;
@@ -128,13 +127,7 @@ interface Options {
     num_groups: number;
     group_sizes: number[];
     group_table_nums: number[][];
-    main_group: GroupsSwitchOps;
-}
-
-interface GroupsSwitchOps {
     switching_mode: string;
-    auto_switch_method: string;
-    auto_switch_count: number;
     auto_switch_prop: number;
     manual_switches: number;
 }

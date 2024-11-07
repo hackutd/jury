@@ -101,11 +101,11 @@ const Admin = () => {
                 </Button>
                 {options &&
                     options.multi_group &&
-                    options.main_group.switching_mode === 'manual' && (
+                    options.switching_mode === 'manual' && (
                         <>
                             <p className="text-lg text-right grow mr-4 text-lighter">
                                 <span className="font-bold">Swaps: </span>
-                                {options.main_group.manual_switches}
+                                {options.manual_switches}
                             </p>
                             <Button
                                 type="gold"

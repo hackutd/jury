@@ -113,13 +113,6 @@ func DropAll(db *mongo.Database) error {
 	return nil
 }
 
-// UpdateCategories updates the categories in the database
-func UpdateCategories(db *mongo.Database, categories []string) error {
-	// Update the categories
-	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"categories": categories}})
-	return err
-}
-
 // UpdateMinViews will update the min views setting
 func UpdateMinViews(db *mongo.Database, minViews int) error {
 	// Update the min views

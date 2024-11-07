@@ -116,14 +116,8 @@ func MoveJudgeGroup(db *mongo.Database, ctx context.Context, judge *models.Judge
 	// Increment the count of projects seen in the group
 	judge.GroupSeen++
 
-	// Make sure the group switch method is valid
-	if options.MainGroup.AutoSwitchMethod != "count" && options.MainGroup.AutoSwitchMethod != "proportion" {
-		return errors.New("invalid group switch method detected: " + options.MainGroup.AutoSwitchMethod)
-	}
-
-	// If the judge has seen more than the number of projects in the group, move them to a new group
-	if (options.MainGroup.AutoSwitchMethod == "count" && judge.GroupSeen >= options.MainGroup.AutoSwitchCount) ||
-		(options.MainGroup.AutoSwitchMethod == "proportion" && float64(judge.GroupSeen)/float64(numProjects) >= options.MainGroup.AutoSwitchProp) {
+	// If the judge has seen more than the proportion of projects in the group, move them to a new group
+	if float64(judge.GroupSeen)/float64(numProjects) >= options.AutoSwitchProp {
 		judge.Group = (judge.Group + 1) % options.NumGroups
 		judge.GroupSeen = 0
 	}

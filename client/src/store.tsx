@@ -41,22 +41,6 @@ const useAdminStore = create<AdminStore>()((set) => ({
             errorAlert(projRes);
             return;
         }
-        const projects = projRes.data as Project[];
-
-        const scoreRes = await getRequest<ScoredItem[]>('/admin/score', 'admin');
-        if (scoreRes.status !== 200) {
-            errorAlert(scoreRes);
-            return;
-        }
-        const scores = scoreRes.data as ScoredItem[];
-
-        projects.forEach((project) => {
-            const score = scores.find((s) => s.id === project.id);
-            if (score) {
-                project.score = score.score;
-            }
-        });
-
         set({ projects: projRes.data as Project[] });
     },
 
@@ -148,7 +132,6 @@ const useOptionsStore = create<OptionsStore>((set) => ({
             running: false,
         },
         judging_timer: 0,
-        categories: [],
         min_views: 0,
         clock_sync: false,
         judge_tracks: false,
@@ -157,13 +140,9 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         num_groups: 0,
         group_sizes: [],
         group_table_nums: [],
-        main_group: {
-            switching_mode: '',
-            auto_switch_method: '',
-            auto_switch_count: 0,
-            auto_switch_prop: 0,
-            manual_switches: 0,
-        },
+        switching_mode: '',
+        auto_switch_prop: 0,
+        manual_switches: 0,
     },
 
     selectedTrack: '',
