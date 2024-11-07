@@ -5,6 +5,7 @@ import (
 	"log"
 	"server/database"
 	"server/judging"
+	"server/logging"
 	"server/models"
 
 	"github.com/gin-contrib/cors"
@@ -14,7 +15,7 @@ import (
 )
 
 // Creates a new Gin router with all routes defined
-func NewRouter(db *mongo.Database) *gin.Engine {
+func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	// Create the router
 	router := gin.Default()
 
@@ -31,6 +32,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	router.Use(useVar("db", db))
 	router.Use(useVar("clock", clock))
 	router.Use(useVar("comps", comps))
+	router.Use(useVar("logger", logger))
 
 	// CORS
 	router.Use(cors.New(cors.Config{
@@ -117,6 +119,9 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/project/prioritize", PrioritizeProject)
 	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
 
+	// Admin panel - log
+	adminRouter.GET("/admin/log", GetLog)
+
 	// Judging
 	judgeRouter.GET("/judge", GetJudge)
 	judgeRouter.GET("/judge/welcome", CheckJudgeReadWelcome)
@@ -150,6 +155,9 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	router.NoRoute(func(ctx *gin.Context) {
 		ctx.HTML(200, "index.html", nil)
 	})
+
+	// Log the successful creation
+	logger.SystemLogf("API created and running")
 
 	return router
 }

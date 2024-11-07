@@ -383,6 +383,7 @@ func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset b
 }
 
 // PutJudgesInGroups assigns judges to groups
+// TODO: Fix this
 func PutJudgesInGroups(db *mongo.Database) error {
 	return WithTransaction(db, func(sc mongo.SessionContext) error {
 		// Get all judges

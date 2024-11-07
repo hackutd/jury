@@ -17,6 +17,7 @@ import AdminSettings from './pages/admin/settings';
 import Expo from './pages/Expo';
 
 import './index.css';
+import AdminLog from './pages/admin/log';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -72,6 +73,10 @@ const router = createBrowserRouter([
     {
         path: '/admin/settings',
         element: <AdminSettings />,
+    },
+    {
+        path: '/admin/log',
+        element: <AdminLog />,
     }
 ]);
 

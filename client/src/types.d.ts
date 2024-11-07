@@ -162,3 +162,7 @@ interface ProjectStats {
     avg_votes: number;
     avg_seen: number;
 }
+
+interface Log {
+    log: string;
+}

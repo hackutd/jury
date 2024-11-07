@@ -5,6 +5,7 @@ import (
 	"server/database"
 	"server/funcs"
 	"server/judging"
+	"server/logging"
 	"server/models"
 	"server/util"
 	"strings"
@@ -21,6 +22,9 @@ func AddDevpostCsv(ctx *gin.Context) {
 
 	// Get comparison from the context
 	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
@@ -66,6 +70,7 @@ func AddDevpostCsv(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Added %d projects from Devpost CSV", len(projects))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -85,6 +90,9 @@ func AddProject(ctx *gin.Context) {
 
 	// Get comparison from the context
 	comps := ctx.MustGet("comps").(*judging.Comparisons)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the projectReq from the request
 	var projectReq AddProjectRequest
@@ -141,6 +149,7 @@ func AddProject(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Added project %s (%s)", project.Name, project.Id.Hex())
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -207,6 +216,9 @@ func AddProjectsCsv(ctx *gin.Context) {
 	// Get comparison from the context
 	comps := ctx.MustGet("comps").(*judging.Comparisons)
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
 	if err != nil {
@@ -254,6 +266,7 @@ func AddProjectsCsv(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Added %d projects from CSV", len(projects))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -261,6 +274,9 @@ func AddProjectsCsv(ctx *gin.Context) {
 func DeleteProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the id from the request
 	id := ctx.Param("id")
@@ -280,6 +296,7 @@ func DeleteProject(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Deleted project %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -369,6 +386,9 @@ func HideProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	// Get ID from body
 	var idReq models.IdRequest
 	err := ctx.BindJSON(&idReq)
@@ -393,6 +413,7 @@ func HideProject(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Hid project %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -400,6 +421,9 @@ func HideProject(ctx *gin.Context) {
 func UnhideProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get ID from body
 	var idReq models.IdRequest
@@ -425,6 +449,7 @@ func UnhideProject(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Unhid project %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -432,6 +457,9 @@ func UnhideProject(ctx *gin.Context) {
 func PrioritizeProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get ID from body
 	var idReq models.IdRequest
@@ -457,6 +485,7 @@ func PrioritizeProject(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Prioritized project %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -464,6 +493,9 @@ func PrioritizeProject(ctx *gin.Context) {
 func UnprioritizeProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get ID from body
 	var idReq models.IdRequest
@@ -489,6 +521,7 @@ func UnprioritizeProject(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Unprioritized project %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -497,12 +530,17 @@ func ReassignProjectNums(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	err := funcs.ReassignNums(db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
 		return
 	}
 
+	// Send OK
+	logger.AdminLogf("Reassigned project numbers")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -590,4 +628,16 @@ func BalanceProjectGroups(ctx *gin.Context) {
 	// for _, proj := range homeless {
 
 	// }
+}
+
+// GET /admin/log - Returns the log file
+func GetLog(ctx *gin.Context) {
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the log file
+	log := logger.Get()
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"log": log})
 }

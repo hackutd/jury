@@ -5,7 +5,9 @@ import (
 	"server/config"
 	"server/database"
 	"server/funcs"
+	"server/logging"
 	"server/models"
+	"server/util"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,6 +22,9 @@ func LoginAdmin(ctx *gin.Context) {
 	// Get the password from the environmental variable
 	password := config.GetEnv("JURY_ADMIN_PASSWORD")
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	// Get password guess from request
 	var req LoginAdminRequest
 	err := ctx.BindJSON(&req)
@@ -30,11 +35,13 @@ func LoginAdmin(ctx *gin.Context) {
 
 	// Return status OK if the password matches
 	if req.Password == password {
+		logger.AdminLogf("Log in")
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 		return
 	}
 
 	// Return status Unauthorized if the password does not match
+	logger.AdminLogf("Invalid log in attempt with pass %s", req.Password)
 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid or missing password field"})
 }
 
@@ -115,10 +122,14 @@ func PauseClock(ctx *gin.Context) {
 	sc.Mutex.Lock()
 	defer sc.Mutex.Unlock()
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	// Pause the clock
 	sc.Clock.Pause()
 
 	// Send OK
+	logger.AdminLogf("Paused clock")
 	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock})
 }
 
@@ -132,6 +143,9 @@ func UnpauseClock(ctx *gin.Context) {
 	sc.Mutex.Lock()
 	defer sc.Mutex.Unlock()
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	// Unpause the clock
 	sc.Clock.Resume()
 
@@ -143,6 +157,7 @@ func UnpauseClock(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Unpaused clock")
 	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock})
 }
 
@@ -156,6 +171,9 @@ func ResetClock(ctx *gin.Context) {
 	sc.Mutex.Lock()
 	defer sc.Mutex.Unlock()
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	// Reset the clock
 	sc.Clock.Reset()
 
@@ -167,6 +185,7 @@ func ResetClock(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Reset clock")
 	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock, "ok": 1})
 }
 
@@ -180,10 +199,14 @@ func BackupClock(ctx *gin.Context) {
 	sc.Mutex.Lock()
 	defer sc.Mutex.Unlock()
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	// Backup the clock
 	database.UpdateClock(db, &sc.Clock)
 
 	// Send OK
+	logger.AdminLogf("Backed up clock")
 	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock, "ok": 1})
 }
 
@@ -191,6 +214,9 @@ func BackupClock(ctx *gin.Context) {
 func SetOptions(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the options
 	var options models.OptionalOptions
@@ -208,6 +234,7 @@ func SetOptions(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Updated options: %s", util.StructToStringWithoutNils(options))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -215,6 +242,9 @@ func SetOptions(ctx *gin.Context) {
 func ResetDatabase(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Reset the database
 	err := database.DropAll(db)
@@ -224,6 +254,7 @@ func ResetDatabase(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("RESET ENTIRE DATABASE")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -365,6 +396,9 @@ func SetNumGroups(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
 	// Get the request
 	var req SetNumGroupsRequest
 	err := ctx.BindJSON(&req)
@@ -383,6 +417,7 @@ func SetNumGroups(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Set num groups to %d", req.NumGroups)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -390,6 +425,9 @@ func SetNumGroups(ctx *gin.Context) {
 func SwapJudgeGroups(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Swap the groups (increment the group number of each judge)
 	err := funcs.IncrementJudgeGroupNum(db)
@@ -399,5 +437,6 @@ func SwapJudgeGroups(ctx *gin.Context) {
 	}
 
 	// Send OK
+	logger.AdminLogf("Swapped judge groups")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }

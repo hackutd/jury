@@ -2,8 +2,11 @@ package util
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
+	"reflect"
 	"server/models"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -62,4 +65,62 @@ func GroupFromTable(op *models.Options, table int64) int64 {
 		group++
 	}
 	return group
+}
+
+// RankingToString converts a ranking array to a string
+func RankingToString(rankings []primitive.ObjectID) string {
+	sb := strings.Builder{}
+	sb.WriteString("[")
+	for i, id := range rankings {
+		if i != 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(id.Hex())
+	}
+	sb.WriteString("]")
+
+	return sb.String()
+}
+
+// StructToString converts a struct to a string
+func StructToString(s interface{}) string {
+	sb := strings.Builder{}
+	sb.WriteString("{")
+	v := reflect.ValueOf(s)
+	for i := 0; i < v.NumField(); i++ {
+		if i != 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(v.Type().Field(i).Name)
+		sb.WriteString(": ")
+		sb.WriteString(fmt.Sprintf("%v", v.Field(i)))
+	}
+	sb.WriteString("}")
+
+	return sb.String()
+}
+
+// StructToStringWithoutNils converts a struct to a string without nil values.
+// Note that the interface fields MUST all be pointers.
+func StructToStringWithoutNils(s interface{}) string {
+	sb := strings.Builder{}
+	sb.WriteString("{")
+	v := reflect.ValueOf(s)
+	hasSmth := false
+	for i := 0; i < v.NumField(); i++ {
+		if v.Field(i).IsNil() {
+			continue
+		}
+		if hasSmth {
+			sb.WriteString(", ")
+		}
+		hasSmth = true
+
+		sb.WriteString(v.Type().Field(i).Name)
+		sb.WriteString(": ")
+		sb.WriteString(fmt.Sprintf("%v", v.Field(i).Elem()))
+	}
+	sb.WriteString("}")
+
+	return sb.String()
 }
