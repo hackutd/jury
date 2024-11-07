@@ -10,6 +10,7 @@ interface Project {
     seen: number;
     track_seen: { [track: string]: number };
     active: boolean;
+    prioritized: boolean;
     score: number;
     stars: number;
     track_stars: { [track: string]: number };

@@ -64,6 +64,20 @@ func FindProjectsByTrack(db *mongo.Database, ctx context.Context, track string) 
 	return projects, nil
 }
 
+// GetPrioritizedProjects returns a list of all prioritized projects in the database
+func GetPrioritizedProjects(db *mongo.Database, ctx context.Context) ([]*models.Project, error) {
+	projects := make([]*models.Project, 0)
+	cursor, err := db.Collection("projects").Find(ctx, gin.H{"prioritized": true}, options.Find().SetProjection(gin.H{"_id": 1}))
+	if err != nil {
+		return nil, err
+	}
+	err = cursor.All(ctx, &projects)
+	if err != nil {
+		return nil, err
+	}
+	return projects, nil
+}
+
 // DeleteProjectById deletes a project from the database by id
 func DeleteProjectById(db *mongo.Database, id primitive.ObjectID) error {
 	_, err := db.Collection("projects").DeleteOne(context.Background(), gin.H{"_id": id})

@@ -56,6 +56,13 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 // Open delete popup
                 setDeletePopup(true);
                 break;
+            case 'prioritize':
+                prioritizeProject();
+                break;
+            default:
+                console.error('Invalid action');
+                alert('Invalid action');
+                break;
         }
 
         setPopup(false);
@@ -69,6 +76,22 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
         );
         if (res.status === 200) {
             alert(`Project ${project.active ? 'hidden' : 'un-hidden'} successfully!`);
+            fetchProjects();
+        } else {
+            errorAlert(res);
+        }
+    };
+
+    const prioritizeProject = async () => {
+        const res = await postRequest<OkResponse>(
+            project.prioritized ? '/project/unprioritize' : '/project/prioritize',
+            'admin',
+            { id: project.id }
+        );
+        if (res.status === 200) {
+            alert(
+                `Project ${project.prioritized ? 'un-prioritized' : 'prioritized'} successfully!`
+            );
             fetchProjects();
         } else {
             errorAlert(res);
@@ -98,6 +121,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 className={twMerge(
                     'border-t-2 border-backgroundDark duration-150 bg-background',
                     flags.length >= 1 && 'bg-error/30',
+                    project.prioritized && 'bg-gold/30',
                     !project.active && 'bg-lightest',
                     checked && 'bg-primary/20'
                 )}
@@ -163,6 +187,13 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                             >
                                 {project.active ? 'Hide' : 'Un-hide'}
                             </div>
+                            <div
+                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
+                                onClick={() => doAction('prioritize')}
+                            >
+                                {project.prioritized ? 'Unprioritize' : 'Prioritize'}
+                            </div>
+
                             <div
                                 className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150 text-error"
                                 onClick={() => doAction('delete')}

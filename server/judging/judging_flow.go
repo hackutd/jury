@@ -128,10 +128,11 @@ func MoveJudgeGroup(db *mongo.Database, ctx context.Context, judge *models.Judge
 // PickNextProject - Picks the next project for the judge to judge.
 // To do this:
 //  1. Get all available projects
-//  2. Shuffle projects
-//  3. If judging a track, simply pick the next project in order
-//  4. If any projects seen less than min views (set in admin side), only select from that list
-//  5. Otherwise, pick the project with the minimum number of comparisons with every other project
+//  2. If any project is prioritized and on the list, return that
+//  3. Shuffle projects
+//  4. If judging a track, simply pick the next project in order
+//  5. If any projects seen less than min views (set in admin side), only select from that list
+//  6. Otherwise, pick the project with the minimum number of comparisons with every other project
 func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext, comps *Comparisons) (*models.Project, error) {
 	// Get items
 	items, err := FindAvaliableItems(db, ctx, judge)
@@ -153,6 +154,21 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 	options, err := database.GetOptions(db, ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// Get prioritized projects
+	prioritizedProjects, err := database.GetPrioritizedProjects(db, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// If any prioritized projects are in the list, return the first one
+	for _, proj := range prioritizedProjects {
+		if slices.ContainsFunc(items, func(p *models.Project) bool {
+			return p.Id == proj.Id
+		}) {
+			return proj, nil
+		}
 	}
 
 	// Shuffle items

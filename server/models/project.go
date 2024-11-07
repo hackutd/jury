@@ -21,6 +21,7 @@ type Project struct {
 	Stars         int64              `bson:"stars" json:"stars"`
 	TrackStars    map[string]int64   `bson:"track_stars" json:"track_stars"`
 	Active        bool               `bson:"active" json:"active"`
+	Prioritized   bool               `bson:"prioritized" json:"prioritized"`
 	Group         int64              `bson:"group" json:"group"`
 	LastActivity  primitive.DateTime `bson:"last_activity" json:"last_activity"`
 }
@@ -41,6 +42,7 @@ func NewProject(name string, location int64, group int64, description string, ur
 		Stars:         0,
 		TrackStars:    make(map[string]int64),
 		Active:        true,
+		Prioritized:   false,
 		LastActivity:  primitive.DateTime(0),
 	}
 }
