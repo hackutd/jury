@@ -77,7 +77,7 @@ const router = createBrowserRouter([
     {
         path: '/admin/log',
         element: <AdminLog />,
-    }
+    },
 ]);
 
 root.render(
