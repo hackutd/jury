@@ -521,3 +521,73 @@ func GetChallenges(ctx *gin.Context) {
 	// Send OK
 	ctx.JSON(http.StatusOK, challenges)
 }
+
+// POST /project/balance-groups - BalanceProjectGroups balances project groups
+func BalanceProjectGroups(ctx *gin.Context) {
+	// TODO: Write this; its harder than i imagined oops
+	// // Get the database from the context
+	// db := ctx.MustGet("db").(*mongo.Database)
+
+	// // Get the options from the database
+	// options, err := database.GetOptions(db, ctx)
+	// if err != nil {
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+	// 	return
+	// }
+
+	// // Get all projects
+	// projects, err := database.FindAllProjects(db, ctx)
+	// if err != nil {
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects from database: " + err.Error()})
+	// 	return
+	// }
+
+	// // Get the project count per group
+	// groupCounts := make(map[int64]int, options.NumGroups)
+	// for _, proj := range projects {
+	// 	groupCounts[proj.Group]++
+	// }
+
+	// // Get the average project count per group
+	// avg := len(projects) / int(options.NumGroups)
+	// rem := len(projects) % int(options.NumGroups)
+
+	// // Figure out which groups need to be adjusted
+	// incrGroups := make(map[int64]int, 0)
+	// decrGroups := make(map[int64]int, 0)
+	// for group, count := range groupCounts {
+	// 	comp := avg
+	// 	if rem > 0 {
+	// 		comp++
+	// 		rem--
+	// 	}
+
+	// 	if count > comp {
+	// 		decrGroups[group] = count - comp
+	// 	} else if count < comp {
+	// 		incrGroups[group] = comp - count
+	// 	}
+	// }
+
+	// // Move projects from groups with more projects to groups with fewer projects
+	// homeless := make([]*models.Project, 0)
+	// for group, count := range decrGroups {
+	// 	// Put the last few projects in the group into the homeless list
+	// 	// We can loop backwards through the projects bc they are in order of group
+	// 	for i := len(projects) - 1; i >= 0; i-- {
+	// 		if projects[i].Group == group {
+	// 			homeless = append(homeless, projects[i])
+	// 			projects = append(projects[:i], projects[i+1:]...)
+	// 			count--
+	// 			if count <= 0 {
+	// 				break
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// // Find homes for the homeless
+	// for _, proj := range homeless {
+
+	// }
+}

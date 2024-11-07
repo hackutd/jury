@@ -96,6 +96,7 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/clock/reset", ResetClock)
 	adminRouter.POST("/admin/reset", ResetDatabase)
 	adminRouter.POST("/project/reassign", ReassignProjectNums)
+	adminRouter.POST("/project/balance-groups", BalanceProjectGroups)
 	adminRouter.POST("/judge/reassign", ReassignJudgeGroups)
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.GET("/admin/options", GetOptions)
