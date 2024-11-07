@@ -157,7 +157,7 @@ const ProjectsTable = () => {
                             sortField={ProjectSortField.TableNumber}
                             sortState={sortState}
                         />
-                        {options.multi_group && (
+                        {options.multi_group && selectedTrack === '' && (
                             <HeaderEntry
                                 name="Group"
                                 updateSort={updateSort}

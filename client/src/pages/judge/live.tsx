@@ -18,12 +18,13 @@ import alarm from '../../assets/alarm.mp3';
 import data from '../../data.json';
 import RawTextInput from '../../components/RawTextInput';
 
-const infoPages = ['paused', 'hidden', 'no-projects', 'done'];
+const infoPages = ['paused', 'hidden', 'no-projects', 'done', 'doneTrack'];
 const infoData = [
     data.judgeInfo.paused,
     data.judgeInfo.hidden,
     data.judgeInfo.noProjects,
     data.judgeInfo.done,
+    data.judgeInfo.doneTrack,
 ];
 
 const audio = new Audio(alarm);
@@ -133,7 +134,7 @@ const JudgeLive = () => {
 
         // No project has been returned (all projects have been judged)
         if (!newProject.data?.project_id) {
-            setInfoPage('done');
+            setInfoPage(judge?.track === '' ? 'done' : 'doneTrack');
             return;
         }
 

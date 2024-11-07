@@ -138,7 +138,9 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
-                {options.multi_group && <td className="text-center">{project.group}</td>}
+                {options.multi_group && track === '' && (
+                    <td className="text-center">{project.group}</td>
+                )}
                 {track === '' && <td className="text-center">{project.score}</td>}
                 <td className="text-center">{stars}</td>
                 <td className="text-center">{seen}</td>
