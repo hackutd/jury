@@ -193,22 +193,15 @@ const ProjectsTable = () => {
                         />
                         <th className="text-right w-24">Actions</th>
                     </tr>
-                    {projects.map((project: Project, idx) => {
-                        const projectFlags = flags
-                            .filter((flag) => !flag.reason.includes('busy'))
-                            .filter((flag) => flag.project_id === project.id);
-
-                        return (
-                            <ProjectRow
-                                key={idx}
-                                idx={idx}
-                                project={project}
-                                flags={projectFlags}
-                                checked={checked[idx]}
-                                handleCheckedChange={handleCheckedChange}
-                            />
-                        );
-                    })}
+                    {projects.map((project: Project, idx) => (
+                        <ProjectRow
+                            key={idx}
+                            idx={idx}
+                            project={project}
+                            checked={checked[idx]}
+                            handleCheckedChange={handleCheckedChange}
+                        />
+                    ))}
                 </tbody>
             </table>
         </div>

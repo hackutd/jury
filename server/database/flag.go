@@ -73,3 +73,9 @@ func DeleteAbsentFlags(db *mongo.Database, projectId *primitive.ObjectID, ctx mo
 	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{"project_id": projectId, "reason": "absent"})
 	return err
 }
+
+// DeleteFlag deletes a flag from the database
+func DeleteFlag(db *mongo.Database, ctx context.Context, flagId *primitive.ObjectID) error {
+	_, err := db.Collection("flags").DeleteOne(ctx, gin.H{"_id": flagId})
+	return err
+}

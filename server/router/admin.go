@@ -10,6 +10,7 @@ import (
 	"server/util"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -438,5 +439,33 @@ func SwapJudgeGroups(ctx *gin.Context) {
 
 	// Send OK
 	logger.AdminLogf("Swapped judge groups")
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// DELETE /admin/flag/:id - RemoveFlag deletes a flag
+func RemoveFlag(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the flag ID from the URL
+	id := ctx.Param("id")
+	flagId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing flag ID: " + err.Error()})
+		return
+	}
+
+	// Delete the flag
+	err = database.DeleteFlag(db, ctx, &flagId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting flag: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Deleted flag %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }

@@ -486,7 +486,11 @@ func JudgeSkip(ctx *gin.Context) {
 	}
 
 	// Send OK
-	logger.JudgeLogf(judge, "Skipped project %s", id)
+	if skipReq.Reason == "busy" {
+		logger.JudgeLogf(judge, "Skipped busy project %s", id)
+	} else {
+		logger.JudgeLogf(judge, "Flagged project %s due to %s", id, skipReq.Reason)
+	}
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { timeSince } from '../../util';
+import { errorAlert, timeSince } from '../../util';
 import Popup from '../Popup';
 import { useFlagsStore } from '../../store';
+import { deleteRequest } from '../../api';
 
 interface FlagsPopupProps {
     /* State variable for open/closed */
@@ -19,6 +20,7 @@ const FlagsPopup = (props: FlagsPopupProps) => {
     const [sortedFlags, setSortedFlags] = useState<Flag[]>([]);
     const [sortMethod, setSortMethod] = useState(3);
     const [displayedFlags, setDisplayedFlags] = useState<Flag[]>([]);
+    const fetchFlags = useFlagsStore((state) => state.fetchFlags);
 
     useEffect(() => {
         // Filter out busy flags and sort by time
@@ -58,6 +60,16 @@ const FlagsPopup = (props: FlagsPopupProps) => {
         }
     }, [sortMethod, flags]);
 
+    const clearFlag = async (id: string) => {
+        const res = await deleteRequest(`/admin/flag/${id}`, 'admin');
+        if (res.status !== 200) {
+            errorAlert(res);
+            return;
+        }
+
+        fetchFlags();
+    };
+
     return (
         <Popup enabled={props.enabled} setEnabled={props.setEnabled} className="w-2/3 md:w-2/3">
             <h1 className="text-5xl text-center font-bold mb-6">Flags</h1>
@@ -65,7 +77,7 @@ const FlagsPopup = (props: FlagsPopupProps) => {
                 <div className="flex flex-row items-center text-xl border-b-2 border-backgroundDark py-2">
                     <h2
                         className={
-                            'basis-2/5 text-left font-bold cursor-pointer ' +
+                            'basis-2/6 text-left font-bold cursor-pointer ' +
                             (sortMethod === 0 ? 'text-primary' : 'text-light')
                         }
                         onClick={() => setSortMethod(0)}
@@ -74,7 +86,7 @@ const FlagsPopup = (props: FlagsPopupProps) => {
                     </h2>
                     <h2
                         className={
-                            'basis-1/5 text-left font-bold cursor-pointer ' +
+                            'basis-1/6 text-center font-bold cursor-pointer ' +
                             (sortMethod === 1 ? 'text-primary' : 'text-light')
                         }
                         onClick={() => setSortMethod(1)}
@@ -83,7 +95,7 @@ const FlagsPopup = (props: FlagsPopupProps) => {
                     </h2>
                     <h2
                         className={
-                            'basis-1/5 text-left font-bold cursor-pointer ' +
+                            'basis-1/6 text-center font-bold cursor-pointer ' +
                             (sortMethod === 2 ? 'text-primary' : 'text-light')
                         }
                         onClick={() => setSortMethod(2)}
@@ -92,12 +104,20 @@ const FlagsPopup = (props: FlagsPopupProps) => {
                     </h2>
                     <h2
                         className={
-                            'basis-1/5 text-left font-bold cursor-pointer ' +
+                            'basis-1/6 text-center font-bold cursor-pointer ' +
                             (sortMethod === 3 ? 'text-primary' : 'text-light')
                         }
                         onClick={() => setSortMethod(3)}
                     >
                         Time
+                    </h2>
+                    <h2
+                        className={
+                            'basis-1/6 text-right font-bold cursor-pointer ' +
+                            (sortMethod === 3 ? 'text-primary' : 'text-light')
+                        }
+                    >
+                        Resolve
                     </h2>
                 </div>
                 {displayedFlags.map((flag) => (
@@ -105,12 +125,18 @@ const FlagsPopup = (props: FlagsPopupProps) => {
                         key={`${flag.id}`}
                         className="flex flex-row items-center text-xl border-b-2 border-backgroundDark py-1"
                     >
-                        <h2 className="basis-2/5 text-left text-lg">
+                        <h2 className="basis-2/6 text-left text-lg">
                             {`[${flag.project_location}] ${flag.project_name}`}
                         </h2>
-                        <h2 className="basis-1/5 text-left text-lg">{flag.judge_name}</h2>
-                        <h2 className="basis-1/5 text-left text-lg">{flag.reason}</h2>
-                        <h2 className="basis-1/5 text-left text-lg">{timeSince(flag.time)}</h2>
+                        <h2 className="basis-1/6 text-center text-lg">{flag.judge_name}</h2>
+                        <h2 className="basis-1/6 text-center text-lg">{flag.reason}</h2>
+                        <h2 className="basis-1/6 text-center text-lg">{timeSince(flag.time)}</h2>
+                        <button
+                            className="basis-1/6 text-right cursor-pointer text-error hover:text-errorDark duration-150"
+                            onClick={() => clearFlag(flag.id)}
+                        >
+                            resolve
+                        </button>
                     </div>
                 ))}
             </div>

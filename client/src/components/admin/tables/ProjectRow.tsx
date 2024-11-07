@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { errorAlert, fixIfFloatDigits, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
-import { useAdminStore, useOptionsStore } from '../../../store';
+import { useAdminStore, useFlagsStore, useOptionsStore } from '../../../store';
 import { postRequest } from '../../../api';
 import FlagsPopup from '../FlagsPopup';
 import { twMerge } from 'tailwind-merge';
@@ -10,22 +10,22 @@ import { twMerge } from 'tailwind-merge';
 interface ProjectRowProps {
     project: Project;
     idx: number;
-    flags: Flag[];
     checked: boolean;
     handleCheckedChange: (e: React.ChangeEvent<HTMLInputElement>, idx: number) => void;
 }
 
-const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: ProjectRowProps) => {
+const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowProps) => {
     const [popup, setPopup] = useState(false);
     const [flagPopup, setFlagPopup] = useState(false);
-    const [flagCount, setflagCount] = useState(0);
-    const [flagPopupProjectId, setflagPopupProjectId] = useState('');
+    const [flags, setFlags] = useState<Flag[]>([]);
+    const [flagPopupProjectId, setFlagPopupProjectId] = useState('');
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const options = useOptionsStore((state) => state.options);
     const track = useOptionsStore((state) => state.selectedTrack);
+    const allFlags = useFlagsStore((state) => state.flags);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -99,13 +99,17 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
     };
 
     useEffect(() => {
+        const flags = allFlags.filter(
+            (flag) => flag.project_id === project.id && flag.reason !== 'busy'
+        );
+        setFlags(flags);
+
         if (flags.length > 0) {
-            setflagCount(flagCount);
-            setflagPopupProjectId(flags[0].project_id);
+            setFlagPopupProjectId(flags[0].project_id);
         } else {
-            setflagPopupProjectId('');
+            setFlagPopupProjectId('null');
         }
-    }, [flags, project]);
+    }, [allFlags, project]);
 
     let stars = project.stars;
     let seen = project.seen;
