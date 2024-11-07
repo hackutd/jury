@@ -12,6 +12,8 @@ func CalculateScoreDiff(rankings []primitive.ObjectID, oldRankings []primitive.O
 	// Create a map of project IDs to their index in the rankings
 	// Use negative numbers here because if there's in the previous but not current then they're removed
 	m := len(oldRankings)
+	n := len(rankings)
+
 	rankingsMap := make(map[primitive.ObjectID]int)
 	for i, proj := range oldRankings {
 		rankingsMap[proj] = -(m - i)
@@ -21,9 +23,9 @@ func CalculateScoreDiff(rankings []primitive.ObjectID, oldRankings []primitive.O
 	for i, proj := range rankings {
 		_, ok := rankingsMap[proj]
 		if ok {
-			rankingsMap[proj] += m - i
+			rankingsMap[proj] += n - i
 		} else {
-			rankingsMap[proj] = m - i
+			rankingsMap[proj] = n - i
 		}
 	}
 
