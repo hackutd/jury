@@ -140,7 +140,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                         className="cursor-pointer hover:text-primary duration-100"
                     ></input>
                 </td>
-                <td>{project.name}</td>
+                <td><a href={project.url} className="hover:underline" target="_blank">{project.name}</a></td>
                 <td className="flex justify-center">
                     <button
                         onClick={() => {
