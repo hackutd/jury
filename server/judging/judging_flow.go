@@ -187,10 +187,11 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 //  2. Filter out all projects that the judge has already seen
 //  3. Filter out all projects that the judge has flagged (except for busy projects)
 //  4. Filter out all projects that is not in the judge's track (if tracks are enabled and the user has a track)
-//  5. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
-//  6. If judging a track, return at this point (ignore last 2 conditions)
-//  7. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
-//  8. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
+//  5. If tracks are enabled, filter out all track projects that have been seen >2 times
+//  6. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
+//  7. If judging a track, return at this point (ignore last 2 conditions)
+//  8. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
+//  9. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
 func FindAvaliableItems(db *mongo.Database, ctx mongo.SessionContext, judge *models.Judge) ([]*models.Project, error) {
 	// Get the list of all active projects
 	projects, err := database.FindActiveProjects(db, ctx)
@@ -233,12 +234,27 @@ func FindAvaliableItems(db *mongo.Database, ctx mongo.SessionContext, judge *mod
 	}
 	projects = filteredProjects
 
+	// Get all projects currently being judged
+	busyProjects, err := database.FindBusyProjects(db, ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// Filter out all projects that are not in the judge's track
+	// Also filter out all track projects that have been seen >2 times OR is currently being judged by a track judge
 	if options.JudgeTracks && judge.Track != "" {
 		var trackProjects []*models.Project
 		for _, proj := range projects {
 			if slices.Contains(proj.ChallengeList, judge.Track) {
-				trackProjects = append(trackProjects, proj)
+				// If currently being judged by second track judge, do not assign
+				if proj.TrackSeen[judge.Track] == 1 && busyProjects[proj.Id] == judge.Track {
+					continue
+				}
+
+				// Otherwise, only add to list if seen < 2 times
+				if proj.TrackSeen[judge.Track] < 2 {
+					trackProjects = append(trackProjects, proj)
+				}
 			}
 		}
 		projects = trackProjects
@@ -250,22 +266,11 @@ func FindAvaliableItems(db *mongo.Database, ctx mongo.SessionContext, judge *mod
 		return []*models.Project{}, nil
 	}
 
-	// Get all projects currently being judged and remove them from the list
-	// Also convert the list to a map for faster lookup
-	busyProjects, err := database.FindBusyProjects(db, ctx)
-	if err != nil {
-		return nil, err
-	}
-	busyProjectsMap := make(map[string]bool)
-	for _, proj := range busyProjects {
-		busyProjectsMap[proj.Hex()] = true
-	}
-
 	// Filter out projects that are currently being judged
 	// If all projects are busy, ignore this condition
 	var freeProjects []*models.Project
 	for _, proj := range projects {
-		if !busyProjectsMap[proj.Id.Hex()] {
+		if _, ok := busyProjects[proj.Id]; !ok {
 			freeProjects = append(freeProjects, proj)
 		}
 	}

@@ -128,17 +128,17 @@ func FindActiveProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*models
 }
 
 // FindBusyProjects returns a list of all projects that are currently being judged.
-// To do this, we collect all projects in the judge's "current" field
-func FindBusyProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*primitive.ObjectID, error) {
+// To do this, we collect all projects in the judge's "current" field.
+// We will return a map of project IDs to track names.
+func FindBusyProjects(db *mongo.Database, ctx mongo.SessionContext) (map[primitive.ObjectID]string, error) {
 	// Get all judges that are currently judging a project
-	// TODO: This query can be optimized by projecting on the "current" field
 	var judges []*models.Judge
 	cursor, err := db.Collection("judges").Find(ctx, gin.H{
 		"current": gin.H{
 			"$ne": nil,
 		},
 		"active": true,
-	})
+	}, options.Find().SetProjection(gin.H{"current": 1, "track": 1}))
 	if err != nil {
 		return nil, err
 	}
@@ -148,11 +148,13 @@ func FindBusyProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*primitiv
 	}
 
 	// Extract the project IDs from the judges
-	var projects []*primitive.ObjectID
+	output := make(map[primitive.ObjectID]string)
 	for _, judge := range judges {
-		projects = append(projects, judge.Current)
+		if judge.Current != nil {
+			output[*judge.Current] = judge.Track
+		}
 	}
-	return projects, nil
+	return output, nil
 }
 
 // FindProjectById returns a project from the database by id
