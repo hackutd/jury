@@ -10,8 +10,8 @@ interface NewProjectData {
     name: string;
     description: string;
     url: string;
-    link: string;
-    video: string;
+    try_link: string;
+    video_link: string;
     challenge_list: string;
 }
 
@@ -25,11 +25,6 @@ const NewProjectForm = () => {
         setIsSubmitting(true);
 
         const res = await postRequest('/project/new', 'admin', data);
-        if (res.status === 400) {
-            alert(`Error with form: ${res.error}`);
-            setIsSubmitting(false);
-            return;
-        }
         if (res.status !== 200) {
             errorAlert(res);
             setIsSubmitting(false);

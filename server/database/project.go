@@ -169,19 +169,19 @@ func FindProjectById(db *mongo.Database, ctx context.Context, id *primitive.Obje
 }
 
 // UpdateAfterPicked updates the seen value of the new project picked and the judge's current project
-func UpdateAfterPicked(db *mongo.Database, projectId *primitive.ObjectID, judgeId *primitive.ObjectID) error {
+func UpdateAfterPicked(db *mongo.Database, project *models.Project, judge *models.Judge) error {
 	err := WithTransaction(db, func(ctx mongo.SessionContext) error {
-		return UpdateAfterPickedWithTx(db, ctx, projectId, judgeId)
+		return UpdateAfterPickedWithTx(db, ctx, project, judge)
 	})
 	return err
 }
 
 // UpdateAfterPickedWithTx updates the seen value of the new project picked and the judge's current project
-func UpdateAfterPickedWithTx(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID, judgeId *primitive.ObjectID) error {
+func UpdateAfterPickedWithTx(db *mongo.Database, ctx context.Context, project *models.Project, judge *models.Judge) error {
 	// De-prioritize project
 	_, err := db.Collection("projects").UpdateOne(
 		ctx,
-		gin.H{"_id": projectId},
+		gin.H{"_id": project.Id},
 		gin.H{"$set": gin.H{"prioritized": false}},
 	)
 	if err != nil {
@@ -191,8 +191,8 @@ func UpdateAfterPickedWithTx(db *mongo.Database, ctx context.Context, projectId 
 	// Set the judge's current project
 	_, err = db.Collection("judges").UpdateOne(
 		ctx,
-		gin.H{"_id": judgeId},
-		gin.H{"$set": gin.H{"current": projectId, "last_activity": util.Now()}},
+		gin.H{"_id": judge.Id},
+		gin.H{"$set": gin.H{"last_location": project.Location, "current": project.Id, "last_activity": util.Now()}},
 	)
 	return err
 }

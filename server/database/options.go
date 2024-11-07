@@ -72,13 +72,6 @@ func GetCategories(db *mongo.Database) ([]string, error) {
 	return options.Categories, err
 }
 
-// GetMinViews gets the minimum views option from the database
-func GetMinViews(db *mongo.Database) (int64, error) {
-	var options models.Options
-	err := db.Collection("options").FindOne(context.Background(), gin.H{}).Decode(&options)
-	return options.MinViews, err
-}
-
 func UpdateJudgeTracks(db *mongo.Database, ctx context.Context, judgeTracks bool) error {
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"judge_tracks": judgeTracks}})
 	return err

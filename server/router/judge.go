@@ -323,13 +323,7 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	judge := ctx.MustGet("judge").(*models.Judge)
 
 	// Get the comparisons object
-	var comps *judging.Comparisons
-	if judge.Track == "" {
-		comps = ctx.MustGet("comps").(*judging.Comparisons)
-	} else {
-		trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
-		comps = trackComps[judge.Track]
-	}
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
 
 	// If the judge already has a next project, return that project
 	if judge.Current != nil {
@@ -354,7 +348,7 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	}
 
 	// Update judge and project
-	err = database.UpdateAfterPicked(db, &project.Id, &judge.Id)
+	err = database.UpdateAfterPicked(db, project, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating next project in database: " + err.Error()})
 		return
@@ -437,13 +431,7 @@ func JudgeSkip(ctx *gin.Context) {
 	judge := ctx.MustGet("judge").(*models.Judge)
 
 	// Get the comparisons object
-	var comps *judging.Comparisons
-	if judge.Track == "" {
-		comps = ctx.MustGet("comps").(*judging.Comparisons)
-	} else {
-		trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
-		comps = trackComps[judge.Track]
-	}
+	comps := ctx.MustGet("comps").(*judging.Comparisons)
 
 	// Get the skip reason from the request
 	var skipReq SkipRequest

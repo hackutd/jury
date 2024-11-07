@@ -21,9 +21,6 @@ func AddDevpostCsv(ctx *gin.Context) {
 	// Get comparison from the context
 	comps := ctx.MustGet("comps").(*judging.Comparisons)
 
-	// Get track comparisons from the context
-	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
-
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
 	if err != nil {
@@ -67,13 +64,6 @@ func AddDevpostCsv(ctx *gin.Context) {
 		return
 	}
 
-	// Reload track comparisons
-	err = judging.ReloadTrackComparisons(db, &trackComps)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
-		return
-	}
-
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
@@ -82,9 +72,9 @@ type AddProjectRequest struct {
 	Name          string `json:"name"`
 	Description   string `json:"description"`
 	Url           string `json:"url"`
-	TryLink       string `json:"tryLink"`
-	VideoLink     string `json:"videoLink"`
-	ChallengeList string `json:"challengeList"`
+	TryLink       string `json:"try_link"`
+	VideoLink     string `json:"video_link"`
+	ChallengeList string `json:"challenge_list"`
 }
 
 // POST /project/new - AddProject adds a project to the database
@@ -94,9 +84,6 @@ func AddProject(ctx *gin.Context) {
 
 	// Get comparison from the context
 	comps := ctx.MustGet("comps").(*judging.Comparisons)
-
-	// Get track comparisons from the context
-	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
 
 	// Get the projectReq from the request
 	var projectReq AddProjectRequest
@@ -158,13 +145,6 @@ func AddProject(ctx *gin.Context) {
 		return
 	}
 
-	// Reload track comparisons
-	err = judging.ReloadTrackComparisons(db, &trackComps)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
-		return
-	}
-
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
@@ -185,14 +165,13 @@ func ListProjects(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, projects)
 }
 
-// TODO: Why is the other things not underscore case
 type PublicProject struct {
 	Name          string `json:"name"`
 	Location      int64  `json:"location"`
 	Description   string `json:"description"`
 	Url           string `json:"url"`
-	TryLink       string `json:"tryLink"`
-	VideoLink     string `json:"videoLink"`
+	TryLink       string `json:"try_link"`
+	VideoLink     string `json:"video_link"`
 	ChallengeList string `json:"challenge_list"`
 }
 
@@ -232,9 +211,6 @@ func AddProjectsCsv(ctx *gin.Context) {
 
 	// Get comparison from the context
 	comps := ctx.MustGet("comps").(*judging.Comparisons)
-
-	// Get track comparisons from the context
-	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
 
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
@@ -279,13 +255,6 @@ func AddProjectsCsv(ctx *gin.Context) {
 	err = judging.ReloadComparisons(db, comps)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
-		return
-	}
-
-	// Reload track comparisons
-	err = judging.ReloadTrackComparisons(db, &trackComps)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
 		return
 	}
 

@@ -16,6 +16,7 @@ type Project struct {
 	VideoLink     string             `bson:"video_link" json:"video_link"`
 	ChallengeList []string           `bson:"challenge_list" json:"challenge_list"`
 	Seen          int64              `bson:"seen" json:"seen"`
+	TrackSeen     map[string]int64   `bson:"track_seen" json:"track_seen"`
 	Score         int64              `bson:"score" json:"score"`
 	Stars         int64              `bson:"stars" json:"stars"`
 	TrackStars    map[string]int64   `bson:"track_stars" json:"track_stars"`
@@ -35,6 +36,7 @@ func NewProject(name string, location int64, group int64, description string, ur
 		VideoLink:     videoLink,
 		ChallengeList: challengeList,
 		Seen:          0,
+		TrackSeen:     make(map[string]int64),
 		Score:         0,
 		Stars:         0,
 		TrackStars:    make(map[string]int64),

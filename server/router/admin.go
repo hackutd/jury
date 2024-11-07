@@ -5,7 +5,6 @@ import (
 	"server/config"
 	"server/database"
 	"server/funcs"
-	"server/judging"
 	"server/models"
 	"server/ranking"
 
@@ -567,9 +566,6 @@ func ToggleTracks(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
-	// Get the track comparisons from the context
-	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
-
 	// Get the request
 	var req ToggleTracksRequest
 	err := ctx.BindJSON(&req)
@@ -585,15 +581,6 @@ func ToggleTracks(ctx *gin.Context) {
 		return
 	}
 
-	// Create track comparison objects
-	if req.JudgeTracks {
-		err = judging.ReloadTrackComparisons(db, &trackComps)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
-			return
-		}
-	}
-
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
@@ -607,9 +594,6 @@ func SetTracks(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
-	// Get the track comparisons from the context
-	trackComps := ctx.MustGet("trackComps").(map[string]*judging.Comparisons)
-
 	// Get the tracks
 	var tracksReq SetTracksRequest
 	err := ctx.BindJSON(&tracksReq)
@@ -622,13 +606,6 @@ func SetTracks(ctx *gin.Context) {
 	err = database.UpdateTracks(db, ctx, tracksReq.Tracks)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving tracks: " + err.Error()})
-		return
-	}
-
-	// Create track comparison objects
-	err = judging.ReloadTrackComparisons(db, &trackComps)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading track comparisons: " + err.Error()})
 		return
 	}
 
