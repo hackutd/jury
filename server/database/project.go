@@ -306,3 +306,23 @@ func UpdateProjectScores(db *mongo.Database, ctx context.Context, scoreDiff *map
 
 	return nil
 }
+
+// GetMaxTableNum returns the max table number assigned to a project;
+// This will be the maximum table number in the database
+func GetMaxTableNum(db *mongo.Database, ctx context.Context) (int64, error) {
+	// Get the maximum table number
+	cursor, err := db.Collection("projects").Find(ctx, gin.H{}, options.Find().SetSort(gin.H{"location": -1}).SetLimit(1))
+	if err != nil {
+		return 0, err
+	}
+
+	var project models.Project
+	if cursor.Next(ctx) {
+		err = cursor.Decode(&project)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return project.Location, nil
+}

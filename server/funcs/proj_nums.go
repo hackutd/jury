@@ -27,24 +27,13 @@ func ReassignNumsInOrder(db *mongo.Database) error {
 		// Sort projets by table num
 		sort.Sort(models.ByTableNumber(projects))
 
-		// Get the options from the database
-		options, err := database.GetOptions(db, sc)
-		if err != nil {
-			return errors.New("error getting options from database: " + err.Error())
-		}
-
 		// Set init table num to 0
-		options.CurrTableNum = 0
+		tableNum := int64(0)
 
 		// Loop through all projects
 		for _, project := range projects {
-			project.Location = options.GetNextIncrTableNum()
-		}
-
-		// Update the options in the database
-		err = database.UpdateCurrTableNum(db, sc, options)
-		if err != nil {
-			return errors.New("error updating options in database: " + err.Error())
+			tableNum++
+			project.Location = tableNum
 		}
 
 		// Update all projects in the database
@@ -152,18 +141,6 @@ func ReassignNumsByGroup(db *mongo.Database) error {
 	// })
 
 	// return err
-}
-
-// GetNextTableNum gets the group and table number for the next project added.
-// If groups is not enabled, it will only return a table number (first return value will be null).
-func GetNextTableNum(db *mongo.Database, op *models.Options) (int64, int64) {
-	if op.MultiGroup {
-		group, table := op.GetNextGroupTableNum()
-		return group, table
-	} else {
-		table := op.GetNextIncrTableNum()
-		return 0, table
-	}
 }
 
 // IncrementJudgeGroupNum increments every single judges' group number.

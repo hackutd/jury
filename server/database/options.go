@@ -30,12 +30,6 @@ func UpdateOptions(db *mongo.Database, options *models.Options) error {
 	return err
 }
 
-// UpdateCurrTableNum updates the current table number in the database
-func UpdateCurrTableNum(db *mongo.Database, ctx context.Context, options *models.Options) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"curr_table_num": options.CurrTableNum, "group_table_nums": options.GroupTableNums}})
-	return err
-}
-
 // UpdateClockSync updates the clock sync in the database
 func UpdateClockSync(db *mongo.Database, ctx context.Context, clockSync bool) error {
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"clock_sync": clockSync}})

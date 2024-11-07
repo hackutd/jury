@@ -5,7 +5,6 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 type Options struct {
 	Id             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Ref            int64              `bson:"ref" json:"ref"`
-	CurrTableNum   int64              `bson:"curr_table_num" json:"curr_table_num"`
 	Clock          ClockState         `bson:"clock" json:"clock"`
 	JudgingTimer   int64              `bson:"judging_timer" json:"judging_timer"`
 	MinViews       int64              `bson:"min_views" json:"min_views"`
@@ -31,7 +30,6 @@ type GroupSwitchOps struct {
 func NewOptions() *Options {
 	return &Options{
 		Ref:            0,
-		CurrTableNum:   0,
 		JudgingTimer:   300,
 		MinViews:       3,
 		Clock:          *NewClockState(),
@@ -55,23 +53,6 @@ func NewGroupOptions() *GroupSwitchOps {
 		AutoSwitchProp:   0.1,
 		ManualSwitches:   0,
 	}
-}
-
-// GetNextIncrTableNum increments the current table number and returns the new value.
-// This is used for in-order project number assignment
-func (o *Options) GetNextIncrTableNum() int64 {
-	o.CurrTableNum++
-	return o.CurrTableNum
-}
-
-// GetNextGroupTableNum returns the next group and table number for a project.
-// Since this is done round-robin, we will use the current table number to determine the group.
-// The return values are (group, table number)
-func (o *Options) GetNextGroupTableNum() (int64, int64) {
-	group := o.CurrTableNum % o.NumGroups
-	o.GroupTableNums[group]++
-	o.CurrTableNum++
-	return group, o.GroupTableNums[group]
 }
 
 // OptionalGroupOptions is a struct that will be used to update the group options.
