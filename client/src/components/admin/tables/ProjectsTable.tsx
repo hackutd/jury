@@ -110,10 +110,20 @@ const ProjectsTable = () => {
                 sortFunc = (a, b) => (a.score - b.score) * asc;
                 break;
             case ProjectSortField.Stars:
-                sortFunc = (a, b) => (a.stars - b.stars) * asc;
+                sortFunc = (a, b) => {
+                    if (options.judge_tracks && selectedTrack !== '') {
+                        return (a.track_stars[selectedTrack] - b.track_stars[selectedTrack]) * asc;
+                    }
+                    return (a.stars - b.stars) * asc;
+                };
                 break;
             case ProjectSortField.Seen:
-                sortFunc = (a, b) => (a.seen - b.seen) * asc;
+                sortFunc = (a, b) => {
+                    if (options.judge_tracks && selectedTrack !== '') {
+                        return (a.track_seen[selectedTrack] - b.track_seen[selectedTrack]) * asc;
+                    }
+                    return (a.seen - b.seen) * asc;
+                };
                 break;
             case ProjectSortField.Updated:
                 sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
@@ -155,12 +165,14 @@ const ProjectsTable = () => {
                                 sortState={sortState}
                             />
                         )}
-                        <HeaderEntry
-                            name="Score"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Score}
-                            sortState={sortState}
-                        />
+                        {selectedTrack === '' && (
+                            <HeaderEntry
+                                name="Score"
+                                updateSort={updateSort}
+                                sortField={ProjectSortField.Score}
+                                sortState={sortState}
+                            />
+                        )}
                         <HeaderEntry
                             name="Stars"
                             updateSort={updateSort}

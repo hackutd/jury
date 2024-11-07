@@ -85,8 +85,10 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
     }, [flags, project]);
 
     let stars = project.stars;
+    let seen = project.seen;
     if (options.judge_tracks && track !== '') {
         stars = project.track_stars[track] || 0;
+        seen = project.track_seen[track] || 0;
     }
 
     return (
@@ -137,9 +139,9 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                     Table {project.location} {checked}
                 </td>
                 {options.multi_group && <td className="text-center">{project.group}</td>}
-                <td className="text-center">{project.score}</td>
+                {track === '' && <td className="text-center">{project.score}</td>}
                 <td className="text-center">{stars}</td>
-                <td className="text-center">{project.seen}</td>
+                <td className="text-center">{seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>
                 <td className="text-right align-center">
                     {popup && (

@@ -8,6 +8,7 @@ interface Project {
     video_link: string;
     challenge_list: string[];
     seen: number;
+    track_seen: { [track: string]: number };
     active: boolean;
     score: number;
     stars: number;
