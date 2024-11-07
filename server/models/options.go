@@ -3,20 +3,19 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Options struct {
-	Id             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Ref            int64              `bson:"ref" json:"ref"`
-	Clock          ClockState         `bson:"clock" json:"clock"`
-	JudgingTimer   int64              `bson:"judging_timer" json:"judging_timer"`
-	MinViews       int64              `bson:"min_views" json:"min_views"`
-	ClockSync      bool               `bson:"clock_sync" json:"clock_sync"`
-	Categories     []string           `bson:"categories" json:"categories"`
-	JudgeTracks    bool               `bson:"judge_tracks" json:"judge_tracks"`
-	Tracks         []string           `bson:"tracks" json:"tracks"`
-	MultiGroup     bool               `bson:"multi_group" json:"multi_group"`
-	NumGroups      int64              `bson:"num_groups" json:"num_groups"`             // Number of groups to split projects into
-	GroupSizes     []int64            `bson:"group_sizes" json:"group_sizes"`           // Number of projects in each group except last (last group will be remainder, size = numGroups - 1)
-	GroupTableNums []int64            `bson:"group_table_nums" json:"group_table_nums"` // Table number assignments to each group -- this will be round-robin due to the way groups are split
-	MainGroup      GroupSwitchOps     `bson:"main_group" json:"main_group"`             // Group options for the general judging track
+	Id           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Ref          int64              `bson:"ref" json:"ref"`
+	Clock        ClockState         `bson:"clock" json:"clock"`
+	JudgingTimer int64              `bson:"judging_timer" json:"judging_timer"`
+	MinViews     int64              `bson:"min_views" json:"min_views"`
+	ClockSync    bool               `bson:"clock_sync" json:"clock_sync"`
+	Categories   []string           `bson:"categories" json:"categories"`
+	JudgeTracks  bool               `bson:"judge_tracks" json:"judge_tracks"`
+	Tracks       []string           `bson:"tracks" json:"tracks"`
+	MultiGroup   bool               `bson:"multi_group" json:"multi_group"`
+	NumGroups    int64              `bson:"num_groups" json:"num_groups"`   // Number of groups to split projects into
+	GroupSizes   []int64            `bson:"group_sizes" json:"group_sizes"` // Number of projects in each group except last (last group will be remainder, size = numGroups - 1)
+	MainGroup    GroupSwitchOps     `bson:"main_group" json:"main_group"`   // Group options for the general judging track
 }
 
 type GroupSwitchOps struct {
@@ -29,19 +28,18 @@ type GroupSwitchOps struct {
 
 func NewOptions() *Options {
 	return &Options{
-		Ref:            0,
-		JudgingTimer:   300,
-		MinViews:       3,
-		Clock:          *NewClockState(),
-		ClockSync:      false,
-		Categories:     []string{"Creativity/Innovation", "Technical Competence/Execution", "Research/Design", "Presentation"},
-		JudgeTracks:    false,
-		Tracks:         []string{},
-		MultiGroup:     false,
-		NumGroups:      3,
-		GroupSizes:     []int64{30, 30, 30},
-		GroupTableNums: []int64{0, 30, 60},
-		MainGroup:      *NewGroupOptions(),
+		Ref:          0,
+		JudgingTimer: 300,
+		MinViews:     3,
+		Clock:        *NewClockState(),
+		ClockSync:    false,
+		Categories:   []string{"Creativity/Innovation", "Technical Competence/Execution", "Research/Design", "Presentation"},
+		JudgeTracks:  false,
+		Tracks:       []string{},
+		MultiGroup:   false,
+		NumGroups:    3,
+		GroupSizes:   []int64{30, 30, 30},
+		MainGroup:    *NewGroupOptions(),
 	}
 }
 

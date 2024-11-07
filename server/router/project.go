@@ -484,30 +484,15 @@ func UnprioritizeProject(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
+// POST /project/reassign - ReassignProjectNums reassigns project numbers
 func ReassignProjectNums(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
-	// Get the options
-	options, err := database.GetOptions(db, ctx)
+	err := funcs.ReassignNums(db)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
 		return
-	}
-
-	// Reassign project numbers by group or in order based on options
-	if options.MultiGroup {
-		err = funcs.ReassignNumsByGroup(db)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
-			return
-		}
-	} else {
-		err = funcs.ReassignNumsInOrder(db)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
-			return
-		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})

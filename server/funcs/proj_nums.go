@@ -1,7 +1,6 @@
 package funcs
 
 import (
-	"context"
 	"errors"
 	"server/database"
 	"server/models"
@@ -10,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// ReassignNumsInOrder assigns project numbers in order.
-func ReassignNumsInOrder(db *mongo.Database) error {
+// ReassignNums assigns project numbers in order.
+func ReassignNums(db *mongo.Database) error {
 	err := database.WithTransaction(db, func(sc mongo.SessionContext) error {
 		// Get all the projects from the database
 		projects, err := database.FindAllProjects(db, sc)
@@ -45,102 +44,6 @@ func ReassignNumsInOrder(db *mongo.Database) error {
 	})
 
 	return err
-}
-
-// TODO: THIS IS BROKEN
-func ReassignNumsByGroup(db *mongo.Database) error {
-	err := ReassignNumsInOrder(db)
-	if err != nil {
-		return err
-	}
-
-	// Get options
-	options, err := database.GetOptions(db, context.Background())
-	if err != nil {
-		return err
-	}
-
-	// Get all the projects from the database
-	projects, err := database.FindAllProjects(db, context.Background())
-	if err != nil {
-		return errors.New("error getting projects from database: " + err.Error())
-	}
-
-	// Sort projets by table num
-	sort.Sort(models.ByTableNumber(projects))
-
-	// Assign group numbers in order
-	curr := 0
-	for i, gn := range options.GroupSizes {
-		println(gn)
-		for j := 0; j < int(gn); j++ {
-			if curr >= len(projects) {
-				break
-			}
-			projects[curr].Group = int64(i)
-			curr++
-		}
-	}
-
-	// Update all projects in the database
-	err = database.UpdateProjects(db, projects)
-	if err != nil {
-		return errors.New("error updating projects in database: " + err.Error())
-	}
-
-	return nil
-
-	// err := database.WithTransaction(db, func(sc mongo.SessionContext) error {
-
-	// 	// Get the options from the database
-	// 	options, err := database.GetOptions(db, sc)
-	// 	if err != nil {
-	// 		return errors.New("error getting options from database: " + err.Error())
-	// 	}
-
-	// 	// Sort projets by table num
-	// 	sort.Sort(models.ByTableNumber(projects))
-
-	// 	// Set init table num to 0
-	// 	options.CurrTableNum = 0
-
-	// 	// Create group table numbers slice
-	// 	options.GroupTableNums = make([]int64, options.NumGroups)
-
-	// 	// Fill group table numbers slice with numbers corresponding to the group
-	// 	for i := range options.GroupTableNums {
-	// 		if i == 0 {
-	// 			options.GroupTableNums[0] = 0
-	// 			continue
-	// 		}
-	// 		options.GroupTableNums[i] = options.GroupSizes[i-1] + options.GroupTableNums[i-1]
-	// 	}
-
-	// 	// Loop through all projects
-	// 	for _, project := range projects {
-	// 		project.Group, project.Location = options.GetNextGroupTableNum()
-	// 	}
-
-	// 	// Update the options in the database
-	// 	err = database.UpdateCurrTableNum(db, sc, options)
-	// 	if err != nil {
-	// 		return errors.New("error updating options in database: " + err.Error())
-	// 	}
-
-	// 	// Don't update if there are no projects
-	// 	if len(projects) == 0 {
-	// 		return nil
-	// 	}
-
-	// 	// Update all projects in the database
-	// 	err = database.UpdateProjects(db, projects)
-	// 	if err != nil {
-	// 		return errors.New("error updating projects in database: " + err.Error())
-	// 	}
-	// 	return nil
-	// })
-
-	// return err
 }
 
 // IncrementJudgeGroupNum increments every single judges' group number.

@@ -630,21 +630,6 @@ func ToggleGroups(ctx *gin.Context) {
 		return
 	}
 
-	// Reassign table numbers based on groups
-	if req.MultiGroup {
-		err = funcs.ReassignNumsByGroup(db)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning table numbers: " + err.Error()})
-			return
-		}
-	} else {
-		err = funcs.ReassignNumsInOrder(db)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning table numbers (no groups): " + err.Error()})
-			return
-		}
-	}
-
 	// Save the options in the database
 	err = database.UpdateMultiGroup(db, ctx, req.MultiGroup)
 	if err != nil {
