@@ -112,7 +112,9 @@ const ProjectsTable = () => {
             case ProjectSortField.Stars:
                 sortFunc = (a, b) => {
                     if (options.judge_tracks && selectedTrack !== '') {
-                        return (a.track_stars[selectedTrack] - b.track_stars[selectedTrack]) * asc;
+                        const ats = a.track_stars[selectedTrack] ?? 0;
+                        const bts = b.track_stars[selectedTrack] ?? 0;
+                        return (ats - bts) * asc;
                     }
                     return (a.stars - b.stars) * asc;
                 };
@@ -120,7 +122,9 @@ const ProjectsTable = () => {
             case ProjectSortField.Seen:
                 sortFunc = (a, b) => {
                     if (options.judge_tracks && selectedTrack !== '') {
-                        return (a.track_seen[selectedTrack] - b.track_seen[selectedTrack]) * asc;
+                        const ats = a.track_seen[selectedTrack] ?? 0;
+                        const bts = b.track_seen[selectedTrack] ?? 0;
+                        return (ats - bts) * asc;
                     }
                     return (a.seen - b.seen) * asc;
                 };
