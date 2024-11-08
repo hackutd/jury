@@ -99,27 +99,34 @@ const Admin = () => {
                 >
                     Settings
                 </Button>
-                {options &&
-                    options.multi_group &&
-                    options.main_group.switching_mode === 'manual' && (
-                        <>
-                            <p className="text-lg text-right grow mr-4 text-lighter">
-                                <span className="font-bold">Swaps: </span>
-                                {options.main_group.manual_switches}
-                            </p>
-                            <Button
-                                type="gold"
-                                onClick={setSwapPopup.bind(null, true)}
-                                disabled={clock.running}
-                                tooltip="Groups can only be swapped when judging is paused"
-                                small
-                                bold
-                                className="mr-36 py-2"
-                            >
-                                Swap Judge Groups
-                            </Button>
-                        </>
-                    )}
+                <Button
+                    type="outline"
+                    onClick={() => navigate('/admin/log')}
+                    small
+                    bold
+                    className="ml-4 py-2"
+                >
+                    Audit Log
+                </Button>
+                {options && options.multi_group && options.switching_mode === 'manual' && (
+                    <>
+                        <p className="text-lg text-right grow mr-4 text-lighter">
+                            <span className="font-bold">Swaps: </span>
+                            {options.manual_switches}
+                        </p>
+                        <Button
+                            type="gold"
+                            onClick={setSwapPopup.bind(null, true)}
+                            disabled={clock.running}
+                            tooltip="Groups can only be swapped when judging is paused"
+                            small
+                            bold
+                            className="mr-36 py-2"
+                        >
+                            Swap Judge Groups
+                        </Button>
+                    </>
+                )}
             </div>
             <AdminStatsPanel />
             <AdminToggleSwitch state={showProjects} setState={setShowProjects} />

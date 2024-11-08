@@ -33,7 +33,7 @@ As the project deadline approaches, hackers will be hard at work submitting thei
 
 At this point, your team would be setting up the judging room(s), with tables laid out for hackers to stand at (judging in the [science fair style](/docs/judging-setup)). You can then go to the live judging page ([example here](https://jury-dev.mikz.dev/expo)), which will show a list of all projects and their assigned table numbers. Once you have tables set up, this live judging page can be safely sent out to hackers without exposing any of the other parts of the judging application. Hackers should go to their tables and set up there before judging starts.
 
-In the admin settings, you are also able to export projects grouped by their opt-in prize (specified on Devpost) as a CSV file. This may be beneficial for any sponsors that want lists of projects that submitted specifically to their challenge. There are other output options such as a list of all projects or judges on that page as well. Some other settings include limiting the project presentation times and categories that projects are ranked on.
+In the admin settings, you are also able to export projects grouped by their opt-in prize (specified on Devpost) as a CSV file. This may be beneficial for any sponsors that want lists of projects that submitted specifically to their challenge. There are other output options such as a list of all projects or judges on that page as well. Some other settings include limiting the project presentation times and enabling track judging.
 
 ## Judging Time!
 

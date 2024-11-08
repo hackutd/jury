@@ -8,9 +8,12 @@ interface Project {
     video_link: string;
     challenge_list: string[];
     seen: number;
+    track_seen: { [track: string]: number };
     active: boolean;
+    prioritized: boolean;
     score: number;
     stars: number;
+    track_stars: { [track: string]: number };
     group: number;
     last_activity: number;
 }
@@ -117,7 +120,6 @@ interface Options {
     curr_table_num: number;
     clock: ClockState;
     judging_timer: number;
-    categories: string[];
     min_views: number;
     clock_sync: boolean;
     judge_tracks: boolean;
@@ -126,13 +128,7 @@ interface Options {
     num_groups: number;
     group_sizes: number[];
     group_table_nums: number[][];
-    main_group: GroupsSwitchOps;
-}
-
-interface GroupsSwitchOps {
     switching_mode: string;
-    auto_switch_method: string;
-    auto_switch_count: number;
     auto_switch_prop: number;
     manual_switches: number;
 }
@@ -156,11 +152,6 @@ interface ScoredItem {
     score: number;
 }
 
-interface StarredItem {
-    id: string;
-    stars: number;
-}
-
 interface JudgeStats {
     num: number;
     avg_seen: number;
@@ -171,4 +162,12 @@ interface ProjectStats {
     num: number;
     avg_votes: number;
     avg_seen: number;
+}
+
+interface Log {
+    log: string;
+}
+
+interface Code {
+    qr_code: string;
 }
