@@ -711,6 +711,11 @@ func JudgeRank(ctx *gin.Context) {
 	// Calculate diff of scores
 	diff := ranking.CalculateScoreDiff(rankReq.Ranking, judge.Rankings)
 
+	if len(*diff) == 0 {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+		return
+	}
+
 	// Wrap in transaction
 	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
 		// Update the judge's ranking
