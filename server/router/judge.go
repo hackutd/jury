@@ -929,3 +929,43 @@ func ReassignJudgeGroups(ctx *gin.Context) {
 	logger.AdminLogf("Reassigned judge groups")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
+
+type MoveJudgeRequest struct {
+	Group int64  `json:"group"`
+	Id    string `json:"id"`
+}
+
+// POST /judge/move - Move a judge to a different group
+func MoveJudge(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request object
+	var moveReq MoveJudgeRequest
+	err := ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Convert ID string to ObjectID
+	judgeObjectId, err := primitive.ObjectIDFromHex(moveReq.Id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid judge ID"})
+		return
+	}
+
+	// Move the judge to the new group
+	err = database.SetJudgeGroup(db, ctx, &judgeObjectId, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving judge group: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Moved judge %s to group %d", moveReq.Id, moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}

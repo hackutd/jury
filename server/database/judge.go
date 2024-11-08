@@ -295,7 +295,7 @@ func GetMinJudgeGroup(db *mongo.Database, track string) (int64, error) {
 	}
 
 	// Sort by count in ascending order
-	minGroups := util.SortMapByValue(groupCounts)
+	minGroups := util.SortMapByValue(groupCounts, false)
 
 	// Get options
 	options, err := GetOptions(db, context.Background())
@@ -408,4 +408,10 @@ func PutJudgesInGroups(db *mongo.Database) error {
 		err = UpdateJudgesWithTx(db, sc, judges)
 		return err
 	})
+}
+
+// SetJudgeGroup sets the group of a judge
+func SetJudgeGroup(db *mongo.Database, ctx context.Context, judgeId *primitive.ObjectID, group int64) error {
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{"group": group, "group_seen": 0}})
+	return err
 }

@@ -210,7 +210,6 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 		tableNum++
 
 		// Add project to slice
-		// TODO: Set group
 		projects = append(projects, models.NewProject(
 			record[0],
 			tableNum,
