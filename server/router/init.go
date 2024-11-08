@@ -71,6 +71,11 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.DELETE("/judge/:id", DeleteJudge)
 	adminRouter.PUT("/judge/:id", EditJudge)
 	adminRouter.POST("/admin/groups/swap", SwapJudgeGroups)
+	adminRouter.POST("/admin/qr", GenerateQRCode)
+	adminRouter.POST("/admin/qr/:track", GenerateTrackQRCode)
+	defaultRouter.GET("/qr", GetQRCode)
+	defaultRouter.GET("/qr/:track", GetTrackQRCode)
+	defaultRouter.POST("/qr/add", AddJudgeFromQR)
 
 	// Admin panel - projects
 	adminRouter.POST("/project/new", AddProject)

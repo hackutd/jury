@@ -18,6 +18,9 @@ import Expo from './pages/Expo';
 
 import './index.css';
 import AdminLog from './pages/admin/log';
+import QrCode from './pages/admin/QrCode';
+import AddSelf from './pages/AddSelf';
+import Info from './pages/Info';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
@@ -77,6 +80,23 @@ const router = createBrowserRouter([
     {
         path: '/admin/log',
         element: <AdminLog />,
+    },
+    {
+        path: '/admin/qr',
+        element: <QrCode />,
+    },
+    {
+        path: '/add-self',
+        element: <AddSelf />,
+    },
+    {
+        path: '/add-self/done',
+        element: (
+            <Info>
+                Thanks for adding yourself to the system! You should recieve an email soon with your
+                judging login info. You can safely close this tab.
+            </Info>
+        ),
     },
 ]);
 

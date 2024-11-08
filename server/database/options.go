@@ -111,3 +111,16 @@ func IncrementManualSwitches(db *mongo.Database, ctx context.Context) error {
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$inc": gin.H{"manual_switches": 1}})
 	return err
 }
+
+// UpdateQRCode updates the QR code in the database
+func UpdateQRCode(db *mongo.Database, ctx context.Context, qrCode string) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"qr_code": qrCode}})
+	return err
+}
+
+// UpdateTrackQRCode updates the QR code for a track in the database
+func UpdateTrackQRCode(db *mongo.Database, ctx context.Context, track string, qrCode string) error {
+	key := "track_qr_codes." + track
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{key: qrCode}})
+	return err
+}

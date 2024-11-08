@@ -12,6 +12,9 @@ interface JuryHeaderProps {
 
     /* Whether the user is an admin */
     isAdmin?: boolean;
+
+    /* Custom back location */
+    backLocation?: string;
 }
 
 const JuryHeader = (props: JuryHeaderProps) => {
@@ -24,7 +27,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
         navigate('/');
     };
 
-    const backToAdmin = () => navigate('/admin');
+    const backToAdmin = () => navigate(props.backLocation ?? '/admin');
 
     const adminCenter = props.isAdmin ? 'text-center' : '';
 

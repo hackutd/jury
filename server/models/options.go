@@ -17,6 +17,8 @@ type Options struct {
 	SwitchingMode  string             `bson:"switching_mode" json:"switching_mode"`     // "auto" or "manual"
 	AutoSwitchProp float64            `bson:"auto_switch_prop" json:"auto_switch_prop"` // Proportion of projects to view in each group
 	ManualSwitches int64              `bson:"manual_switches" json:"manual_switches"`   // Number of manual switches that have happened
+	QRCode         string             `bson:"qr_code" json:"qr_code"`                   // Secret key of the QR code
+	TrackQRCodes   map[string]string  `bson:"track_qr_codes" json:"track_qr_codes"`     // Secret keys of the QR codes for each track
 }
 
 func NewOptions() *Options {
@@ -34,6 +36,8 @@ func NewOptions() *Options {
 		SwitchingMode:  "auto",
 		AutoSwitchProp: 0.1,
 		ManualSwitches: 0,
+		QRCode:         "",
+		TrackQRCodes:   make(map[string]string),
 	}
 }
 

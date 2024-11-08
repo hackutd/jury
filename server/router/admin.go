@@ -469,3 +469,95 @@ func RemoveFlag(ctx *gin.Context) {
 	logger.AdminLogf("Deleted flag %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
+
+// POST /admin/qr - generates a new QR code
+func GenerateQRCode(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Generate QR code
+	token, err := util.GenerateToken()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error generating QR code: " + err.Error()})
+		return
+	}
+
+	// Save the QR code
+	err = database.UpdateQRCode(db, ctx, token)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving QR code: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Generated QR code")
+	ctx.JSON(http.StatusOK, gin.H{"qr_code": token})
+}
+
+// POST /admin/qr/:track - generates a new QR code for a track
+func GenerateTrackQRCode(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Generate QR code
+	token, err := util.GenerateToken()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error generating QR code: " + err.Error()})
+		return
+	}
+
+	// Save the QR code
+	err = database.UpdateTrackQRCode(db, ctx, track, token)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving QR code: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Generated QR code for track %s", track)
+	ctx.JSON(http.StatusOK, gin.H{"qr_code": token})
+}
+
+// GET /admin/qr - GetQRCode returns the QR code
+func GetQRCode(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the QR code
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"qr_code": options.QRCode})
+}
+
+// GET /admin/qr/:track - GetTrackQRCode returns the QR code for a track
+func GetTrackQRCode(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Get the QR code
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, gin.H{"qr_code": options.TrackQRCodes[track]})
+}

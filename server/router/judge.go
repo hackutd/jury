@@ -969,3 +969,101 @@ func MoveJudge(ctx *gin.Context) {
 	logger.AdminLogf("Moved judge %s to group %d", moveReq.Id, moveReq.Group)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
+
+type AddJudgeFromQRRequest struct {
+	Code  string `json:"code"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Track string `json:"track"`
+}
+
+// POST /judge/qr - Add a judge from a QR code
+func AddJudgeFromQR(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request object
+	var qrReq AddJudgeFromQRRequest
+	err := ctx.BindJSON(&qrReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the options from the database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Make sure the code is correct
+	if qrReq.Track == "" {
+		if qrReq.Code != options.QRCode {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
+			return
+		}
+	} else {
+		if qrReq.Code != options.TrackQRCodes[qrReq.Track] {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
+			return
+		}
+	}
+
+	// Check if the judge already exists
+	judge, err := database.FindJudgeByCode(db, qrReq.Code)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judge in database: " + err.Error()})
+		return
+	}
+	if judge != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge already exists"})
+		return
+	}
+
+	// Determine group judge should go in
+	group, err := database.GetMinJudgeGroup(db, qrReq.Track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+		return
+	}
+
+	// Create the judge
+	judge = models.NewJudge(qrReq.Name, qrReq.Email, qrReq.Track, "", group)
+
+	// SEND EMAILS =============================
+
+	// Get hostname from request
+	hostname := util.GetFullHostname(ctx)
+
+	// Make sure email is right
+	if !funcs.CheckEmail(judge.Email) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
+		return
+	}
+
+	// Send email to judge
+	err = funcs.SendJudgeEmail(judge, hostname)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
+		return
+	}
+
+	// Insert the judge into the database
+	err = database.InsertJudge(db, judge)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judge into database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	track := ""
+	if qrReq.Track != "" {
+		track = ", track " + qrReq.Track
+	}
+	logger.AdminLogf("Added judge %s (%s) from QR code%s", judge.Name, judge.Email, track)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}

@@ -167,3 +167,7 @@ interface ProjectStats {
 interface Log {
     log: string;
 }
+
+interface Code {
+    qr_code: string;
+}
