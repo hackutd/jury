@@ -18,12 +18,13 @@ import alarm from '../../assets/alarm.mp3';
 import data from '../../data.json';
 import RawTextInput from '../../components/RawTextInput';
 
-const infoPages = ['paused', 'hidden', 'no-projects', 'done'];
+const infoPages = ['paused', 'hidden', 'no-projects', 'done', 'doneTrack'];
 const infoData = [
     data.judgeInfo.paused,
     data.judgeInfo.hidden,
     data.judgeInfo.noProjects,
     data.judgeInfo.done,
+    data.judgeInfo.doneTrack,
 ];
 
 const audio = new Audio(alarm);
@@ -133,7 +134,7 @@ const JudgeLive = () => {
 
         // No project has been returned (all projects have been judged)
         if (!newProject.data?.project_id) {
-            setInfoPage('done');
+            setInfoPage(judge?.track === '' ? 'done' : 'doneTrack');
             return;
         }
 
@@ -384,13 +385,13 @@ const JudgeLive = () => {
                 {judge.current && <ProjectDisplay judge={judge} projectId={judge.current} />}
                 {/* Dummy div for fixed text input */}
                 <div className="w-full py-2 h-10"></div>
-                <div className="fixed bottom-0 flex p-2 w-full left-0 bg-background">
+                <div className="fixed bottom-0 flex justify-center p-2 w-full left-0 bg-background">
                     <RawTextInput
                         name="notes"
                         placeholder="Personal notes..."
                         text={notes}
                         setText={setNotes}
-                        className="grow"
+                        className="w-full md:w-[30rem]"
                     />
                 </div>
                 <FinishPopup

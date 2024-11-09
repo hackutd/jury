@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { errorAlert, fixIfFloatDigits, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
-import { useAdminStore, useOptionsStore } from '../../../store';
+import { useAdminStore, useFlagsStore, useOptionsStore } from '../../../store';
 import { postRequest } from '../../../api';
 import FlagsPopup from '../FlagsPopup';
 import { twMerge } from 'tailwind-merge';
@@ -10,21 +10,22 @@ import { twMerge } from 'tailwind-merge';
 interface ProjectRowProps {
     project: Project;
     idx: number;
-    flags: Flag[];
     checked: boolean;
     handleCheckedChange: (e: React.ChangeEvent<HTMLInputElement>, idx: number) => void;
 }
 
-const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: ProjectRowProps) => {
+const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowProps) => {
     const [popup, setPopup] = useState(false);
     const [flagPopup, setFlagPopup] = useState(false);
-    const [flagCount, setflagCount] = useState(0);
-    const [flagPopupProjectId, setflagPopupProjectId] = useState('');
+    const [flags, setFlags] = useState<Flag[]>([]);
+    const [flagPopupProjectId, setFlagPopupProjectId] = useState('');
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const options = useOptionsStore((state) => state.options);
+    const track = useOptionsStore((state) => state.selectedTrack);
+    const allFlags = useFlagsStore((state) => state.flags);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -55,6 +56,13 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 // Open delete popup
                 setDeletePopup(true);
                 break;
+            case 'prioritize':
+                prioritizeProject();
+                break;
+            default:
+                console.error('Invalid action');
+                alert('Invalid action');
+                break;
         }
 
         setPopup(false);
@@ -74,14 +82,41 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
         }
     };
 
-    useEffect(() => {
-        if (flags.length > 0) {
-            setflagCount(flagCount);
-            setflagPopupProjectId(flags[0].project_id);
+    const prioritizeProject = async () => {
+        const res = await postRequest<OkResponse>(
+            project.prioritized ? '/project/unprioritize' : '/project/prioritize',
+            'admin',
+            { id: project.id }
+        );
+        if (res.status === 200) {
+            alert(
+                `Project ${project.prioritized ? 'un-prioritized' : 'prioritized'} successfully!`
+            );
+            fetchProjects();
         } else {
-            setflagPopupProjectId('');
+            errorAlert(res);
         }
-    }, [flags, project]);
+    };
+
+    useEffect(() => {
+        const flags = allFlags.filter(
+            (flag) => flag.project_id === project.id && flag.reason !== 'busy'
+        );
+        setFlags(flags);
+
+        if (flags.length > 0) {
+            setFlagPopupProjectId(flags[0].project_id);
+        } else {
+            setFlagPopupProjectId('null');
+        }
+    }, [allFlags, project]);
+
+    let stars = project.stars;
+    let seen = project.seen;
+    if (options.judge_tracks && track !== '') {
+        stars = project.track_stars[track] || 0;
+        seen = project.track_seen[track] || 0;
+    }
 
     return (
         <>
@@ -90,6 +125,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 className={twMerge(
                     'border-t-2 border-backgroundDark duration-150 bg-background',
                     flags.length >= 1 && 'bg-error/30',
+                    project.prioritized && 'bg-gold/30',
                     !project.active && 'bg-lightest',
                     checked && 'bg-primary/20'
                 )}
@@ -104,7 +140,7 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                         className="cursor-pointer hover:text-primary duration-100"
                     ></input>
                 </td>
-                <td>{project.name}</td>
+                <td><a href={project.url} className="hover:underline" target="_blank">{project.name}</a></td>
                 <td className="flex justify-center">
                     <button
                         onClick={() => {
@@ -130,10 +166,12 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                 <td className="text-center py-1">
                     Table {project.location} {checked}
                 </td>
-                {options.multi_group && <td className="text-center">{project.group}</td>}
-                <td className="text-center">{project.score}</td>
-                <td className="text-center">{project.stars}</td>
-                <td className="text-center">{project.seen}</td>
+                {options.multi_group && track === '' && (
+                    <td className="text-center">{project.group}</td>
+                )}
+                {track === '' && <td className="text-center">{project.score}</td>}
+                <td className="text-center">{stars}</td>
+                <td className="text-center">{seen}</td>
                 <td className="text-center">{timeSince(project.last_activity)}</td>
                 <td className="text-right align-center">
                     {popup && (
@@ -153,6 +191,13 @@ const ProjectRow = ({ project, idx, flags, checked, handleCheckedChange }: Proje
                             >
                                 {project.active ? 'Hide' : 'Un-hide'}
                             </div>
+                            <div
+                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
+                                onClick={() => doAction('prioritize')}
+                            >
+                                {project.prioritized ? 'Unprioritize' : 'Prioritize'}
+                            </div>
+
                             <div
                                 className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150 text-error"
                                 onClick={() => doAction('delete')}

@@ -12,6 +12,9 @@ interface JuryHeaderProps {
 
     /* Whether the user is an admin */
     isAdmin?: boolean;
+
+    /* Custom back location */
+    backLocation?: string;
 }
 
 const JuryHeader = (props: JuryHeaderProps) => {
@@ -24,14 +27,14 @@ const JuryHeader = (props: JuryHeaderProps) => {
         navigate('/');
     };
 
-    const backToAdmin = () => navigate('/admin');
+    const backToAdmin = () => navigate(props.backLocation ?? '/admin');
 
     const adminCenter = props.isAdmin ? 'text-center' : '';
 
     return (
         <div
             className={twMerge(
-                'md:px-2 px-4 relative mx-auto pt-6 w-full flex flex-col bg-background',
+                'px-2 relative mx-auto pt-2 md:pt-6 w-full flex flex-col bg-background',
                 props.isAdmin ? 'items-center' : 'md:w-[30rem]'
             )}
         >
@@ -64,7 +67,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
             )}
             {props.withLogout && (
                 <div
-                    className="absolute top-6 right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 z-10"
+                    className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 z-10"
                     onClick={logout}
                 >
                     <div className="text-light text-xl mr-2">Logout</div>

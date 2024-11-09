@@ -4,7 +4,7 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import Paragraph from '../../components/Paragraph';
 import Back from '../../components/Back';
-import { getRequest, postRequest, putRequest } from '../../api';
+import { getRequest, putRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Star from '../../components/judge/Star';
 import RawTextArea from '../../components/RawTextArea';
@@ -31,13 +31,14 @@ const Project = () => {
         fetchData();
     }, []);
 
+    // Update notes with a delay for typing
     useEffect(() => {
         if (!project) return;
 
         async function updateNotes() {
-            const res = await postRequest<OkResponse>('/judge/notes', 'judge', {
+            const url = `/judge/notes/${project?.project_id}`;
+            const res = await putRequest<OkResponse>(url, 'judge', {
                 notes,
-                project: project?.project_id,
             });
             if (res.status !== 200) {
                 errorAlert(res);
@@ -52,7 +53,6 @@ const Project = () => {
     }, [notes]);
 
     const updateStar = async () => {
-        // TODO: THis should prob be put but better lmao (like have the id in the query params)
         const res = await putRequest<OkResponse>('/judge/star', 'judge', {
             project: project?.project_id,
             starred: !starred,

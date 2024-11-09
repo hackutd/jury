@@ -5,6 +5,7 @@ import (
 	"log"
 	"server/database"
 	"server/judging"
+	"server/logging"
 	"server/models"
 
 	"github.com/gin-contrib/cors"
@@ -14,7 +15,7 @@ import (
 )
 
 // Creates a new Gin router with all routes defined
-func NewRouter(db *mongo.Database) *gin.Engine {
+func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	// Create the router
 	router := gin.Default()
 
@@ -27,17 +28,11 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 		log.Fatalf("error loading projects from the database: %s\n", err.Error())
 	}
 
-	// Create track comparisons array
-	trackComps, err := judging.LoadTrackComparisons(db)
-	if err != nil {
-		log.Fatalf("error loading track comparisons from the database: %s\n", err.Error())
-	}
-
 	// Add shared variables to router
 	router.Use(useVar("db", db))
 	router.Use(useVar("clock", clock))
 	router.Use(useVar("comps", comps))
-	router.Use(useVar("trackComps", trackComps))
+	router.Use(useVar("logger", logger))
 
 	// CORS
 	router.Use(cors.New(cors.Config{
@@ -76,6 +71,11 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.DELETE("/judge/:id", DeleteJudge)
 	adminRouter.PUT("/judge/:id", EditJudge)
 	adminRouter.POST("/admin/groups/swap", SwapJudgeGroups)
+	adminRouter.POST("/admin/qr", GenerateQRCode)
+	adminRouter.POST("/admin/qr/:track", GenerateTrackQRCode)
+	defaultRouter.GET("/qr", GetQRCode)
+	defaultRouter.GET("/qr/:track", GetTrackQRCode)
+	defaultRouter.POST("/qr/add", AddJudgeFromQR)
 
 	// Admin panel - projects
 	adminRouter.POST("/project/new", AddProject)
@@ -90,17 +90,12 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.GET("/admin/stats/:track", GetAdminTrackStats)
 	adminRouter.GET("/project/stats", ProjectStats)
 	adminRouter.GET("/judge/stats", JudgeStats)
-	adminRouter.GET("/admin/score", GetScores)
-	adminRouter.GET("/admin/score/:track", GetTrackScores)
-	adminRouter.GET("/admin/stars", GetStars)
-	adminRouter.GET("/admin/stars/:track", GetTrackStars)
 	adminRouter.GET("/admin/flags", GetFlags)
 
 	// Admin panel - clock
 	adminRouter.GET("/admin/clock", GetClock)
 	adminRouter.POST("/admin/clock/pause", PauseClock)
 	adminRouter.POST("/admin/clock/unpause", UnpauseClock)
-	adminRouter.POST("/admin/clock/sync", SetClockSync)
 	adminRouter.POST("/admin/clock/backup", BackupClock)
 	defaultRouter.GET("/admin/started", IsClockRunning)
 
@@ -108,18 +103,12 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/admin/clock/reset", ResetClock)
 	adminRouter.POST("/admin/reset", ResetDatabase)
 	adminRouter.POST("/project/reassign", ReassignProjectNums)
+	adminRouter.POST("/project/balance-groups", BalanceProjectGroups)
 	adminRouter.POST("/judge/reassign", ReassignJudgeGroups)
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
-	adminRouter.POST("/admin/timer", SetJudgingTimer)
-	adminRouter.POST("/admin/categories", SetCategories)
-	adminRouter.POST("/admin/min-views", SetMinViews)
 	adminRouter.GET("/admin/options", GetOptions)
-	adminRouter.POST("/admin/tracks/toggle", ToggleTracks)
-	adminRouter.POST("/admin/tracks", SetTracks)
-	adminRouter.POST("/admin/groups/toggle", ToggleGroups)
-	adminRouter.POST("/admin/groups/num", SetNumGroups)
-	adminRouter.POST("/admin/groups/sizes", SetGroupSizes)
-	adminRouter.POST("/admin/groups/options", SetGroupOptions)
+	adminRouter.POST("/admin/options", SetOptions)
+	adminRouter.POST("/admin/num-groups", SetNumGroups)
 
 	// Admin panel - exports
 	adminRouter.GET("/admin/export/judges", ExportJudges)
@@ -134,6 +123,11 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	adminRouter.POST("/project/unhide", UnhideProject)
 	adminRouter.POST("/project/prioritize", PrioritizeProject)
 	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
+	adminRouter.DELETE("/admin/flag/:id", RemoveFlag)
+	adminRouter.POST("/judge/move", MoveJudge)
+
+	// Admin panel - log
+	adminRouter.GET("/admin/log", GetLog)
 
 	// Judging
 	judgeRouter.GET("/judge", GetJudge)
@@ -144,14 +138,12 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 	judgeRouter.POST("/judge/skip", JudgeSkip)
 	judgeRouter.POST("/judge/score", JudgeScore)
 	judgeRouter.POST("/judge/rank", JudgeRank)
-	judgeRouter.PUT("/judge/star", JudgeStar)
-	judgeRouter.PUT("/judge/score", JudgeUpdateScore)
+	judgeRouter.PUT("/judge/star/:id", JudgeStar)
 	judgeRouter.POST("/judge/break", JudgeBreak)
-	judgeRouter.POST("/judge/notes", JudgeUpdateNotes)
+	judgeRouter.PUT("/judge/notes/:id", JudgeUpdateNotes)
 	judgeRouter.GET("/project/:id", GetProject)
 	judgeRouter.GET("/project/count", GetProjectCount)
 	judgeRouter.GET("/judge/project/:id", GetJudgedProject)
-	judgeRouter.GET("/categories", GetCategories)
 
 	// Project expo routes
 	defaultRouter.GET("/project/list/public", ListPublicProjects)
@@ -171,6 +163,9 @@ func NewRouter(db *mongo.Database) *gin.Engine {
 		ctx.HTML(200, "index.html", nil)
 	})
 
+	// Log the successful creation
+	logger.SystemLogf("API created and running")
+
 	return router
 }
 
@@ -182,8 +177,8 @@ func useVar(key string, v any) gin.HandlerFunc {
 	}
 }
 
-// getClockFromDb gets the clock state from the database
-// and on init will pause the clock
+// getClockFromDb gets the clock state from the database.
+// If the clock sync option is not enabled, the clock will be 0.
 func getClockFromDb(db *mongo.Database) *models.SafeClock {
 	// Get the clock state from the database
 	options, err := database.GetOptions(db, context.Background())

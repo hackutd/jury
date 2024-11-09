@@ -50,8 +50,6 @@ const AdminSettings = () => {
     const [multiGroup, setMultiGroup] = useState(false);
     const [numGroups, setNumGroups] = useState(3);
     const [switchingMode, setSwitchingMode] = useState('auto');
-    const [autoSwitchMethod, setAutoSwitchMethod] = useState('count');
-    const [autoSwitchCount, setAutoSwitchCount] = useState(3);
     const [autoSwitchProp, setAutoSwitchProp] = useState(0.1);
     const [groupSizes, setGroupSizes] = useState('30, 30');
     const [judgeTracks, setJudgeTracks] = useState(false);
@@ -88,10 +86,8 @@ const AdminSettings = () => {
         setMultiGroup(res.data.multi_group);
         setNumGroups(res.data.num_groups);
         setGroupSizes(res.data.group_sizes.join(', '));
-        setSwitchingMode(res.data.main_group.switching_mode);
-        setAutoSwitchMethod(res.data.main_group.auto_switch_method);
-        setAutoSwitchCount(res.data.main_group.auto_switch_count);
-        setAutoSwitchProp(res.data.main_group.auto_switch_prop);
+        setSwitchingMode(res.data.switching_mode);
+        setAutoSwitchProp(res.data.auto_switch_prop);
         setJudgeTracks(res.data.judge_tracks);
         setTracks(res.data.tracks.join(', '));
 
@@ -139,7 +135,7 @@ const AdminSettings = () => {
         }
 
         // Update the timer
-        const res = await postRequest<OkResponse>('/admin/timer', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             judging_timer: timer,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -159,7 +155,7 @@ const AdminSettings = () => {
         }
 
         // Update min views
-        const res = await postRequest<OkResponse>('/admin/min-views', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             min_views: minViews,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -172,7 +168,7 @@ const AdminSettings = () => {
     };
 
     const toggleJudgeTracks = async () => {
-        const res = await postRequest<OkResponse>('/admin/tracks/toggle', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             judge_tracks: !judgeTracks,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -191,7 +187,7 @@ const AdminSettings = () => {
             .map((track) => track.trim())
             .filter((track) => track !== '');
 
-        const res = await postRequest<OkResponse>('/admin/tracks', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             tracks: filteredTracks,
         });
         if (res.status !== 200 || !res.data) {
@@ -203,7 +199,7 @@ const AdminSettings = () => {
     };
 
     const toggleMultiGroup = async () => {
-        const res = await postRequest<OkResponse>('/admin/groups/toggle', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             multi_group: !multiGroup,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -222,7 +218,7 @@ const AdminSettings = () => {
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/num', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/num-groups', 'admin', {
             num_groups: numGroups,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -237,7 +233,7 @@ const AdminSettings = () => {
     };
 
     const updateSwitchingMode = async (newMode: string) => {
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             switching_mode: newMode,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -249,42 +245,13 @@ const AdminSettings = () => {
         alert('Switching method updated!');
     };
 
-    const updateAutoSwitchMethod = async (newMethod: string) => {
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
-            auto_switch_method: newMethod,
-        });
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('Auto switch method updated!');
-    };
-
-    const updateAutoSwitchCount = async () => {
-        if (isNaN(autoSwitchCount) || autoSwitchCount < 1) {
-            alert('Auto switch count should be a positive integer!');
-            return;
-        }
-
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
-            auto_switch_count: autoSwitchCount,
-        });
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('Auto switch count updated!');
-    };
-
     const updateAutoSwitchProp = async () => {
         if (isNaN(autoSwitchProp) || autoSwitchProp < 0 || autoSwitchProp > 1) {
             alert('Auto switch proportion should be a decimal between 0 and 1!');
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             auto_switch_prop: autoSwitchProp,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -310,7 +277,7 @@ const AdminSettings = () => {
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/sizes', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             group_sizes: sizes,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -333,7 +300,7 @@ const AdminSettings = () => {
     };
 
     const toggleSyncClock = async () => {
-        const res = await postRequest<OkResponse>('/admin/clock/sync', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             clock_sync: !syncClock,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -608,74 +575,30 @@ const AdminSettings = () => {
 
                         {switchingMode === 'auto' && (
                             <>
-                                <SubSection>Auto Switch Method</SubSection>
+                                <SubSection>Auto Switch Proportion</SubSection>
                                 <Description>
-                                    Choose when judges will automatically switch between projects.
-                                    If set to "count", judges will switch after viewing a specific
-                                    number of projects in the group. If set to "proportion", judges
-                                    will switch after a certain proportion of projects in the group.
-                                    Note that when using "count" switching, rooms must contain
-                                    approximately the same number of projects.
+                                    Set the proportion of projects judges will view before switching
+                                    groups. This should be a decimal between 0 and 1. All numbers
+                                    will be rounded up, with a minimum of 1 view per group. Note
+                                    that too low of values may cause judges to experience a
+                                    marathon, especially if your rooms/groups are far apart.
+                                    However, too high of values may bias the aggregated ranking
+                                    results if judges do not visit enough different groups.
                                 </Description>
-                                <SelectionButton
-                                    selected={autoSwitchMethod}
-                                    setSelected={setAutoSwitchMethod}
-                                    onClick={updateAutoSwitchMethod}
-                                    options={['count', 'proportion']}
-                                    className="my-2"
-                                />
-
-                                {autoSwitchMethod === 'count' ? (
-                                    <>
-                                        <SubSection>Auto Switch Count</SubSection>
-                                        <Description>
-                                            Set how many projects judges will view before switching
-                                            groups.
-                                        </Description>
-                                        <div className="flex flex-row">
-                                            <RawTextInput
-                                                name="auto-switch-count"
-                                                text={autoSwitchCount}
-                                                setText={setAutoSwitchCount}
-                                                placeholder="Enter an integer..."
-                                                large
-                                                number
-                                                className="my-2 mr-4"
-                                            />
-                                            <SettingsButton onClick={updateAutoSwitchCount}>
-                                                Update Count
-                                            </SettingsButton>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <SubSection>Auto Switch Proportion</SubSection>
-                                        <Description>
-                                            Set the proportion of projects judges will view before
-                                            switching groups. This should be a decimal between 0 and
-                                            1. All numbers will be rounded up, with a minimum of 1
-                                            view per group. Note that too low of values may cause
-                                            judges to experience a marathon, especially if your
-                                            rooms/groups are far apart. However, too high of values
-                                            may bias the aggregated ranking results if judges do not
-                                            visit enough different groups.
-                                        </Description>
-                                        <div className="flex flex-row">
-                                            <RawTextInput
-                                                name="auto-switch-prop"
-                                                text={autoSwitchProp}
-                                                setText={setAutoSwitchProp}
-                                                placeholder="Enter a decimal..."
-                                                large
-                                                number
-                                                className="my-2 mr-4"
-                                            />
-                                            <SettingsButton onClick={updateAutoSwitchProp}>
-                                                Update Proportion
-                                            </SettingsButton>
-                                        </div>
-                                    </>
-                                )}
+                                <div className="flex flex-row">
+                                    <RawTextInput
+                                        name="auto-switch-prop"
+                                        text={autoSwitchProp}
+                                        setText={setAutoSwitchProp}
+                                        placeholder="Enter a decimal..."
+                                        large
+                                        number
+                                        className="my-2 mr-4"
+                                    />
+                                    <SettingsButton onClick={updateAutoSwitchProp}>
+                                        Update Proportion
+                                    </SettingsButton>
+                                </div>
                             </>
                         )}
                     </>

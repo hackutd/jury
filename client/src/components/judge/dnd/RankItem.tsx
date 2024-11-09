@@ -19,7 +19,11 @@ const RankItem = forwardRef<HTMLDivElement, RankItemProps>(
         };
         return (
             <div {...props} ref={ref} style={styles}>
-                <ProjectEntry project={item} ranking={props.ranking === 0 ? -1 : props.ranking} />
+                <ProjectEntry
+                    id={item.id}
+                    project={item}
+                    ranking={props.ranking === 0 ? -1 : props.ranking}
+                />
             </div>
         );
     }

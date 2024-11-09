@@ -20,6 +20,7 @@ type Judge struct {
 	ReadWelcome  bool                 `bson:"read_welcome" json:"read_welcome"`
 	Notes        string               `bson:"notes" json:"notes"`
 	Current      *primitive.ObjectID  `bson:"current" json:"current"`
+	LastLocation int64                `bson:"last_location" json:"last_location"`
 	Seen         int64                `bson:"seen" json:"seen"`
 	GroupSeen    int64                `bson:"group_seen" json:"group_seen"` // Projects seen in the group
 	SeenProjects []JudgedProject      `bson:"seen_projects" json:"seen_projects"`
@@ -48,6 +49,7 @@ func NewJudge(name string, email string, track string, notes string, group int64
 		ReadWelcome:  false,
 		Notes:        notes,
 		Current:      nil,
+		LastLocation: -1,
 		Seen:         0,
 		GroupSeen:    0,
 		SeenProjects: []JudgedProject{},
