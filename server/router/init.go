@@ -109,6 +109,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.GET("/admin/options", GetOptions)
 	adminRouter.POST("/admin/options", SetOptions)
 	adminRouter.POST("/admin/num-groups", SetNumGroups)
+	adminRouter.POST("/admin/group-sizes", SetGroupSizes)
 
 	// Admin panel - exports
 	adminRouter.GET("/admin/export/judges", ExportJudges)

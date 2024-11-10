@@ -277,7 +277,7 @@ const AdminSettings = () => {
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/group-sizes', 'admin', {
             group_sizes: sizes,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {

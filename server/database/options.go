@@ -45,9 +45,6 @@ func UpdateOptions(db *mongo.Database, ctx context.Context, options *models.Opti
 	if options.MultiGroup != nil {
 		update["multi_group"] = *options.MultiGroup
 	}
-	if options.GroupSizes != nil {
-		update["group_sizes"] = *options.GroupSizes
-	}
 	if options.SwitchingMode != nil {
 		update["switching_mode"] = *options.SwitchingMode
 	}
@@ -102,8 +99,36 @@ func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) e
 	// Reassign group numbers to all projects
 	ReassignAllGroupNums(db, ctx, options)
 
-	_, err = db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"num_groups": numGroups, "group_sizes": options.GroupSizes}})
-	return err
+	// Update options
+	return UpdateOptions(db, ctx, &models.OptionalOptions{NumGroups: &numGroups, GroupSizes: &options.GroupSizes})
+}
+
+func UpdateGroupSizes(db *mongo.Database, ctx context.Context, groupSizes []int64) error {
+	// Get options
+	options, err := GetOptions(db, ctx)
+	if err != nil {
+		return err
+	}
+
+	// If group sizes did not change, do nothing
+	if len(groupSizes) == len(options.GroupSizes) {
+		same := true
+		for i := range groupSizes {
+			if groupSizes[i] != options.GroupSizes[i] {
+				same = false
+				break
+			}
+		}
+		if same {
+			return nil
+		}
+	}
+
+	// Reassign group numbers to all projects
+	ReassignAllGroupNums(db, ctx, options)
+
+	// Update options
+	return UpdateOptions(db, ctx, &models.OptionalOptions{GroupSizes: &groupSizes})
 }
 
 // IncrementManualSwitches increments the manual switches in the database
