@@ -494,7 +494,7 @@ func JudgeSkip(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /judge/hide - Endpoint to hide a judge
+// POST /judge/hide/:id - Endpoint to hide a judge
 func HideJudge(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -502,49 +502,16 @@ func HideJudge(ctx *gin.Context) {
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
+	// Get ID from URL
+	id := ctx.Param("id")
+
 	// Get ID from body
-	var idReq models.IdRequest
-	err := ctx.BindJSON(&idReq)
+	var hideReq models.HideProjectRequest
+	err := ctx.BindJSON(&hideReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
-
-	// Convert ID string to ObjectID
-	judgeObjectId, err := primitive.ObjectIDFromHex(idReq.Id)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid judge ID"})
-		return
-	}
-
-	// Hide judge in database
-	err = database.SetJudgeHidden(db, &judgeObjectId, true)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error hiding judge in database: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	logger.AdminLogf("Hid judge %s", idReq.Id)
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// POST /judge/unhide - Endpoint to unhide a judge
-func UnhideJudge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
-
-	// Get ID from body
-	var idReq models.IdRequest
-	err := ctx.BindJSON(&idReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
-		return
-	}
-	id := idReq.Id
 
 	// Convert ID string to ObjectID
 	judgeObjectId, err := primitive.ObjectIDFromHex(id)
@@ -553,15 +520,19 @@ func UnhideJudge(ctx *gin.Context) {
 		return
 	}
 
-	// Unhide judge in database
-	err = database.SetJudgeHidden(db, &judgeObjectId, false)
+	// Hide judge in database
+	err = database.SetJudgeActive(db, &judgeObjectId, !hideReq.Hide)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error unhiding judge in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error hiding judge in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Unhid judge %s", id)
+	action := "Unhid"
+	if hideReq.Hide {
+		action = "Hid"
+	}
+	logger.AdminLogf("%s judge %s", action, id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 

@@ -223,9 +223,9 @@ func CountTrackProjects(db *mongo.Database, track string) (int64, error) {
 	return db.Collection("projects").CountDocuments(context.Background(), gin.H{"challenge_list": track})
 }
 
-// SetProjectHidden sets the active field of a project (hide or unhide project)
-func SetProjectHidden(db *mongo.Database, ctx context.Context, id *primitive.ObjectID, hidden bool) error {
-	_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"active": !hidden}})
+// SetProjectActive sets the active field of a project (hide or unhide project)
+func SetProjectActive(db *mongo.Database, ctx context.Context, id *primitive.ObjectID, active bool) error {
+	_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"active": active}})
 	return err
 }
 

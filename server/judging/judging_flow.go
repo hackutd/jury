@@ -89,7 +89,7 @@ func HideAbsentProject(db *mongo.Database, ctx mongo.SessionContext, projectId *
 	}
 
 	// Hide the project
-	err = database.SetProjectHidden(db, ctx, projectId, true)
+	err = database.SetProjectActive(db, ctx, projectId, false)
 	if err != nil {
 		return errors.New("Error hiding project: " + err.Error())
 	}

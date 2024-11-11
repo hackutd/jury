@@ -206,12 +206,12 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 	return nil
 }
 
-// SetJudgeHidden sets the active field of a judge
-func SetJudgeHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
+// SetJudgeActive sets the active field of a judge
+func SetJudgeActive(db *mongo.Database, id *primitive.ObjectID, active bool) error {
 	_, err := db.Collection("judges").UpdateOne(
 		context.Background(),
 		gin.H{"_id": id},
-		gin.H{"$set": gin.H{"active": !hidden, "last_activity": util.Now()}},
+		gin.H{"$set": gin.H{"active": active, "last_activity": util.Now()}},
 	)
 	return err
 }

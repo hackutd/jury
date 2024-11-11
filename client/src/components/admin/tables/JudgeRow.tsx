@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { errorAlert, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditJudgePopup from './EditJudgePopup';
-import { postRequest } from '../../../api';
+import { postRequest, putRequest } from '../../../api';
 import { useAdminStore, useOptionsStore } from '../../../store';
 import { twMerge } from 'tailwind-merge';
 import ConfirmPopup from '../../ConfirmPopup';
 import RawTextInput from '../../RawTextInput';
+import ActionsDropdown from '../../ActionsDropdown';
 
 interface JudgeRowProps {
     judge: Judge;
@@ -47,43 +48,17 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
         setNewGroup(String(judge.group));
     }, [judge]);
 
-    const doAction = (action: 'edit' | 'prioritize' | 'move' | 'hide' | 'delete') => {
-        switch (action) {
-            case 'edit':
-                // Open edit popup
-                setEditPopup(true);
-                break;
-            case 'hide':
-                // Hide
-                hideJudge();
-                break;
-            case 'delete':
-                // Open delete popup
-                setDeletePopup(true);
-                break;
-            case 'move':
-                setMovePopup(true);
-                break;
-            default:
-                alert('Invalid action');
-                break;
-        }
-
-        setPopup(false);
-    };
-
     const hideJudge = async () => {
-        const res = await postRequest<OkResponse>(
-            judge.active ? '/judge/hide' : '/judge/unhide',
-            'admin',
-            { id: judge.id }
-        );
-        if (res.status === 200) {
-            alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
-            fetchJudges();
-        } else {
+        const res = await putRequest<OkResponse>(`/judge/hide/${judge.id}`, 'admin', {
+            hide: judge.active,
+        });
+        if (res.status !== 200) {
             errorAlert(res);
+            return;
         }
+
+        alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
+        fetchJudges();
     };
 
     const moveJudgeGroup = async () => {
@@ -138,39 +113,18 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 <td className="text-center">{getBestRanked(judge)}</td>
                 <td className="text-center">{timeSince(judge.last_activity)}</td>
                 <td className="text-right font-bold flex align-center justify-end">
-                    {popup && (
-                        <div
-                            className="absolute flex flex-col bg-background rounded-md border-lightest border-2 font-normal text-sm"
-                            ref={ref}
-                        >
-                            <div
-                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
-                                onClick={() => doAction('edit')}
-                            >
-                                Edit
-                            </div>
-                            <div
-                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
-                                onClick={() => doAction('hide')}
-                            >
-                                {judge.active ? 'Hide' : 'Un-hide'}
-                            </div>
-                            {options.multi_group && (
-                                <div
-                                    className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
-                                    onClick={() => doAction('move')}
-                                >
-                                    Move Group
-                                </div>
-                            )}
-                            <div
-                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150 text-error"
-                                onClick={() => doAction('delete')}
-                            >
-                                Delete
-                            </div>
-                        </div>
-                    )}
+                    <ActionsDropdown
+                        open={popup}
+                        setOpen={setPopup}
+                        actions={['Edit', judge.active ? 'Hide' : 'Unhide', 'Move Group', 'Delete']}
+                        actionFunctions={[
+                            setEditPopup.bind(null, true),
+                            hideJudge,
+                            setMovePopup.bind(null, true),
+                            setDeletePopup.bind(null, true),
+                        ]}
+                        redIndices={[3]}
+                    />
                     <span
                         className="cursor-pointer px-1 hover:text-primary duration-150"
                         onClick={() => {
