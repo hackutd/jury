@@ -21,6 +21,7 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
     const projects = useAdminTableStore((state) => state.projects);
     const judges = useAdminTableStore((state) => state.judges);
     const [movePopup, setMovePopup] = useState(false);
+    const [projectMovePopup, setProjectMovePopup] = useState(false);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
 
@@ -47,7 +48,6 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
         if (!selected) return;
 
         const ref = props.showProjects ? projects : judges;
-        console.log(ref);
 
         const newSelectedIds: string[] = [];
         selected.forEach((isSelected, idx) => {
@@ -174,7 +174,13 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                         <ActionsDropdown
                             actions={
                                 props.showProjects
-                                    ? ['Hide', 'Unhide', 'Prioritize', 'Unprioritize']
+                                    ? [
+                                          'Hide',
+                                          'Unhide',
+                                          'Prioritize',
+                                          'Unprioritize',
+                                          'Move Groups',
+                                      ]
                                     : ['Hide', 'Unhide', 'Move']
                             }
                             actionFunctions={
@@ -184,6 +190,7 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                                           hide.bind(null, false),
                                           prioritize.bind(null, true),
                                           prioritize.bind(null, false),
+                                          setProjectMovePopup.bind(null, true),
                                       ]
                                     : [
                                           hide.bind(null, true),
@@ -208,7 +215,13 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                 </p>
             </div>
             <FlagsPopup enabled={showFlags} setEnabled={setShowFlags} />
-            <MovePopup open={movePopup} setOpen={setMovePopup} judges={selectedIds} />
+            <MovePopup enabled={movePopup} setEnabled={setMovePopup} items={selectedIds} />
+            <MovePopup
+                enabled={projectMovePopup}
+                setEnabled={setProjectMovePopup}
+                items={selectedIds}
+                isProject
+            />
         </>
     );
 };

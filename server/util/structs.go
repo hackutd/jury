@@ -22,11 +22,11 @@ type PrioritizeSelectedRequest struct {
 	Prioritize bool                 `json:"prioritize"`
 }
 
-type MoveJudgeRequest struct {
+type MoveRequest struct {
 	Group int64 `json:"group"`
 }
 
-type MoveSelectedJudgesRequest struct {
-	Judges []primitive.ObjectID `json:"judges"`
-	Group  int64                `json:"group"`
+type MoveSelectedRequest struct {
+	Items []primitive.ObjectID `json:"items"`
+	Group int64                `json:"group"`
 }

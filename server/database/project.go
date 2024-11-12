@@ -385,3 +385,41 @@ func ReassignAllGroupNums(db *mongo.Database, ctx context.Context, op *models.Op
 
 	return nil
 }
+
+// GetGroupMaxNum returns the maximum table number in the given group,
+// returning -1 if there are no projects in the group
+func GetGroupMaxNum(db *mongo.Database, ctx context.Context, group int64) (int64, error) {
+	// Get the maximum table number in the given group
+	cursor, err := db.Collection("projects").Find(ctx, gin.H{"group": group}, options.Find().SetSort(gin.H{"location": -1}).SetLimit(1))
+	if err != nil {
+		return 0, err
+	}
+
+	var project models.Project
+	if cursor.Next(ctx) {
+		err = cursor.Decode(&project)
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	return project.Location, nil
+}
+
+// SetProjectNum sets the table number of the project
+func SetProjectNum(db *mongo.Database, ctx context.Context, id primitive.ObjectID, num int64, group int64) error {
+	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": gin.H{"location": num, "group": group}})
+	return err
+}
+
+// SetProjectsNum sets the table numbers of the projects, all with the same group
+func SetProjectsNum(db *mongo.Database, ctx context.Context, ids []primitive.ObjectID, startingNum int64, group int64) error {
+	models := make([]mongo.WriteModel, 0, len(ids))
+	for i, id := range ids {
+		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": id}).SetUpdate(gin.H{"$set": gin.H{"location": startingNum + int64(i), "group": group}}))
+	}
+
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := db.Collection("projects").BulkWrite(ctx, models, opts)
+	return err
+}

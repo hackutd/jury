@@ -120,7 +120,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
                     </span>
                 </td>
             </tr>
-            <MovePopup open={movePopup} setOpen={setMovePopup} judge={judge} />
+            <MovePopup enabled={movePopup} setEnabled={setMovePopup} item={judge} />
             <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={judge} />
             <EditJudgePopup enabled={editPopup} setEnabled={setEditPopup} judge={judge} />
         </>

@@ -986,7 +986,7 @@ func MoveJudge(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	// Get the request object
-	var moveReq util.MoveJudgeRequest
+	var moveReq util.MoveRequest
 	err := ctx.BindJSON(&moveReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
@@ -1021,7 +1021,7 @@ func MoveSelectedJudges(ctx *gin.Context) {
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the request object
-	var moveReq util.MoveSelectedJudgesRequest
+	var moveReq util.MoveSelectedRequest
 	err := ctx.BindJSON(&moveReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
@@ -1029,14 +1029,156 @@ func MoveSelectedJudges(ctx *gin.Context) {
 	}
 
 	// Move the judges to the new group
-	err = database.SetJudgesGroup(db, ctx, moveReq.Judges, moveReq.Group)
+	err = database.SetJudgesGroup(db, ctx, moveReq.Items, moveReq.Group)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving judges group: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Moved %d judges to group %d", len(moveReq.Judges), moveReq.Group)
+	logger.AdminLogf("Moved %d judges to group %d", len(moveReq.Items), moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// PUT /project/move/:id - Move a project to a different group
+func MoveProject(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the ID from the URL
+	rawId := ctx.Param("id")
+	id, err := primitive.ObjectIDFromHex(rawId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
+	// Get the request object
+	var moveReq util.MoveRequest
+	err = ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get options from database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Make sure valid group
+	if moveReq.Group < 0 || moveReq.Group >= options.NumGroups {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group number"})
+		return
+	}
+
+	// Get max number in group
+	currMaxNum, err := database.GetGroupMaxNum(db, ctx, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
+		return
+	}
+	if currMaxNum == -1 {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number"})
+		return
+	}
+
+	// Get maximum number for the given group
+	maxGroupNum := int64(0)
+	for i, size := range options.GroupSizes {
+		maxGroupNum += size
+		if int64(i) == moveReq.Group {
+			break
+		}
+	}
+
+	// Make sure the group has space (check for max group number and make sure it doesn't exceed)
+	if moveReq.Group < options.NumGroups-1 && currMaxNum >= maxGroupNum {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "group is full, cannot move project to provided group"})
+		return
+	}
+
+	// Move the project to the new group
+	err = database.SetProjectNum(db, ctx, id, currMaxNum+1, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving project group: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Moved project %s to group %d", id.Hex(), moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /project/move - Move selected projects to a different group
+func MoveSelectedProjects(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request object
+	var moveReq util.MoveSelectedRequest
+	err := ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get options from database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Make sure valid group
+	if moveReq.Group < 0 || moveReq.Group >= options.NumGroups {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group number"})
+		return
+	}
+
+	// Get max number in group
+	currMaxNum, err := database.GetGroupMaxNum(db, ctx, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
+		return
+	}
+	if currMaxNum == -1 {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number"})
+		return
+	}
+
+	// Get maximum number for the given group
+	maxGroupNum := int64(0)
+	for i, size := range options.GroupSizes {
+		maxGroupNum += size
+		if int64(i) == moveReq.Group {
+			break
+		}
+	}
+
+	// Check if the group has space (check for max group number and make sure it doesn't exceed)
+	if moveReq.Group < options.NumGroups-1 && currMaxNum+int64(len(moveReq.Items)) > maxGroupNum {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "group is full, cannot move projects to provided group"})
+		return
+	}
+
+	// Move the projects to the new group
+	err = database.SetProjectsNum(db, ctx, moveReq.Items, currMaxNum+1, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving projects group: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Moved %d projects to group %d", len(moveReq.Items), moveReq.Group)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 

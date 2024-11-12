@@ -7,26 +7,30 @@ import TextInput from '../../TextInput';
 
 interface MovePopupProps {
     /* State variable to open popup */
-    open: boolean;
+    enabled: boolean;
 
     /* Setter for open */
-    setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    setEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 
-    /* Judge to move */
-    judge?: Judge;
+    /* Set to true if operating on project(s) */
+    isProject?: boolean;
 
-    /* List of judge IDs (at least one of judge/judges should be defined) */
-    judges?: string[];
+    /* Item to move */
+    item?: Judge | Project;
+
+    /* List of item IDs (at least one of judge/judges should be defined) */
+    items?: string[];
 }
 
 const MovePopup = (props: MovePopupProps) => {
     const [newGroup, setNewGroup] = useState('');
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
+    const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const setSelected = useAdminTableStore((state) => state.setSelected);
     const selected = useAdminTableStore((state) => state.selected);
 
     const handleSubmit = () => {
-        if (!props.judge && !props.judges) {
+        if (!props.item && !props.items) {
             throw new Error('At least one of judge/judges must be defined');
         }
 
@@ -37,68 +41,77 @@ const MovePopup = (props: MovePopupProps) => {
             return;
         }
 
-        if (props.judge) {
-            moveJudgeGroup(group);
-        } else if (props.judges) {
-            moveJudgesGroup(group);
+        if (props.item) {
+            moveGroup(group);
+        } else if (props.items) {
+            moveGroupMulti(group);
         }
     };
 
-    const moveJudgeGroup = async (group: number) => {
-        const res = await putRequest<OkResponse>(`/judge/move/${props.judge?.id}`, 'admin', {
-            group,
-        });
+    const moveGroup = async (group: number) => {
+        const res = await putRequest<OkResponse>(
+            `/${props.isProject ? 'project' : 'judge'}/move/${props.item?.id}`,
+            'admin',
+            {
+                group,
+            }
+        );
         if (res.status !== 200) {
             errorAlert(res);
             return;
         }
 
-        alert(`Judge moved successfully!`);
-        fetchJudges();
-        props.setOpen(false);
+        alert(`${props.isProject ? 'Project' : 'Judge'} moved successfully!`);
+        props.isProject ? fetchProjects() : fetchJudges();
+        props.setEnabled(false);
     };
 
-    const moveJudgesGroup = async (group: number) => {
-        const res = await postRequest<OkResponse>('/judge/move', 'admin', {
-            judges: props.judges,
-            group,
-        });
+    const moveGroupMulti = async (group: number) => {
+        const res = await postRequest<OkResponse>(
+            `/${props.isProject ? 'project' : 'judge'}/move`,
+            'admin',
+            {
+                items: props.items,
+                group,
+            }
+        );
         if (res.status !== 200) {
             errorAlert(res);
             return;
         }
 
-        alert(`Selected judges moved successfully!`);
-        fetchJudges();
-        props.setOpen(false);
+        alert(`Selected ${props.isProject ? 'projects' : 'judges'} moved successfully!`);
+        props.isProject ? fetchProjects() : fetchJudges();
+        props.setEnabled(false);
         setSelected(new Array(selected.length).fill(false));
     };
 
     useEffect(() => {
-        if (!props.judge) return;
+        if (!props.item) return;
 
-        setNewGroup(String(props.judge.group));
-    }, [props.judge]);
+        setNewGroup(String(props.item.group));
+    }, [props.item]);
 
     return (
         <ConfirmPopup
-            enabled={props.open}
-            setEnabled={props.setOpen}
+            enabled={props.enabled}
+            setEnabled={props.setEnabled}
             onSubmit={handleSubmit}
             submitText="Move"
-            title="Move Judge"
+            title={`Move ${props.isProject ? 'Project' : 'Judge'}`}
         >
             <div className="flex flex-col items-center">
-                {props.judge && (
+                {props.item && (
                     <p className="text-light">
-                        Move the judge{' '}
-                        <span className="text-primary font-bold">{props.judge?.name}</span> to
+                        Move the {props.isProject ? 'project' : 'judge'}&nbsp;
+                        <span className="text-primary font-bold">{props.item?.name}</span> to
                         another group. Enter the new group number below.
                     </p>
                 )}
-                {props.judges && (
+                {props.items && (
                     <p className="text-light">
-                        Move the selected judges to another group. Enter the new group number below.
+                        Move the selected {props.isProject ? 'projects' : 'judges'} to another
+                        group. Enter the new group number below.
                     </p>
                 )}
                 <TextInput

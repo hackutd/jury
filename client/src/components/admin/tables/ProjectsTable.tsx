@@ -135,7 +135,7 @@ const ProjectsTable = () => {
                 sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
-        setProjects(filteredProjects.sort(sortFunc));
+        setProjects(filteredProjects.toSorted(sortFunc));
     };
 
     return (

@@ -15,15 +15,7 @@ const JudgesTable = () => {
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
     const judges = useAdminTableStore((state) => state.judges);
     const setJudges = useAdminTableStore((state) => state.setJudges);
-    const selected = useAdminTableStore((state) => state.selected);
     const setSelected = useAdminTableStore((state) => state.setSelected);
-
-    const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
-        setSelected({
-            ...selected,
-            [i]: e.target.checked,
-        });
-    };
 
     const updateSort = (field: SortField) => {
         if (sortState.field === field) {
@@ -102,7 +94,7 @@ const JudgesTable = () => {
                 sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
-        setJudges(filteredJudges.sort(sortFunc));
+        setJudges(filteredJudges.toSorted(sortFunc));
     };
 
     return (

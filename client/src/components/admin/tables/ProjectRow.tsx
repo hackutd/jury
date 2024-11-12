@@ -7,6 +7,7 @@ import { putRequest } from '../../../api';
 import FlagsPopup from '../FlagsPopup';
 import { twMerge } from 'tailwind-merge';
 import ActionsDropdown from '../../ActionsDropdown';
+import MovePopup from './MovePopup';
 
 interface ProjectRowProps {
     project: Project;
@@ -20,6 +21,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
     const [flagPopupProjectId, setFlagPopupProjectId] = useState('');
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
+    const [movePopup, setMovePopup] = useState(false);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const options = useOptionsStore((state) => state.options);
     const track = useOptionsStore((state) => state.selectedTrack);
@@ -33,7 +35,6 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
         newSelected[idx] = e.target.checked;
         setSelected(newSelected);
     };
-
 
     const hideProject = async () => {
         const res = await putRequest<OkResponse>(`/project/hide/${project.id}`, 'admin', {
@@ -56,7 +57,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
             errorAlert(res);
             return;
         }
-        
+
         alert(`Project ${project.prioritized ? 'un-prioritized' : 'prioritized'} successfully!`);
         fetchProjects();
     };
@@ -130,9 +131,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
                         )}
                     </button>
                 </td>
-                <td className="text-center py-1">
-                    Table {project.location}
-                </td>
+                <td className="text-center py-1">Table {project.location}</td>
                 {options.multi_group && track === '' && (
                     <td className="text-center">{project.group}</td>
                 )}
@@ -148,15 +147,17 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
                             'Edit',
                             project.active ? 'Hide' : 'Unhide',
                             project.prioritized ? 'Unprioritize' : 'Prioritize',
+                            'Move Groups',
                             'Delete',
                         ]}
                         actionFunctions={[
                             setEditPopup.bind(null, true),
                             hideProject,
                             prioritizeProject,
+                            setMovePopup.bind(null, true),
                             setDeletePopup.bind(null, true),
                         ]}
-                        redIndices={[3]}
+                        redIndices={[4]}
                     />
                     <div
                         className="cursor-pointer hover:text-primary duration-150 mr-2"
@@ -175,6 +176,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
             />
             <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={project} />
             <EditProjectPopup enabled={editPopup} setEnabled={setEditPopup} project={project} />
+            <MovePopup enabled={movePopup} setEnabled={setMovePopup} item={project} isProject />
         </>
     );
 };
