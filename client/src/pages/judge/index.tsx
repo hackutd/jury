@@ -15,6 +15,7 @@ const Judge = () => {
     const [judge, setJudge] = useState<Judge | null>(null);
     const [loaded, setLoaded] = useState(false);
     const [projCount, setProjCount] = useState(0);
+    const [deliberation, setDeliberation] = useState(false);
 
     // Verify user is logged in and read welcome before proceeding
     useEffect(() => {
@@ -63,6 +64,15 @@ const Judge = () => {
                 return;
             }
             setProjCount(projCountRes.data?.count as number);
+
+            // Get deliberation status
+            const delibRes = await getRequest<OkResponse>('/judge/deliberation', 'judge');
+            if (delibRes.status !== 200) {
+                errorAlert(delibRes);
+                return;
+            }
+            setDeliberation(delibRes.data?.ok === 1);
+
             setLoaded(true);
         }
 
@@ -117,7 +127,11 @@ const Judge = () => {
                     <StatBlock name="Seen" value={judge.seen_projects.length as number} />
                     <StatBlock name="Total Projects" value={projCount} />
                 </div>
-                {judge.track === '' ? <Ranking judge={judge} /> : <StarList judge={judge} />}
+                {judge.track === '' ? (
+                    <Ranking judge={judge} deliberation={deliberation} />
+                ) : (
+                    <StarList judge={judge} deliberation={deliberation} />
+                )}
             </Container>
         </>
     );

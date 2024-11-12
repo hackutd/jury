@@ -20,9 +20,10 @@ import { errorAlert } from '../../../util';
 
 interface RankingProps {
     judge: Judge | null;
+    deliberation: boolean;
 }
 
-const Ranking = ({ judge }: RankingProps) => {
+const Ranking = ({ judge, deliberation }: RankingProps) => {
     const [activeId, setActiveId] = useState<number | null>(null);
     const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
     const [disabled, setDisabled] = useState(false);
@@ -38,7 +39,6 @@ const Ranking = ({ judge }: RankingProps) => {
     );
     const [ranked, setRanked] = useState<SortableJudgedProject[]>([]);
     const [unranked, setUnranked] = useState<SortableJudgedProject[]>([]);
-    const [deliberation, setDeliberation] = useState(false);
     const [loaded, setLoaded] = useState(false);
 
     // Load all projects when judge loads
@@ -58,14 +58,6 @@ const Ranking = ({ judge }: RankingProps) => {
                 judge.rankings.every((r) => r !== p.project_id)
             );
             unrankedProjects.reverse();
-
-            // Get deliberation status
-            const delibRes = await getRequest<OkResponse>('/judge/deliberation', 'judge');
-            if (delibRes.status !== 200) {
-                errorAlert(delibRes);
-                return;
-            }
-            setDeliberation(delibRes.data?.ok === 1);
 
             setRanked(rankedProjects);
             setUnranked(unrankedProjects);

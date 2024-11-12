@@ -3,9 +3,10 @@ import ProjectEntry from '../ProjectEntry';
 
 interface StarListProps {
     judge: Judge | null;
+    deliberation: boolean;
 }
 
-const StarList = ({ judge }: StarListProps) => {
+const StarList = ({ judge, deliberation }: StarListProps) => {
     const [loaded, setLoaded] = useState(false);
     const [starred, setStarred] = useState<SortableJudgedProject[]>([]);
     const [unstarred, setUnstarred] = useState<SortableJudgedProject[]>([]);
@@ -54,6 +55,11 @@ const StarList = ({ judge }: StarListProps) => {
 
     return (
         <div>
+            {deliberation && (
+                <p className="p-2 text-center mt-4 m-2 border-gold border-2 bg-gold/20 rounded-md">
+                    Deliberation has started. You cannot change rankings or stars.
+                </p>
+            )}
             <h2 className="text-primary text-xl font-bold mt-4">Starred Projects</h2>
             <p className="text-light text-sm">
                 You may star as many projects as you like. Projects are sorted in reverse
@@ -68,6 +74,7 @@ const StarList = ({ judge }: StarListProps) => {
                     starCallback={handleStarChange}
                     ranking={-1}
                     noDrag
+                    disabled={deliberation}
                 />
             ))}
             <h2 className="text-primary text-xl font-bold mt-4">Unstarred Projects</h2>
@@ -83,6 +90,7 @@ const StarList = ({ judge }: StarListProps) => {
                     starCallback={handleStarChange}
                     ranking={-1}
                     noDrag
+                    disabled={deliberation}
                 />
             ))}
         </div>
