@@ -2,30 +2,28 @@ import { useEffect, useRef, useState } from 'react';
 import { errorAlert, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditJudgePopup from './EditJudgePopup';
-import { postRequest, putRequest } from '../../../api';
-import { useAdminStore, useOptionsStore } from '../../../store';
+import { putRequest } from '../../../api';
+import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../../store';
 import { twMerge } from 'tailwind-merge';
-import ConfirmPopup from '../../ConfirmPopup';
-import RawTextInput from '../../RawTextInput';
 import ActionsDropdown from '../../ActionsDropdown';
+import MovePopup from './MovePopup';
 
 interface JudgeRowProps {
     judge: Judge;
     idx: number;
-    checked: boolean;
-    handleCheckedChange: (e: React.ChangeEvent<HTMLInputElement>, idx: number) => void;
 }
 
-const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) => {
+const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
     const [popup, setPopup] = useState(false);
     const [editPopup, setEditPopup] = useState(false);
     const [movePopup, setMovePopup] = useState(false);
-    const [newGroup, setNewGroup] = useState('');
     const [deletePopup, setDeletePopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
     const options = useOptionsStore((state) => state.options);
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
+    const selected = useAdminTableStore((state) => state.selected);
+    const setSelected = useAdminTableStore((state) => state.setSelected);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -42,11 +40,11 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
         };
     }, [ref]);
 
-    useEffect(() => {
-        if (!judge) return;
-
-        setNewGroup(String(judge.group));
-    }, [judge]);
+    const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newSelected = selected.slice();
+        newSelected[idx] = e.target.checked;
+        setSelected(newSelected);
+    };
 
     const hideJudge = async () => {
         const res = await putRequest<OkResponse>(`/judge/hide/${judge.id}`, 'admin', {
@@ -59,20 +57,6 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
 
         alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
         fetchJudges();
-    };
-
-    const moveJudgeGroup = async () => {
-        const res = await postRequest<OkResponse>('/judge/move', 'admin', {
-            id: judge.id,
-            group: Number(newGroup),
-        });
-        if (res.status === 200) {
-            alert(`Judge moved successfully!`);
-            fetchJudges();
-            setMovePopup(false);
-        } else {
-            errorAlert(res);
-        }
     };
 
     const getBestRanked = (judge: Judge) => {
@@ -91,15 +75,16 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 key={idx}
                 className={twMerge(
                     'border-t-2 border-backgroundDark duration-150',
-                    checked ? 'bg-primary/20' : !judge.active ? 'bg-lightest' : 'bg-background'
+                    !judge.active && 'bg-backgroundDark',
+                    selected && selected[idx] && 'bg-primary/20'
                 )}
             >
                 <td className="px-2">
                     <input
                         type="checkbox"
-                        checked={checked}
+                        checked={selected && selected[idx]}
                         onChange={(e) => {
-                            handleCheckedChange(e, idx);
+                            handleCheckedChange(e);
                         }}
                         className="cursor-pointer hover:text-primary duration-100"
                     ></input>
@@ -135,28 +120,7 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                     </span>
                 </td>
             </tr>
-            <ConfirmPopup
-                enabled={movePopup}
-                setEnabled={setMovePopup}
-                onSubmit={moveJudgeGroup}
-                submitText="Move"
-                title="Move Judge"
-            >
-                <div className="flex flex-col items-center">
-                    <p className="text-light">
-                        Move the judge <span className="text-primary font-bold">{judge.name}</span>{' '}
-                        to another group. Enter the new group number below.
-                    </p>
-                    <RawTextInput
-                        name="group"
-                        placeholder="New group"
-                        text={newGroup}
-                        setText={setNewGroup}
-                        large
-                        className="mt-2"
-                    />
-                </div>
-            </ConfirmPopup>
+            <MovePopup open={movePopup} setOpen={setMovePopup} judge={judge} />
             <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={judge} />
             <EditJudgePopup enabled={editPopup} setEnabled={setEditPopup} judge={judge} />
         </>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { errorAlert, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditProjectPopup from './EditProjectPopup';
-import { useAdminStore, useFlagsStore, useOptionsStore } from '../../../store';
+import { useAdminStore, useAdminTableStore, useFlagsStore, useOptionsStore } from '../../../store';
 import { putRequest } from '../../../api';
 import FlagsPopup from '../FlagsPopup';
 import { twMerge } from 'tailwind-merge';
@@ -11,11 +11,9 @@ import ActionsDropdown from '../../ActionsDropdown';
 interface ProjectRowProps {
     project: Project;
     idx: number;
-    checked: boolean;
-    handleCheckedChange: (e: React.ChangeEvent<HTMLInputElement>, idx: number) => void;
 }
 
-const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowProps) => {
+const ProjectRow = ({ project, idx }: ProjectRowProps) => {
     const [popup, setPopup] = useState(false);
     const [flagPopup, setFlagPopup] = useState(false);
     const [flags, setFlags] = useState<Flag[]>([]);
@@ -26,6 +24,16 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
     const options = useOptionsStore((state) => state.options);
     const track = useOptionsStore((state) => state.selectedTrack);
     const allFlags = useFlagsStore((state) => state.flags);
+    const setSelected = useAdminTableStore((state) => state.setSelected);
+    const selected = useAdminTableStore((state) => state.selected);
+
+    const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Change the selected state of the project
+        const newSelected = selected.slice();
+        newSelected[idx] = e.target.checked;
+        setSelected(newSelected);
+    };
+
 
     const hideProject = async () => {
         const res = await putRequest<OkResponse>(`/project/hide/${project.id}`, 'admin', {
@@ -82,15 +90,15 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                     flags.length >= 1 && 'bg-error/30',
                     project.prioritized && 'bg-gold/30',
                     !project.active && 'bg-lightest',
-                    checked && 'bg-primary/20'
+                    selected && selected[idx] && 'bg-primary/20'
                 )}
             >
                 <td className="px-2">
                     <input
                         type="checkbox"
-                        checked={checked}
+                        checked={selected && selected[idx]}
                         onChange={(e) => {
-                            handleCheckedChange(e, idx);
+                            handleCheckedChange(e);
                         }}
                         className="cursor-pointer hover:text-primary duration-100"
                     ></input>
@@ -123,7 +131,7 @@ const ProjectRow = ({ project, idx, checked, handleCheckedChange }: ProjectRowPr
                     </button>
                 </td>
                 <td className="text-center py-1">
-                    Table {project.location} {checked}
+                    Table {project.location}
                 </td>
                 {options.multi_group && track === '' && (
                     <td className="text-center">{project.group}</td>

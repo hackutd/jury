@@ -393,7 +393,7 @@ func HideProject(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	// Get the request
-	var hideReq models.HideProjectRequest
+	var hideReq util.HideRequest
 	err := ctx.BindJSON(&hideReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
@@ -423,6 +423,38 @@ func HideProject(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
+// POST /project/hide - HideSelectedProjects hides selected projects
+func HideSelectedProjects(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request
+	var hideReq util.HideSelectedRequest
+	err := ctx.BindJSON(&hideReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Update the projects in the database
+	err = database.SetProjectsActive(db, ctx, hideReq.Items, !hideReq.Hide)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating projects in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	action := "Unhid"
+	if hideReq.Hide {
+		action = "Hid"
+	}
+	logger.AdminLogf("%s %d projects", action, len(hideReq.Items))
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
 // PUT /project/prioritize/:id - PrioritizeProject prioritizes a project
 func PrioritizeProject(ctx *gin.Context) {
 	// Get the database from the context
@@ -435,7 +467,7 @@ func PrioritizeProject(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	// Get ID from body
-	var priReq models.PrioritizeProjectRequest
+	var priReq util.PrioritizeRequest
 	err := ctx.BindJSON(&priReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
@@ -462,6 +494,37 @@ func PrioritizeProject(ctx *gin.Context) {
 		action = "Unprioritized"
 	}
 	logger.AdminLogf("%s project %s", action, id)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+func PrioritizeSelectedProjects(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request
+	var priReq util.PrioritizeSelectedRequest
+	err := ctx.BindJSON(&priReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Update the projects in the database
+	err = database.SetProjectsPrioritized(db, ctx, priReq.Items, priReq.Prioritize)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating projects in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	action := "Prioritized"
+	if !priReq.Prioritize {
+		action = "Unprioritized"
+	}
+	logger.AdminLogf("%s %d projects", action, len(priReq.Items))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 

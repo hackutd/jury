@@ -185,4 +185,31 @@ const useFlagsStore = create<FlagsStore>((set) => ({
     },
 }));
 
-export { useAdminStore, useClockStore, useOptionsStore, useFlagsStore };
+interface AdminTableStore {
+    projects: Project[],
+    judges: Judge[],
+    selected: boolean[],
+    setProjects: (projects: Project[]) => void,
+    setJudges: (judges: Judge[]) => void,
+    setSelected: (selected: boolean[]) => void,
+}
+
+const useAdminTableStore = create<AdminTableStore>((set) => ({
+    projects: [],
+    judges: [],
+    selected: [],
+
+    setProjects: (projects: Project[]) => {
+        set({ projects: projects });
+    },
+
+    setJudges: (judges: Judge[]) => {
+        set({ judges: judges });
+    },
+
+    setSelected: (selected: boolean[]) => {
+        set({ selected: selected });
+    },
+}));
+
+export { useAdminStore, useClockStore, useOptionsStore, useFlagsStore, useAdminTableStore };

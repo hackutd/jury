@@ -121,8 +121,12 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.PUT("/judge/hide/:id", HideJudge)
 	adminRouter.PUT("/project/hide/:id", HideProject)
 	adminRouter.PUT("/project/prioritize/:id", PrioritizeProject)
+	adminRouter.POST("/project/prioritize", PrioritizeSelectedProjects)
+	adminRouter.POST("/project/hide", HideSelectedProjects)
+	adminRouter.POST("/judge/hide", HideSelectedJudges)
+	adminRouter.POST("/judge/move", MoveSelectedJudges)
 	adminRouter.DELETE("/admin/flag/:id", RemoveFlag)
-	adminRouter.POST("/judge/move", MoveJudge)
+	adminRouter.PUT("/judge/move/:id", MoveJudge)
 
 	// Admin panel - log
 	adminRouter.GET("/admin/log", GetLog)

@@ -85,11 +85,3 @@ type ByTableNumber []*Project
 func (a ByTableNumber) Len() int           { return len(a) }
 func (a ByTableNumber) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByTableNumber) Less(i, j int) bool { return a[i].Location < a[j].Location }
-
-type HideProjectRequest struct {
-	Hide bool `json:"hide"`
-}
-
-type PrioritizeProjectRequest struct {
-	Prioritize bool `json:"prioritize"`
-}

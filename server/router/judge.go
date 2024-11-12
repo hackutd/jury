@@ -506,7 +506,7 @@ func HideJudge(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	// Get ID from body
-	var hideReq models.HideProjectRequest
+	var hideReq util.HideRequest
 	err := ctx.BindJSON(&hideReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
@@ -533,6 +533,38 @@ func HideJudge(ctx *gin.Context) {
 		action = "Hid"
 	}
 	logger.AdminLogf("%s judge %s", action, id)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /judge/hide - Endpoint to hide selected judges
+func HideSelectedJudges(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request object
+	var hideReq util.HideSelectedRequest
+	err := ctx.BindJSON(&hideReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Hide judges in database
+	err = database.SetJudgesActive(db, hideReq.Items, !hideReq.Hide)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error hiding judges in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	action := "Unhid"
+	if hideReq.Hide {
+		action = "Hid"
+	}
+	logger.AdminLogf("%s %d judges", action, len(hideReq.Items))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -906,12 +938,7 @@ func ReassignJudgeGroups(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-type MoveJudgeRequest struct {
-	Group int64  `json:"group"`
-	Id    string `json:"id"`
-}
-
-// POST /judge/move - Move a judge to a different group
+// PUT /judge/move/:id - Move a judge to a different group
 func MoveJudge(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -919,8 +946,11 @@ func MoveJudge(ctx *gin.Context) {
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
+	// Get the ID from the URL
+	id := ctx.Param("id")
+
 	// Get the request object
-	var moveReq MoveJudgeRequest
+	var moveReq util.MoveJudgeRequest
 	err := ctx.BindJSON(&moveReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
@@ -928,7 +958,7 @@ func MoveJudge(ctx *gin.Context) {
 	}
 
 	// Convert ID string to ObjectID
-	judgeObjectId, err := primitive.ObjectIDFromHex(moveReq.Id)
+	judgeObjectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid judge ID"})
 		return
@@ -942,7 +972,35 @@ func MoveJudge(ctx *gin.Context) {
 	}
 
 	// Send OK
-	logger.AdminLogf("Moved judge %s to group %d", moveReq.Id, moveReq.Group)
+	logger.AdminLogf("Moved judge %s to group %d", id, moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /judge/move - Move selected judges to a different group
+func MoveSelectedJudges(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request object
+	var moveReq util.MoveSelectedJudgesRequest
+	err := ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Move the judges to the new group
+	err = database.SetJudgesGroup(db, ctx, moveReq.Judges, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving judges group: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Moved %d judges to group %d", len(moveReq.Judges), moveReq.Group)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 

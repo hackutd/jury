@@ -216,6 +216,16 @@ func SetJudgeActive(db *mongo.Database, id *primitive.ObjectID, active bool) err
 	return err
 }
 
+// SetJudgesActive sets the active field of multiple judges
+func SetJudgesActive(db *mongo.Database, ids []primitive.ObjectID, active bool) error {
+	_, err := db.Collection("judges").UpdateMany(
+		context.Background(),
+		gin.H{"_id": gin.H{"$in": ids}},
+		gin.H{"$set": gin.H{"active": active, "last_activity": util.Now()}},
+	)
+	return err
+}
+
 // UpdateJudgeBasicInfo updates the basic info of a judge (name, email, notes)
 func UpdateJudgeBasicInfo(db *mongo.Database, judgeId *primitive.ObjectID, addRequest *models.AddJudgeRequest) error {
 	_, err := db.Collection("judges").UpdateOne(
@@ -413,5 +423,11 @@ func PutJudgesInGroups(db *mongo.Database) error {
 // SetJudgeGroup sets the group of a judge
 func SetJudgeGroup(db *mongo.Database, ctx context.Context, judgeId *primitive.ObjectID, group int64) error {
 	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{"group": group, "group_seen": 0}})
+	return err
+}
+
+// SetJudgesGroup sets the group of multiple judges
+func SetJudgesGroup(db *mongo.Database, ctx context.Context, judgeIds []primitive.ObjectID, group int64) error {
+	_, err := db.Collection("judges").UpdateMany(ctx, gin.H{"_id": gin.H{"$in": judgeIds}}, gin.H{"$set": gin.H{"group": group, "group_seen": 0}})
 	return err
 }

@@ -16,6 +16,12 @@ interface ActionsDropdownProps {
 
     /* Indices to make red */
     redIndices?: number[];
+
+    /* Large text */
+    large?: boolean;
+
+    /* Additional class names */
+    className?: string;
 }
 
 const ActionsDropdown = (props: ActionsDropdownProps) => {
@@ -39,7 +45,7 @@ const ActionsDropdown = (props: ActionsDropdownProps) => {
     const handleClick = (index: number) => {
         props.actionFunctions[index]();
         props.setOpen(false);
-    }
+    };
 
     if (!props.open) {
         return null;
@@ -47,14 +53,18 @@ const ActionsDropdown = (props: ActionsDropdownProps) => {
 
     return (
         <div
-            className="absolute flex flex-col bg-background rounded-md border-lightest border-2 font-normal text-sm"
+            className={twMerge(
+                'absolute flex flex-col bg-background rounded-md border-lightest border-2 font-normal text-sm',
+                props.large && 'text-lg',
+                props.className
+            )}
             ref={ref}
         >
             {props.actions.map((action, index) => (
                 <div
                     key={index}
                     className={twMerge(
-                        'py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150',
+                        'py-1 px-2 cursor-pointer hover:bg-primary/20 duration-150',
                         props.redIndices?.includes(index) && 'text-error'
                     )}
                     onClick={handleClick.bind(null, index)}

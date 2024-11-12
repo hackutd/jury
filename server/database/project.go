@@ -229,9 +229,21 @@ func SetProjectActive(db *mongo.Database, ctx context.Context, id *primitive.Obj
 	return err
 }
 
+// SetProjectsActive sets the active field of a project (hide or unhide project)
+func SetProjectsActive(db *mongo.Database, ctx context.Context, ids []primitive.ObjectID, active bool) error {
+	_, err := db.Collection("projects").UpdateMany(ctx, gin.H{"_id": gin.H{"$in": ids}}, gin.H{"$set": gin.H{"active": active}})
+	return err
+}
+
 // SetProjectPrioritized sets the prioritized field of a project
 func SetProjectPrioritized(db *mongo.Database, id *primitive.ObjectID, prioritized bool) error {
 	_, err := db.Collection("projects").UpdateOne(context.Background(), gin.H{"_id": id}, gin.H{"$set": gin.H{"prioritized": prioritized}})
+	return err
+}
+
+// SetProjectsPrioritized sets the prioritized field of multiple projects
+func SetProjectsPrioritized(db *mongo.Database, ctx context.Context, ids []primitive.ObjectID, prioritized bool) error {
+	_, err := db.Collection("projects").UpdateMany(ctx, gin.H{"_id": gin.H{"$in": ids}}, gin.H{"$set": gin.H{"prioritized": prioritized}})
 	return err
 }
 

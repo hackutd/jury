@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAdminStore, useOptionsStore } from '../../../store';
+import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { JudgeSortField } from '../../../enums';
 import JudgeRow from './JudgeRow';
@@ -7,18 +7,20 @@ import JudgeRow from './JudgeRow';
 const JudgesTable = () => {
     const unsortedJudges = useAdminStore((state) => state.judges);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
-    const [judges, setJudges] = useState<Judge[]>([]);
-    const [checked, setChecked] = useState<boolean[]>([]);
     const [sortState, setSortState] = useState<SortState<JudgeSortField>>({
         field: JudgeSortField.None,
         ascending: true,
     });
     const options = useOptionsStore((state) => state.options);
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
+    const judges = useAdminTableStore((state) => state.judges);
+    const setJudges = useAdminTableStore((state) => state.setJudges);
+    const selected = useAdminTableStore((state) => state.selected);
+    const setSelected = useAdminTableStore((state) => state.setSelected);
 
     const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
-        setChecked({
-            ...checked,
+        setSelected({
+            ...selected,
             [i]: e.target.checked,
         });
     };
@@ -56,8 +58,16 @@ const JudgesTable = () => {
 
     // When judges change, update judges and sort
     useEffect(() => {
-        setChecked(Array(unsortedJudges.length).fill(false));
+        setSelected(Array(unsortedJudges.length).fill(false));
 
+        sortAndFilterJudges();
+    }, [sortState, selectedTrack]);
+
+    useEffect(() => {
+        sortAndFilterJudges();
+    }, [unsortedJudges]);
+
+    const sortAndFilterJudges = () => {
         // Filter by track
         // TODO: lowk this looks like hot garbage
         const filteredJudges = options.judge_tracks
@@ -93,7 +103,7 @@ const JudgesTable = () => {
                 break;
         }
         setJudges(filteredJudges.sort(sortFunc));
-    }, [unsortedJudges, sortState, selectedTrack]);
+    };
 
     return (
         <div className="w-full px-8 pb-4">
@@ -143,13 +153,7 @@ const JudgesTable = () => {
                         <th className="text-right w-24">Actions</th>
                     </tr>
                     {judges.map((judge: Judge, idx) => (
-                        <JudgeRow
-                            key={idx}
-                            idx={idx}
-                            judge={judge}
-                            checked={checked[idx]}
-                            handleCheckedChange={handleCheckedChange}
-                        />
+                        <JudgeRow key={idx} idx={idx} judge={judge} />
                     ))}
                 </tbody>
             </table>
