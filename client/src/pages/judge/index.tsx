@@ -9,6 +9,7 @@ import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Ranking from '../../components/judge/dnd/Ranking';
 import StarList from '../../components/judge/dnd/StarList';
+import { Helmet } from 'react-helmet';
 
 const Judge = () => {
     const navigate = useNavigate();
@@ -107,6 +108,9 @@ const Judge = () => {
 
     return (
         <>
+            <Helmet>
+                <title>Judging | Jury</title>
+            </Helmet>
             <JuryHeader withLogout />
             <Container noCenter className="px-2 pb-4">
                 <h1 className="text-2xl mt-2">Welcome, {judge.name}!</h1>

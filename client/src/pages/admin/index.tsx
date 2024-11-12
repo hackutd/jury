@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAdminStore, useClockStore, useFlagsStore, useOptionsStore } from '../../store';
 import ToTopButton from '../../components/ToTopButton';
 import AdminHeader from '../../components/admin/AdminHeader';
+import { Helmet } from 'react-helmet';
 
 const Admin = () => {
     const navigate = useNavigate();
@@ -68,6 +69,9 @@ const Admin = () => {
     }
     return (
         <>
+            <Helmet>
+                <title>Admin | Jury</title>
+            </Helmet>
             <JuryHeader withLogout isAdmin />
             <AdminHeader />
             <AdminStatsPanel />

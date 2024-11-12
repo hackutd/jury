@@ -17,6 +17,7 @@ import { errorAlert } from '../../util';
 import alarm from '../../assets/alarm.mp3';
 import data from '../../data.json';
 import TextInput from '../../components/TextInput';
+import { Helmet } from 'react-helmet';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done', 'doneTrack'];
 const infoData = [
@@ -328,6 +329,9 @@ const JudgeLive = () => {
 
     return (
         <>
+            <Helmet>
+                <title>Live Judging | Jury</title>
+            </Helmet>
             <JuryHeader withLogout />
             <Container noCenter className="px-2 pb-4">
                 <Back location="/judge" />
