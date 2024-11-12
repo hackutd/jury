@@ -116,7 +116,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
                             setPopup(!popup);
                         }}
                     >
-                        ...
+                        ···
                     </span>
                 </td>
             </tr>

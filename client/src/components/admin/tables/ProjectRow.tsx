@@ -164,7 +164,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
                             setPopup(!popup);
                         }}
                     >
-                        ...
+                        ···
                     </div>
                 </td>
             </tr>
