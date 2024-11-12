@@ -93,7 +93,7 @@ func UpdateJudgesWithTx(db *mongo.Database, sc mongo.SessionContext, judges []*m
 		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": judge.Id}).SetUpdate(gin.H{"$set": judge}))
 	}
 	opts := options.BulkWrite().SetOrdered(false)
-	_, err := db.Collection("judges").BulkWrite(context.Background(), models, opts)
+	_, err := db.Collection("judges").BulkWrite(sc, models, opts)
 	return err
 }
 
