@@ -86,16 +86,16 @@ const Expo = () => {
                 <table className="table-fixed">
                     <thead className="text-left">
                         <tr>
-                            <th className="pr-2">Table</th>
                             <th className="pr-2">Group</th>
+                            <th className="pr-2">Table</th>
                             <th className="pr-2">Name</th>
                         </tr>
                     </thead>
                     <tbody>
                         {projects.map((project, idx) => (
                             <tr key={idx}>
-                                <td className="pr-2">{project.location}</td>
                                 <td className="pr-2">{groupNames[project.group]}</td>
+                                <td className="pr-2">{project.location}</td>
                                 <td className="pr-2">{project.name}</td>
                             </tr>
                         ))}
