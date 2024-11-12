@@ -11,6 +11,7 @@ interface ProjectEntryProps {
     id: number;
     starCallback?: (id: number, starred: boolean) => void;
     noDrag?: boolean;
+    disabled?: boolean;
 }
 
 const ProjectEntry = (props: ProjectEntryProps) => {
@@ -50,7 +51,13 @@ const ProjectEntry = (props: ProjectEntryProps) => {
             }
         );
         if (res.status !== 200) {
+            // If deliberation, reload page
+            if (res.error.indexOf('deliberation') !== -1) {
+                window.location.reload();
+            }
+
             errorAlert(res);
+            return;
         }
 
         if (props.starCallback) {
@@ -77,7 +84,13 @@ const ProjectEntry = (props: ProjectEntryProps) => {
                         </h3>
                         <p className="text-light text-xs line-clamp-1">{props.project.notes}</p>
                     </div>
-                    <Star small active={starred} setActive={setStarred} onClick={updateStar} />
+                    <Star
+                        small
+                        active={starred}
+                        setActive={setStarred}
+                        onClick={updateStar}
+                        disabled={props.disabled}
+                    />
                     {!props.noDrag ? (
                         <div className="text-right flex items-center justify-end">
                             <DragHamburger />

@@ -207,12 +207,22 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 	return nil
 }
 
-// SetJudgeHidden sets the active field of a judge
-func SetJudgeHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
+// SetJudgeActive sets the active field of a judge
+func SetJudgeActive(db *mongo.Database, id *primitive.ObjectID, active bool) error {
 	_, err := db.Collection("judges").UpdateOne(
 		context.Background(),
 		gin.H{"_id": id},
-		gin.H{"$set": gin.H{"active": !hidden, "last_activity": util.Now()}},
+		gin.H{"$set": gin.H{"active": active, "last_activity": util.Now()}},
+	)
+	return err
+}
+
+// SetJudgesActive sets the active field of multiple judges
+func SetJudgesActive(db *mongo.Database, ids []primitive.ObjectID, active bool) error {
+	_, err := db.Collection("judges").UpdateMany(
+		context.Background(),
+		gin.H{"_id": gin.H{"$in": ids}},
+		gin.H{"$set": gin.H{"active": active, "last_activity": util.Now()}},
 	)
 	return err
 }
@@ -271,14 +281,14 @@ func ResetBusyProjectListForJudge(db *mongo.Database, ctx context.Context, judge
 }
 
 // GetMinJudgeGroup returns the group with the fewest judges
-func GetMinJudgeGroup(db *mongo.Database, track string) (int64, error) {
-	pipe := []gin.H{{"$group": gin.H{
+func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
+	pipe := []gin.H{{"$match": gin.H{
+		"active": true,
+		"track":  "",
+	}}, {"$group": gin.H{
 		"_id":   "$group",
 		"count": gin.H{"$sum": 1},
 	}}}
-	if track != "" {
-		pipe = append([]gin.H{{"$match": gin.H{"track": track}}}, pipe...)
-	}
 
 	cursor, err := db.Collection("judges").Aggregate(context.Background(), pipe)
 	if err != nil {
@@ -339,6 +349,10 @@ func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset b
 	} else {
 		groupCounts = make(map[int64]int64)
 		cursor, err := db.Collection("judges").Aggregate(ctx, []gin.H{
+			{"$match": gin.H{
+				"active": true,
+				"track":  "",
+			}},
 			{"$group": gin.H{
 				"_id":   "$group",
 				"count": gin.H{"$sum": 1},
@@ -384,11 +398,10 @@ func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset b
 }
 
 // PutJudgesInGroups assigns judges to groups
-// TODO: Fix this
 func PutJudgesInGroups(db *mongo.Database) error {
 	return WithTransaction(db, func(sc mongo.SessionContext) error {
 		// Get all judges
-		judges, err := FindAllJudges(db, sc)
+		judges, err := FindJudgesByTrack(db, sc, "")
 		if err != nil {
 			return err
 		}
@@ -414,5 +427,11 @@ func PutJudgesInGroups(db *mongo.Database) error {
 // SetJudgeGroup sets the group of a judge
 func SetJudgeGroup(db *mongo.Database, ctx context.Context, judgeId *primitive.ObjectID, group int64) error {
 	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{"group": group, "group_seen": 0}})
+	return err
+}
+
+// SetJudgesGroup sets the group of multiple judges
+func SetJudgesGroup(db *mongo.Database, ctx context.Context, judgeIds []primitive.ObjectID, group int64) error {
+	_, err := db.Collection("judges").UpdateMany(ctx, gin.H{"_id": gin.H{"$in": judgeIds}}, gin.H{"$set": gin.H{"group": group, "group_seen": 0}})
 	return err
 }

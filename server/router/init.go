@@ -109,6 +109,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.GET("/admin/options", GetOptions)
 	adminRouter.POST("/admin/options", SetOptions)
 	adminRouter.POST("/admin/num-groups", SetNumGroups)
+	adminRouter.POST("/admin/group-sizes", SetGroupSizes)
 
 	// Admin panel - exports
 	adminRouter.GET("/admin/export/judges", ExportJudges)
@@ -117,14 +118,18 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.GET("/admin/export/rankings", ExportRankings)
 
 	// Admin panel - table actions
-	adminRouter.POST("/judge/hide", HideJudge)
-	adminRouter.POST("/judge/unhide", UnhideJudge)
-	adminRouter.POST("/project/hide", HideProject)
-	adminRouter.POST("/project/unhide", UnhideProject)
-	adminRouter.POST("/project/prioritize", PrioritizeProject)
-	adminRouter.POST("/project/unprioritize", UnprioritizeProject)
+	adminRouter.PUT("/judge/hide/:id", HideJudge)
+	adminRouter.PUT("/project/hide/:id", HideProject)
+	adminRouter.PUT("/project/prioritize/:id", PrioritizeProject)
+	adminRouter.POST("/project/prioritize", PrioritizeSelectedProjects)
+	adminRouter.POST("/project/hide", HideSelectedProjects)
+	adminRouter.POST("/judge/hide", HideSelectedJudges)
+	adminRouter.POST("/judge/move", MoveSelectedJudges)
 	adminRouter.DELETE("/admin/flag/:id", RemoveFlag)
-	adminRouter.POST("/judge/move", MoveJudge)
+	adminRouter.PUT("/judge/move/:id", MoveJudge)
+	adminRouter.PUT("/project/move/:id", MoveProject)
+	adminRouter.POST("/project/move", MoveSelectedProjects)
+	adminRouter.POST("/admin/deliberation", SetDeliberation)
 
 	// Admin panel - log
 	adminRouter.GET("/admin/log", GetLog)
@@ -144,10 +149,12 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	judgeRouter.GET("/project/:id", GetProject)
 	judgeRouter.GET("/project/count", GetProjectCount)
 	judgeRouter.GET("/judge/project/:id", GetJudgedProject)
+	judgeRouter.GET("/judge/deliberation", GetDeliberationStatus)
 
 	// Project expo routes
 	defaultRouter.GET("/project/list/public", ListPublicProjects)
 	defaultRouter.GET("/challenges", GetChallenges)
+	defaultRouter.GET("/group-names", GetGroupNames)
 
 	// ######################
 	// ##### END ROUTES #####

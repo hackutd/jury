@@ -6,7 +6,7 @@ import { errorAlert } from '../../util';
 import ConfirmPopup from '../../components/ConfirmPopup';
 import Loading from '../../components/Loading';
 import Checkbox from '../../components/Checkbox';
-import RawTextInput from '../../components/RawTextInput';
+import TextInput from '../../components/TextInput';
 import SelectionButton from '../../components/SelectionButton';
 import { useOptionsStore } from '../../store';
 
@@ -54,6 +54,8 @@ const AdminSettings = () => {
     const [groupSizes, setGroupSizes] = useState('30, 30');
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
+    const [challenges, setChallenges] = useState<string[]>([]);
+    const [groupNames, setGroupNames] = useState('');
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
 
     async function getOptions() {
@@ -66,6 +68,14 @@ const AdminSettings = () => {
             alert('error: could not get options data');
             return;
         }
+
+        // Get challenges
+        const challengesRes = await getRequest<string[]>('/challenges', '');
+        if (challengesRes.status !== 200) {
+            errorAlert(challengesRes);
+            return;
+        }
+        setChallenges(challengesRes.data as string[]);
 
         // Calculate judging timer MM:SS
         const timer = res.data.judging_timer;
@@ -90,6 +100,7 @@ const AdminSettings = () => {
         setAutoSwitchProp(res.data.auto_switch_prop);
         setJudgeTracks(res.data.judge_tracks);
         setTracks(res.data.tracks.join(', '));
+        setGroupNames(res.data.group_names.join(', '));
 
         setLoading(false);
     }
@@ -277,7 +288,7 @@ const AdminSettings = () => {
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/group-sizes', 'admin', {
             group_sizes: sizes,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -287,6 +298,32 @@ const AdminSettings = () => {
 
         alert('Group sizes updated!');
     };
+
+    const updateGroupNames = async () => {
+        const names = groupNames.split(',').map((name) => name.trim());
+        if (names.some((name) => name === '')) {
+            alert('Group names should not be empty!');
+            return;
+        }
+
+        // Make sure number of names is numGroups
+        if (names.length !== numGroups) {
+            alert(
+                'Number of names should be the same as number of groups (you need a name for each group)!'
+            );
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+            group_names: names,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Group names updated!');
+    }
 
     const resetClock = async () => {
         const res = await postRequest<OkResponse>('/admin/clock/reset', 'admin', null);
@@ -414,8 +451,7 @@ const AdminSettings = () => {
                     condition (recommended: 3-5).
                 </Description>
                 <div className="flex flex-row">
-                    <RawTextInput
-                        name="min-views"
+                    <TextInput
                         text={minViews}
                         setText={setMinViews}
                         placeholder="Enter an integer..."
@@ -460,8 +496,7 @@ const AdminSettings = () => {
                     to have a timer for each judge.
                 </Description>
                 <div className="flex flex-row">
-                    <RawTextInput
-                        name="judging-timer"
+                    <TextInput
                         text={judgingTimer}
                         setText={setJudgingTimer}
                         placeholder="MM:SS"
@@ -495,8 +530,13 @@ const AdminSettings = () => {
                             under the 'Opt-In Prizes' category. Only the tracks listed here will be
                             judged! As with the previous setting, DO NOT CHANGE THIS DURING JUDGING.
                         </Description>
-                        <RawTextInput
-                            name="tracks"
+                        {challenges && (
+                            <div className="border-2 border-primary bg-primary/10 rounded-md p-2 my-2">
+                                <h1 className="text-xl font-bold">Challenge List</h1>
+                                <Description>{challenges.join(', ')}</Description>
+                            </div>
+                        )}
+                        <TextInput
                             text={tracks}
                             setText={setTracks}
                             placeholder="Track 1, Track 2, ..."
@@ -526,8 +566,7 @@ const AdminSettings = () => {
                             Set the number of groups judges will be split into.
                         </Description>
                         <div className="flex flex-row">
-                            <RawTextInput
-                                name="num-groups"
+                            <TextInput
                                 text={numGroups}
                                 setText={setNumGroups}
                                 placeholder="Enter an integer..."
@@ -547,8 +586,7 @@ const AdminSettings = () => {
                             of groups (eg. 3 groups: "30, 30, 40"). Note that the last group will be
                             used as overflow if all groups fill up.
                         </Description>
-                        <RawTextInput
-                            name="group-sizes"
+                        <TextInput
                             placeholder="30, 30, 30, ..."
                             text={groupSizes}
                             setText={setGroupSizes}
@@ -586,8 +624,7 @@ const AdminSettings = () => {
                                     results if judges do not visit enough different groups.
                                 </Description>
                                 <div className="flex flex-row">
-                                    <RawTextInput
-                                        name="auto-switch-prop"
+                                    <TextInput
                                         text={autoSwitchProp}
                                         setText={setAutoSwitchProp}
                                         placeholder="Enter a decimal..."
@@ -601,6 +638,22 @@ const AdminSettings = () => {
                                 </div>
                             </>
                         )}
+
+                        <SubSection>Group Names</SubSection>
+                        <Description>
+                            Set the names of the groups. This will be displayed to judges and admins
+                            to help them keep track of which group they are in. This is especially
+                            useful if you have multiple rooms or groups of judges.
+                        </Description>
+                        <TextInput
+                            placeholder="Group 1, Group 2, Group 3, ..."
+                            text={groupNames}
+                            setText={setGroupNames}
+                            full
+                            large
+                            className="my-2"
+                        />
+                        <SettingsButton onClick={updateGroupNames}>Update Group Names</SettingsButton>
                     </>
                 )}
 

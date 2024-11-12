@@ -172,6 +172,7 @@ func ListProjects(ctx *gin.Context) {
 type PublicProject struct {
 	Name          string `json:"name"`
 	Location      int64  `json:"location"`
+	Group         int64  `json:"group"`
 	Description   string `json:"description"`
 	Url           string `json:"url"`
 	TryLink       string `json:"try_link"`
@@ -196,6 +197,7 @@ func ListPublicProjects(ctx *gin.Context) {
 		publicProjects[i] = PublicProject{
 			Name:          project.Name,
 			Location:      project.Location,
+			Group:         project.Group,
 			Description:   project.Description,
 			Url:           project.Url,
 			TryLink:       project.TryLink,
@@ -381,7 +383,7 @@ func GetProjectCount(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"count": count})
 }
 
-// POST /project/hide - HideProject hides a project
+// PUT /project/hide/:id - Sets the active status of a project
 func HideProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -389,14 +391,16 @@ func HideProject(ctx *gin.Context) {
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
-	// Get ID from body
-	var idReq models.IdRequest
-	err := ctx.BindJSON(&idReq)
+	// Get ID from URL
+	id := ctx.Param("id")
+
+	// Get the request
+	var hideReq util.HideRequest
+	err := ctx.BindJSON(&hideReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
-	id := idReq.Id
 
 	// Convert project ID string to ObjectID
 	projectObjectId, err := primitive.ObjectIDFromHex(id)
@@ -406,54 +410,54 @@ func HideProject(ctx *gin.Context) {
 	}
 
 	// Update the project in the database
-	err = database.SetProjectHidden(db, ctx, &projectObjectId, true)
+	err = database.SetProjectActive(db, ctx, &projectObjectId, !hideReq.Hide)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Hid project %s", id)
+	action := "Unhid"
+	if hideReq.Hide {
+		action = "Hid"
+	}
+	logger.AdminLogf("%s project %s", action, id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /project/unhide - UnhideProject unhides a project
-func UnhideProject(ctx *gin.Context) {
+// POST /project/hide - HideSelectedProjects hides selected projects
+func HideSelectedProjects(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
-	// Get ID from body
-	var idReq models.IdRequest
-	err := ctx.BindJSON(&idReq)
+	// Get the request
+	var hideReq util.HideSelectedRequest
+	err := ctx.BindJSON(&hideReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
-	id := idReq.Id
 
-	// Convert project ID string to ObjectID
-	projectObjectId, err := primitive.ObjectIDFromHex(id)
+	// Update the projects in the database
+	err = database.SetProjectsActive(db, ctx, hideReq.Items, !hideReq.Hide)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
-		return
-	}
-
-	// Update the project in the database
-	err = database.SetProjectHidden(db, ctx, &projectObjectId, false)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating projects in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Unhid project %s", id)
+	action := "Unhid"
+	if hideReq.Hide {
+		action = "Hid"
+	}
+	logger.AdminLogf("%s %d projects", action, len(hideReq.Items))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /project/prioritize - PrioritizeProject prioritizes a project
+// PUT /project/prioritize/:id - PrioritizeProject prioritizes a project
 func PrioritizeProject(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -461,14 +465,16 @@ func PrioritizeProject(ctx *gin.Context) {
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
+	// Get ID from URL
+	id := ctx.Param("id")
+
 	// Get ID from body
-	var idReq models.IdRequest
-	err := ctx.BindJSON(&idReq)
+	var priReq util.PrioritizeRequest
+	err := ctx.BindJSON(&priReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
-	id := idReq.Id
 
 	// Convert project ID string to ObjectID
 	projectObjectId, err := primitive.ObjectIDFromHex(id)
@@ -478,50 +484,49 @@ func PrioritizeProject(ctx *gin.Context) {
 	}
 
 	// Update the project in the database
-	err = database.SetProjectPrioritized(db, &projectObjectId, true)
+	err = database.SetProjectPrioritized(db, &projectObjectId, priReq.Prioritize)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Prioritized project %s", id)
+	action := "Prioritized"
+	if !priReq.Prioritize {
+		action = "Unprioritized"
+	}
+	logger.AdminLogf("%s project %s", action, id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /project/unprioritize - UnprioritizeProject unprioritizes a project
-func UnprioritizeProject(ctx *gin.Context) {
+func PrioritizeSelectedProjects(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
-	// Get ID from body
-	var idReq models.IdRequest
-	err := ctx.BindJSON(&idReq)
+	// Get the request
+	var priReq util.PrioritizeSelectedRequest
+	err := ctx.BindJSON(&priReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
-	id := idReq.Id
 
-	// Convert project ID string to ObjectID
-	projectObjectId, err := primitive.ObjectIDFromHex(id)
+	// Update the projects in the database
+	err = database.SetProjectsPrioritized(db, ctx, priReq.Items, priReq.Prioritize)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
-		return
-	}
-
-	// Update the project in the database
-	err = database.SetProjectPrioritized(db, &projectObjectId, false)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating projects in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Unprioritized project %s", id)
+	action := "Prioritized"
+	if !priReq.Prioritize {
+		action = "Unprioritized"
+	}
+	logger.AdminLogf("%s %d projects", action, len(priReq.Items))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 

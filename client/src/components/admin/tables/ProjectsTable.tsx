@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import ProjectRow from './ProjectRow';
-import { useAdminStore, useOptionsStore } from '../../../store';
+import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { ProjectSortField } from '../../../enums';
 import { getRequest } from '../../../api';
@@ -9,8 +9,6 @@ import { errorAlert } from '../../../util';
 const ProjectsTable = () => {
     const unsortedProjects = useAdminStore((state) => state.projects);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [checked, setChecked] = useState<boolean[]>([]);
     const [flags, setFlags] = useState<Flag[]>([]);
     const [sortState, setSortState] = useState<SortState<ProjectSortField>>({
         field: ProjectSortField.None,
@@ -18,13 +16,9 @@ const ProjectsTable = () => {
     });
     const options = useOptionsStore((state) => state.options);
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
-
-    const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
-        setChecked({
-            ...checked,
-            [i]: e.target.checked,
-        });
-    };
+    const setSelected = useAdminTableStore((state) => state.setSelected);
+    const projects = useAdminTableStore((state) => state.projects);
+    const setProjects = useAdminTableStore((state) => state.setProjects);
 
     const updateSort = (field: SortField) => {
         if (sortState.field === field) {
@@ -72,8 +66,16 @@ const ProjectsTable = () => {
 
     // When projects change, update projects and sort
     useEffect(() => {
-        setChecked(Array(unsortedProjects.length).fill(false));
+        setSelected(Array(unsortedProjects.length).fill(false));
 
+        sortAndFilterProjects();
+    }, [sortState, selectedTrack]);
+
+    useEffect(() => {
+        sortAndFilterProjects();
+    }, [unsortedProjects]);
+
+    const sortAndFilterProjects = () => {
         // Filter by track if enabled
         const filteredProjects =
             options.judge_tracks && selectedTrack !== ''
@@ -133,8 +135,8 @@ const ProjectsTable = () => {
                 sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
-        setProjects(filteredProjects.sort(sortFunc));
-    }, [unsortedProjects, sortState, selectedTrack]);
+        setProjects(filteredProjects.toSorted(sortFunc));
+    };
 
     return (
         <div className="w-full px-8 pb-4">
@@ -198,13 +200,7 @@ const ProjectsTable = () => {
                         <th className="text-right w-24">Actions</th>
                     </tr>
                     {projects.map((project: Project, idx) => (
-                        <ProjectRow
-                            key={idx}
-                            idx={idx}
-                            project={project}
-                            checked={checked[idx]}
-                            handleCheckedChange={handleCheckedChange}
-                        />
+                        <ProjectRow key={idx} idx={idx} project={project} />
                     ))}
                 </tbody>
             </table>

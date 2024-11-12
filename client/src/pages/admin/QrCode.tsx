@@ -79,8 +79,10 @@ const QrCode = () => {
         // Create QR code
         const origin = window.location.origin.toString();
         const track = searchParams.get('track') ?? '';
-        const url = `${origin}/add-self?code=${code}&track=${track}`;
-        console.log(url);
+        const url = `${origin}/add-self?code=${code}&track=${track.replace(/\s/g, '%20')}`;
+
+        console.log("track url:", url);
+
         const qrCode = qr(url);
 
         // Draw on the canvas

@@ -1,30 +1,49 @@
-import type { UseFormRegister } from 'react-hook-form';
+import { twMerge } from 'tailwind-merge';
 
 interface TextInputProps {
-    /* Name of the field */
-    name: string;
-
     /* Placeholder of the field */
     placeholder: string;
-    
+
+    /* State variable for input */
+    text: string | number;
+
+    /* State setting function for input */
+    setText:
+        | React.Dispatch<React.SetStateAction<string>>
+        | React.Dispatch<React.SetStateAction<number>>;
+
     /* Default value of the field */
     defaultValue?: string;
 
-    /* Register function from react-hook-form */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    register: UseFormRegister<any>;
+    /* Custom styling */
+    className?: string;
 
-    /* Required field */
-    required?: boolean;
+    /* Full Width */
+    full?: boolean;
+
+    /* Large text */
+    large?: boolean;
+
+    /* Number input */
+    number?: boolean;
 }
 
 const TextInput = (props: TextInputProps) => {
     return (
         <input
-            className="w-full h-14 px-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
+            type={props.number ? 'number' : 'text'}
+            className={twMerge(
+                'w-auto h-10 px-2 text-md rounded-sm border-lightest border-2 focus:border-primary outline-none',
+                props.full && 'w-full',
+                props.large && 'text-xl h-12',
+                props.className
+            )}
             placeholder={props.placeholder}
             defaultValue={props.defaultValue}
-            {...props.register(props.name, { required: props.required || false })}
+            value={props.text}
+            onChange={(e) =>
+                props.setText(props.number ? Number(e.target.value) : (e.target.value as any))
+            }
         />
     );
 };

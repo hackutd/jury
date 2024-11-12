@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { createHeaders } from '../../../api';
 import Loading from '../../Loading';
 import { useAdminStore } from '../../../store';
+import Button from '../../Button';
 
 interface UploadCSVFormProps {
     /* The format of the CSV file */
@@ -36,8 +37,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
     };
 
     // Handle file upload
-    const UploadCSV = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const UploadCSV = async () => {
         setIsUploading(true);
         setError(null);
 
@@ -171,17 +171,16 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                             </div>
                         )}
                         <div className="flex flex-row w-full mt-4 space-x-6">
-                            <button
-                                className={`w-full h-11 px-4 text-2xl text-white bg-primary rounded-full
-                                ${
-                                    isUploading || !file || !fileName
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : ''
-                                }`}
+                            <Button
+                                type="primary"
+                                onClick={UploadCSV}
+                                full
+                                flat
                                 disabled={isUploading || !file || !fileName}
+                                className="py-1 rounded-md"
                             >
                                 {isUploading ? 'Uploading...' : 'Upload'}
-                            </button>
+                            </Button>
                         </div>
                     </form>
                 </div>

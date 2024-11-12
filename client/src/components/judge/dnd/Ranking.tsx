@@ -15,14 +15,15 @@ import RankItem from './RankItem';
 import CustomPointerSensor from './CustomPointerSensor';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useEffect, useState } from 'react';
-import { postRequest } from '../../../api';
+import { getRequest, postRequest } from '../../../api';
 import { errorAlert } from '../../../util';
 
 interface RankingProps {
     judge: Judge | null;
+    deliberation: boolean;
 }
 
-const Ranking = ({ judge }: RankingProps) => {
+const Ranking = ({ judge, deliberation }: RankingProps) => {
     const [activeId, setActiveId] = useState<number | null>(null);
     const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
     const [disabled, setDisabled] = useState(false);
@@ -42,24 +43,28 @@ const Ranking = ({ judge }: RankingProps) => {
 
     // Load all projects when judge loads
     useEffect(() => {
-        if (!judge) return;
+        async function fetchData() {
+            if (!judge) return;
 
-        const allProjects = judge.seen_projects.map((p, i) => ({
-            id: i + 1,
-            ...p,
-        }));
+            const allProjects = judge.seen_projects.map((p, i) => ({
+                id: i + 1,
+                ...p,
+            }));
 
-        const rankedProjects = judge.rankings.map((r) =>
-            allProjects.find((p) => p.project_id === r)
-        ) as SortableJudgedProject[];
-        const unrankedProjects = allProjects.filter((p) =>
-            judge.rankings.every((r) => r !== p.project_id)
-        );
-        unrankedProjects.reverse();
+            const rankedProjects = judge.rankings.map((r) =>
+                allProjects.find((p) => p.project_id === r)
+            ) as SortableJudgedProject[];
+            const unrankedProjects = allProjects.filter((p) =>
+                judge.rankings.every((r) => r !== p.project_id)
+            );
+            unrankedProjects.reverse();
 
-        setRanked(rankedProjects);
-        setUnranked(unrankedProjects);
-        setLoaded(true);
+            setRanked(rankedProjects);
+            setUnranked(unrankedProjects);
+            setLoaded(true);
+        }
+
+        fetchData();
     }, [judge]);
 
     const handleDragStart = (event: DragStartEvent) => {
@@ -162,6 +167,11 @@ const Ranking = ({ judge }: RankingProps) => {
             ranking: projects.map((p) => p.project_id),
         });
         if (saveRes.status !== 200) {
+            // If deliberation, reload page
+            if (saveRes.error.indexOf('deliberation') !== -1) {
+                window.location.reload();
+            }
+
             errorAlert(saveRes);
             return;
         }
@@ -179,19 +189,34 @@ const Ranking = ({ judge }: RankingProps) => {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
+            {deliberation && (
+                <p className="p-2 text-center mt-4 m-2 border-gold border-2 bg-gold/20 rounded-md">
+                    Deliberation has started. You cannot change rankings or stars.
+                </p>
+            )}
             <h2 className="text-primary text-xl font-bold mt-4">Ranked Projects</h2>
             <p className="text-light text-sm">
                 Rank at most 5 projects. Click on titles to edit scores and see details.
             </p>
             <div className="h-[1px] w-full bg-light my-2"></div>
-            <Droppable id="ranked" projects={ranked} active={activeDropzone} disabled={disabled} />
+            <Droppable
+                id="ranked"
+                projects={ranked}
+                active={activeDropzone}
+                disabled={disabled || deliberation}
+            />
 
             <h2 className="text-primary text-xl font-bold mt-4">Unranked Projects</h2>
             <p className="text-light text-sm">
                 Projects will be sorted in reverse chronological order.
             </p>
             <div className="h-[1px] w-full bg-light my-2"></div>
-            <Droppable id="unranked" projects={unranked} active={activeDropzone} />
+            <Droppable
+                id="unranked"
+                projects={unranked}
+                active={activeDropzone}
+                disabled={deliberation}
+            />
 
             <DragOverlay>
                 {activeId ? (
@@ -201,6 +226,7 @@ const Ranking = ({ judge }: RankingProps) => {
                             (ranked.find((p) => p.id === activeId) as SortableJudgedProject)
                         }
                         ranking={ranked.findIndex((p) => p.id === activeId) + 1}
+                        disabled={deliberation}
                     />
                 ) : null}
             </DragOverlay>

@@ -33,6 +33,7 @@ const Droppable = (props: DroppableProps) => {
                         key={p.id}
                         item={p}
                         ranking={props.id === 'ranked' ? i + 1 : -1}
+                        disabled={props.disabled}
                     />
                 ))}
             </div>
