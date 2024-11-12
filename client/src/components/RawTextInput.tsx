@@ -1,9 +1,6 @@
 import { twMerge } from 'tailwind-merge';
 
 interface RawTextInputProps {
-    /* Name of the field */
-    name: string;
-
     /* Placeholder of the field */
     placeholder: string;
 

@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import TextInput from '../../TextInput';
-import TextArea from '../../TextArea';
 import { putRequest } from '../../../api';
 import { errorAlert } from '../../../util';
 import { useAdminStore } from '../../../store';
 import ConfirmPopup from '../../ConfirmPopup';
-import Loading from '../../Loading';
+import RawTextInput from '../../RawTextInput';
+import RawTextArea from '../../RawTextArea';
 
 interface EditJudgePopupProps {
     /* Judge to edit */
@@ -19,20 +17,17 @@ interface EditJudgePopupProps {
     setEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-interface UpdateJudgeData {
-    name: string;
-    email: string;
-    notes: string;
-}
-
 const EditJudgePopup = (props: EditJudgePopupProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { register, handleSubmit, reset } = useForm<UpdateJudgeData>();
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
+    const [name, setName] = useState(props.judge.name);
+    const [email, setEmail] = useState(props.judge.email);
+    const [notes, setNotes] = useState(props.judge.notes);
 
-    const onSubmit: SubmitHandler<UpdateJudgeData> = async (data) => {
+    const onSubmit = async () => {
         setIsSubmitting(true);
 
+        const data = { name, email, notes };
         const res = await putRequest(`/judge/${props.judge.id}`, 'admin', data);
         if (res.status !== 200) {
             errorAlert(res);
@@ -40,7 +35,6 @@ const EditJudgePopup = (props: EditJudgePopupProps) => {
         }
 
         alert('Judge updated successfully!');
-        reset();
         setIsSubmitting(false);
         props.setEnabled(false);
         fetchJudges();
@@ -52,32 +46,15 @@ const EditJudgePopup = (props: EditJudgePopupProps) => {
             setEnabled={props.setEnabled}
             title="Edit Judge"
             submitText="Save"
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={onSubmit}
             disabledSubmit={isSubmitting}
         >
             <h2 className="text-2xl font-bold mb-2 text-center text-primary">{props.judge.name}</h2>
             <div className="flex flex-row w-full my-3 space-x-3">
-                <TextInput
-                    name="name"
-                    placeholder="Name"
-                    register={register}
-                    required
-                    defaultValue={props.judge.name}
-                />
-                <TextInput
-                    name="email"
-                    placeholder="Email"
-                    register={register}
-                    required
-                    defaultValue={props.judge.email}
-                />
+                <RawTextInput placeholder="Name" text={name} setText={setName} full />
+                <RawTextInput placeholder="Email" text={email} setText={setEmail} full />
             </div>
-            <TextArea
-                name="notes"
-                placeholder="Notes (optional)"
-                register={register}
-                defaultValue={props.judge.notes}
-            />
+            <RawTextArea placeholder="Notes (optional)" value={notes} setValue={setNotes} />
         </ConfirmPopup>
     );
 };
