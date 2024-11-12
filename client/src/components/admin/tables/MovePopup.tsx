@@ -102,7 +102,6 @@ const MovePopup = (props: MovePopupProps) => {
                     </p>
                 )}
                 <RawTextInput
-                    name="group"
                     placeholder="New group"
                     text={newGroup}
                     setText={setNewGroup}

@@ -54,6 +54,7 @@ const AdminSettings = () => {
     const [groupSizes, setGroupSizes] = useState('30, 30');
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
+    const [challenges, setChallenges] = useState<string[]>([]);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
 
     async function getOptions() {
@@ -66,6 +67,14 @@ const AdminSettings = () => {
             alert('error: could not get options data');
             return;
         }
+
+        // Get challenges
+        const challengesRes = await getRequest<string[]>('/challenges', '');
+        if (challengesRes.status !== 200) {
+            errorAlert(challengesRes);
+            return;
+        }
+        setChallenges(challengesRes.data as string[]);
 
         // Calculate judging timer MM:SS
         const timer = res.data.judging_timer;
@@ -415,7 +424,6 @@ const AdminSettings = () => {
                 </Description>
                 <div className="flex flex-row">
                     <RawTextInput
-                        name="min-views"
                         text={minViews}
                         setText={setMinViews}
                         placeholder="Enter an integer..."
@@ -461,7 +469,6 @@ const AdminSettings = () => {
                 </Description>
                 <div className="flex flex-row">
                     <RawTextInput
-                        name="judging-timer"
                         text={judgingTimer}
                         setText={setJudgingTimer}
                         placeholder="MM:SS"
@@ -495,8 +502,13 @@ const AdminSettings = () => {
                             under the 'Opt-In Prizes' category. Only the tracks listed here will be
                             judged! As with the previous setting, DO NOT CHANGE THIS DURING JUDGING.
                         </Description>
+                        {challenges && (
+                            <div className="border-2 border-primary bg-primary/10 rounded-md p-2 my-2">
+                                <h1 className="text-xl font-bold">Challenge List</h1>
+                                <Description>{challenges.join(', ')}</Description>
+                            </div>
+                        )}
                         <RawTextInput
-                            name="tracks"
                             text={tracks}
                             setText={setTracks}
                             placeholder="Track 1, Track 2, ..."
@@ -527,7 +539,6 @@ const AdminSettings = () => {
                         </Description>
                         <div className="flex flex-row">
                             <RawTextInput
-                                name="num-groups"
                                 text={numGroups}
                                 setText={setNumGroups}
                                 placeholder="Enter an integer..."
@@ -548,7 +559,6 @@ const AdminSettings = () => {
                             used as overflow if all groups fill up.
                         </Description>
                         <RawTextInput
-                            name="group-sizes"
                             placeholder="30, 30, 30, ..."
                             text={groupSizes}
                             setText={setGroupSizes}
@@ -587,7 +597,6 @@ const AdminSettings = () => {
                                 </Description>
                                 <div className="flex flex-row">
                                     <RawTextInput
-                                        name="auto-switch-prop"
                                         text={autoSwitchProp}
                                         setText={setAutoSwitchProp}
                                         placeholder="Enter a decimal..."

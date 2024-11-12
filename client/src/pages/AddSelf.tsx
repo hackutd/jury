@@ -87,9 +87,8 @@ const AddSelf = () => {
                     need is your name and email. Once you hit submit, you will get an email with
                     your judging code.
                 </p>
-                <RawTextInput name="Name" text={name} setText={setName} placeholder="Name" large />
+                <RawTextInput text={name} setText={setName} placeholder="Name" large />
                 <RawTextInput
-                    name="Email"
                     text={email}
                     setText={setEmail}
                     placeholder="Email"

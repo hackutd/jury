@@ -398,7 +398,6 @@ const JudgeLive = () => {
                 <div className="w-full py-2 h-10"></div>
                 <div className="fixed bottom-0 flex justify-center p-2 w-full left-0 bg-background">
                     <RawTextInput
-                        name="notes"
                         placeholder="Personal notes..."
                         text={notes}
                         setText={setNotes}
