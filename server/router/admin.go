@@ -635,3 +635,18 @@ func SetDeliberation(ctx *gin.Context) {
 	logger.AdminLogf("%s deliberation", hap)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
+
+func GetGroupNames(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the options
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, options.GroupNames)
+}

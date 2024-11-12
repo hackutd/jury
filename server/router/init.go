@@ -152,6 +152,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	// Project expo routes
 	defaultRouter.GET("/project/list/public", ListPublicProjects)
 	defaultRouter.GET("/challenges", GetChallenges)
+	defaultRouter.GET("/group-names", GetGroupNames)
 
 	// ######################
 	// ##### END ROUTES #####

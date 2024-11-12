@@ -21,6 +21,7 @@ interface Project {
 interface PublicProject {
     name: string;
     location: number;
+    group: number;
     description: string;
     url: string;
     try_link: string;

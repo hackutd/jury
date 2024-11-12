@@ -172,6 +172,7 @@ func ListProjects(ctx *gin.Context) {
 type PublicProject struct {
 	Name          string `json:"name"`
 	Location      int64  `json:"location"`
+	Group         int64  `json:"group"`
 	Description   string `json:"description"`
 	Url           string `json:"url"`
 	TryLink       string `json:"try_link"`
@@ -196,6 +197,7 @@ func ListPublicProjects(ctx *gin.Context) {
 		publicProjects[i] = PublicProject{
 			Name:          project.Name,
 			Location:      project.Location,
+			Group:         project.Group,
 			Description:   project.Description,
 			Url:           project.Url,
 			TryLink:       project.TryLink,
