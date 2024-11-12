@@ -299,6 +299,32 @@ const AdminSettings = () => {
         alert('Group sizes updated!');
     };
 
+    const updateGroupNames = async () => {
+        const names = groupNames.split(',').map((name) => name.trim());
+        if (names.some((name) => name === '')) {
+            alert('Group names should not be empty!');
+            return;
+        }
+
+        // Make sure number of names is numGroups
+        if (names.length !== numGroups) {
+            alert(
+                'Number of names should be the same as number of groups (you need a name for each group)!'
+            );
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+            group_names: names,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Group names updated!');
+    }
+
     const resetClock = async () => {
         const res = await postRequest<OkResponse>('/admin/clock/reset', 'admin', null);
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -627,6 +653,7 @@ const AdminSettings = () => {
                             large
                             className="my-2"
                         />
+                        <SettingsButton onClick={updateGroupNames}>Update Group Names</SettingsButton>
                     </>
                 )}
 
