@@ -9,12 +9,14 @@ import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Ranking from '../../components/judge/dnd/Ranking';
 import StarList from '../../components/judge/dnd/StarList';
+import { Helmet } from 'react-helmet';
 
 const Judge = () => {
     const navigate = useNavigate();
     const [judge, setJudge] = useState<Judge | null>(null);
     const [loaded, setLoaded] = useState(false);
     const [projCount, setProjCount] = useState(0);
+    const [deliberation, setDeliberation] = useState(false);
 
     // Verify user is logged in and read welcome before proceeding
     useEffect(() => {
@@ -63,6 +65,15 @@ const Judge = () => {
                 return;
             }
             setProjCount(projCountRes.data?.count as number);
+
+            // Get deliberation status
+            const delibRes = await getRequest<OkResponse>('/judge/deliberation', 'judge');
+            if (delibRes.status !== 200) {
+                errorAlert(delibRes);
+                return;
+            }
+            setDeliberation(delibRes.data?.ok === 1);
+
             setLoaded(true);
         }
 
@@ -97,6 +108,9 @@ const Judge = () => {
 
     return (
         <>
+            <Helmet>
+                <title>Judging | Jury</title>
+            </Helmet>
             <JuryHeader withLogout />
             <Container noCenter className="px-2 pb-4">
                 <h1 className="text-2xl mt-2">Welcome, {judge.name}!</h1>
@@ -117,7 +131,11 @@ const Judge = () => {
                     <StatBlock name="Seen" value={judge.seen_projects.length as number} />
                     <StatBlock name="Total Projects" value={projCount} />
                 </div>
-                {judge.track === '' ? <Ranking judge={judge} /> : <StarList judge={judge} />}
+                {judge.track === '' ? (
+                    <Ranking judge={judge} deliberation={deliberation} />
+                ) : (
+                    <StarList judge={judge} deliberation={deliberation} />
+                )}
             </Container>
         </>
     );

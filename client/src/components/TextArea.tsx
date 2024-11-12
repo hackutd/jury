@@ -1,27 +1,29 @@
-import type { UseFormRegister } from 'react-hook-form';
+import { twMerge } from 'tailwind-merge';
 
 interface TextAreaProps {
-    /* Name of the field */
-    name: string;
-
     /* Placeholder of the field */
     placeholder: string;
 
-    /* Default value of the field */
-    defaultValue?: string;
+    /* State variable for the field */
+    value: string;
 
-    /* Register function from react-hook-form */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    register: UseFormRegister<any>;
+    /* Setter function for the field */
+    setValue: React.Dispatch<React.SetStateAction<string>>;
+
+    /* Custom class name */
+    className?: string;
 }
 
 const TextArea = (props: TextAreaProps) => {
     return (
         <textarea
-            className="w-full h-36 px-4 py-4 text-2xl border-lightest border-2 rounded-sm focus:border-primary focus:border-4 focus:outline-none"
+            className={twMerge(
+                'w-full p-2 text-md border-lightest border-2 rounded-sm focus:border-primary focus:border-2 focus:outline-none',
+                props.className
+            )}
+            value={props.value}
+            onChange={(e) => props.setValue(e.target.value)}
             placeholder={props.placeholder}
-            defaultValue={props.defaultValue}
-            {...props.register(props.name)}
         />
     );
 };

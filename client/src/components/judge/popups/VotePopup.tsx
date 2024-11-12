@@ -1,11 +1,8 @@
 import Button from '../../Button';
-import ConfirmPopup from '../../ConfirmPopup';
 import Popup from '../../Popup';
 import { useNavigate } from 'react-router-dom';
 import Star from '../Star';
-import { useState } from 'react';
 import TextArea from '../../TextArea';
-import RawTextArea from '../../RawTextArea';
 
 interface FinishPopupProps {
     /* Function to modify the popup state variable */
@@ -58,7 +55,7 @@ const FinishPopup = (props: FinishPopupProps) => {
                 </p>
             </div>
             <h3 className="text-lighter text-sm text-left mt-2">Personal Notes</h3>
-            <RawTextArea
+            <TextArea
                 placeholder="Type any personal comments here"
                 value={props.notes}
                 setValue={props.setNotes}

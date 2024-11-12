@@ -16,7 +16,8 @@ import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import alarm from '../../assets/alarm.mp3';
 import data from '../../data.json';
-import RawTextInput from '../../components/RawTextInput';
+import TextInput from '../../components/TextInput';
+import { Helmet } from 'react-helmet';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done', 'doneTrack'];
 const infoData = [
@@ -83,6 +84,17 @@ const JudgeLive = () => {
             }
             if (startedRes.data?.ok !== 1) {
                 setVerified(true);
+                setInfoPage('paused');
+                return;
+            }
+
+            // Check to see if deliberation has started
+            const deliberationRes = await getRequest<OkResponse>('/admin/deliberation', '');
+            if (deliberationRes.status !== 200) {
+                errorAlert(deliberationRes);
+                return;
+            }
+            if (deliberationRes.data?.ok === 1) {
                 setInfoPage('paused');
                 return;
             }
@@ -317,6 +329,9 @@ const JudgeLive = () => {
 
     return (
         <>
+            <Helmet>
+                <title>Live Judging | Jury</title>
+            </Helmet>
             <JuryHeader withLogout />
             <Container noCenter className="px-2 pb-4">
                 <Back location="/judge" />
@@ -386,8 +401,7 @@ const JudgeLive = () => {
                 {/* Dummy div for fixed text input */}
                 <div className="w-full py-2 h-10"></div>
                 <div className="fixed bottom-0 flex justify-center p-2 w-full left-0 bg-background">
-                    <RawTextInput
-                        name="notes"
+                    <TextInput
                         placeholder="Personal notes..."
                         text={notes}
                         setText={setNotes}

@@ -45,6 +45,9 @@ func UpdateOptions(db *mongo.Database, ctx context.Context, options *models.Opti
 	if options.MultiGroup != nil {
 		update["multi_group"] = *options.MultiGroup
 	}
+	if options.NumGroups != nil {
+		update["num_groups"] = *options.NumGroups
+	}
 	if options.GroupSizes != nil {
 		update["group_sizes"] = *options.GroupSizes
 	}
@@ -53,6 +56,9 @@ func UpdateOptions(db *mongo.Database, ctx context.Context, options *models.Opti
 	}
 	if options.AutoSwitchProp != nil {
 		update["auto_switch_prop"] = *options.AutoSwitchProp
+	}
+	if options.GroupNames != nil {
+		update["group_names"] = *options.GroupNames
 	}
 
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
@@ -92,9 +98,9 @@ func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) e
 
 	// Resize group sizes if necessary
 	if numGroups < options.NumGroups {
-		options.GroupSizes = options.GroupSizes[:numGroups-1]
+		options.GroupSizes = options.GroupSizes[:numGroups]
 	} else if numGroups > options.NumGroups {
-		for i := options.NumGroups; i < numGroups-1; i++ {
+		for i := options.NumGroups; i < numGroups; i++ {
 			options.GroupSizes = append(options.GroupSizes, 30)
 		}
 	}
@@ -102,8 +108,37 @@ func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) e
 	// Reassign group numbers to all projects
 	ReassignAllGroupNums(db, ctx, options)
 
-	_, err = db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"num_groups": numGroups, "group_sizes": options.GroupSizes}})
-	return err
+	// Update options
+	return UpdateOptions(db, ctx, &models.OptionalOptions{NumGroups: &numGroups, GroupSizes: &options.GroupSizes})
+}
+
+func UpdateGroupSizes(db *mongo.Database, ctx context.Context, groupSizes []int64) error {
+	// Get options
+	options, err := GetOptions(db, ctx)
+	if err != nil {
+		return err
+	}
+
+	// If group sizes did not change, do nothing
+	if len(groupSizes) == len(options.GroupSizes) {
+		same := true
+		for i := range groupSizes {
+			if groupSizes[i] != options.GroupSizes[i] {
+				same = false
+				break
+			}
+		}
+		if same {
+			return nil
+		}
+	}
+
+	// Reassign group numbers to all projects
+	options.GroupSizes = groupSizes
+	ReassignAllGroupNums(db, ctx, options)
+
+	// Update options
+	return UpdateOptions(db, ctx, &models.OptionalOptions{GroupSizes: &groupSizes})
 }
 
 // IncrementManualSwitches increments the manual switches in the database
@@ -122,5 +157,11 @@ func UpdateQRCode(db *mongo.Database, ctx context.Context, qrCode string) error 
 func UpdateTrackQRCode(db *mongo.Database, ctx context.Context, track string, qrCode string) error {
 	key := "track_qr_codes." + track
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{key: qrCode}})
+	return err
+}
+
+// UpdateDeliberation updates the deliberation in the database
+func UpdateDeliberation(db *mongo.Database, ctx context.Context, deliberation bool) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"deliberation": deliberation}})
 	return err
 }

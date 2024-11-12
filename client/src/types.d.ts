@@ -21,6 +21,7 @@ interface Project {
 interface PublicProject {
     name: string;
     location: number;
+    group: number;
     description: string;
     url: string;
     try_link: string;
@@ -131,6 +132,8 @@ interface Options {
     switching_mode: string;
     auto_switch_prop: number;
     manual_switches: number;
+    deliberation: boolean;
+    group_names: string[];
 }
 
 interface FetchResponse<T> {

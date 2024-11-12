@@ -89,7 +89,7 @@ func HideAbsentProject(db *mongo.Database, ctx mongo.SessionContext, projectId *
 	}
 
 	// Hide the project
-	err = database.SetProjectHidden(db, ctx, projectId, true)
+	err = database.SetProjectActive(db, ctx, projectId, false)
 	if err != nil {
 		return errors.New("Error hiding project: " + err.Error())
 	}
@@ -128,9 +128,9 @@ func MoveJudgeGroup(db *mongo.Database, ctx context.Context, judge *models.Judge
 // PickNextProject - Picks the next project for the judge to judge.
 // To do this:
 //  1. Get all available projects
-//  2. If any project is prioritized and on the list, return that
-//  3. Shuffle projects
-//  4. If judging a track, simply pick the next project in order
+//  2. If judging a track, simply pick the next project in order
+//  3. If any project is prioritized and on the list, return that
+//  4. Shuffle projects
 //  5. If any projects seen less than min views (set in admin side), only select from that list
 //  6. Otherwise, pick the project with the minimum number of comparisons with every other project
 func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext, comps *Comparisons) (*models.Project, error) {
@@ -156,6 +156,11 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 		return nil, err
 	}
 
+	// If judging a track, simply pick the next project
+	if judge.Track != "" {
+		return GetNextFreeProject(judge.LastLocation, items)
+	}
+
 	// Get prioritized projects
 	prioritizedProjects, err := database.GetPrioritizedProjects(db, ctx)
 	if err != nil {
@@ -175,11 +180,6 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 	for i := range items {
 		j := rand.Intn(i + 1)
 		items[i], items[j] = items[j], items[i]
-	}
-
-	// If judging a track, simply pick the next project
-	if judge.Track != "" {
-		return GetNextFreeProject(judge.LastLocation, items)
 	}
 
 	// Stable sort by the number of views

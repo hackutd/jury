@@ -23,12 +23,18 @@ const JudgeQrCodes = () => {
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Judge by QR Code</h1>
                 <div className="flex flex-row w-full">
-                    <Button type="primary" href="/admin/qr" full flat className="mr-4">
+                    <Button type="primary" href="/admin/qr" full flat className="mr-4 rounded-md">
                         General Judges
                     </Button>
                     {options && options.judge_tracks && (
                         <>
-                            <Button type="primary" href={`/admin/qr?track=${track}`} full flat>
+                            <Button
+                                type="primary"
+                                href={`/admin/qr?track=${track}`}
+                                full
+                                flat
+                                className="rounded-md"
+                            >
                                 {track} Track Judges
                             </Button>
                             <Dropdown

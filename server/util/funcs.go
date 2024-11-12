@@ -60,6 +60,9 @@ func GroupFromTable(op *models.Options, table int64) int64 {
 		table -= op.GroupSizes[group]
 		group++
 	}
+	if group == int64(len(op.GroupSizes)) {
+		group--
+	}
 	return group
 }
 

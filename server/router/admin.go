@@ -388,10 +388,6 @@ func GetJudgingTimer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"judging_timer": options.JudgingTimer})
 }
 
-type SetNumGroupsRequest struct {
-	NumGroups int64 `json:"num_groups"`
-}
-
 // POST /admin/groups/num - SetNumGroups sets the number of groups
 func SetNumGroups(ctx *gin.Context) {
 	// Get the database from the context
@@ -401,16 +397,22 @@ func SetNumGroups(ctx *gin.Context) {
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the request
-	var req SetNumGroupsRequest
+	var req models.OptionalOptions
 	err := ctx.BindJSON(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
 		return
 	}
 
+	// Make sure the number of groups is valid
+	if req.NumGroups == nil || *req.NumGroups < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid number of groups"})
+		return
+	}
+
 	// Update number of groups in the database
 	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
-		return database.UpdateNumGroups(db, sc, req.NumGroups)
+		return database.UpdateNumGroups(db, sc, *req.NumGroups)
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving num groups to options: " + err.Error()})
@@ -419,6 +421,42 @@ func SetNumGroups(ctx *gin.Context) {
 
 	// Send OK
 	logger.AdminLogf("Set num groups to %d", req.NumGroups)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /admin/groups/sizes - SetGroupSizes sets the sizes of each group
+func SetGroupSizes(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request
+	var req models.OptionalOptions
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Make sure the group sizes are valid
+	if req.GroupSizes == nil || len(*req.GroupSizes) == 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group sizes"})
+		return
+	}
+
+	// Update group sizes in the database
+	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+		return database.UpdateGroupSizes(db, sc, *req.GroupSizes)
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving group sizes to options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Set group sizes to %s", util.StructToStringWithoutNils(req))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -560,4 +598,55 @@ func GetTrackQRCode(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"qr_code": options.TrackQRCodes[track]})
+}
+
+type deliberationRequest struct {
+	Start bool `json:"start"`
+}
+
+// POST /admin/deliberation - SetDeliberation sets the deliberation state
+func SetDeliberation(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request
+	var req deliberationRequest
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Update the deliberation state
+	err = database.UpdateDeliberation(db, ctx, req.Start)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating deliberation: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	hap := "Started"
+	if !req.Start {
+		hap = "Stopped"
+	}
+	logger.AdminLogf("%s deliberation", hap)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+func GetGroupNames(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the options
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	ctx.JSON(http.StatusOK, options.GroupNames)
 }

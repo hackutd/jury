@@ -52,10 +52,13 @@ func AddJudge(ctx *gin.Context) {
 	}
 
 	// Determine group judge should go in
-	group, err := database.GetMinJudgeGroup(db, judgeReq.Track)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
-		return
+	group := int64(0)
+	if judgeReq.Track == "" {
+		group, err = database.GetMinJudgeGroup(db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+			return
+		}
 	}
 
 	// Create the judge
@@ -494,7 +497,7 @@ func JudgeSkip(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /judge/hide - Endpoint to hide a judge
+// POST /judge/hide/:id - Endpoint to hide a judge
 func HideJudge(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -502,49 +505,16 @@ func HideJudge(ctx *gin.Context) {
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
+	// Get ID from URL
+	id := ctx.Param("id")
+
 	// Get ID from body
-	var idReq models.IdRequest
-	err := ctx.BindJSON(&idReq)
+	var hideReq util.HideRequest
+	err := ctx.BindJSON(&hideReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
-
-	// Convert ID string to ObjectID
-	judgeObjectId, err := primitive.ObjectIDFromHex(idReq.Id)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid judge ID"})
-		return
-	}
-
-	// Hide judge in database
-	err = database.SetJudgeHidden(db, &judgeObjectId, true)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error hiding judge in database: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	logger.AdminLogf("Hid judge %s", idReq.Id)
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// POST /judge/unhide - Endpoint to unhide a judge
-func UnhideJudge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
-
-	// Get ID from body
-	var idReq models.IdRequest
-	err := ctx.BindJSON(&idReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
-		return
-	}
-	id := idReq.Id
 
 	// Convert ID string to ObjectID
 	judgeObjectId, err := primitive.ObjectIDFromHex(id)
@@ -553,15 +523,51 @@ func UnhideJudge(ctx *gin.Context) {
 		return
 	}
 
-	// Unhide judge in database
-	err = database.SetJudgeHidden(db, &judgeObjectId, false)
+	// Hide judge in database
+	err = database.SetJudgeActive(db, &judgeObjectId, !hideReq.Hide)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error unhiding judge in database: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error hiding judge in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Unhid judge %s", id)
+	action := "Unhid"
+	if hideReq.Hide {
+		action = "Hid"
+	}
+	logger.AdminLogf("%s judge %s", action, id)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /judge/hide - Endpoint to hide selected judges
+func HideSelectedJudges(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request object
+	var hideReq util.HideSelectedRequest
+	err := ctx.BindJSON(&hideReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Hide judges in database
+	err = database.SetJudgesActive(db, hideReq.Items, !hideReq.Hide)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error hiding judges in database: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	action := "Unhid"
+	if hideReq.Hide {
+		action = "Hid"
+	}
+	logger.AdminLogf("%s %d judges", action, len(hideReq.Items))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -624,6 +630,17 @@ func JudgeScore(ctx *gin.Context) {
 	err := ctx.BindJSON(&scoreReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the options and return error if deliberations
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+	if options.Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
 		return
 	}
 
@@ -705,6 +722,17 @@ func JudgeRank(ctx *gin.Context) {
 		return
 	}
 
+	// Get the options and return error if deliberations
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+	if options.Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+		return
+	}
+
 	// Old ranks
 	oldRanks := util.RankingToString(judge.Rankings)
 
@@ -770,6 +798,17 @@ func JudgeStar(ctx *gin.Context) {
 	err = ctx.BindJSON(&starReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the options and return error if deliberations
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+	if options.Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
 		return
 	}
 
@@ -902,7 +941,7 @@ func JudgeUpdateNotes(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /judge/reassign - Reassigns judge numbers to all judges
+// POST /judge/reassign - Reassigns judge numbers to all judges that are not in a track
 func ReassignJudgeGroups(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -935,12 +974,7 @@ func ReassignJudgeGroups(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-type MoveJudgeRequest struct {
-	Group int64  `json:"group"`
-	Id    string `json:"id"`
-}
-
-// POST /judge/move - Move a judge to a different group
+// PUT /judge/move/:id - Move a judge to a different group
 func MoveJudge(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -948,8 +982,11 @@ func MoveJudge(ctx *gin.Context) {
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
+	// Get the ID from the URL
+	id := ctx.Param("id")
+
 	// Get the request object
-	var moveReq MoveJudgeRequest
+	var moveReq util.MoveRequest
 	err := ctx.BindJSON(&moveReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
@@ -957,7 +994,7 @@ func MoveJudge(ctx *gin.Context) {
 	}
 
 	// Convert ID string to ObjectID
-	judgeObjectId, err := primitive.ObjectIDFromHex(moveReq.Id)
+	judgeObjectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid judge ID"})
 		return
@@ -971,7 +1008,177 @@ func MoveJudge(ctx *gin.Context) {
 	}
 
 	// Send OK
-	logger.AdminLogf("Moved judge %s to group %d", moveReq.Id, moveReq.Group)
+	logger.AdminLogf("Moved judge %s to group %d", id, moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /judge/move - Move selected judges to a different group
+func MoveSelectedJudges(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request object
+	var moveReq util.MoveSelectedRequest
+	err := ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Move the judges to the new group
+	err = database.SetJudgesGroup(db, ctx, moveReq.Items, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving judges group: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Moved %d judges to group %d", len(moveReq.Items), moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// PUT /project/move/:id - Move a project to a different group
+func MoveProject(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the ID from the URL
+	rawId := ctx.Param("id")
+	id, err := primitive.ObjectIDFromHex(rawId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
+	// Get the request object
+	var moveReq util.MoveRequest
+	err = ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get options from database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Make sure valid group
+	if moveReq.Group < 0 || moveReq.Group >= options.NumGroups {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group number"})
+		return
+	}
+
+	// Get max number in group
+	currMaxNum, err := database.GetGroupMaxNum(db, ctx, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
+		return
+	}
+	if currMaxNum == -1 {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number"})
+		return
+	}
+
+	// Get maximum number for the given group
+	maxGroupNum := int64(0)
+	for i, size := range options.GroupSizes {
+		maxGroupNum += size
+		if int64(i) == moveReq.Group {
+			break
+		}
+	}
+
+	// Make sure the group has space (check for max group number and make sure it doesn't exceed)
+	if moveReq.Group < options.NumGroups-1 && currMaxNum >= maxGroupNum {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "group is full, cannot move project to provided group"})
+		return
+	}
+
+	// Move the project to the new group
+	err = database.SetProjectNum(db, ctx, id, currMaxNum+1, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving project group: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Moved project %s to group %d", id.Hex(), moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /project/move - Move selected projects to a different group
+func MoveSelectedProjects(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request object
+	var moveReq util.MoveSelectedRequest
+	err := ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get options from database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Make sure valid group
+	if moveReq.Group < 0 || moveReq.Group >= options.NumGroups {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group number"})
+		return
+	}
+
+	// Get max number in group
+	currMaxNum, err := database.GetGroupMaxNum(db, ctx, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
+		return
+	}
+	if currMaxNum == -1 {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number"})
+		return
+	}
+
+	// Get maximum number for the given group
+	maxGroupNum := int64(0)
+	for i, size := range options.GroupSizes {
+		maxGroupNum += size
+		if int64(i) == moveReq.Group {
+			break
+		}
+	}
+
+	// Check if the group has space (check for max group number and make sure it doesn't exceed)
+	if moveReq.Group < options.NumGroups-1 && currMaxNum+int64(len(moveReq.Items)) > maxGroupNum {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "group is full, cannot move projects to provided group"})
+		return
+	}
+
+	// Move the projects to the new group
+	err = database.SetProjectsNum(db, ctx, moveReq.Items, currMaxNum+1, moveReq.Group)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving projects group: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	logger.AdminLogf("Moved %d projects to group %d", len(moveReq.Items), moveReq.Group)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -1030,10 +1237,13 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	}
 
 	// Determine group judge should go in
-	group, err := database.GetMinJudgeGroup(db, qrReq.Track)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
-		return
+	group := int64(0)
+	if qrReq.Track == "" {
+		group, err = database.GetMinJudgeGroup(db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+			return
+		}
 	}
 
 	// Create the judge
@@ -1071,4 +1281,23 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	}
 	logger.AdminLogf("Added judge %s (%s) from QR code%s", judge.Name, judge.Email, track)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// GET /judge/deliberation - Get the status of the deliberation
+func GetDeliberationStatus(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the options from the database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	if options.Deliberation {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
 }

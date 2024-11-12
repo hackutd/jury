@@ -7,7 +7,7 @@ import Back from '../../components/Back';
 import { getRequest, putRequest } from '../../api';
 import { errorAlert } from '../../util';
 import Star from '../../components/judge/Star';
-import RawTextArea from '../../components/RawTextArea';
+import TextArea from '../../components/TextArea';
 
 const Project = () => {
     const { id } = useParams();
@@ -91,7 +91,7 @@ const Project = () => {
                         Star projects you think should win the top places in the hackathon.
                     </p>
                 </div>
-                <RawTextArea
+                <TextArea
                     placeholder="Your notes..."
                     value={notes}
                     setValue={setNotes}
