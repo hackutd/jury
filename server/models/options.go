@@ -9,6 +9,7 @@ type Options struct {
 	JudgingTimer   int64              `bson:"judging_timer" json:"judging_timer"`
 	MinViews       int64              `bson:"min_views" json:"min_views"`
 	ClockSync      bool               `bson:"clock_sync" json:"clock_sync"`
+	Deliberation   bool               `bson:"deliberation" json:"deliberation"`
 	JudgeTracks    bool               `bson:"judge_tracks" json:"judge_tracks"`
 	Tracks         []string           `bson:"tracks" json:"tracks"`
 	MultiGroup     bool               `bson:"multi_group" json:"multi_group"`
@@ -28,6 +29,7 @@ func NewOptions() *Options {
 		MinViews:       3,
 		Clock:          *NewClockState(),
 		ClockSync:      false,
+		Deliberation:   false,
 		JudgeTracks:    false,
 		Tracks:         []string{},
 		MultiGroup:     false,

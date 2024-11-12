@@ -131,6 +131,7 @@ interface Options {
     switching_mode: string;
     auto_switch_prop: number;
     manual_switches: number;
+    deliberation: boolean;
 }
 
 interface FetchResponse<T> {

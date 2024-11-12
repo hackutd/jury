@@ -599,3 +599,39 @@ func GetTrackQRCode(ctx *gin.Context) {
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"qr_code": options.TrackQRCodes[track]})
 }
+
+type deliberationRequest struct {
+	Start bool `json:"start"`
+}
+
+// POST /admin/deliberation - SetDeliberation sets the deliberation state
+func SetDeliberation(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the request
+	var req deliberationRequest
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Update the deliberation state
+	err = database.UpdateDeliberation(db, ctx, req.Start)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating deliberation: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	hap := "Started"
+	if !req.Start {
+		hap = "Stopped"
+	}
+	logger.AdminLogf("%s deliberation", hap)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}

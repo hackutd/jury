@@ -630,6 +630,17 @@ func JudgeScore(ctx *gin.Context) {
 		return
 	}
 
+	// Get the options and return error if deliberations
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+	if options.Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+		return
+	}
+
 	projId := judge.Current.Hex()
 
 	// Wrap the database transaction
@@ -708,6 +719,17 @@ func JudgeRank(ctx *gin.Context) {
 		return
 	}
 
+	// Get the options and return error if deliberations
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+	if options.Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+		return
+	}
+
 	// Old ranks
 	oldRanks := util.RankingToString(judge.Rankings)
 
@@ -773,6 +795,17 @@ func JudgeStar(ctx *gin.Context) {
 	err = ctx.BindJSON(&starReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the options and return error if deliberations
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+	if options.Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
 		return
 	}
 
@@ -1100,4 +1133,23 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	}
 	logger.AdminLogf("Added judge %s (%s) from QR code%s", judge.Name, judge.Email, track)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// GET /judge/deliberation - Get the status of the deliberation
+func GetDeliberationStatus(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the options from the database
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	if options.Deliberation {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
 }

@@ -6,6 +6,7 @@ interface SortableItemProps {
     item: SortableJudgedProject;
     ranking: number;
     children?: React.ReactNode;
+    disabled?: boolean;
 }
 
 const SortableItem = (props: SortableItemProps) => {
@@ -14,6 +15,7 @@ const SortableItem = (props: SortableItemProps) => {
     }
     const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
         id: props.item.id,
+        disabled: props.disabled,
     });
 
     const style = {

@@ -27,6 +27,25 @@ const AdminHeader = () => {
         alert('Judge groups swapped successfully');
     };
 
+    const startDeliberation = async () => {
+        const res = await postRequest<OkResponse>('/admin/deliberation', 'admin', {
+            start: !options.deliberation,
+        });
+        if (res.status !== 200) {
+            errorAlert(res);
+            return;
+        }
+
+        fetchOptions();
+        if (options.deliberation) {
+            alert('Deliberations has been stopped. Judges can now edit their rankings.');
+        } else {
+            alert(
+                'Deliberation has started! Judges will no longer be able to edit their rankings.'
+            );
+        }
+    };
+
     return (
         <div className="absolute top-4 w-full flex items-center z-0">
             <PauseButton />
@@ -50,25 +69,37 @@ const AdminHeader = () => {
             >
                 Audit Log
             </Button>
-            {options && options.multi_group && options.switching_mode === 'manual' && (
-                <>
-                    <p className="text-lg text-right grow mr-4 text-lighter">
-                        <span className="font-bold">Swaps: </span>
-                        {options.manual_switches}
-                    </p>
-                    <Button
-                        type="gold"
-                        onClick={setSwapPopup.bind(null, true)}
-                        disabled={clock.running}
-                        tooltip="Groups can only be swapped when judging is paused"
-                        small
-                        bold
-                        className="mr-36 py-2"
-                    >
-                        Swap Judge Groups
-                    </Button>
-                </>
-            )}
+            <div className="grow mr-36 flex flex-row justify-end items-center">
+                {options && options.multi_group && options.switching_mode === 'manual' && (
+                    <>
+                        <p className="text-lg text-right grow mr-4 text-lighter">
+                            <span className="font-bold">Swaps: </span>
+                            {options.manual_switches}
+                        </p>
+                        <Button
+                            type="gold"
+                            onClick={setSwapPopup.bind(null, true)}
+                            disabled={clock.running}
+                            tooltip="Groups can only be swapped when judging is paused"
+                            small
+                            bold
+                            className="py-2"
+                        >
+                            Swap Judge Groups
+                        </Button>
+                    </>
+                )}
+                <Button
+                    type={options.deliberation ? 'outline' : 'error'}
+                    onClick={startDeliberation}
+                    small
+                    bold
+                    tooltip="Stop judges from editing their rankings during deliberation"
+                    className="ml-4 py-2"
+                >
+                    {options.deliberation ? 'End Deliberation' : 'Start Deliberation'}
+                </Button>
+            </div>
             <ConfirmPopup
                 enabled={swapPopup}
                 setEnabled={setSwapPopup}

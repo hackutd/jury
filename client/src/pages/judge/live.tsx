@@ -87,6 +87,17 @@ const JudgeLive = () => {
                 return;
             }
 
+            // Check to see if deliberation has started
+            const deliberationRes = await getRequest<OkResponse>('/admin/deliberation', '');
+            if (deliberationRes.status !== 200) {
+                errorAlert(deliberationRes);
+                return;
+            }
+            if (deliberationRes.data?.ok === 1) {
+                setInfoPage('paused');
+                return;
+            }
+
             setVerified(true);
         }
 

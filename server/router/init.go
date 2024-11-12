@@ -127,6 +127,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.POST("/judge/move", MoveSelectedJudges)
 	adminRouter.DELETE("/admin/flag/:id", RemoveFlag)
 	adminRouter.PUT("/judge/move/:id", MoveJudge)
+	adminRouter.POST("/admin/deliberation", SetDeliberation)
 
 	// Admin panel - log
 	adminRouter.GET("/admin/log", GetLog)
@@ -146,6 +147,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	judgeRouter.GET("/project/:id", GetProject)
 	judgeRouter.GET("/project/count", GetProjectCount)
 	judgeRouter.GET("/judge/project/:id", GetJudgedProject)
+	judgeRouter.GET("/judge/deliberation", GetDeliberationStatus)
 
 	// Project expo routes
 	defaultRouter.GET("/project/list/public", ListPublicProjects)

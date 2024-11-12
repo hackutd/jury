@@ -149,3 +149,9 @@ func UpdateTrackQRCode(db *mongo.Database, ctx context.Context, track string, qr
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{key: qrCode}})
 	return err
 }
+
+// UpdateDeliberation updates the deliberation in the database
+func UpdateDeliberation(db *mongo.Database, ctx context.Context, deliberation bool) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"deliberation": deliberation}})
+	return err
+}
