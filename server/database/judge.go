@@ -280,14 +280,14 @@ func ResetBusyProjectListForJudge(db *mongo.Database, ctx context.Context, judge
 }
 
 // GetMinJudgeGroup returns the group with the fewest judges
-func GetMinJudgeGroup(db *mongo.Database, track string) (int64, error) {
-	pipe := []gin.H{{"$group": gin.H{
+func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
+	pipe := []gin.H{{"$match": gin.H{
+		"active": true,
+		"track":  "",
+	}}, {"$group": gin.H{
 		"_id":   "$group",
 		"count": gin.H{"$sum": 1},
 	}}}
-	if track != "" {
-		pipe = append([]gin.H{{"$match": gin.H{"track": track}}}, pipe...)
-	}
 
 	cursor, err := db.Collection("judges").Aggregate(context.Background(), pipe)
 	if err != nil {
@@ -348,6 +348,10 @@ func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset b
 	} else {
 		groupCounts = make(map[int64]int64)
 		cursor, err := db.Collection("judges").Aggregate(ctx, []gin.H{
+			{"$match": gin.H{
+				"active": true,
+				"track":  "",
+			}},
 			{"$group": gin.H{
 				"_id":   "$group",
 				"count": gin.H{"$sum": 1},
@@ -393,11 +397,10 @@ func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset b
 }
 
 // PutJudgesInGroups assigns judges to groups
-// TODO: Fix this
 func PutJudgesInGroups(db *mongo.Database) error {
 	return WithTransaction(db, func(sc mongo.SessionContext) error {
 		// Get all judges
-		judges, err := FindAllJudges(db, sc)
+		judges, err := FindJudgesByTrack(db, sc, "")
 		if err != nil {
 			return err
 		}

@@ -52,10 +52,13 @@ func AddJudge(ctx *gin.Context) {
 	}
 
 	// Determine group judge should go in
-	group, err := database.GetMinJudgeGroup(db, judgeReq.Track)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
-		return
+	group := int64(0)
+	if judgeReq.Track == "" {
+		group, err = database.GetMinJudgeGroup(db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+			return
+		}
 	}
 
 	// Create the judge
@@ -938,7 +941,7 @@ func JudgeUpdateNotes(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /judge/reassign - Reassigns judge numbers to all judges
+// POST /judge/reassign - Reassigns judge numbers to all judges that are not in a track
 func ReassignJudgeGroups(ctx *gin.Context) {
 	// Get the database from the context
 	db := ctx.MustGet("db").(*mongo.Database)
@@ -1092,10 +1095,13 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	}
 
 	// Determine group judge should go in
-	group, err := database.GetMinJudgeGroup(db, qrReq.Track)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
-		return
+	group := int64(0)
+	if qrReq.Track == "" {
+		group, err = database.GetMinJudgeGroup(db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+			return
+		}
 	}
 
 	// Create the judge
