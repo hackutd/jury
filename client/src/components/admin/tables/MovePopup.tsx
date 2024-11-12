@@ -32,7 +32,7 @@ const MovePopup = (props: MovePopupProps) => {
 
         // Check to see if new group is valid
         const group = Number(newGroup);
-        if (isNaN(group) || group < 1) {
+        if (isNaN(group) || group < 0) {
             alert('Invalid group number');
             return;
         }
