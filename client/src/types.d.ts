@@ -132,6 +132,7 @@ interface Options {
     auto_switch_prop: number;
     manual_switches: number;
     deliberation: boolean;
+    group_names: string[];
 }
 
 interface FetchResponse<T> {

@@ -55,6 +55,7 @@ const AdminSettings = () => {
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
     const [challenges, setChallenges] = useState<string[]>([]);
+    const [groupNames, setGroupNames] = useState('');
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
 
     async function getOptions() {
@@ -99,6 +100,7 @@ const AdminSettings = () => {
         setAutoSwitchProp(res.data.auto_switch_prop);
         setJudgeTracks(res.data.judge_tracks);
         setTracks(res.data.tracks.join(', '));
+        setGroupNames(res.data.group_names.join(', '));
 
         setLoading(false);
     }
@@ -610,6 +612,21 @@ const AdminSettings = () => {
                                 </div>
                             </>
                         )}
+
+                        <SubSection>Group Names</SubSection>
+                        <Description>
+                            Set the names of the groups. This will be displayed to judges and admins
+                            to help them keep track of which group they are in. This is especially
+                            useful if you have multiple rooms or groups of judges.
+                        </Description>
+                        <TextInput
+                            placeholder="Group 1, Group 2, Group 3, ..."
+                            text={groupNames}
+                            setText={setGroupNames}
+                            full
+                            large
+                            className="my-2"
+                        />
                     </>
                 )}
 

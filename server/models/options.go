@@ -20,6 +20,7 @@ type Options struct {
 	ManualSwitches int64              `bson:"manual_switches" json:"manual_switches"`   // Number of manual switches that have happened
 	QRCode         string             `bson:"qr_code" json:"qr_code"`                   // Secret key of the QR code
 	TrackQRCodes   map[string]string  `bson:"track_qr_codes" json:"track_qr_codes"`     // Secret keys of the QR codes for each track
+	GroupNames     []string           `bson:"group_names" json:"group_names"`           // Names of the groups
 }
 
 func NewOptions() *Options {
@@ -40,6 +41,7 @@ func NewOptions() *Options {
 		ManualSwitches: 0,
 		QRCode:         "",
 		TrackQRCodes:   make(map[string]string),
+		GroupNames:     []string{"Group 1", "Group 2", "Group 3"},
 	}
 }
 
@@ -54,4 +56,5 @@ type OptionalOptions struct {
 	GroupSizes     *[]int64  `bson:"group_sizes,omitempty" json:"group_sizes,omitempty"`
 	SwitchingMode  *string   `bson:"switching_mode,omitempty" json:"switching_mode,omitempty"`
 	AutoSwitchProp *float64  `bson:"auto_switch_prop,omitempty" json:"auto_switch_prop,omitempty"`
+	GroupNames     *[]string `bson:"group_names,omitempty" json:"group_names,omitempty"`
 }

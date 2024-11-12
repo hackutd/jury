@@ -45,11 +45,20 @@ func UpdateOptions(db *mongo.Database, ctx context.Context, options *models.Opti
 	if options.MultiGroup != nil {
 		update["multi_group"] = *options.MultiGroup
 	}
+	if options.NumGroups != nil {
+		update["num_groups"] = *options.NumGroups
+	}
+	if options.GroupSizes != nil {
+		update["group_sizes"] = *options.GroupSizes
+	}
 	if options.SwitchingMode != nil {
 		update["switching_mode"] = *options.SwitchingMode
 	}
 	if options.AutoSwitchProp != nil {
 		update["auto_switch_prop"] = *options.AutoSwitchProp
+	}
+	if options.GroupNames != nil {
+		update["group_names"] = *options.GroupNames
 	}
 
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
@@ -89,9 +98,9 @@ func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) e
 
 	// Resize group sizes if necessary
 	if numGroups < options.NumGroups {
-		options.GroupSizes = options.GroupSizes[:numGroups-1]
+		options.GroupSizes = options.GroupSizes[:numGroups]
 	} else if numGroups > options.NumGroups {
-		for i := options.NumGroups; i < numGroups-1; i++ {
+		for i := options.NumGroups; i < numGroups; i++ {
 			options.GroupSizes = append(options.GroupSizes, 30)
 		}
 	}
@@ -125,6 +134,7 @@ func UpdateGroupSizes(db *mongo.Database, ctx context.Context, groupSizes []int6
 	}
 
 	// Reassign group numbers to all projects
+	options.GroupSizes = groupSizes
 	ReassignAllGroupNums(db, ctx, options)
 
 	// Update options
