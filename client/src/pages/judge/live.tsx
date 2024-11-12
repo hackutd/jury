@@ -16,7 +16,7 @@ import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
 import alarm from '../../assets/alarm.mp3';
 import data from '../../data.json';
-import RawTextInput from '../../components/RawTextInput';
+import TextInput from '../../components/TextInput';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done', 'doneTrack'];
 const infoData = [
@@ -397,7 +397,7 @@ const JudgeLive = () => {
                 {/* Dummy div for fixed text input */}
                 <div className="w-full py-2 h-10"></div>
                 <div className="fixed bottom-0 flex justify-center p-2 w-full left-0 bg-background">
-                    <RawTextInput
+                    <TextInput
                         placeholder="Personal notes..."
                         text={notes}
                         setText={setNotes}

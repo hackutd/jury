@@ -6,7 +6,7 @@ import { errorAlert } from '../../util';
 import ConfirmPopup from '../../components/ConfirmPopup';
 import Loading from '../../components/Loading';
 import Checkbox from '../../components/Checkbox';
-import RawTextInput from '../../components/RawTextInput';
+import TextInput from '../../components/TextInput';
 import SelectionButton from '../../components/SelectionButton';
 import { useOptionsStore } from '../../store';
 
@@ -423,7 +423,7 @@ const AdminSettings = () => {
                     condition (recommended: 3-5).
                 </Description>
                 <div className="flex flex-row">
-                    <RawTextInput
+                    <TextInput
                         text={minViews}
                         setText={setMinViews}
                         placeholder="Enter an integer..."
@@ -468,7 +468,7 @@ const AdminSettings = () => {
                     to have a timer for each judge.
                 </Description>
                 <div className="flex flex-row">
-                    <RawTextInput
+                    <TextInput
                         text={judgingTimer}
                         setText={setJudgingTimer}
                         placeholder="MM:SS"
@@ -508,7 +508,7 @@ const AdminSettings = () => {
                                 <Description>{challenges.join(', ')}</Description>
                             </div>
                         )}
-                        <RawTextInput
+                        <TextInput
                             text={tracks}
                             setText={setTracks}
                             placeholder="Track 1, Track 2, ..."
@@ -538,7 +538,7 @@ const AdminSettings = () => {
                             Set the number of groups judges will be split into.
                         </Description>
                         <div className="flex flex-row">
-                            <RawTextInput
+                            <TextInput
                                 text={numGroups}
                                 setText={setNumGroups}
                                 placeholder="Enter an integer..."
@@ -558,7 +558,7 @@ const AdminSettings = () => {
                             of groups (eg. 3 groups: "30, 30, 40"). Note that the last group will be
                             used as overflow if all groups fill up.
                         </Description>
-                        <RawTextInput
+                        <TextInput
                             placeholder="30, 30, 30, ..."
                             text={groupSizes}
                             setText={setGroupSizes}
@@ -596,7 +596,7 @@ const AdminSettings = () => {
                                     results if judges do not visit enough different groups.
                                 </Description>
                                 <div className="flex flex-row">
-                                    <RawTextInput
+                                    <TextInput
                                         text={autoSwitchProp}
                                         setText={setAutoSwitchProp}
                                         placeholder="Enter a decimal..."

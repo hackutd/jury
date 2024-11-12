@@ -1,6 +1,6 @@
 import { twMerge } from 'tailwind-merge';
 
-interface RawTextInputProps {
+interface TextInputProps {
     /* Placeholder of the field */
     placeholder: string;
 
@@ -28,7 +28,7 @@ interface RawTextInputProps {
     number?: boolean;
 }
 
-const RawTextInput = (props: RawTextInputProps) => {
+const TextInput = (props: TextInputProps) => {
     return (
         <input
             type={props.number ? 'number' : 'text'}
@@ -48,4 +48,4 @@ const RawTextInput = (props: RawTextInputProps) => {
     );
 };
 
-export default RawTextInput;
+export default TextInput;

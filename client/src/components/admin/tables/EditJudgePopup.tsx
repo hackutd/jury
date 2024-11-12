@@ -3,8 +3,8 @@ import { putRequest } from '../../../api';
 import { errorAlert } from '../../../util';
 import { useAdminStore } from '../../../store';
 import ConfirmPopup from '../../ConfirmPopup';
-import RawTextInput from '../../RawTextInput';
-import RawTextArea from '../../RawTextArea';
+import TextInput from '../../TextInput';
+import TextArea from '../../TextArea';
 
 interface EditJudgePopupProps {
     /* Judge to edit */
@@ -51,10 +51,10 @@ const EditJudgePopup = (props: EditJudgePopupProps) => {
         >
             <h2 className="text-2xl font-bold mb-2 text-center text-primary">{props.judge.name}</h2>
             <div className="flex flex-row w-full my-3 space-x-3">
-                <RawTextInput placeholder="Name" text={name} setText={setName} full />
-                <RawTextInput placeholder="Email" text={email} setText={setEmail} full />
+                <TextInput placeholder="Name" text={name} setText={setName} full />
+                <TextInput placeholder="Email" text={email} setText={setEmail} full />
             </div>
-            <RawTextArea placeholder="Notes (optional)" value={notes} setValue={setNotes} />
+            <TextArea placeholder="Notes (optional)" value={notes} setValue={setNotes} />
         </ConfirmPopup>
     );
 };

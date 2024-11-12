@@ -3,7 +3,7 @@ import { postRequest, putRequest } from '../../../api';
 import ConfirmPopup from '../../ConfirmPopup';
 import { errorAlert } from '../../../util';
 import { useAdminStore, useAdminTableStore } from '../../../store';
-import RawTextInput from '../../RawTextInput';
+import TextInput from '../../TextInput';
 
 interface MovePopupProps {
     /* State variable to open popup */
@@ -101,7 +101,7 @@ const MovePopup = (props: MovePopupProps) => {
                         Move the selected judges to another group. Enter the new group number below.
                     </p>
                 )}
-                <RawTextInput
+                <TextInput
                     placeholder="New group"
                     text={newGroup}
                     setText={setNewGroup}

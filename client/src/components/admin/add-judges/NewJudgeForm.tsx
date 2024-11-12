@@ -4,8 +4,8 @@ import { errorAlert } from '../../../util';
 import Checkbox from '../../Checkbox';
 import Loading from '../../Loading';
 import { useAdminStore, useOptionsStore } from '../../../store';
-import RawTextArea from '../../RawTextArea';
-import RawTextInput from '../../RawTextInput';
+import TextArea from '../../TextArea';
+import TextInput from '../../TextInput';
 import Dropdown from '../../Dropdown';
 
 const NewJudgeForm = () => {
@@ -58,8 +58,8 @@ const NewJudgeForm = () => {
                 <h1 className="text-3xl mb-4">Add Judge</h1>
                 <form className="flex flex-col w-full" onSubmit={handleSubmit}>
                     <div className="flex flex-row w-full mt-4 space-x-6">
-                        <RawTextInput placeholder="Name" text={name} setText={setName} large full />
-                        <RawTextInput
+                        <TextInput placeholder="Name" text={name} setText={setName} large full />
+                        <TextInput
                             placeholder="Email"
                             text={email}
                             setText={setEmail}
@@ -74,7 +74,7 @@ const NewJudgeForm = () => {
                         setSelected={setTrack}
                         className="mt-0 mb-4 text-left text-xl bg-white rounded-sm"
                     />
-                    <RawTextArea
+                    <TextArea
                         value={notes}
                         setValue={setNotes}
                         placeholder="Notes (optional)"

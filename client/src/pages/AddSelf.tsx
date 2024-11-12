@@ -3,7 +3,7 @@ import Container from '../components/Container';
 import JuryHeader from '../components/JuryHeader';
 import { useEffect, useState } from 'react';
 import Loading from '../components/Loading';
-import RawTextInput from '../components/RawTextInput';
+import TextInput from '../components/TextInput';
 import Button from '../components/Button';
 import { getRequest, postRequest } from '../api';
 import { errorAlert } from '../util';
@@ -87,8 +87,8 @@ const AddSelf = () => {
                     need is your name and email. Once you hit submit, you will get an email with
                     your judging code.
                 </p>
-                <RawTextInput text={name} setText={setName} placeholder="Name" large />
-                <RawTextInput
+                <TextInput text={name} setText={setName} placeholder="Name" large />
+                <TextInput
                     text={email}
                     setText={setEmail}
                     placeholder="Email"

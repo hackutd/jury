@@ -1,6 +1,6 @@
 import { twMerge } from 'tailwind-merge';
 
-interface RawTextAreaProps {
+interface TextAreaProps {
     /* Placeholder of the field */
     placeholder: string;
 
@@ -14,7 +14,7 @@ interface RawTextAreaProps {
     className?: string;
 }
 
-const RawTextArea = (props: RawTextAreaProps) => {
+const TextArea = (props: TextAreaProps) => {
     return (
         <textarea
             className={twMerge(
@@ -28,4 +28,4 @@ const RawTextArea = (props: RawTextAreaProps) => {
     );
 };
 
-export default RawTextArea;
+export default TextArea;

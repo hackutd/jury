@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { postRequest } from '../../../api';
 import { errorAlert } from '../../../util';
 import { useAdminStore } from '../../../store';
-import RawTextInput from '../../RawTextInput';
-import RawTextArea from '../../RawTextArea';
+import TextInput from '../../TextInput';
+import TextArea from '../../TextArea';
 
 const NewProjectForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,28 +45,28 @@ const NewProjectForm = () => {
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Project</h1>
                 <form className="flex flex-col w-full space-y-4" onSubmit={handleSubmit}>
-                    <RawTextInput placeholder="Name" text={name} setText={setName} />
-                    <RawTextArea
+                    <TextInput placeholder="Name" text={name} setText={setName} />
+                    <TextArea
                         placeholder="Description"
                         value={description}
                         setValue={setDescription}
                     />
-                    <RawTextInput placeholder="URL" text={url} setText={setUrl} />
+                    <TextInput placeholder="URL" text={url} setText={setUrl} />
                     <div className="flex flex-row w-full mt-4 space-x-6">
-                        <RawTextInput
+                        <TextInput
                             placeholder='"Try It" Link (optional)'
                             text={tryLink}
                             setText={setTryLink}
                             full
                         />
-                        <RawTextInput
+                        <TextInput
                             placeholder="Video Link (optional)"
                             text={videoLink}
                             setText={setVideoLink}
                             full
                         />
                     </div>
-                    <RawTextInput
+                    <TextInput
                         placeholder="Challenge List (comma separated, optional)"
                         text={challengeList}
                         setText={setChallengeList}
