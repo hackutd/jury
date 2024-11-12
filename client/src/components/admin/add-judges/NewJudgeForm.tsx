@@ -7,6 +7,7 @@ import { useAdminStore, useOptionsStore } from '../../../store';
 import TextArea from '../../TextArea';
 import TextInput from '../../TextInput';
 import Dropdown from '../../Dropdown';
+import Button from '../../Button';
 
 const NewJudgeForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,8 +19,7 @@ const NewJudgeForm = () => {
     const fetchJudgeStats = useAdminStore((state) => state.fetchJudgeStats);
     const options = useOptionsStore((state) => state.options);
 
-    const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
-        e.preventDefault();
+    const submit = async () => {
         setIsSubmitting(true);
 
         // Make sure name and email are defined
@@ -56,16 +56,10 @@ const NewJudgeForm = () => {
         <div className="w-full h-full border-lightest border-2 p-8 rounded-sm">
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Judge</h1>
-                <form className="flex flex-col w-full" onSubmit={handleSubmit}>
+                <form className="flex flex-col w-full">
                     <div className="flex flex-row w-full mt-4 space-x-6">
                         <TextInput placeholder="Name" text={name} setText={setName} large full />
-                        <TextInput
-                            placeholder="Email"
-                            text={email}
-                            setText={setEmail}
-                            large
-                            full
-                        />
+                        <TextInput placeholder="Email" text={email} setText={setEmail} large full />
                     </div>
                     <p className="mt-2 font-bold text-lighter">Track</p>
                     <Dropdown
@@ -83,12 +77,9 @@ const NewJudgeForm = () => {
                     <Checkbox checked={noSend} onChange={setNoSend} className="my-2">
                         Do not send an email
                     </Checkbox>
-                    <button
-                        className="w-full h-11 px-4 text-2xl text-white bg-primary rounded-full"
-                        disabled={isSubmitting}
-                    >
+                    <Button type="primary" onClick={submit} full flat className="py-1 rounded-md">
                         Add
-                    </button>
+                    </Button>
                 </form>
             </div>
             <Loading disabled={!isSubmitting} />

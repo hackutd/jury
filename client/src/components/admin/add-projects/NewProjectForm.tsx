@@ -4,6 +4,7 @@ import { errorAlert } from '../../../util';
 import { useAdminStore } from '../../../store';
 import TextInput from '../../TextInput';
 import TextArea from '../../TextArea';
+import Button from '../../Button';
 
 const NewProjectForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,8 +16,7 @@ const NewProjectForm = () => {
     const [videoLink, setVideoLink] = useState('');
     const [challengeList, setChallengeList] = useState('');
 
-    const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
-        e.preventDefault();
+    const submit = async () => {
         setIsSubmitting(true);
 
         const data = {
@@ -44,7 +44,7 @@ const NewProjectForm = () => {
         <div className="w-full h-full border-lightest border-2 p-8 rounded-sm">
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Project</h1>
-                <form className="flex flex-col w-full space-y-4" onSubmit={handleSubmit}>
+                <form className="flex flex-col w-full space-y-3">
                     <TextInput placeholder="Name" text={name} setText={setName} />
                     <TextArea
                         placeholder="Description"
@@ -71,12 +71,9 @@ const NewProjectForm = () => {
                         text={challengeList}
                         setText={setChallengeList}
                     />
-                    <button
-                        className="w-full h-11 px-4 text-2xl text-white bg-primary rounded-full"
-                        disabled={isSubmitting}
-                    >
+                    <Button type="primary" onClick={submit} full flat className="py-1 rounded-md">
                         Add
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>
