@@ -87,11 +87,11 @@ const JudgesTable = () => {
             case JudgeSortField.Seen:
                 sortFunc = (a, b) => (a.seen - b.seen) * asc;
                 break;
-            case JudgeSortField.Top:
-                sortFunc = (a, b) => (a.rankings.length - b.rankings.length) * asc;
-                break;
             case JudgeSortField.Updated:
                 sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
+                break;
+            case JudgeSortField.Curr:
+                sortFunc = (a, b) => a.current.localeCompare(b.current) * asc;
                 break;
         }
         setJudges(filteredJudges.toSorted(sortFunc));
@@ -131,9 +131,9 @@ const JudgesTable = () => {
                             sortState={sortState}
                         />
                         <HeaderEntry
-                            name="Best Proj"
+                            name="Curr Proj"
                             updateSort={updateSort}
-                            sortField={JudgeSortField.Top}
+                            sortField={JudgeSortField.Curr}
                             sortState={sortState}
                         />
                         <HeaderEntry

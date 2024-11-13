@@ -80,31 +80,7 @@ const Judge = () => {
         fetchData();
     }, []);
 
-    if (!loaded) return <Loading disabled={!loaded} />;
-
-    // Lets the user take a break
-    const takeBreak = async () => {
-        if (!judge) {
-            alert('You are not logged in!');
-            return;
-        }
-
-        // Check if the user is allowed to take a break
-        if (judge.current == null) {
-            alert('You are already taking a break!');
-            return;
-        }
-
-        const res = await postRequest<OkResponse>('/judge/break', 'judge', null);
-        if (res.status !== 200) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('You can now take a break! Press "Next project" to continue judging.');
-    };
-
-    if (!judge) return <Loading disabled={!judge} />;
+    if (!loaded || !judge) return <Loading disabled={!loaded || !judge} />;
 
     return (
         <>
@@ -121,11 +97,6 @@ const Judge = () => {
                     <Button type="primary" full href="/judge/live">
                         Next Project
                     </Button>
-                    <div className="flex align-center justify-center mt-4">
-                        <Button type="outline" onClick={takeBreak} className="text-lg p-2">
-                            I want to take a break!
-                        </Button>
-                    </div>
                 </div>
                 <div className="flex justify-evenly">
                     <StatBlock name="Seen" value={judge.seen_projects.length as number} />
