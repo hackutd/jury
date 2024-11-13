@@ -103,7 +103,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                             ? 'Upload a CSV file exported from Devpost. Make sure you select Projects data and "do not include personal info".'
                             : `CSV should be formatted in the order of ${displayText} separated by commas; each entry should be on a new line.`}
                     </p>
-                    <form className="flex flex-col w-full space-y-4 mt-4" onSubmit={UploadCSV}>
+                    <div className="flex flex-col w-full space-y-4 mt-4">
                         <div
                             className="flex flex-col items-center justify-center w-full"
                             onDrop={handleDrop}
@@ -182,7 +182,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                                 {isUploading ? 'Uploading...' : 'Upload'}
                             </Button>
                         </div>
-                    </form>
+                    </div>
                 </div>
                 <Loading disabled={!isUploading} />
             </div>
