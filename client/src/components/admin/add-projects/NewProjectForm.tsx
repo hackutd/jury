@@ -44,7 +44,7 @@ const NewProjectForm = () => {
         <div className="w-full h-full border-lightest border-2 p-8 rounded-sm">
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Project</h1>
-                <form className="flex flex-col w-full space-y-3">
+                <div className="flex flex-col w-full space-y-3">
                     <TextInput placeholder="Name" text={name} setText={setName} />
                     <TextArea
                         placeholder="Description"
@@ -74,7 +74,7 @@ const NewProjectForm = () => {
                     <Button type="primary" onClick={submit} full flat className="py-1 rounded-md">
                         Add
                     </Button>
-                </form>
+                </div>
             </div>
         </div>
     );

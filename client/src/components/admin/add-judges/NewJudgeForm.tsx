@@ -56,7 +56,7 @@ const NewJudgeForm = () => {
         <div className="w-full h-full border-lightest border-2 p-8 rounded-sm">
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Judge</h1>
-                <form className="flex flex-col w-full">
+                <div className="flex flex-col w-full">
                     <div className="flex flex-row w-full mt-4 space-x-6">
                         <TextInput placeholder="Name" text={name} setText={setName} large full />
                         <TextInput placeholder="Email" text={email} setText={setEmail} large full />
@@ -80,7 +80,7 @@ const NewJudgeForm = () => {
                     <Button type="primary" onClick={submit} full flat className="py-1 rounded-md">
                         Add
                     </Button>
-                </form>
+                </div>
             </div>
             <Loading disabled={!isSubmitting} />
         </div>
