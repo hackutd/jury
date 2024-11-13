@@ -4,8 +4,8 @@ export enum JudgeSortField {
     Track,
     Group,
     Seen,
-    Top,
     Updated,
+    Curr,
     None,
 }
 

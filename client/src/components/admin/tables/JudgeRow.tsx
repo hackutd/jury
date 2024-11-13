@@ -24,6 +24,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
     const selected = useAdminTableStore((state) => state.selected);
     const setSelected = useAdminTableStore((state) => state.setSelected);
+    const projects = useAdminStore((state) => state.projects);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -59,14 +60,13 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
         fetchJudges();
     };
 
-    const getBestRanked = (judge: Judge) => {
-        if (judge.rankings.length === 0) {
-            return 'N/A';
+    const idToProj = (id: string) => {
+        if (!id || id === '') {
+            return 'None';
         }
 
-        const best = judge.rankings[0];
-        const bestName = judge.seen_projects.find((p) => p.project_id === best)?.name;
-        return bestName ? bestName : best;
+        const proj = projects.find((p) => p.id === id);
+        return proj ? `${proj.name} [T${proj.location}]` : 'None';
     };
 
     return (
@@ -95,7 +95,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
                     <td className="text-center">{judge.group}</td>
                 )}
                 <td className="text-center">{judge.seen}</td>
-                <td className="text-center">{getBestRanked(judge)}</td>
+                <td className="text-center">{idToProj(judge.current)}</td>
                 <td className="text-center">{timeSince(judge.last_activity)}</td>
                 <td className="text-right font-bold flex align-center justify-end">
                     <ActionsDropdown
