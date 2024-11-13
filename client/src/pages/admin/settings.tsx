@@ -9,6 +9,7 @@ import Checkbox from '../../components/Checkbox';
 import TextInput from '../../components/TextInput';
 import SelectionButton from '../../components/SelectionButton';
 import { useOptionsStore } from '../../store';
+import ChallengeBlock from '../../components/admin/ChallengeBlock';
 
 // Text components
 const Section = ({ children: c }: { children: React.ReactNode }) => (
@@ -54,8 +55,8 @@ const AdminSettings = () => {
     const [groupSizes, setGroupSizes] = useState('30, 30');
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
-    const [challenges, setChallenges] = useState<string[]>([]);
     const [groupNames, setGroupNames] = useState('');
+    const [ignoreTracks, setIgnoreTracks] = useState<string>('');
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
 
     async function getOptions() {
@@ -68,14 +69,6 @@ const AdminSettings = () => {
             alert('error: could not get options data');
             return;
         }
-
-        // Get challenges
-        const challengesRes = await getRequest<string[]>('/challenges', '');
-        if (challengesRes.status !== 200) {
-            errorAlert(challengesRes);
-            return;
-        }
-        setChallenges(challengesRes.data as string[]);
 
         // Calculate judging timer MM:SS
         const timer = res.data.judging_timer;
@@ -101,6 +94,7 @@ const AdminSettings = () => {
         setJudgeTracks(res.data.judge_tracks);
         setTracks(res.data.tracks.join(', '));
         setGroupNames(res.data.group_names.join(', '));
+        setIgnoreTracks(res.data.ignore_tracks.join(', '));
 
         setLoading(false);
     }
@@ -323,7 +317,25 @@ const AdminSettings = () => {
         }
 
         alert('Group names updated!');
-    }
+    };
+
+    const updateIgnoreTracks = async () => {
+        const tracks = ignoreTracks.split(',').map((track) => track.trim());
+        if (tracks.some((track) => track === '')) {
+            alert('Track names should not be empty!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+            ignore_tracks: tracks,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Ignored tracks updated!');
+    };
 
     const resetClock = async () => {
         const res = await postRequest<OkResponse>('/admin/clock/reset', 'admin', null);
@@ -462,6 +474,25 @@ const AdminSettings = () => {
                     <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
                 </div>
 
+                <SubSection>Ignore Tracks</SubSection>
+                <Description>
+                    Set a list of tracks to ignore when uploading projects. This will be applied
+                    when uploading projects -- projects that are ignored will NOT be added to Jury
+                    at all. This is most effective when using Devpost CSV upload.
+                </Description>
+                <ChallengeBlock />
+                <TextInput
+                    text={ignoreTracks}
+                    setText={setIgnoreTracks}
+                    placeholder="Track 1, Track 2, ..."
+                    large
+                    full
+                    className="my-2"
+                />
+                <SettingsButton onClick={updateIgnoreTracks} type="gold">
+                    Update Ignore Tracks
+                </SettingsButton>
+
                 <Section>Judging Clock and Timer</Section>
 
                 <SubSection>Reset Main Clock</SubSection>
@@ -530,12 +561,7 @@ const AdminSettings = () => {
                             under the 'Opt-In Prizes' category. Only the tracks listed here will be
                             judged! As with the previous setting, DO NOT CHANGE THIS DURING JUDGING.
                         </Description>
-                        {challenges && (
-                            <div className="border-2 border-primary bg-primary/10 rounded-md p-2 my-2">
-                                <h1 className="text-xl font-bold">Challenge List</h1>
-                                <Description>{challenges.join(', ')}</Description>
-                            </div>
-                        )}
+                        <ChallengeBlock />
                         <TextInput
                             text={tracks}
                             setText={setTracks}
@@ -653,7 +679,9 @@ const AdminSettings = () => {
                             large
                             className="my-2"
                         />
-                        <SettingsButton onClick={updateGroupNames}>Update Group Names</SettingsButton>
+                        <SettingsButton onClick={updateGroupNames}>
+                            Update Group Names
+                        </SettingsButton>
                     </>
                 )}
 

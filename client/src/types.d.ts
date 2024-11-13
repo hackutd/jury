@@ -134,6 +134,7 @@ interface Options {
     manual_switches: number;
     deliberation: boolean;
     group_names: string[];
+    ignore_tracks: string[];
 }
 
 interface FetchResponse<T> {

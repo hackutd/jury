@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/exp/slices"
 )
 
 // POST /project/devpost - AddDevpostCsv adds a csv export from devpost to the database
@@ -117,17 +118,30 @@ func AddProject(ctx *gin.Context) {
 		challengeList[i] = strings.TrimSpace(challengeList[i])
 	}
 
-	// Get max project number
-	tableNum, err := database.GetMaxTableNum(db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting max project number from database: " + err.Error()})
-		return
-	}
-
 	// Get the options from the database
 	options, err := database.GetOptions(db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+		return
+	}
+
+	// If the challenge list contains the ignore track, skip the project
+	ignore := false
+	for _, ignoreTrack := range options.IgnoreTracks {
+		if slices.Contains(challengeList, ignoreTrack) {
+			ignore = true
+			break
+		}
+	}
+	if ignore {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "project is in an ignored track"})
+		return
+	}
+
+	// Get max project number
+	tableNum, err := database.GetMaxTableNum(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting max project number from database: " + err.Error()})
 		return
 	}
 
