@@ -60,6 +60,9 @@ func UpdateOptions(db *mongo.Database, ctx context.Context, options *models.Opti
 	if options.GroupNames != nil {
 		update["group_names"] = *options.GroupNames
 	}
+	if options.IgnoreTracks != nil {
+		update["ignore_tracks"] = *options.IgnoreTracks
+	}
 
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
 	return err

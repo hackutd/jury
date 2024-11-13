@@ -21,6 +21,7 @@ type Options struct {
 	QRCode         string             `bson:"qr_code" json:"qr_code"`                   // Secret key of the QR code
 	TrackQRCodes   map[string]string  `bson:"track_qr_codes" json:"track_qr_codes"`     // Secret keys of the QR codes for each track
 	GroupNames     []string           `bson:"group_names" json:"group_names"`           // Names of the groups
+	IgnoreTracks   []string           `bson:"ignore_tracks" json:"ignore_tracks"`       // Ignore all projects that are added with this track
 }
 
 func NewOptions() *Options {
@@ -42,6 +43,7 @@ func NewOptions() *Options {
 		QRCode:         "",
 		TrackQRCodes:   make(map[string]string),
 		GroupNames:     []string{"Group 1", "Group 2", "Group 3"},
+		IgnoreTracks:   []string{},
 	}
 }
 
@@ -57,4 +59,5 @@ type OptionalOptions struct {
 	SwitchingMode  *string   `bson:"switching_mode,omitempty" json:"switching_mode,omitempty"`
 	AutoSwitchProp *float64  `bson:"auto_switch_prop,omitempty" json:"auto_switch_prop,omitempty"`
 	GroupNames     *[]string `bson:"group_names,omitempty" json:"group_names,omitempty"`
+	IgnoreTracks   *[]string `bson:"ignore_tracks,omitempty" json:"ignore_tracks,omitempty"`
 }

@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/exp/slices"
 )
 
 // Read CSV file and return a slice of judge structs
@@ -115,6 +116,18 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 			challengeList[i] = strings.TrimSpace(challengeList[i])
 		}
 
+		// If the challenge list contains the ignore track, skip the project
+		ignore := false
+		for _, ignoreTrack := range options.IgnoreTracks {
+			if slices.Contains(challengeList, ignoreTrack) {
+				ignore = true
+				break
+			}
+		}
+		if ignore {
+			continue
+		}
+
 		// Optional fields
 		var tryLink string
 		if len(record) > 3 && record[3] != "" {
@@ -204,6 +217,18 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 		}
 		for i := range challengeList {
 			challengeList[i] = strings.TrimSpace(challengeList[i])
+		}
+
+		// If the challenge list contains the ignore track, skip the project
+		ignore := false
+		for _, ignoreTrack := range options.IgnoreTracks {
+			if slices.Contains(challengeList, ignoreTrack) {
+				ignore = true
+				break
+			}
+		}
+		if ignore {
+			continue
 		}
 
 		// Increment the table number
