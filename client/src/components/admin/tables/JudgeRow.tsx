@@ -7,6 +7,7 @@ import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../../sto
 import { twMerge } from 'tailwind-merge';
 import ActionsDropdown from '../../ActionsDropdown';
 import MovePopup from './MovePopup';
+import JudgeRanksPopup from './JudgeRanksPopup';
 
 interface JudgeRowProps {
     judge: Judge;
@@ -18,6 +19,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
     const [editPopup, setEditPopup] = useState(false);
     const [movePopup, setMovePopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
+    const [ranksPopup, setRanksPopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
     const options = useOptionsStore((state) => state.options);
@@ -101,8 +103,9 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
                     <ActionsDropdown
                         open={popup}
                         setOpen={setPopup}
-                        actions={['Edit', judge.active ? 'Hide' : 'Unhide', 'Move Group', 'Delete']}
+                        actions={['Scores', 'Edit', judge.active ? 'Hide' : 'Unhide', 'Move Group', 'Delete']}
                         actionFunctions={[
+                            setRanksPopup.bind(null, true),
                             setEditPopup.bind(null, true),
                             hideJudge,
                             setMovePopup.bind(null, true),
@@ -123,6 +126,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
             <MovePopup enabled={movePopup} setEnabled={setMovePopup} item={judge} />
             <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={judge} />
             <EditJudgePopup enabled={editPopup} setEnabled={setEditPopup} judge={judge} />
+            <JudgeRanksPopup enabled={ranksPopup} setEnabled={setRanksPopup} judge={judge} />
         </>
     );
 };
