@@ -53,7 +53,7 @@ const JudgeLogin = () => {
 
     // Disable button if length of code is not 6
     useEffect(() => {
-        setDisabled(code.length !== 6);
+        setDisabled(code.length === 0);
     }, [code]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,11 +72,11 @@ const JudgeLogin = () => {
         setLoginLock(true);
 
         // Check for length of code
-        if (code.length < 6) {
-            setError(true);
-            setLoginLock(false);
-            return;
-        }
+        // if (code.length < 6) {
+        //     setError(true);
+        //     setLoginLock(false);
+        //     return;
+        // }
 
         // Make async call to check code
         const res = await postRequest<TokenResponse>('/judge/login', '', { code });
@@ -121,7 +121,6 @@ const JudgeLogin = () => {
                 <PasswordInput
                     value={code}
                     label="Enter your judging code"
-                    maxLength={6}
                     placeholder="000000"
                     onKeyPress={handleEnter}
                     onChange={handleChange}
