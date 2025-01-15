@@ -76,15 +76,19 @@ func FillTemplate(name string, baseUrl string, code string, appName string) ([]b
 	}
 
 	t.Execute(&body, struct {
-		Name    string
-		BaseUrl string
-		Code    string
-		AppName string
+		Name      string
+		BaseUrl   string
+		CodeLeft  string
+		CodeRight string
+		Code      string
+		AppName   string
 	}{
-		Name:    name,
-		BaseUrl: baseUrl,
-		Code:    code,
-		AppName: appName,
+		Name:      name,
+		BaseUrl:   baseUrl,
+		CodeLeft:  code[:4],
+		CodeRight: code[4:],
+		Code:      code,
+		AppName:   appName,
 	})
 
 	return body.Bytes(), nil
