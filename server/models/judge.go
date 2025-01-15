@@ -40,7 +40,7 @@ type JudgedProject struct {
 func NewJudge(name string, email string, track string, notes string, group int64) *Judge {
 	return &Judge{
 		Token:        "",
-		Code:         fmt.Sprintf("%d", rand.Intn(900000)+100000), // Generates a num between 100000 and 999999
+		Code:         RandCode(),
 		Name:         name,
 		Email:        email,
 		Active:       true,
@@ -56,6 +56,11 @@ func NewJudge(name string, email string, track string, notes string, group int64
 		Rankings:     []primitive.ObjectID{},
 		LastActivity: primitive.DateTime(0),
 	}
+}
+
+// RandCode generates a random 8 digit code
+func RandCode() string {
+	return fmt.Sprintf("%d", rand.Intn(90000000)+10000000)
 }
 
 func JudgeProjectFromProject(project *Project, notes string, starred bool) *JudgedProject {
