@@ -11,6 +11,7 @@ import SelectionButton from '../../components/SelectionButton';
 import { useOptionsStore } from '../../store';
 import ChallengeBlock from '../../components/admin/ChallengeBlock';
 import Card from '../../components/Card';
+import ToTopButton from '../../components/ToTopButton';
 
 // Text components
 const Section = ({ children: c }: { children: string }) => (
@@ -480,7 +481,7 @@ const AdminSettings = () => {
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
 
-                <div className="mt-4 flex flex-row flex-wrap gap-4">
+                <div className="my-4 flex flex-row flex-wrap gap-4">
                     <NavButton>Judge Login</NavButton>
                     <NavButton>Judging Parameters</NavButton>
                     <NavButton>Judging Clock and Timer</NavButton>
@@ -871,6 +872,7 @@ const AdminSettings = () => {
                 DO THIS. THIS IS YOUR LAST WARNING!
             </ConfirmPopup>
             <Loading disabled={!loading} />
+            <ToTopButton />
         </>
     );
 };
