@@ -22,6 +22,8 @@ type Options struct {
 	TrackQRCodes   map[string]string  `bson:"track_qr_codes" json:"track_qr_codes"`     // Secret keys of the QR codes for each track
 	GroupNames     []string           `bson:"group_names" json:"group_names"`           // Names of the groups
 	IgnoreTracks   []string           `bson:"ignore_tracks" json:"ignore_tracks"`       // Ignore all projects that are added with this track
+	MaxReqPerMin   int64              `bson:"max_req_per_min" json:"max_req_per_min"`   // Maximum number of requests per minute
+	BlockReqs      bool               `bson:"block_reqs" json:"block_reqs"`             // Whether or not to block login requests
 }
 
 func NewOptions() *Options {
@@ -44,6 +46,8 @@ func NewOptions() *Options {
 		TrackQRCodes:   make(map[string]string),
 		GroupNames:     []string{"Group 1", "Group 2", "Group 3"},
 		IgnoreTracks:   []string{},
+		MaxReqPerMin:   100,
+		BlockReqs:      false,
 	}
 }
 
@@ -60,4 +64,6 @@ type OptionalOptions struct {
 	AutoSwitchProp *float64  `bson:"auto_switch_prop,omitempty" json:"auto_switch_prop,omitempty"`
 	GroupNames     *[]string `bson:"group_names,omitempty" json:"group_names,omitempty"`
 	IgnoreTracks   *[]string `bson:"ignore_tracks,omitempty" json:"ignore_tracks,omitempty"`
+	MaxReqPerMin   *int64    `bson:"max_req_per_min,omitempty" json:"max_req_per_min,omitempty"`
+	BlockReqs      *bool     `bson:"block_reqs,omitempty" json:"block_reqs,omitempty"`
 }

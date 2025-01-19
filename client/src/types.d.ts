@@ -135,6 +135,8 @@ interface Options {
     deliberation: boolean;
     group_names: string[];
     ignore_tracks: string[];
+    block_reqs: boolean;
+    max_req_per_min: number;
 }
 
 interface FetchResponse<T> {

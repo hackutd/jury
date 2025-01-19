@@ -57,6 +57,8 @@ const AdminSettings = () => {
     const [tracks, setTracks] = useState<string>('');
     const [groupNames, setGroupNames] = useState('');
     const [ignoreTracks, setIgnoreTracks] = useState<string>('');
+    const [maxReqPerMin, setMaxReqPerMin] = useState(100);
+    const [blockReqs, setBlockReqs] = useState(false);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
 
     async function getOptions() {
@@ -95,14 +97,46 @@ const AdminSettings = () => {
         setTracks(res.data.tracks.join(', '));
         setGroupNames(res.data.group_names.join(', '));
         setIgnoreTracks(res.data.ignore_tracks.join(', '));
+        setBlockReqs(res.data.block_reqs);
+        setMaxReqPerMin(res.data.max_req_per_min);
 
         setLoading(false);
     }
 
-    // Get the previous options
+    // Get the previous options on load
     useEffect(() => {
         getOptions();
     }, []);
+
+    const updateBlockReqs = async () => {
+        const res = await postRequest<OkResponse>('/admin/block-reqs', 'admin', {
+            block_reqs: !blockReqs,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        setBlockReqs(!blockReqs);
+        alert(`Judge login is now ${blockReqs ? 'enabled' : 'BLOCKED'}`);
+    };
+
+    const updateMaxReqPerMin = async () => {
+        if (isNaN(maxReqPerMin) || maxReqPerMin < 0) {
+            alert('Max requests per minute should be a positive integer!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/max-reqs', 'admin', {
+            max_req_per_min: maxReqPerMin,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Max requests per minute updated!');
+    }
 
     const reassignTables = async () => {
         const res = await postRequest<OkResponse>('/project/reassign', 'admin', null);
@@ -428,6 +462,38 @@ const AdminSettings = () => {
             <JuryHeader withBack withLogout isAdmin />
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
+
+                <Section>Judge Login</Section>
+
+                <SubSection>Disable Logins</SubSection>
+                <Description>
+                    Disable ALL judge login endpoints. Judges who are currently logged in can still
+                    judge, but no new judges can log in. This is useful if you want to prevent brute
+                    force enumeration attacks.
+                </Description>
+                <SettingsButton onClick={updateBlockReqs} type="error">
+                    {blockReqs
+                        ? 'Enable Logins (Currently DISABLED)'
+                        : 'Disable Logins (Currently ENABLED)'}
+                </SettingsButton>
+
+                <SubSection>Max Logins Per Minute</SubSection>
+                <Description>
+                    Set the maximum number of requests that can be made to the login endpoint per
+                    minute. This is also useful for preventing brute force attacks.
+                </Description>
+                <div className="flex flex-row">
+                    <TextInput
+                        text={maxReqPerMin}
+                        setText={setMaxReqPerMin}
+                        placeholder="Enter an integer..."
+                        large
+                        className="my-2 mr-4"
+                        number
+                    />
+                    <SettingsButton onClick={updateBlockReqs}>Update Max Requests</SettingsButton>
+                </div>
+
                 <Section>Judging Parameters</Section>
 
                 <SubSection>Reassign Project Numbers</SubSection>

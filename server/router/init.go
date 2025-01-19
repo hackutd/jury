@@ -28,11 +28,18 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 		log.Fatalf("error loading projects from the database: %s\n", err.Error())
 	}
 
+	// Get the limiter from the database
+	limiter := getLimiterFromDb(db)
+
 	// Add shared variables to router
 	router.Use(useVar("db", db))
 	router.Use(useVar("clock", clock))
 	router.Use(useVar("comps", comps))
 	router.Use(useVar("logger", logger))
+	router.Use(useVar("limiter", limiter))
+
+	// Rate limit login requests
+	router.Use(rateLimit(limiter))
 
 	// CORS
 	router.Use(cors.New(cors.Config{
@@ -110,6 +117,8 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.POST("/admin/options", SetOptions)
 	adminRouter.POST("/admin/num-groups", SetNumGroups)
 	adminRouter.POST("/admin/group-sizes", SetGroupSizes)
+	adminRouter.POST("/admin/block-reqs", SetBlockReqs)
+	adminRouter.POST("/admin/max-reqs", SetMaxReqs)
 
 	// Admin panel - exports
 	adminRouter.GET("/admin/export/judges", ExportJudges)
@@ -184,6 +193,25 @@ func useVar(key string, v any) gin.HandlerFunc {
 	}
 }
 
+// rateLimit is a middleware that limits the number of requests per minute
+// for the judge login endpoint
+func rateLimit(limiter *Limiter) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		// Check for /judge/login endpoint
+		if ctx.Request.URL.Path != "/api/judge/login" {
+			ctx.Next()
+			return
+		}
+
+		ip := ctx.ClientIP()
+		if !limiter.CheckNewRequest(ip) {
+			ctx.AbortWithStatusJSON(429, gin.H{"error": "Too many requests. Logins have been blocked or rate limited."})
+			return
+		}
+		ctx.Next()
+	}
+}
+
 // getClockFromDb gets the clock state from the database.
 // If the clock sync option is not enabled, the clock will be 0.
 func getClockFromDb(db *mongo.Database) *models.SafeClock {
@@ -203,6 +231,19 @@ func getClockFromDb(db *mongo.Database) *models.SafeClock {
 	mut := models.NewSafeClock(&clock)
 
 	return mut
+}
+
+// getLimiterFromDb gets the limiter state from the database
+func getLimiterFromDb(db *mongo.Database) *Limiter {
+	// Get the limiter state from the database
+	options, err := database.GetOptions(db, context.Background())
+	if err != nil {
+		log.Fatalln("error getting options: " + err.Error())
+	}
+
+	limiter := CreateLimiter(int(options.MaxReqPerMin), options.BlockReqs)
+
+	return limiter
 }
 
 // Heartbeat is a simple endpoint to check if the server is running

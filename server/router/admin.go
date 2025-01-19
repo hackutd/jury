@@ -650,3 +650,83 @@ func GetGroupNames(ctx *gin.Context) {
 	// Send OK
 	ctx.JSON(http.StatusOK, options.GroupNames)
 }
+
+// POST /admin/block-reqs - blocks or unblocks login requests
+func SetBlockReqs(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the limiter from the context
+	limiter := ctx.MustGet("limiter").(*Limiter)
+
+	// Get the request
+	var req models.OptionalOptions
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Make sure the block requests field is valid
+	if req.BlockReqs == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid block requests field"})
+		return
+	}
+
+	// Update the block requests state
+	err = database.UpdateOptions(db, ctx, &req)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating block requests: " + err.Error()})
+		return
+	}
+
+	// Update the limiter
+	limiter.Block = *req.BlockReqs
+
+	// Send OK
+	logger.AdminLogf("Updated block requests to %t", *req.BlockReqs)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /admin/max-reqs - updates the maximum number of requests per minute
+func SetMaxReqs(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the limiter from the context
+	limiter := ctx.MustGet("limiter").(*Limiter)
+
+	// Get the request
+	var req models.OptionalOptions
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Make sure the max requests field is valid
+	if req.MaxReqPerMin == nil || *req.MaxReqPerMin < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid max requests field"})
+		return
+	}
+
+	// Update the max requests state
+	err = database.UpdateOptions(db, ctx, &req)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating max requests: " + err.Error()})
+		return
+	}
+
+	// Update the limiter
+	limiter.MaxReqPerMin = int(*req.MaxReqPerMin)
+
+	// Send OK
+	logger.AdminLogf("Updated max requests to %d", *req.MaxReqPerMin)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
