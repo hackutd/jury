@@ -28,7 +28,7 @@ interface SelectionButtonProps {
 
 const SelectionButton = (props: SelectionButtonProps) => {
     return (
-        <div className={twMerge('flex flex-row space-x-[2px] bg-lightest border-solid border-2 border-lightest rounded-md overflow-hidden text-xl', props.className)}>
+        <div className={twMerge('flex flex-row space-x-[2px] bg-lightest border-solid border-2 border-lightest rounded-md overflow-hidden text-xl w-max', props.className)}>
             {props.options.map((option, index) => (
                 <button
                     disabled={props.disabled}

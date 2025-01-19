@@ -8,6 +8,7 @@ import TextArea from '../../TextArea';
 import TextInput from '../../TextInput';
 import Dropdown from '../../Dropdown';
 import Button from '../../Button';
+import Card from '../../Card';
 
 const NewJudgeForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,7 +54,7 @@ const NewJudgeForm = () => {
     };
 
     return (
-        <div className="w-full h-full border-lightest border-2 p-8 rounded-sm">
+        <Card>
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Judge</h1>
                 <div className="flex flex-col w-full">
@@ -66,7 +67,7 @@ const NewJudgeForm = () => {
                         options={['', ...options.tracks]}
                         selected={track}
                         setSelected={setTrack}
-                        className="mt-0 mb-4 text-left text-xl bg-white rounded-sm"
+                        className="mt-0 mb-4 text-left text-xl bg-white rounded-sm hover:bg-background"
                     />
                     <TextArea
                         value={notes}
@@ -83,7 +84,7 @@ const NewJudgeForm = () => {
                 </div>
             </div>
             <Loading disabled={!isSubmitting} />
-        </div>
+        </Card>
     );
 };
 
