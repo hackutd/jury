@@ -5,6 +5,7 @@ import { useAdminStore } from '../../../store';
 import TextInput from '../../TextInput';
 import TextArea from '../../TextArea';
 import Button from '../../Button';
+import Card from '../../Card';
 
 const NewProjectForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,6 +18,7 @@ const NewProjectForm = () => {
     const [challengeList, setChallengeList] = useState('');
 
     const submit = async () => {
+        if (isSubmitting) return;
         setIsSubmitting(true);
 
         const data = {
@@ -41,7 +43,7 @@ const NewProjectForm = () => {
     };
 
     return (
-        <div className="w-full h-full border-lightest border-2 p-8 rounded-sm">
+        <Card>
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Project</h1>
                 <div className="flex flex-col w-full space-y-3">
@@ -76,7 +78,7 @@ const NewProjectForm = () => {
                     </Button>
                 </div>
             </div>
-        </div>
+        </Card>
     );
 };
 

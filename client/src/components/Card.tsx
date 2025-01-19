@@ -9,7 +9,7 @@ function Card(props: CardProps) {
     return (
         <div
             className={twMerge(
-                'bg-white/50 border-2 border-backgroundDark rounded-lg p-4 my-4 w-full',
+                'bg-white/50 border-2 border-backgroundDark rounded-md p-4 my-4 w-full',
                 props.className
             )}
         >
