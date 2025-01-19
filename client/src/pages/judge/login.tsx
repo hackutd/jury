@@ -71,15 +71,11 @@ const JudgeLogin = () => {
         if (loginLock) return;
         setLoginLock(true);
 
-        // Check for length of code
-        // if (code.length < 6) {
-        //     setError(true);
-        //     setLoginLock(false);
-        //     return;
-        // }
+        // Remove any whitespace in the code
+        const cleanCode = code.replace(/\s/g, '');
 
         // Make async call to check code
-        const res = await postRequest<TokenResponse>('/judge/login', '', { code });
+        const res = await postRequest<TokenResponse>('/judge/login', '', { code: cleanCode });
 
         // Invalid code
         if (res.status === 400) {
@@ -89,7 +85,6 @@ const JudgeLogin = () => {
         }
 
         // Internal server error
-        console.log(res.status)
         if (res.status !== 200) {
             errorAlert(res);
 
@@ -121,13 +116,13 @@ const JudgeLogin = () => {
                 <PasswordInput
                     value={code}
                     label="Enter your judging code"
-                    placeholder="000000"
+                    placeholder="XXXXXX"
                     onKeyPress={handleEnter}
                     onChange={handleChange}
                     error={error}
                     setError={setError}
                     errorMessage="Invalid judging code"
-                    className="text-[20vw] md:text-8xl text-center w-4/5"
+                    className="text-3xl md:text-6xl text-center w-4/5"
                 />
                 <p className="text-2xl text-light text-center mx-4 my-12">
                     If you did not get a code, check your email or contact an organizer.

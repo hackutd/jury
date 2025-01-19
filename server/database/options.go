@@ -63,6 +63,12 @@ func UpdateOptions(db *mongo.Database, ctx context.Context, options *models.Opti
 	if options.IgnoreTracks != nil {
 		update["ignore_tracks"] = *options.IgnoreTracks
 	}
+	if options.MaxReqPerMin != nil {
+		update["max_req_per_min"] = *options.MaxReqPerMin
+	}
+	if options.BlockReqs != nil {
+		update["block_reqs"] = *options.BlockReqs
+	}
 
 	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
 	return err
