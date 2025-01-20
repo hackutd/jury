@@ -103,7 +103,7 @@ func AggregateStats(db *mongo.Database, track string) (*models.Stats, error) {
 // DropAll drops the entire database
 func DropAll(db *mongo.Database) error {
 	// Drop all collections
-	var collections = []string{"projects", "judges", "flags", "options"}
+	var collections = []string{"projects", "judges", "flags", "options", "logs"}
 	for _, c := range collections {
 		if err := db.Collection(c).Drop(context.Background()); err != nil {
 			return err
