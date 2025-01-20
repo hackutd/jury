@@ -1,21 +1,23 @@
 package logging
 
 import (
-	"bufio"
-	"errors"
+	"context"
 	"fmt"
-	"os"
+	"server/database"
 	"server/models"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Logger struct {
-	Mutex      sync.Mutex
-	File       *os.File
-	FileWriter *bufio.Writer
-	Memory     *strings.Builder
+	Mutex  sync.Mutex
+	Memory []string
+	DbRef  *mongo.Database
 }
 
 type LogType int
@@ -26,26 +28,92 @@ const (
 	Judge
 )
 
-func NewLogger() *Logger {
-	// Open the log file
-	f, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+const DbLogLimit = 10000
+
+func NewLogger(db *mongo.Database) (*Logger, error) {
+	// Get all logs from the db
+	dbLogs, err := GetAllDbLogs(db)
 	if err != nil {
-		panic(errors.New("error opening log file: " + err.Error()))
+		return nil, err
 	}
 
-	// Read the log file into memory
-	memory := &strings.Builder{}
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		memory.WriteString(scanner.Text() + "\n")
+	// Create a new logger and add all logs from the database
+	memory := []string{}
+	for _, log := range dbLogs {
+		memory = append(memory, log.Entries...)
 	}
 
 	return &Logger{
-		Mutex:      sync.Mutex{},
-		File:       f,
-		FileWriter: bufio.NewWriter(f),
-		Memory:     &strings.Builder{},
+		Mutex:  sync.Mutex{},
+		Memory: memory,
+		DbRef:  db,
+	}, nil
+}
+
+// GetAllDbLogs retrieves all logs from the database.
+func GetAllDbLogs(db *mongo.Database) ([]*models.Log, error) {
+	// Get all logs from the database, sorted in ascending order of time
+	cursor, err := db.Collection("logs").Find(context.Background(), gin.H{}, options.Find().SetSort(gin.H{"time": 1}))
+	if err != nil {
+		return nil, err
 	}
+
+	// Iterate through the cursor and decode each log
+	logs := []*models.Log{}
+	for cursor.Next(context.Background()) {
+		var log models.Log
+		err := cursor.Decode(&log)
+		if err != nil {
+			return nil, err
+		}
+
+		logs = append(logs, &log)
+	}
+
+	// If no logs, create one
+	if len(logs) == 0 {
+		_, err = db.Collection("logs").InsertOne(context.Background(), models.NewLog())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return logs, nil
+}
+
+// TODO: Pass in context as a parameter to the log functions, then remove the transaction wrapper from here
+func (l *Logger) writeToDb(item string) error {
+	return database.WithTransaction(l.DbRef, func(sc mongo.SessionContext) error {
+		// Insert the log into the database
+		res := l.DbRef.Collection("logs").FindOneAndUpdate(
+			sc,
+			gin.H{},
+			gin.H{"$push": gin.H{"entries": item}, "$inc": gin.H{"count": 1}},
+			options.FindOneAndUpdate().SetSort(gin.H{"time": -1}),
+		)
+
+		// Check for errors
+		if res.Err() != nil {
+			return res.Err()
+		}
+
+		// Get the log from the result
+		var log models.Log
+		err := res.Decode(&log)
+		if err != nil {
+			return err
+		}
+
+		// If the log is too long, create a new log in the db
+		if log.Count > DbLogLimit {
+			_, err = l.DbRef.Collection("logs").InsertOne(sc, models.NewLog())
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 // Logf logs a message to the log file.
@@ -56,23 +124,15 @@ func (l *Logger) Logf(t LogType, message string, args ...interface{}) error {
 
 	// Form output string
 	userInput := fmt.Sprintf(message, args...)
-	output := fmt.Sprintf("[%s] %s | %s\n", time.Now().Format(time.RFC3339), typeToString(t), userInput)
-
-	// Write to file
-	_, err := l.FileWriter.WriteString(output)
-	if err != nil {
-		return err
-	}
-
-	// Flush file
-	err = l.FileWriter.Flush()
-	if err != nil {
-		return err
-	}
+	output := fmt.Sprintf("[%s] %s | %s", time.Now().Format(time.RFC3339), typeToString(t), userInput)
 
 	// Write to memory
-	_, err = l.Memory.WriteString(output)
-	return err
+	l.Memory = append(l.Memory, output)
+
+	// Write to database
+	l.writeToDb(output)
+
+	return nil
 }
 
 // SystemLogf logs a message with the System LogType.
@@ -116,5 +176,5 @@ func (l *Logger) Get() string {
 	l.Mutex.Lock()
 	defer l.Mutex.Unlock()
 
-	return l.Memory.String()
+	return strings.Join(l.Memory, "\n")
 }
