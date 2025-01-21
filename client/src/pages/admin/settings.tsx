@@ -519,7 +519,7 @@ const AdminSettings = () => {
                             className="my-2 mr-4"
                             number
                         />
-                        <SettingsButton onClick={updateBlockReqs}>
+                        <SettingsButton onClick={updateMaxReqPerMin}>
                             Update Max Requests
                         </SettingsButton>
                     </div>
