@@ -21,7 +21,7 @@ const JudgeLogin = () => {
 
     // If token cookie is already defined and valid, redirect to judge page
     useEffect(() => {
-        if (codeParam.length === 6) {
+        if (codeParam.length > 0) {
             setCode(codeParam);
         }
 
