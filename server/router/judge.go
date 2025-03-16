@@ -355,6 +355,9 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	// Get the comparisons object
 	comps := ctx.MustGet("comps").(*judging.Comparisons)
 
+	// Get the clock from the context
+	clock := ctx.MustGet("clock").(*models.SafeClock)
+
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
@@ -366,19 +369,35 @@ func GetNextJudgeProject(ctx *gin.Context) {
 
 	// Otherwise, get the next project for the judge
 	project_int, err := database.WithTransactionItem(db, func(sc mongo.SessionContext) (interface{}, error) {
+		// Get options
+		options, err := database.GetOptions(db, sc)
+		if err != nil {
+			return nil, errors.New("error getting options: " + err.Error())
+		}
+
+		// If the clock is paused, return an empty object
+		// This is to ensure that no projects are gotten if the clock is paused
+		clock.Mutex.Lock()
+		if !clock.Clock.Running || options.Deliberation {
+			return nil, nil
+		}
+		clock.Mutex.Unlock()
+
 		return judging.PickNextProject(db, judge, sc, comps)
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
 		return
 	}
-	project := project_int.(*models.Project)
 
 	// If there is no next project, return an empty object
-	if project == nil {
+	if project_int == nil {
 		ctx.JSON(http.StatusOK, gin.H{})
 		return
 	}
+
+	// Cast the project to a Project object
+	project := project_int.(*models.Project)
 
 	// Update judge and project
 	err = database.UpdateAfterPicked(db, project, judge)
@@ -467,6 +486,9 @@ func JudgeSkip(ctx *gin.Context) {
 	// Get the comparisons object
 	comps := ctx.MustGet("comps").(*judging.Comparisons)
 
+	// Get the clock from the context
+	clock := ctx.MustGet("clock").(*models.SafeClock)
+
 	// Get the logger from the context
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
@@ -481,8 +503,18 @@ func JudgeSkip(ctx *gin.Context) {
 	// Skipped project ID
 	id := judge.Current.Hex()
 
+	// Check if judging is paused
+	options, err := database.GetOptions(db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+	clock.Mutex.Lock()
+	newProj := clock.Clock.Running && !options.Deliberation
+	clock.Mutex.Unlock()
+
 	// Skip the project
-	err = judging.SkipCurrentProject(db, judge, comps, skipReq.Reason, true)
+	err = judging.SkipCurrentProject(db, judge, comps, skipReq.Reason, newProj)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

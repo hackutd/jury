@@ -76,29 +76,6 @@ const JudgeLive = () => {
                 navigate('/judge/welcome');
             }
 
-            // Check to see if judging has started
-            const startedRes = await getRequest<OkResponse>('/admin/started', '');
-            if (startedRes.status !== 200) {
-                errorAlert(startedRes);
-                return;
-            }
-            if (startedRes.data?.ok !== 1) {
-                setVerified(true);
-                setInfoPage('paused');
-                return;
-            }
-
-            // Check to see if deliberation has started
-            const deliberationRes = await getRequest<OkResponse>('/admin/deliberation', '');
-            if (deliberationRes.status !== 200) {
-                errorAlert(deliberationRes);
-                return;
-            }
-            if (deliberationRes.data?.ok === 1) {
-                setInfoPage('paused');
-                return;
-            }
-
             setVerified(true);
         }
 
@@ -107,6 +84,29 @@ const JudgeLive = () => {
 
     // Once verification finishes, get the judge's next project to judge, as well as the timer
     async function getJudgeData() {
+        // Check to see if judging has started
+        const startedRes = await getRequest<OkResponse>('/admin/started', '');
+        if (startedRes.status !== 200) {
+            errorAlert(startedRes);
+            return;
+        }
+        if (startedRes.data?.ok !== 1) {
+            setVerified(true);
+            setInfoPage('paused');
+            return;
+        }
+
+        // Check to see if deliberation has started
+        const deliberationRes = await getRequest<OkResponse>('/admin/deliberation', '');
+        if (deliberationRes.status !== 200) {
+            errorAlert(deliberationRes);
+            return;
+        }
+        if (deliberationRes.data?.ok === 1) {
+            setInfoPage('paused');
+            return;
+        }
+
         // Get judging timer
         const timerRes = await getRequest<Timer>('/admin/timer', 'judge');
         if (timerRes.status !== 200) {
