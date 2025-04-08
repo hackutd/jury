@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 3
 title: Judging Walkthrough
 description: A quick walkthrough of the judging process through an admin and judge POV.
 ---

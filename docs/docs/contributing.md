@@ -4,7 +4,15 @@ sidebar_position: 3
 
 # Contributing
 
-The entire development environment is set up using [Docker Compose](https://docs.docker.com/compose/). You simply need to have Docker and Docker Compose [installed](https://docs.docker.com/compose/install/).
+First of all, thank you for your interest in contributing to Jury! This project would not be possible without open-source developers like you. Refer to the [Github Issues Page](https://github.com/hackutd/jury/issues) to find an issue you would like to work on. Please comment on the issue and a moderator will assign you to the issue. Once you have been assigned an issue, fork the project and work on the issue assigned. Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) on Github to have your changes reviewed and ultimately merged into the project.
+
+This page will go over how to set up the Jury development environment.
+
+:::info[Only developing frontend?]
+If you are ONLY developing frontend, you will only need `yarn` and `node` to run the frontend. See the [section below](#only-running-frontend) for more information.
+:::
+
+The entire development environment is set up using [Docker Compose](https://docs.docker.com/compose/). You simply need to have Docker and Docker Compose [installed](https://docs.docker.com/compose/install/) to run the application -- no other system dependencies required! (Though it may be nice to have `node`/`go` installed for debugging in your IDE).
 
 ## With Docker (Recommended!)
 
@@ -34,9 +42,9 @@ jury-dev-backend   | [GIN-debug] GET    /favicon.ico              --> github.com
 jury-dev-backend   | [GIN-debug] HEAD   /favicon.ico              --> github.com/gin-gonic/gin.(*RouterGroup).StaticFile.func1 (7 handlers)
 ```
 
-### [Alternative] Offline database development
+### [Alternative] Local database development
 
-If you don't want to create a MongoDB instance or don't want to work online (this only is viable if you've downloaded the packages before), you can use the offline development version.
+If you don't want to create a MongoDB instance or don't want to work online, you can use the local database development runtime. Note that this only works offline if you've **downloaded the packages before** (ie. you need to run this with a connection at least once).
 
 Copy `.env.template` into `.env` and fill in the environmental variables (see [environmental variables](/docs/reference/envs) for more details). Instead of defining `MONGODB_URI`, you should define the following variables:
 
@@ -53,7 +61,11 @@ docker compose -f docker-compose-mongo.dev.yml up
 
 As with above, you will need to wait for both the backend and frontend to load. Additionally, you will have to wait for the MongoDB database to intialize and create a replica set (takes more than 10 seconds).
 
-### Connecting to the MongoDB Container (running locally)
+:::warning
+Make sure you don't define `MONGODB_URI` as that takes precedence over the manual username/password definition!
+:::
+
+#### Connecting to the MongoDB Container (running locally)
 
 This is only applicable if you used the `docker-compose-mongo.dev.yml` compose file. Use `mongodb://{MONGODB_USER}:{MONGODB_PASS}@0.0.0.0:27107/?directConnection=true` as the connection string. This works with both MongoDB Compass and through `mongosh`.
 

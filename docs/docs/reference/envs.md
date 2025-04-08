@@ -22,10 +22,10 @@ SENDGRID_API_KEY=
 PORT=
 ```
 
-The `JURY_NAME` and `JURY_ADMIN_PASSWORD` are simply the name of the app and the admin password that you are using for local development. This doesn't really matter as you are the only one accessing your local instance.
+The `JURY_NAME` and `JURY_ADMIN_PASSWORD` are simply the name of the app and the admin password that you are using for local development. For development, the values here don't matter that much, but you should remember your admin password to log in (I personally use the classic `admin` password).
 
 If you are using MongoDB Atlas, you should fill in the `MONGODB_URI` field using the [instructions on the MongoDB Atlas starter guide](https://www.mongodb.com/docs/atlas/getting-started/). This is the recommended way to run the application locally. If you are instead running MongoDB locally, you will need to define the `MONGODB_USER` and `MONGODB_PASS` fields -- see the [contributing page](/docs/contributing#alternative-offline-database-development) for more details.
 
-For all email fields, refer to the information in the ["Deploying for your Hackathon"](/docs/intro#email-hosting) page.
+For all email fields, refer to the information in the ["Deploying for your Hackathon"](/usage/deploy#email-hosting) page.
 
 Finally, the definition of the `PORT` variable is optional -- specify this if you wish to connect to your app on a different port.
