@@ -35,7 +35,7 @@ const config: Config = {
             {
                 docs: {
                     sidebarPath: './sidebars.ts',
-                    editUrl: 'https://github.com/hackutd/docs/',
+                    editUrl: 'https://github.com/hackutd/jury/tree/master',
                 },
                 blog: false,
                 theme: {
@@ -55,10 +55,16 @@ const config: Config = {
             },
             items: [
                 {
-                    type: 'docSidebar',
-                    sidebarId: 'docsSidebar',
+                    type: 'doc',
                     position: 'left',
-                    label: 'Get Started!',
+                    docId: 'usage/deploy',
+                    label: 'Get Started',
+                },
+                {
+                    type: 'doc',
+                    position: 'left',
+                    docId: '/category/reference',
+                    label: 'Reference',
                 },
                 {
                     href: 'https://github.com/hackutd/jury',
@@ -73,6 +79,10 @@ const config: Config = {
                 {
                     title: 'Docs',
                     items: [
+                        {
+                            label: 'Deploy Jury',
+                            to: '/docs/usage/deploy',
+                        },
                         {
                             label: 'Contributing',
                             to: '/docs/contributing',
