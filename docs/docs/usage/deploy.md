@@ -9,12 +9,12 @@ description: Step-by-step instructions for how to deploy Jury for your Hackathon
 Whether you're interested in using Jury at your own hackathon or wanting to help develop and improve the software, we're glad you're here 💙. Continue reading for information to get Jury up and running in no time for your event. Or, if you're interested in setting up a development environment, go to [development setup](/docs/contributing).
 
 :::info[How does it work?]
-For a walkthrough of the judging process using Jury, check out our [Judging Walkthrough](/docs/walkthrough) page. For more technical details, read about how Jury works [here](/docs/details)!
+For a walkthrough of the judging process using Jury, check out our [Judging Walkthrough](/docs/usage/walkthrough) page. For more technical details, read about how Jury works [here](/docs/details)!
 :::
 
 ## Deploying for your Hackathon
 
-Jury is a stand-alone application used solely for the judging of hackathon projects. Before using Jury, make sure that your hackathon is using the [recommended physical setup](/docs/judging-setup).
+Jury is a stand-alone application used solely for the judging of hackathon projects. Before using Jury, make sure that your hackathon is using the [recommended physical setup](/docs/usage/judging-setup).
 
 ### Cost?
 
