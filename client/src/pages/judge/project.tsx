@@ -4,15 +4,16 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import Paragraph from '../../components/Paragraph';
 import Back from '../../components/Back';
-import { getRequest, postRequest } from '../../api';
+import { getRequest, putRequest } from '../../api';
 import { errorAlert } from '../../util';
-import Ratings from '../../components/judge/Ratings';
-import RawTextInput from '../../components/RawTextInput';
+import Star from '../../components/judge/Star';
+import TextArea from '../../components/TextArea';
 
 const Project = () => {
     const { id } = useParams();
     const [project, setProject] = useState<null | JudgedProjectWithUrl>(null);
     const [notes, setNotes] = useState('');
+    const [starred, setStarred] = useState(false);
 
     useEffect(() => {
         async function fetchData() {
@@ -24,18 +25,20 @@ const Project = () => {
             const proj = projRes.data as JudgedProjectWithUrl;
             setProject(proj);
             setNotes(proj.notes);
+            setStarred(proj.starred);
         }
 
         fetchData();
     }, []);
 
+    // Update notes with a delay for typing
     useEffect(() => {
         if (!project) return;
 
         async function updateNotes() {
-            const res = await postRequest<OkResponse>('/judge/notes', 'judge', {
+            const url = `/judge/notes/${project?.project_id}`;
+            const res = await putRequest<OkResponse>(url, 'judge', {
                 notes,
-                project: project?.project_id,
             });
             if (res.status !== 200) {
                 errorAlert(res);
@@ -46,8 +49,18 @@ const Project = () => {
         return () => {
             updateNotes();
             clearTimeout(delayDebounceFn);
-        }
+        };
     }, [notes]);
+
+    const updateStar = async () => {
+        const res = await putRequest<OkResponse>('/judge/star', 'judge', {
+            project: project?.project_id,
+            starred: !starred,
+        });
+        if (res.status !== 200) {
+            errorAlert(res);
+        }
+    };
 
     if (!project) return <div>Loading...</div>;
 
@@ -67,21 +80,24 @@ const Project = () => {
                     </a>
                 </h1>
                 <h2 className="text-xl font-bold text-light mb-2">Table {project.location}</h2>
-                <Ratings
-                    prior={project.categories}
-                    project={project}
-                    small
-                    submitText="Update"
-                    update
-                />
-                <RawTextInput
-                    name="notes"
+                <div className="flex flex-row justify-center text-left mb-2 px-2">
+                    <Star
+                        active={starred}
+                        setActive={setStarred}
+                        className="mr-4"
+                        onClick={updateStar}
+                    />
+                    <p className="text-light">
+                        Star projects you think should win the top places in the hackathon.
+                    </p>
+                </div>
+                <TextArea
                     placeholder="Your notes..."
-                    text={notes}
-                    setText={setNotes}
+                    value={notes}
+                    setValue={setNotes}
                     className="mb-4"
                 />
-                <Paragraph text={project.description} className="text-light" />
+                <Paragraph text={project.description} className="text-black" />
             </Container>
         </>
     );

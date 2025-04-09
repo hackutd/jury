@@ -4,8 +4,8 @@ export enum JudgeSortField {
     Track,
     Group,
     Seen,
-    Top,
     Updated,
+    Curr,
     None,
 }
 
@@ -15,6 +15,7 @@ export enum ProjectSortField {
     TableNumber,
     Group,
     Score,
+    Stars,
     Seen,
     Updated,
     None,

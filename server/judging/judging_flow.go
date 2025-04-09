@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -48,27 +49,10 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 			return err
 		}
 
-		// Check to see how many times the project has been marked absent
-		active := true
-		absentCount, err := database.GetProjectAbsentCount(db, skippedProject, ctx)
+		// Hide the project if it has been skipped more than 3 times
+		err = HideAbsentProject(db, ctx, judge.Current)
 		if err != nil {
-			return errors.New("error checking for project flags: " + err.Error())
-		}
-		// Hide project if it's been absent more than 3 times
-		if reason == "absent" && absentCount >= 2 {
-			active = false
-
-			// Also remove all absent flags for the project
-			err = database.DeleteAbsentFlags(db, skippedProject, ctx)
-			if err != nil {
-				return errors.New("error deleting absent flags: " + err.Error())
-			}
-		}
-
-		// Update the project
-		_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": skippedProject.Id}, gin.H{"$inc": gin.H{"seen": -1}, "$set": gin.H{"active": active}})
-		if err != nil {
-			return err
+			return errors.New("error hiding absent project: " + err.Error())
 		}
 
 		// Don't get a new project if we're not supposed to
@@ -87,8 +71,36 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 		}
 
 		// Update the judge
-		return database.UpdateAfterPickedWithTx(db, project, judge, ctx)
+		return database.UpdateAfterPickedWithTx(db, ctx, project, judge)
 	})
+}
+
+// HideAbsentProject hides a project if it has been absent more than 3 times.
+func HideAbsentProject(db *mongo.Database, ctx mongo.SessionContext, projectId *primitive.ObjectID) error {
+	// Get absent count
+	absent, err := database.GetProjectAbsentCount(db, ctx, projectId)
+	if err != nil {
+		return errors.New("Error getting absent count: " + err.Error())
+	}
+
+	// If no more than 3 absences, ignore
+	if absent < 3 {
+		return nil
+	}
+
+	// Hide the project
+	err = database.SetProjectActive(db, ctx, projectId, false)
+	if err != nil {
+		return errors.New("Error hiding project: " + err.Error())
+	}
+
+	// Delete all absent flags
+	err = database.DeleteAbsentFlags(db, projectId, ctx)
+	if err != nil {
+		return errors.New("Error deleting absent flags: " + err.Error())
+	}
+
+	return nil
 }
 
 // MoveJudgeGroup will increment the count of projects they've seen in the current group,
@@ -104,14 +116,8 @@ func MoveJudgeGroup(db *mongo.Database, ctx context.Context, judge *models.Judge
 	// Increment the count of projects seen in the group
 	judge.GroupSeen++
 
-	// Make sure the group switch method is valid
-	if options.MainGroup.AutoSwitchMethod != "count" && options.MainGroup.AutoSwitchMethod != "proportion" {
-		return errors.New("invalid group switch method detected: " + options.MainGroup.AutoSwitchMethod)
-	}
-
-	// If the judge has seen more than the number of projects in the group, move them to a new group
-	if (options.MainGroup.AutoSwitchMethod == "count" && judge.GroupSeen >= options.MainGroup.AutoSwitchCount) ||
-		(options.MainGroup.AutoSwitchMethod == "proportion" && float64(judge.GroupSeen)/float64(numProjects) >= options.MainGroup.AutoSwitchProp) {
+	// If the judge has seen more than the proportion of projects in the group, move them to a new group
+	if float64(judge.GroupSeen)/float64(numProjects) >= options.AutoSwitchProp {
 		judge.Group = (judge.Group + 1) % options.NumGroups
 		judge.GroupSeen = 0
 	}
@@ -121,12 +127,15 @@ func MoveJudgeGroup(db *mongo.Database, ctx context.Context, judge *models.Judge
 
 // PickNextProject - Picks the next project for the judge to judge.
 // To do this:
-//  1. Shuffle projects
-//  2. If any projects seen less than min views (set in admin side), only select from that list
-//  3. Otherwise, pick the project with the minimum number of comparisons with every other project
+//  1. Get all available projects
+//  2. If judging a track, simply pick the next project in order
+//  3. If any project is prioritized and on the list, return that
+//  4. Shuffle projects
+//  5. If any projects seen less than min views (set in admin side), only select from that list
+//  6. Otherwise, pick the project with the minimum number of comparisons with every other project
 func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext, comps *Comparisons) (*models.Project, error) {
 	// Get items
-	items, err := FindPreferredItems(db, judge, ctx)
+	items, err := FindAvaliableItems(db, ctx, judge)
 	if err != nil {
 		return nil, err
 	}
@@ -141,21 +150,36 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 		return items[0], nil
 	}
 
-	// Get min views from db
-	minViews, err := database.GetMinViews(db)
+	// Get options from the db
+	options, err := database.GetOptions(db, ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// If judging a track, simply pick the next project
+	if judge.Track != "" {
+		return GetNextFreeProject(judge.LastLocation, items)
+	}
+
+	// Get prioritized projects
+	prioritizedProjects, err := database.GetPrioritizedProjects(db, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// If any prioritized projects are in the list, return the first one
+	for _, proj := range prioritizedProjects {
+		if slices.ContainsFunc(items, func(p *models.Project) bool {
+			return p.Id == proj.Id
+		}) {
+			return proj, nil
+		}
 	}
 
 	// Shuffle items
 	for i := range items {
 		j := rand.Intn(i + 1)
 		items[i], items[j] = items[j], items[i]
-	}
-
-	// If judging a track, ignore seen
-	if judge.Track != "" {
-		return comps.FindLeastCompared(items, judge.SeenProjects, judge.Track), nil
 	}
 
 	// Stable sort by the number of views
@@ -165,24 +189,26 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 
 	// If any items have not been seen minViews times, return that
 	// This will be a random item due to shuffling + stable sort
-	if items[0].Seen < minViews {
+	if items[0].Seen < options.MinViews {
 		return items[0], nil
 	}
 
 	// Otherwise, pick the project that has been compared to other projects the least
-	return comps.FindLeastCompared(items, judge.SeenProjects, ""), nil
+	return comps.FindLeastCompared(items, judge.SeenProjects), nil
 }
 
-// FindPreferredItems - List of projects to pick from for the judge.
+// FindAvaliableItems - List of projects to pick from for the judge.
 // Find all projects that are higher priority with the following heuristic:
 //  1. Ignore all projects that are inactive
 //  2. Filter out all projects that the judge has already seen
 //  3. Filter out all projects that the judge has flagged (except for busy projects)
 //  4. Filter out all projects that is not in the judge's track (if tracks are enabled and the user has a track)
-//  4. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
-//  5. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
-//  6. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
-func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext) ([]*models.Project, error) {
+//  5. If tracks are enabled, filter out all track projects that have been seen >2 times
+//  6. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
+//  7. If judging a track, return at this point (ignore last 2 conditions)
+//  8. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
+//  9. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
+func FindAvaliableItems(db *mongo.Database, ctx mongo.SessionContext, judge *models.Judge) ([]*models.Project, error) {
 	// Get the list of all active projects
 	projects, err := database.FindActiveProjects(db, ctx)
 	if err != nil {
@@ -224,12 +250,27 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.Sessi
 	}
 	projects = filteredProjects
 
+	// Get all projects currently being judged
+	busyProjects, err := database.FindBusyProjects(db, ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// Filter out all projects that are not in the judge's track
+	// Also filter out all track projects that have been seen >2 times OR is currently being judged by a track judge
 	if options.JudgeTracks && judge.Track != "" {
 		var trackProjects []*models.Project
 		for _, proj := range projects {
 			if slices.Contains(proj.ChallengeList, judge.Track) {
-				trackProjects = append(trackProjects, proj)
+				// If currently being judged by second track judge, do not assign
+				if proj.TrackSeen[judge.Track] == 1 && busyProjects[proj.Id] == judge.Track {
+					continue
+				}
+
+				// Otherwise, only add to list if seen < 2 times
+				if proj.TrackSeen[judge.Track] < 2 {
+					trackProjects = append(trackProjects, proj)
+				}
 			}
 		}
 		projects = trackProjects
@@ -241,27 +282,21 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.Sessi
 		return []*models.Project{}, nil
 	}
 
-	// Get all projects currently being judged and remove them from the list
-	// Also convert the list to a map for faster lookup
-	busyProjects, err := database.FindBusyProjects(db, ctx)
-	if err != nil {
-		return nil, err
-	}
-	busyProjectsMap := make(map[string]bool)
-	for _, proj := range busyProjects {
-		busyProjectsMap[proj.Hex()] = true
-	}
-
 	// Filter out projects that are currently being judged
 	// If all projects are busy, ignore this condition
 	var freeProjects []*models.Project
 	for _, proj := range projects {
-		if !busyProjectsMap[proj.Id.Hex()] {
+		if _, ok := busyProjects[proj.Id]; !ok {
 			freeProjects = append(freeProjects, proj)
 		}
 	}
 	if len(freeProjects) > 0 {
 		projects = freeProjects
+	}
+
+	// If track judging, ignore last conditions
+	if judge.Track != "" {
+		return projects, nil
 	}
 
 	// Group checking logic
@@ -313,4 +348,27 @@ func FindPreferredItems(db *mongo.Database, judge *models.Judge, ctx mongo.Sessi
 	}
 
 	return projects, nil
+}
+
+// GetNextFreeProject - Get the next project in front of the current judges' table number
+func GetNextFreeProject(currTableNum int64, projects []*models.Project) (*models.Project, error) {
+	// If last location is -1, pick a random project
+	if currTableNum == -1 {
+		return projects[rand.Intn(len(projects))], nil
+	}
+
+	// Sort projects by table number
+	slices.SortStableFunc(projects, func(a, b *models.Project) int {
+		return int(a.Location - b.Location)
+	})
+
+	// Get the next project that is not currently being judged
+	for _, proj := range projects {
+		if proj.Location > currTableNum {
+			return proj, nil
+		}
+	}
+
+	// This means that the judge is at the last table number; return the first project
+	return projects[0], nil
 }

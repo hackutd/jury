@@ -24,21 +24,53 @@ func GetOptions(db *mongo.Database, ctx context.Context) (*models.Options, error
 }
 
 // UpdateOptions updates the options in the database
-func UpdateOptions(db *mongo.Database, options *models.Options) error {
-	// Update the options
-	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": options})
-	return err
-}
+func UpdateOptions(db *mongo.Database, ctx context.Context, options *models.OptionalOptions) error {
+	update := gin.H{}
 
-// UpdateCurrTableNum updates the current table number in the database
-func UpdateCurrTableNum(db *mongo.Database, ctx context.Context, options *models.Options) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"curr_table_num": options.CurrTableNum, "group_table_nums": options.GroupTableNums}})
-	return err
-}
+	if options.JudgingTimer != nil {
+		update["judging_timer"] = *options.JudgingTimer
+	}
+	if options.MinViews != nil {
+		update["min_views"] = *options.MinViews
+	}
+	if options.ClockSync != nil {
+		update["clock_sync"] = *options.ClockSync
+	}
+	if options.JudgeTracks != nil {
+		update["judge_tracks"] = *options.JudgeTracks
+	}
+	if options.Tracks != nil {
+		update["tracks"] = *options.Tracks
+	}
+	if options.MultiGroup != nil {
+		update["multi_group"] = *options.MultiGroup
+	}
+	if options.NumGroups != nil {
+		update["num_groups"] = *options.NumGroups
+	}
+	if options.GroupSizes != nil {
+		update["group_sizes"] = *options.GroupSizes
+	}
+	if options.SwitchingMode != nil {
+		update["switching_mode"] = *options.SwitchingMode
+	}
+	if options.AutoSwitchProp != nil {
+		update["auto_switch_prop"] = *options.AutoSwitchProp
+	}
+	if options.GroupNames != nil {
+		update["group_names"] = *options.GroupNames
+	}
+	if options.IgnoreTracks != nil {
+		update["ignore_tracks"] = *options.IgnoreTracks
+	}
+	if options.MaxReqPerMin != nil {
+		update["max_req_per_min"] = *options.MaxReqPerMin
+	}
+	if options.BlockReqs != nil {
+		update["block_reqs"] = *options.BlockReqs
+	}
 
-// UpdateClockSync updates the clock sync in the database
-func UpdateClockSync(db *mongo.Database, ctx context.Context, clockSync bool) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"clock_sync": clockSync}})
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
 	return err
 }
 
@@ -65,35 +97,7 @@ func UpdateClock(db *mongo.Database, clock *models.ClockState) error {
 	return err
 }
 
-// GetCategories gets the categories from the database
-func GetCategories(db *mongo.Database) ([]string, error) {
-	var options models.Options
-	err := db.Collection("options").FindOne(context.Background(), gin.H{}).Decode(&options)
-	return options.Categories, err
-}
-
-// GetMinViews gets the minimum views option from the database
-func GetMinViews(db *mongo.Database) (int64, error) {
-	var options models.Options
-	err := db.Collection("options").FindOne(context.Background(), gin.H{}).Decode(&options)
-	return options.MinViews, err
-}
-
-func UpdateJudgeTracks(db *mongo.Database, ctx context.Context, judgeTracks bool) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"judge_tracks": judgeTracks}})
-	return err
-}
-
-func UpdateTracks(db *mongo.Database, ctx context.Context, tracks []string) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"tracks": tracks}})
-	return err
-}
-
-func UpdateMultiGroup(db *mongo.Database, ctx context.Context, multiGroup bool) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"multi_group": multiGroup}})
-	return err
-}
-
+// UpdateNumGroups will update the number of groups and resize the group sizes if necessary
 func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) error {
 	// Get options
 	options, err := GetOptions(db, ctx)
@@ -103,45 +107,70 @@ func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) e
 
 	// Resize group sizes if necessary
 	if numGroups < options.NumGroups {
-		options.GroupSizes = options.GroupSizes[:numGroups-1]
+		options.GroupSizes = options.GroupSizes[:numGroups]
 	} else if numGroups > options.NumGroups {
-		for i := options.NumGroups; i < numGroups-1; i++ {
+		for i := options.NumGroups; i < numGroups; i++ {
 			options.GroupSizes = append(options.GroupSizes, 30)
 		}
 	}
 
-	_, err = db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"num_groups": numGroups, "group_sizes": options.GroupSizes}})
-	return err
+	// Reassign group numbers to all projects
+	ReassignAllGroupNums(db, ctx, options)
+
+	// Update options
+	return UpdateOptions(db, ctx, &models.OptionalOptions{NumGroups: &numGroups, GroupSizes: &options.GroupSizes})
 }
 
 func UpdateGroupSizes(db *mongo.Database, ctx context.Context, groupSizes []int64) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"group_sizes": groupSizes}})
-	return err
-}
-
-// UpdateGroupOptions will update the group options based on the given options
-func UpdateGroupOptions(db *mongo.Database, ctx context.Context, groupOptions models.OptionalGroupOptions) error {
-	update := gin.H{}
-
-	if groupOptions.SwitchingMode != nil {
-		update["main_group.switching_mode"] = *groupOptions.SwitchingMode
-	}
-	if groupOptions.AutoSwitchMethod != nil {
-		update["main_group.auto_switch_method"] = *groupOptions.AutoSwitchMethod
-	}
-	if groupOptions.AutoSwitchCount != nil {
-		update["main_group.auto_switch_count"] = *groupOptions.AutoSwitchCount
-	}
-	if groupOptions.AutoSwitchProp != nil {
-		update["main_group.auto_switch_prop"] = *groupOptions.AutoSwitchProp
+	// Get options
+	options, err := GetOptions(db, ctx)
+	if err != nil {
+		return err
 	}
 
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": update})
-	return err
+	// If group sizes did not change, do nothing
+	if len(groupSizes) == len(options.GroupSizes) {
+		same := true
+		for i := range groupSizes {
+			if groupSizes[i] != options.GroupSizes[i] {
+				same = false
+				break
+			}
+		}
+		if same {
+			return nil
+		}
+	}
+
+	// Reassign group numbers to all projects
+	options.GroupSizes = groupSizes
+	ReassignAllGroupNums(db, ctx, options)
+
+	// Update options
+	return UpdateOptions(db, ctx, &models.OptionalOptions{GroupSizes: &groupSizes})
 }
 
 // IncrementManualSwitches increments the manual switches in the database
 func IncrementManualSwitches(db *mongo.Database, ctx context.Context) error {
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$inc": gin.H{"main_group.manual_switches": 1}})
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$inc": gin.H{"manual_switches": 1}})
+	return err
+}
+
+// UpdateQRCode updates the QR code in the database
+func UpdateQRCode(db *mongo.Database, ctx context.Context, qrCode string) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"qr_code": qrCode}})
+	return err
+}
+
+// UpdateTrackQRCode updates the QR code for a track in the database
+func UpdateTrackQRCode(db *mongo.Database, ctx context.Context, track string, qrCode string) error {
+	key := "track_qr_codes." + track
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{key: qrCode}})
+	return err
+}
+
+// UpdateDeliberation updates the deliberation in the database
+func UpdateDeliberation(db *mongo.Database, ctx context.Context, deliberation bool) error {
+	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"deliberation": deliberation}})
 	return err
 }

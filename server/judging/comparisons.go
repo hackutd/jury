@@ -4,7 +4,6 @@ import (
 	"context"
 	"server/database"
 	"server/models"
-	"slices"
 	"sync"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -70,53 +69,6 @@ func LoadComparisons(db *mongo.Database) (*Comparisons, error) {
 	return CreateComparisons(projects, judges), nil
 }
 
-func LoadTrackComparisons(db *mongo.Database) (map[string]*Comparisons, error) {
-	// Get all judges
-	judges, err := database.FindAllJudges(db, context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	// Get all projects
-	projects, err := database.FindAllProjects(db, context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	// Get options
-	options, err := database.GetOptions(db, context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	// Create map of track comparisons
-	trackComps := make(map[string]*Comparisons)
-
-	// Loop through all tracks
-	for _, track := range options.Tracks {
-		// Filter out projects not in track
-		var trackProjects []*models.Project
-		for _, v := range projects {
-			if slices.Contains(v.ChallengeList, track) {
-				trackProjects = append(trackProjects, v)
-			}
-		}
-
-		// Filter out judges not in track
-		var trackJudges []*models.Judge
-		for _, v := range judges {
-			if v.Track == track {
-				trackJudges = append(trackJudges, v)
-			}
-		}
-
-		// Create comparisons for track
-		trackComps[track] = CreateComparisons(trackProjects, trackJudges)
-	}
-
-	return trackComps, nil
-}
-
 // AddProjectToComparisons will increase the size of the comparisons array when
 // adding a project to the database
 func (c *Comparisons) AddProjectToComparisons(p *models.Project) error {
@@ -179,20 +131,9 @@ func (c *Comparisons) UpdateProjectComparisonCount(prevSeen []models.JudgedProje
 
 // FindLeastCompared finds the project that has been compared the LEAST
 // to all other projects. Projects param MUST not be empty.
-func (c *Comparisons) FindLeastCompared(projects []*models.Project, prevSeen []models.JudgedProject, track string) *models.Project {
+func (c *Comparisons) FindLeastCompared(projects []*models.Project, prevSeen []models.JudgedProject) *models.Project {
 	c.Mutex.Lock()
 	defer c.Mutex.Unlock()
-
-	// Filter out projects not in track
-	if track != "" {
-		var trackProjects []*models.Project
-		for _, v := range projects {
-			if slices.Contains(v.ChallengeList, track) {
-				trackProjects = append(trackProjects, v)
-			}
-		}
-		projects = trackProjects
-	}
 
 	if len(projects) == 0 {
 		return nil
@@ -215,4 +156,27 @@ func (c *Comparisons) FindLeastCompared(projects []*models.Project, prevSeen []m
 	}
 
 	return minProj
+}
+
+// ReloadComparisons will reload the comparisons from the database
+func ReloadComparisons(db *mongo.Database, comparisons *Comparisons) error {
+	new_comps, err := LoadComparisons(db)
+	if err != nil {
+		return err
+	}
+
+	// Remove all old comparisons
+	comparisons.Arr = make([][]int, len(new_comps.Arr))
+	comparisons.IdNumMap = make(map[primitive.ObjectID]int)
+
+	// Add all new comparisons
+	for k, v := range new_comps.IdNumMap {
+		comparisons.IdNumMap[k] = v
+	}
+	for i, v := range new_comps.Arr {
+		comparisons.Arr[i] = make([]int, len(v))
+		copy(comparisons.Arr[i], v)
+	}
+
+	return nil
 }

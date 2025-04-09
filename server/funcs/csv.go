@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/exp/slices"
 )
 
 // Read CSV file and return a slice of judge structs
@@ -73,15 +74,21 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 		return []*models.Project{}, nil
 	}
 
-	// Get the options from the database
-	options, err := database.GetOptions(db, context.Background())
+	// If the CSV file has a header, skip the first line
+	if hasHeader {
+		r.Read()
+	}
+
+	// Get the starting table number
+	tableNum, err := database.GetMaxTableNum(db, context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	// If the CSV file has a header, skip the first line
-	if hasHeader {
-		r.Read()
+	// Get options from the database
+	options, err := database.GetOptions(db, context.Background())
+	if err != nil {
+		return nil, err
 	}
 
 	// Read the CSV file, looping through each record
@@ -109,6 +116,18 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 			challengeList[i] = strings.TrimSpace(challengeList[i])
 		}
 
+		// If the challenge list contains the ignore track, skip the project
+		ignore := false
+		for _, ignoreTrack := range options.IgnoreTracks {
+			if slices.Contains(challengeList, ignoreTrack) {
+				ignore = true
+				break
+			}
+		}
+		if ignore {
+			continue
+		}
+
 		// Optional fields
 		var tryLink string
 		if len(record) > 3 && record[3] != "" {
@@ -120,16 +139,10 @@ func ParseProjectCsv(content string, hasHeader bool, db *mongo.Database) ([]*mod
 		}
 
 		// Increment the table number
-		group, num := GetNextTableNum(db, options)
+		tableNum++
 
 		// Add project to slice
-		projects = append(projects, models.NewProject(record[0], num, group, record[1], record[2], tryLink, videoLink, challengeList))
-	}
-
-	// Update the options table number in the database
-	err = database.UpdateCurrTableNum(db, context.Background(), options)
-	if err != nil {
-		return nil, err
+		projects = append(projects, models.NewProject(record[0], tableNum, util.GroupFromTable(options, tableNum), record[1], record[2], tryLink, videoLink, challengeList))
 	}
 
 	return projects, nil
@@ -164,7 +177,13 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 	// Skip the first line
 	r.Read()
 
-	// Get the options from the database
+	// Get the starting table number
+	tableNum, err := database.GetMaxTableNum(db, context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	// Get options from the database
 	options, err := database.GetOptions(db, context.Background())
 	if err != nil {
 		return nil, err
@@ -200,26 +219,32 @@ func ParseDevpostCSV(content string, db *mongo.Database) ([]*models.Project, err
 			challengeList[i] = strings.TrimSpace(challengeList[i])
 		}
 
-		// Increment table number
-		group, num := GetNextTableNum(db, options)
+		// If the challenge list contains the ignore track, skip the project
+		ignore := false
+		for _, ignoreTrack := range options.IgnoreTracks {
+			if slices.Contains(challengeList, ignoreTrack) {
+				ignore = true
+				break
+			}
+		}
+		if ignore {
+			continue
+		}
+
+		// Increment the table number
+		tableNum++
 
 		// Add project to slice
 		projects = append(projects, models.NewProject(
 			record[0],
-			num,
-			group,
+			tableNum,
+			util.GroupFromTable(options, tableNum),
 			record[6],
 			record[1],
 			record[7],
 			record[8],
 			challengeList,
 		))
-	}
-
-	// Update the options table number in the database
-	err = database.UpdateCurrTableNum(db, context.Background(), options)
-	if err != nil {
-		return nil, err
 	}
 
 	return projects, nil

@@ -20,6 +20,7 @@ type Judge struct {
 	ReadWelcome  bool                 `bson:"read_welcome" json:"read_welcome"`
 	Notes        string               `bson:"notes" json:"notes"`
 	Current      *primitive.ObjectID  `bson:"current" json:"current"`
+	LastLocation int64                `bson:"last_location" json:"last_location"`
 	Seen         int64                `bson:"seen" json:"seen"`
 	GroupSeen    int64                `bson:"group_seen" json:"group_seen"` // Projects seen in the group
 	SeenProjects []JudgedProject      `bson:"seen_projects" json:"seen_projects"`
@@ -29,7 +30,7 @@ type Judge struct {
 
 type JudgedProject struct {
 	ProjectId   primitive.ObjectID `bson:"project_id" json:"project_id"`
-	Categories  map[string]int     `bson:"categories" json:"categories"`
+	Starred     bool               `bson:"starred" json:"starred"`
 	Notes       string             `bson:"notes" json:"notes"`
 	Name        string             `bson:"name" json:"name"`
 	Location    int64              `bson:"location" json:"location"`
@@ -39,7 +40,7 @@ type JudgedProject struct {
 func NewJudge(name string, email string, track string, notes string, group int64) *Judge {
 	return &Judge{
 		Token:        "",
-		Code:         fmt.Sprintf("%d", rand.Intn(900000)+100000), // Generates a num between 100000 and 999999
+		Code:         RandCode(),
 		Name:         name,
 		Email:        email,
 		Active:       true,
@@ -48,6 +49,7 @@ func NewJudge(name string, email string, track string, notes string, group int64
 		ReadWelcome:  false,
 		Notes:        notes,
 		Current:      nil,
+		LastLocation: -1,
 		Seen:         0,
 		GroupSeen:    0,
 		SeenProjects: []JudgedProject{},
@@ -56,14 +58,19 @@ func NewJudge(name string, email string, track string, notes string, group int64
 	}
 }
 
-func JudgeProjectFromProject(project *Project, categories map[string]int) *JudgedProject {
+// RandCode generates a random 8 digit code
+func RandCode() string {
+	return fmt.Sprintf("%d", rand.Intn(90000000)+10000000)
+}
+
+func JudgeProjectFromProject(project *Project, notes string, starred bool) *JudgedProject {
 	return &JudgedProject{
 		ProjectId:   project.Id,
-		Categories:  categories,
 		Name:        project.Name,
 		Location:    project.Location,
 		Description: project.Description,
-		Notes:       "",
+		Notes:       notes,
+		Starred:     starred,
 	}
 }
 

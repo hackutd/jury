@@ -6,13 +6,18 @@ import { errorAlert } from '../../util';
 import ConfirmPopup from '../../components/ConfirmPopup';
 import Loading from '../../components/Loading';
 import Checkbox from '../../components/Checkbox';
-import RawTextInput from '../../components/RawTextInput';
+import TextInput from '../../components/TextInput';
 import SelectionButton from '../../components/SelectionButton';
 import { useOptionsStore } from '../../store';
+import ChallengeBlock from '../../components/admin/ChallengeBlock';
+import Card from '../../components/Card';
+import ToTopButton from '../../components/ToTopButton';
 
 // Text components
-const Section = ({ children: c }: { children: React.ReactNode }) => (
-    <h2 className="text-4xl mt-8 text-primary">{c}</h2>
+const Section = ({ children: c }: { children: string }) => (
+    <h2 id={c.toLowerCase().replace(/ /g, '-')} className="text-4xl text-primary">
+        {c}
+    </h2>
 );
 const SubSection = ({ children: c }: { children: React.ReactNode }) => (
     <h3 className="text-xl mt-4 mb-1 font-bold">{c}</h3>
@@ -31,9 +36,23 @@ const SettingsButton = ({
     children: React.ReactNode;
     onClick: () => void;
     className?: string;
-    type?: 'primary' | 'error' | 'gold';
+    type?: 'primary' | 'error' | 'gold' | 'outline';
 }) => (
     <Button type={type} onClick={onClick} small className={'my-2 ' + className}>
+        {children}
+    </Button>
+);
+
+// Custom button at the top to nav to sections
+const NavButton = ({ children }: { children: string }) => (
+    <Button
+        type="primary"
+        onClick={() => {
+            window.location.href = `#${children.toLowerCase().replace(/ /g, '-')}`;
+        }}
+        small
+        className="text-xl"
+    >
         {children}
     </Button>
 );
@@ -46,17 +65,18 @@ const AdminSettings = () => {
     const [judgingTimer, setJudgingTimer] = useState('');
     const [minViews, setMinViews] = useState(3);
     const [syncClock, setSyncClock] = useState(false);
-    const [categories, setCategories] = useState('');
     const [loading, setLoading] = useState(true);
     const [multiGroup, setMultiGroup] = useState(false);
     const [numGroups, setNumGroups] = useState(3);
     const [switchingMode, setSwitchingMode] = useState('auto');
-    const [autoSwitchMethod, setAutoSwitchMethod] = useState('count');
-    const [autoSwitchCount, setAutoSwitchCount] = useState(3);
     const [autoSwitchProp, setAutoSwitchProp] = useState(0.1);
     const [groupSizes, setGroupSizes] = useState('30, 30');
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
+    const [groupNames, setGroupNames] = useState('');
+    const [ignoreTracks, setIgnoreTracks] = useState<string>('');
+    const [maxReqPerMin, setMaxReqPerMin] = useState(100);
+    const [blockReqs, setBlockReqs] = useState(false);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
 
     async function getOptions() {
@@ -79,10 +99,6 @@ const AdminSettings = () => {
             setJudgingTimer(timerStr);
         }
 
-        // Set categories
-        const cats = res.data.categories.join(', ');
-        setCategories(cats ?? '');
-
         // Set min views
         setMinViews(res.data.min_views);
 
@@ -93,20 +109,52 @@ const AdminSettings = () => {
         setMultiGroup(res.data.multi_group);
         setNumGroups(res.data.num_groups);
         setGroupSizes(res.data.group_sizes.join(', '));
-        setSwitchingMode(res.data.main_group.switching_mode);
-        setAutoSwitchMethod(res.data.main_group.auto_switch_method);
-        setAutoSwitchCount(res.data.main_group.auto_switch_count);
-        setAutoSwitchProp(res.data.main_group.auto_switch_prop);
+        setSwitchingMode(res.data.switching_mode);
+        setAutoSwitchProp(res.data.auto_switch_prop);
         setJudgeTracks(res.data.judge_tracks);
         setTracks(res.data.tracks.join(', '));
+        setGroupNames(res.data.group_names.join(', '));
+        setIgnoreTracks(res.data.ignore_tracks.join(', '));
+        setBlockReqs(res.data.block_reqs);
+        setMaxReqPerMin(res.data.max_req_per_min);
 
         setLoading(false);
     }
 
-    // Get the previous options
+    // Get the previous options on load
     useEffect(() => {
         getOptions();
     }, []);
+
+    const updateBlockReqs = async () => {
+        const res = await postRequest<OkResponse>('/admin/block-reqs', 'admin', {
+            block_reqs: !blockReqs,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        setBlockReqs(!blockReqs);
+        alert(`Judge login is now ${blockReqs ? 'enabled' : 'BLOCKED'}`);
+    };
+
+    const updateMaxReqPerMin = async () => {
+        if (isNaN(maxReqPerMin) || maxReqPerMin < 0) {
+            alert('Max requests per minute should be a positive integer!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/max-reqs', 'admin', {
+            max_req_per_min: maxReqPerMin,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Max requests per minute updated!');
+    };
 
     const reassignTables = async () => {
         const res = await postRequest<OkResponse>('/project/reassign', 'admin', null);
@@ -144,7 +192,7 @@ const AdminSettings = () => {
         }
 
         // Update the timer
-        const res = await postRequest<OkResponse>('/admin/timer', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             judging_timer: timer,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -164,7 +212,7 @@ const AdminSettings = () => {
         }
 
         // Update min views
-        const res = await postRequest<OkResponse>('/admin/min-views', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             min_views: minViews,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -176,28 +224,8 @@ const AdminSettings = () => {
         getOptions();
     };
 
-    const updateCategories = async () => {
-        // Split categories by comma and remove empty strings
-        const filteredCats = categories
-            .split(',')
-            .map((cat) => cat.trim())
-            .filter((cat) => cat !== '');
-
-        // Post the new categories
-        const res = await postRequest<OkResponse>('/admin/categories', 'admin', {
-            categories: filteredCats,
-        });
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('Categories updated!');
-        getOptions();
-    };
-
     const toggleJudgeTracks = async () => {
-        const res = await postRequest<OkResponse>('/admin/tracks/toggle', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             judge_tracks: !judgeTracks,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -216,7 +244,7 @@ const AdminSettings = () => {
             .map((track) => track.trim())
             .filter((track) => track !== '');
 
-        const res = await postRequest<OkResponse>('/admin/tracks', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             tracks: filteredTracks,
         });
         if (res.status !== 200 || !res.data) {
@@ -228,7 +256,7 @@ const AdminSettings = () => {
     };
 
     const toggleMultiGroup = async () => {
-        const res = await postRequest<OkResponse>('/admin/groups/toggle', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             multi_group: !multiGroup,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -237,6 +265,7 @@ const AdminSettings = () => {
         }
 
         setMultiGroup(!multiGroup);
+        fetchOptions();
         alert('Multi-group judging toggled!');
     };
 
@@ -246,7 +275,7 @@ const AdminSettings = () => {
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/num', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/num-groups', 'admin', {
             num_groups: numGroups,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -261,7 +290,7 @@ const AdminSettings = () => {
     };
 
     const updateSwitchingMode = async (newMode: string) => {
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             switching_mode: newMode,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -273,42 +302,13 @@ const AdminSettings = () => {
         alert('Switching method updated!');
     };
 
-    const updateAutoSwitchMethod = async (newMethod: string) => {
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
-            auto_switch_method: newMethod,
-        });
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('Auto switch method updated!');
-    };
-
-    const updateAutoSwitchCount = async () => {
-        if (isNaN(autoSwitchCount) || autoSwitchCount < 1) {
-            alert('Auto switch count should be a positive integer!');
-            return;
-        }
-
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
-            auto_switch_count: autoSwitchCount,
-        });
-        if (res.status !== 200 || res.data?.ok !== 1) {
-            errorAlert(res);
-            return;
-        }
-
-        alert('Auto switch count updated!');
-    };
-
     const updateAutoSwitchProp = async () => {
         if (isNaN(autoSwitchProp) || autoSwitchProp < 0 || autoSwitchProp > 1) {
             alert('Auto switch proportion should be a decimal between 0 and 1!');
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             auto_switch_prop: autoSwitchProp,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -326,13 +326,15 @@ const AdminSettings = () => {
             return;
         }
 
-        // Make sure number of counts is numGroups - 1
-        if (sizes.length !== numGroups - 1) {
-            alert('Number of sizes should be one less than the number of groups!');
+        // Make sure number of counts is numGroups
+        if (sizes.length !== numGroups) {
+            alert(
+                'Number of sizes should be the same as number of groups (you need a size for each group)!'
+            );
             return;
         }
 
-        const res = await postRequest<OkResponse>('/admin/groups/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/group-sizes', 'admin', {
             group_sizes: sizes,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -340,7 +342,51 @@ const AdminSettings = () => {
             return;
         }
 
-        alert('Split counts updated!');
+        alert('Group sizes updated!');
+    };
+
+    const updateGroupNames = async () => {
+        const names = groupNames.split(',').map((name) => name.trim());
+        if (names.some((name) => name === '')) {
+            alert('Group names should not be empty!');
+            return;
+        }
+
+        // Make sure number of names is numGroups
+        if (names.length !== numGroups) {
+            alert(
+                'Number of names should be the same as number of groups (you need a name for each group)!'
+            );
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+            group_names: names,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Group names updated!');
+    };
+
+    const updateIgnoreTracks = async () => {
+        const tracks = ignoreTracks.split(',').map((track) => track.trim());
+        if (tracks.some((track) => track === '')) {
+            alert('Track names should not be empty!');
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+            ignore_tracks: tracks,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Ignored tracks updated!');
     };
 
     const resetClock = async () => {
@@ -355,7 +401,7 @@ const AdminSettings = () => {
     };
 
     const toggleSyncClock = async () => {
-        const res = await postRequest<OkResponse>('/admin/clock/sync', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
             clock_sync: !syncClock,
         });
         if (res.status !== 200 || res.data?.ok !== 1) {
@@ -434,317 +480,352 @@ const AdminSettings = () => {
             <JuryHeader withBack withLogout isAdmin />
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
-                <Section>Judging Parameters</Section>
 
-                <SubSection>Reassign Project Numbers</SubSection>
-                <Description>
-                    Reassign all project numbers to the projects. This will keep the relative order
-                    but reassign the project numbers starting from the first project. If groups are
-                    enabled, projects will be assigned round-robin into groups. Otherwise, projects
-                    will be assigned in order.
-                </Description>
-                <SettingsButton
-                    onClick={() => setReassignPopup(true)}
-                    className="bg-gold text-black hover:bg-goldDark hover:text-black"
-                >
-                    Reassign
-                </SettingsButton>
-
-                <SubSection>Reassign Judge Groups</SubSection>
-                <Description>
-                    Reassigns all judges to groups. The number of judges in each group will be kept
-                    as even as possible.
-                </Description>
-                <SettingsButton onClick={() => setJudgeReassignPopup(true)} type="gold">
-                    Reassign
-                </SettingsButton>
-
-                <SubSection>Set Minimum Project Views</SubSection>
-                <Description>
-                    Set the minimum amount of times that a project should be seen during judging.
-                    This will ensure all projects get seen at LEAST this many times before switching
-                    over to the optimal method of assigning projects. Set to 0 to ignore this
-                    condition (recommended: 3-5).
-                </Description>
-                <div className="flex flex-row">
-                    <RawTextInput
-                        name="min-views"
-                        text={minViews}
-                        setText={setMinViews}
-                        placeholder="Enter an integer..."
-                        large
-                        className="my-2 mr-4"
-                        number
-                    />
-                    <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
+                <div className="my-4 flex flex-row flex-wrap gap-4">
+                    <NavButton>Judge Login</NavButton>
+                    <NavButton>Judging Parameters</NavButton>
+                    <NavButton>Judging Clock and Timer</NavButton>
+                    <NavButton>Multi-Group and Track Judging</NavButton>
+                    <NavButton>Export Data</NavButton>
+                    <NavButton>Reset Database</NavButton>
                 </div>
 
-                <SubSection>Set Categories</SubSection>
-                <Description>
-                    Set the categories that the judges will be scoring each project on. Please
-                    separate each category with a comma.
-                </Description>
-                <RawTextInput
-                    name="categories"
-                    placeholder="Cat 1, Cat 2, Cat 3, ..."
-                    text={categories}
-                    setText={setCategories}
-                    full
-                    large
-                    className="my-2"
-                />
-                <SettingsButton onClick={updateCategories}>Update Categories</SettingsButton>
+                <Card>
+                    <Section>Judge Login</Section>
 
-                <Section>Judging Clock and Timer</Section>
+                    <SubSection>Disable Logins</SubSection>
+                    <Description>
+                        Disable ALL judge login endpoints. Judges who are currently logged in can
+                        still judge, but no new judges can log in. This is useful if you want to
+                        prevent brute force enumeration attacks.
+                    </Description>
+                    <SettingsButton onClick={updateBlockReqs} type="error">
+                        {blockReqs
+                            ? 'Enable Logins (Currently DISABLED)'
+                            : 'Disable Logins (Currently ENABLED)'}
+                    </SettingsButton>
 
-                <SubSection>Reset Main Clock</SubSection>
-                <Description>Reset the clock back to 00:00:00</Description>
-                <SettingsButton
-                    onClick={() => setClockResetPopup(true)}
-                    className="bg-gold text-black hover:bg-goldDark hover:text-black"
-                >
-                    Reset
-                </SettingsButton>
-
-                <SubSection>Sync Clock with Database Automatically</SubSection>
-                <Description>
-                    Backup clock data to database automatically -- note that this functionality
-                    won't work properly if you are using the database with multiple instances of
-                    Jury. This will save the clock state if the Jury backend server crashes for any
-                    reason. Automatic means every 10 minutes, the clock state will be saved to the
-                    database, as well as whenever the clock is paused/unpaused/reset.
-                </Description>
-                <Checkbox checked={syncClock} onChange={toggleSyncClock}>
-                    Sync automatically
-                </Checkbox>
-
-                <SubSection>Backup Clock</SubSection>
-                <Description>Save clock state to database right now.</Description>
-                <SettingsButton onClick={backupClock}>Backup</SettingsButton>
-
-                <SubSection>Set Judging Timer</SubSection>
-                <Description>
-                    Set how long judges have to view each project. This will reflect on the timer
-                    that shows on the judging page. Leave this field blank (or 0) if you do not wish
-                    to have a timer for each judge.
-                </Description>
-                <div className="flex flex-row">
-                    <RawTextInput
-                        name="judging-timer"
-                        text={judgingTimer}
-                        setText={setJudgingTimer}
-                        placeholder="MM:SS"
-                        large
-                        className="my-2 mr-4"
-                    />
-                    <SettingsButton onClick={updateTimer}>Update Timer</SettingsButton>
-                </div>
-
-                <Section>Multi-Group and Track Judging</Section>
-
-                <SubSection>Enable Track Judging</SubSection>
-                <Description>
-                    Enable judging for individual tracks. This allows judges to be assigned to a
-                    specific track and ONLY judge projects that have submitted to that track. This
-                    does not affect the main general judging, and all projects will still be
-                    considered for the main judging. However, if you have a different track (eg.
-                    design), this feature will allow that track's judges to only see projects that
-                    have submitted to that track. Note that toggling this option during judging{' '}
-                    <span className="font-bold">is very very bad</span>.
-                </Description>
-                <Checkbox checked={judgeTracks} onChange={toggleJudgeTracks}>
-                    Enable Track Judging
-                </Checkbox>
-
-                {judgeTracks && (
-                    <>
-                        <SubSection>Set Tracks</SubSection>
-                        <Description>
-                            Set the tracks that will be judged. Note this should match the name
-                            under the 'Opt-In Prizes' category. Only the tracks listed here will be
-                            judged! As with the previous setting, DO NOT CHANGE THIS DURING JUDGING.
-                        </Description>
-                        <RawTextInput
-                            name="tracks"
-                            text={tracks}
-                            setText={setTracks}
-                            placeholder="Track 1, Track 2, ..."
+                    <SubSection>Max Logins Per Minute</SubSection>
+                    <Description>
+                        Set the maximum number of requests that can be made to the login endpoint
+                        per minute. This is also useful for preventing brute force attacks.
+                    </Description>
+                    <div className="flex flex-row">
+                        <TextInput
+                            text={maxReqPerMin}
+                            setText={setMaxReqPerMin}
+                            placeholder="Enter an integer..."
                             large
-                            full
-                            className="my-2"
+                            className="my-2 mr-4"
+                            number
                         />
-                        <SettingsButton onClick={updateTracks}>Update Tracks</SettingsButton>
-                    </>
-                )}
+                        <SettingsButton onClick={updateMaxReqPerMin}>
+                            Update Max Requests
+                        </SettingsButton>
+                    </div>
+                </Card>
 
-                <SubSection>Enable Multiple Groups</SubSection>
-                <Description>
-                    Enable multiple groups for judging. This will allow judges to be assigned to
-                    different groups and score projects within their group only, switching after
-                    either a certain number of projects or manually by admins. Note that toggling
-                    this option <span className="font-bold">will reassign project numbers</span>.
-                </Description>
-                <Checkbox checked={multiGroup} onChange={toggleMultiGroup}>
-                    Enable Multi-Group Judging
-                </Checkbox>
+                <Card>
+                    <Section>Judging Parameters</Section>
 
-                {multiGroup && (
-                    <>
-                        <SubSection>Number of Groups</SubSection>
-                        <Description>
-                            Set the number of groups judges will be split into.
-                        </Description>
-                        <div className="flex flex-row">
-                            <RawTextInput
-                                name="num-groups"
-                                text={numGroups}
-                                setText={setNumGroups}
-                                placeholder="Enter an integer..."
-                                large
-                                number
-                                className="my-2 mr-4"
-                            />
-                            <SettingsButton onClick={updateNumGroups}>
-                                Update Number of Groups
-                            </SettingsButton>
-                        </div>
+                    <SubSection>Reassign Project Numbers</SubSection>
+                    <Description>
+                        Reassign all project numbers to the projects. This will keep the relative
+                        order but reassign the project numbers starting from the first project. If
+                        groups are enabled, projects will be assigned round-robin into groups.
+                        Otherwise, projects will be assigned in order.
+                    </Description>
+                    <div className="flex flex-row">
+                        <SettingsButton
+                            onClick={() => setReassignPopup(true)}
+                            className="bg-gold text-black hover:bg-goldDark hover:text-black mr-4"
+                        >
+                            Reassign
+                        </SettingsButton>
+                    </div>
 
-                        <SubSection>Group Sizes</SubSection>
-                        <Description>
-                            Set how many projects each group will get. Please separate each count
-                            with a comma. This list should contain one less than the total number of
-                            groups (eg. 3 groups: "30, 30").
-                        </Description>
-                        <RawTextInput
-                            name="group-sizes"
-                            placeholder="30, 30, 30, ..."
-                            text={groupSizes}
-                            setText={setGroupSizes}
-                            full
+                    <SubSection>Reassign Judge Groups</SubSection>
+                    <Description>
+                        Reassigns all judges to groups. The number of judges in each group will be
+                        kept as even as possible.
+                    </Description>
+                    <SettingsButton onClick={() => setJudgeReassignPopup(true)} type="gold">
+                        Reassign
+                    </SettingsButton>
+
+                    <SubSection>Set Minimum Project Views</SubSection>
+                    <Description>
+                        Set the minimum amount of times that a project should be seen during
+                        judging. This will ensure all projects get seen at LEAST this many times
+                        before switching over to the optimal method of assigning projects. Set to 0
+                        to ignore this condition (recommended: 3-5).
+                    </Description>
+                    <div className="flex flex-row">
+                        <TextInput
+                            text={minViews}
+                            setText={setMinViews}
+                            placeholder="Enter an integer..."
+                            large
+                            className="my-2 mr-4"
+                            number
+                        />
+                        <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
+                    </div>
+
+                    <SubSection>Ignore Tracks</SubSection>
+                    <Description>
+                        Set a list of tracks to ignore when uploading projects. This will be applied
+                        when uploading projects -- projects that are ignored will NOT be added to
+                        Jury at all. This is most effective when using Devpost CSV upload.
+                    </Description>
+                    <ChallengeBlock />
+                    <TextInput
+                        text={ignoreTracks}
+                        setText={setIgnoreTracks}
+                        placeholder="Track 1, Track 2, ..."
+                        large
+                        full
+                        className="my-2"
+                    />
+                    <SettingsButton onClick={updateIgnoreTracks} type="gold">
+                        Update Ignore Tracks
+                    </SettingsButton>
+                </Card>
+
+                <Card>
+                    <Section>Judging Clock and Timer</Section>
+
+                    <SubSection>Reset Main Clock</SubSection>
+                    <Description>Reset the clock back to 00:00:00</Description>
+                    <SettingsButton
+                        onClick={() => setClockResetPopup(true)}
+                        className="bg-gold text-black hover:bg-goldDark hover:text-black"
+                    >
+                        Reset
+                    </SettingsButton>
+
+                    <SubSection>Sync Clock with Database Automatically</SubSection>
+                    <Description>
+                        Backup clock data to database automatically -- note that this functionality
+                        won't work properly if you are using the database with multiple instances of
+                        Jury. This will save the clock state if the Jury backend server crashes for
+                        any reason. Automatic means every 10 minutes, the clock state will be saved
+                        to the database, as well as whenever the clock is paused/unpaused/reset.
+                    </Description>
+                    <Checkbox checked={syncClock} onChange={toggleSyncClock}>
+                        Sync automatically
+                    </Checkbox>
+
+                    <SubSection>Backup Clock</SubSection>
+                    <Description>Save clock state to database right now.</Description>
+                    <SettingsButton onClick={backupClock}>Backup</SettingsButton>
+
+                    <SubSection>Set Judging Timer</SubSection>
+                    <Description>
+                        Set how long judges have to view each project. This will reflect on the
+                        timer that shows on the judging page. Leave this field blank (or 0) if you
+                        do not wish to have a timer for each judge.
+                    </Description>
+                    <div className="flex flex-row">
+                        <TextInput
+                            text={judgingTimer}
+                            setText={setJudgingTimer}
+                            placeholder="MM:SS"
                             large
                             className="my-2 mr-4"
                         />
-                        <SettingsButton onClick={updateGroupSizes}>Update Sizes</SettingsButton>
+                        <SettingsButton onClick={updateTimer}>Update Timer</SettingsButton>
+                    </div>
+                </Card>
 
-                        <SubSection>Switching Mode</SubSection>
-                        <Description>
-                            Choose how judges will switch between projects. If set to "auto", judges
-                            will switch after a certain number/proportion of projects. If set to
-                            "manual", judges will switch after an admin manually presses a button to
-                            switch judges' groups.
-                        </Description>
-                        <SelectionButton
-                            selected={switchingMode}
-                            setSelected={setSwitchingMode}
-                            onClick={updateSwitchingMode}
-                            options={['auto', 'manual']}
-                            className="my-2"
-                        />
+                <Card>
+                    <Section>Multi-Group and Track Judging</Section>
 
-                        {switchingMode === 'auto' && (
-                            <>
-                                <SubSection>Auto Switch Method</SubSection>
-                                <Description>
-                                    Choose when judges will automatically switch between projects.
-                                    If set to "count", judges will switch after viewing a specific
-                                    number of projects in the group. If set to "proportion", judges
-                                    will switch after a certain proportion of projects in the group.
-                                    Note that when using "count" switching, rooms must contain
-                                    approximately the same number of projects.
-                                </Description>
-                                <SelectionButton
-                                    selected={autoSwitchMethod}
-                                    setSelected={setAutoSwitchMethod}
-                                    onClick={updateAutoSwitchMethod}
-                                    options={['count', 'proportion']}
-                                    className="my-2"
+                    <SubSection>Enable Track Judging</SubSection>
+                    <Description>
+                        Enable judging for individual tracks. This allows judges to be assigned to a
+                        specific track and ONLY judge projects that have submitted to that track.
+                        This does not affect the main general judging, and all projects will still
+                        be considered for the main judging. However, if you have a different track
+                        (eg. design), this feature will allow that track's judges to only see
+                        projects that have submitted to that track. Note that toggling this option
+                        during judging <span className="font-bold">is very very bad</span>.
+                    </Description>
+                    <Checkbox checked={judgeTracks} onChange={toggleJudgeTracks}>
+                        Enable Track Judging
+                    </Checkbox>
+
+                    {judgeTracks && (
+                        <>
+                            <SubSection>Set Tracks</SubSection>
+                            <Description>
+                                Set the tracks that will be judged. Note this should match the name
+                                under the 'Opt-In Prizes' category. Only the tracks listed here will
+                                be judged! As with the previous setting, DO NOT CHANGE THIS DURING
+                                JUDGING.
+                            </Description>
+                            <ChallengeBlock />
+                            <TextInput
+                                text={tracks}
+                                setText={setTracks}
+                                placeholder="Track 1, Track 2, ..."
+                                large
+                                full
+                                className="my-2"
+                            />
+                            <SettingsButton onClick={updateTracks}>Update Tracks</SettingsButton>
+                        </>
+                    )}
+
+                    <SubSection>Enable Multiple Groups</SubSection>
+                    <Description>
+                        Enable multiple groups for judging. This will allow judges to be assigned to
+                        different groups and score projects within their group only, switching after
+                        either a certain number of projects or manually by admins. Note that
+                        toggling this option{' '}
+                        <span className="font-bold">will reassign project numbers</span>.
+                    </Description>
+                    <Checkbox checked={multiGroup} onChange={toggleMultiGroup}>
+                        Enable Multi-Group Judging
+                    </Checkbox>
+
+                    {multiGroup && (
+                        <>
+                            <SubSection>Number of Groups</SubSection>
+                            <Description>
+                                Set the number of groups judges will be split into.
+                            </Description>
+                            <div className="flex flex-row">
+                                <TextInput
+                                    text={numGroups}
+                                    setText={setNumGroups}
+                                    placeholder="Enter an integer..."
+                                    large
+                                    number
+                                    className="my-2 mr-4"
                                 />
+                                <SettingsButton onClick={updateNumGroups}>
+                                    Update Number of Groups
+                                </SettingsButton>
+                            </div>
 
-                                {autoSwitchMethod === 'count' ? (
-                                    <>
-                                        <SubSection>Auto Switch Count</SubSection>
-                                        <Description>
-                                            Set how many projects judges will view before switching
-                                            groups.
-                                        </Description>
-                                        <div className="flex flex-row">
-                                            <RawTextInput
-                                                name="auto-switch-count"
-                                                text={autoSwitchCount}
-                                                setText={setAutoSwitchCount}
-                                                placeholder="Enter an integer..."
-                                                large
-                                                number
-                                                className="my-2 mr-4"
-                                            />
-                                            <SettingsButton onClick={updateAutoSwitchCount}>
-                                                Update Count
-                                            </SettingsButton>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <SubSection>Auto Switch Proportion</SubSection>
-                                        <Description>
-                                            Set the proportion of projects judges will view before
-                                            switching groups. This should be a decimal between 0 and
-                                            1. All numbers will be rounded up, with a minimum of 1
-                                            view per group. Note that too low of values may cause
-                                            judges to experience a marathon, especially if your
-                                            rooms/groups are far apart. However, too high of values
-                                            may bias the aggregated ranking results if judges do not
-                                            visit enough different groups.
-                                        </Description>
-                                        <div className="flex flex-row">
-                                            <RawTextInput
-                                                name="auto-switch-prop"
-                                                text={autoSwitchProp}
-                                                setText={setAutoSwitchProp}
-                                                placeholder="Enter a decimal..."
-                                                large
-                                                number
-                                                className="my-2 mr-4"
-                                            />
-                                            <SettingsButton onClick={updateAutoSwitchProp}>
-                                                Update Proportion
-                                            </SettingsButton>
-                                        </div>
-                                    </>
-                                )}
-                            </>
-                        )}
-                    </>
-                )}
+                            <SubSection>Group Sizes</SubSection>
+                            <Description>
+                                Set how many projects each group will get. Please separate each
+                                count with a comma. This list should be exactly the same length as
+                                the number of groups (eg. 3 groups: "30, 30, 40"). Note that the
+                                last group will be used as overflow if all groups fill up.
+                            </Description>
+                            <TextInput
+                                placeholder="30, 30, 30, ..."
+                                text={groupSizes}
+                                setText={setGroupSizes}
+                                full
+                                large
+                                className="my-2 mr-4"
+                            />
+                            <SettingsButton onClick={updateGroupSizes}>Update Sizes</SettingsButton>
 
-                <Section>Export Data</Section>
+                            <SubSection>Switching Mode</SubSection>
+                            <Description>
+                                Choose how judges will switch between projects. If set to "auto",
+                                judges will switch after a certain number/proportion of projects. If
+                                set to "manual", judges will switch after an admin manually presses
+                                a button to switch judges' groups.
+                            </Description>
+                            <SelectionButton
+                                selected={switchingMode}
+                                setSelected={setSwitchingMode}
+                                onClick={updateSwitchingMode}
+                                options={['auto', 'manual']}
+                                className="my-2"
+                            />
 
-                <SubSection>Export Collection</SubSection>
-                <Description>Export each collection individually as a CSV download.</Description>
-                <div className="flex">
-                    <SettingsButton onClick={() => exportCsv('judges')} className="mr-4">
-                        Export Judges
+                            {switchingMode === 'auto' && (
+                                <>
+                                    <SubSection>Auto Switch Proportion</SubSection>
+                                    <Description>
+                                        Set the proportion of projects judges will view before
+                                        switching groups. This should be a decimal between 0 and 1.
+                                        All numbers will be rounded up, with a minimum of 1 view per
+                                        group. Note that too low of values may cause judges to
+                                        experience a marathon, especially if your rooms/groups are
+                                        far apart. However, too high of values may bias the
+                                        aggregated ranking results if judges do not visit enough
+                                        different groups.
+                                    </Description>
+                                    <div className="flex flex-row">
+                                        <TextInput
+                                            text={autoSwitchProp}
+                                            setText={setAutoSwitchProp}
+                                            placeholder="Enter a decimal..."
+                                            large
+                                            number
+                                            className="my-2 mr-4"
+                                        />
+                                        <SettingsButton onClick={updateAutoSwitchProp}>
+                                            Update Proportion
+                                        </SettingsButton>
+                                    </div>
+                                </>
+                            )}
+
+                            <SubSection>Group Names</SubSection>
+                            <Description>
+                                Set the names of the groups. This will be displayed to judges and
+                                admins to help them keep track of which group they are in. This is
+                                especially useful if you have multiple rooms or groups of judges.
+                            </Description>
+                            <TextInput
+                                placeholder="Group 1, Group 2, Group 3, ..."
+                                text={groupNames}
+                                setText={setGroupNames}
+                                full
+                                large
+                                className="my-2"
+                            />
+                            <SettingsButton onClick={updateGroupNames}>
+                                Update Group Names
+                            </SettingsButton>
+                        </>
+                    )}
+                </Card>
+
+                <Card>
+                    <Section>Export Data</Section>
+
+                    <SubSection>Export Collection</SubSection>
+                    <Description>
+                        Export each collection individually as a CSV download.
+                    </Description>
+                    <div className="flex">
+                        <SettingsButton onClick={() => exportCsv('judges')} className="mr-4">
+                            Export Judges
+                        </SettingsButton>
+                        <SettingsButton onClick={() => exportCsv('projects')} className="mr-4">
+                            Export Projects
+                        </SettingsButton>
+                        <SettingsButton onClick={exportByChallenge} className="mr-4">
+                            Export by Challenges
+                        </SettingsButton>
+                        <SettingsButton onClick={() => exportCsv('rankings')}>
+                            Export Rankings
+                        </SettingsButton>
+                    </div>
+                </Card>
+
+                <Card>
+                    <Section>Reset Database</Section>
+
+                    <SubSection>THIS WILL DELETE THE ENTIRE DATABASE</SubSection>
+                    <Description>
+                        Mostly used for testing purposes/before the event if you want to reset
+                        everything bc something got messed up. Do NOT use this during judging (duh).
+                    </Description>
+                    <SettingsButton onClick={() => setDropPopup(true)} type="error">
+                        Drop Database
                     </SettingsButton>
-                    <SettingsButton onClick={() => exportCsv('projects')} className="mr-4">
-                        Export Projects
-                    </SettingsButton>
-                    <SettingsButton onClick={exportByChallenge} className="mr-4">
-                        Export by Challenges
-                    </SettingsButton>
-                    <SettingsButton onClick={() => exportCsv('rankings')}>
-                        Export Rankings
-                    </SettingsButton>
-                </div>
-
-                <Section>Reset Database</Section>
-
-                <SubSection>THIS WILL DELETE THE ENTIRE DATABASE</SubSection>
-                <Description>
-                    Mostly used for testing purposes/before the event if you want to reset
-                    everything bc something got messed up. Do NOT use this during judging (duh).
-                </Description>
-                <SettingsButton onClick={() => setDropPopup(true)} type="error">
-                    Drop Database
-                </SettingsButton>
+                </Card>
             </div>
             <ConfirmPopup
                 enabled={reassignPopup}
@@ -791,6 +872,7 @@ const AdminSettings = () => {
                 DO THIS. THIS IS YOUR LAST WARNING!
             </ConfirmPopup>
             <Loading disabled={!loading} />
+            <ToTopButton />
         </>
     );
 };

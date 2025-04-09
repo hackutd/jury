@@ -25,11 +25,7 @@ const useAdminStore = create<AdminStore>()((set) => ({
 
     fetchStats: async () => {
         const selectedTrack = useOptionsStore.getState().selectedTrack;
-        let track = selectedTrack;
-        if (track === 'Main Judging') {
-            track = '';
-        }
-        const statsRes = await getRequest<Stats>(`/admin/stats/${track}`, 'admin');
+        const statsRes = await getRequest<Stats>(`/admin/stats/${selectedTrack}`, 'admin');
         if (statsRes.status !== 200) {
             errorAlert(statsRes);
             return;
@@ -45,22 +41,6 @@ const useAdminStore = create<AdminStore>()((set) => ({
             errorAlert(projRes);
             return;
         }
-        const projects = projRes.data as Project[];
-
-        const scoreRes = await getRequest<ScoredItem[]>('/admin/score', 'admin');
-        if (scoreRes.status !== 200) {
-            errorAlert(scoreRes);
-            return;
-        }
-        const scores = scoreRes.data as ScoredItem[];
-
-        projects.forEach((project) => {
-            const score = scores.find((s) => s.id === project.id);
-            if (score) {
-                project.score = score.score;
-            }
-        });
-
         set({ projects: projRes.data as Project[] });
     },
 
@@ -140,7 +120,6 @@ const useClockStore = create<ClockStore>()((set) => ({
 interface OptionsStore {
     options: Options;
     selectedTrack: string;
-    currTrackScores: ScoredItem[];
     fetchOptions: () => Promise<void>;
     setSelectedTrack: (track: string) => void;
 }
@@ -153,7 +132,6 @@ const useOptionsStore = create<OptionsStore>((set) => ({
             running: false,
         },
         judging_timer: 0,
-        categories: [],
         min_views: 0,
         clock_sync: false,
         judge_tracks: false,
@@ -162,18 +140,12 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         num_groups: 0,
         group_sizes: [],
         group_table_nums: [],
-        main_group: {
-            switching_mode: '',
-            auto_switch_method: '',
-            auto_switch_count: 0,
-            auto_switch_prop: 0,
-            manual_switches: 0,
-        },
+        switching_mode: '',
+        auto_switch_prop: 0,
+        manual_switches: 0,
     },
 
-    selectedTrack: 'Main Judging',
-
-    currTrackScores: [],
+    selectedTrack: '',
 
     fetchOptions: async () => {
         const optionsRes = await getRequest<Options>('/admin/options', 'admin');
@@ -185,15 +157,13 @@ const useOptionsStore = create<OptionsStore>((set) => ({
     },
 
     setSelectedTrack: async (track: string) => {
-        // Get scores for selected track
-        const scoresRes = await getRequest<ScoredItem[]>(`/admin/score/${track}`, 'admin');
-        if (scoresRes.status !== 200) {
-            errorAlert(scoresRes);
+        // If main judging selected, reset selected track
+        if (track === 'Main Judging') {
+            set({ selectedTrack: '' });
             return;
         }
 
         set({ selectedTrack: track });
-        set({ currTrackScores: scoresRes.data as ScoredItem[] });
     },
 }));
 
@@ -215,4 +185,31 @@ const useFlagsStore = create<FlagsStore>((set) => ({
     },
 }));
 
-export { useAdminStore, useClockStore, useOptionsStore, useFlagsStore };
+interface AdminTableStore {
+    projects: Project[],
+    judges: Judge[],
+    selected: boolean[],
+    setProjects: (projects: Project[]) => void,
+    setJudges: (judges: Judge[]) => void,
+    setSelected: (selected: boolean[]) => void,
+}
+
+const useAdminTableStore = create<AdminTableStore>((set) => ({
+    projects: [],
+    judges: [],
+    selected: [],
+
+    setProjects: (projects: Project[]) => {
+        set({ projects: projects });
+    },
+
+    setJudges: (judges: Judge[]) => {
+        set({ judges: judges });
+    },
+
+    setSelected: (selected: boolean[]) => {
+        set({ selected: selected });
+    },
+}));
+
+export { useAdminStore, useClockStore, useOptionsStore, useFlagsStore, useAdminTableStore };

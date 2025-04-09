@@ -61,7 +61,7 @@ func IntToString[T constraints.Integer](arr []T) []string {
 }
 
 // SortMapByValue sorts a map by its values and returns the keys in descending order
-func SortMapByValue(m map[int64]int64) []int64 {
+func SortMapByValue(m map[int64]int64, desc bool) []int64 {
 	type kv struct {
 		Key   int64
 		Value int64
@@ -74,7 +74,11 @@ func SortMapByValue(m map[int64]int64) []int64 {
 
 	// Sort by value
 	sort.Slice(ss, func(i, j int) bool {
-		return ss[i].Value > ss[j].Value
+		if desc {
+			return ss[i].Value > ss[j].Value
+		} else {
+			return ss[i].Value < ss[j].Value
+		}
 	})
 
 	var keys []int64

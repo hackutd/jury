@@ -47,5 +47,5 @@ This built container can now be served anywhere that can host a single docker im
 [Borda Count](https://en.wikipedia.org/wiki/Borda_count)
 
 :::warning[WIP]
-🚧 The technical details page is still under construction 🚧
+🚧 The technical details page is still under construction and will be split into sub-pages 🚧
 :::

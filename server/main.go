@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"server/config"
 	"server/database"
+	"server/logging"
 	"server/router"
 
 	"github.com/joho/godotenv"
@@ -22,8 +24,15 @@ func main() {
 	// Connect to the database
 	db := database.InitDb()
 
+	// Load the logger
+	logger, err := logging.NewLogger(db)
+	if err != nil {
+		panic(errors.New("failed to load logger: " + err.Error()))
+	}
+	logger.SystemLogf("Server restarted")
+
 	// Create the router and attach variables
-	r := router.NewRouter(db)
+	r := router.NewRouter(db, logger)
 
 	// Start the Gin server!
 	r.Run(":" + config.GetOptEnv("PORT", "8080"))
