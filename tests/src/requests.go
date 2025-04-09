@@ -130,6 +130,24 @@ func IsOk(body string) bool {
 	return strings.Contains(body, "\"ok\":1")
 }
 
+// AssertOk checks if body is okay and returns a Result
+func AssertOk(body string, err string) Result {
+	if IsOk(body) {
+		return ResultOk()
+	}
+
+	return NewResult(false, err)
+}
+
+// AssertNotOk checks if body is not okay and returns a Result
+func AssertNotOk(body string, err string) Result {
+	if !IsOk(body) {
+		return ResultOk()
+	}
+
+	return NewResult(false, err)
+}
+
 type JsonType int
 
 const (

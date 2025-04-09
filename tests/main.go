@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"tests/src"
+	"tests/tests"
 )
 
 func main() {
@@ -22,57 +23,12 @@ func main() {
 	// Wait for backend to load
 	src.WaitForBackend(logger)
 
-	// ### TIME TO START TESTING!!! ###
-	apiEndpointTests(logger)
-}
-
-// apiEndpointTests tests the functionality of each API endpoint
-func apiEndpointTests(logger *src.Logger) {
-	logger.LogLn(src.Info, "\nAPI ENDPOINT TESTS\n------------------")
-
-	// Heartbeat
-	res := src.GetRequest(logger, "/", src.DefaultAuth())
-	if !src.IsOk(res) {
-		logger.LogLn(src.Error, "Error with heartbeat endpoint")
-		return
+	// Create a context with the database and logger
+	context := &src.Context{
+		Db:     db,
+		Logger: logger,
 	}
 
-	// Invalid login to admin account
-	res = src.PostRequest(logger, "/admin/login", src.H{"password": "THIS IS DEFINITELY THE WRONG PASSWORD"}, src.DefaultAuth())
-	if src.IsOk(res) {
-		logger.LogLn(src.Error, "Invalid login to admin account should not be successful")
-		return
-	}
-
-	// Login to admin account
-	password := src.GetEnv("ADMIN_PASSWORD")
-	res = src.PostRequest(logger, "/admin/login", src.H{"password": password}, src.DefaultAuth())
-	if !src.IsOk(res) {
-		logger.LogLn(src.Error, "Error logging in as admin")
-		return
-	}
-
-	// Check if authenticated with invalid token
-	res = src.PostRequest(logger, "/admin/auth", nil, "Bearer INVALID_TOKEN")
-	if src.IsOk(res) {
-		logger.LogLn(src.Error, "Invalid token should not be authenticated")
-		return
-	}
-
-	// Check if authenticated
-	res = src.PostRequest(logger, "/admin/auth", nil, src.AdminAuth())
-	if !src.IsOk(res) {
-		logger.LogLn(src.Error, "Error checking if admin is authenticated")
-		return
-	}
-
-	// Get the clock
-	res = src.GetRequest(logger, "/admin/clock", src.AdminAuth())
-	if !src.IsValue(res, "running", src.BoolType, false) || !src.IsValue(res, "time", src.Float64Type, 0.0) {
-		logger.LogLn(src.Error, "Error getting the clock")
-		return
-	}
-
-	// Success!
-	logger.LogLn(src.Info, "\tAll API ENDPOINT TESTS passed!")
+	// Run all tests!
+	tests.RunTests(context)
 }
