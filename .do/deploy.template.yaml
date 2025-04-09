@@ -30,6 +30,6 @@ spec:
       scope: RUN_AND_BUILD_TIME
     git:
       branch: master
-      repo_clone_url: https://github.com/acmutd/jury.git
-    instance_size_slug: basic-xxs
+      repo_clone_url: https://github.com/hackutd/jury.git
+    instance_size_slug: apps-s-1vcpu-0.5gb
     instance_count: 1

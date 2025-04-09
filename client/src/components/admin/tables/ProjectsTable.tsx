@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import ProjectRow from './ProjectRow';
-import { useAdminStore, useOptionsStore } from '../../../store';
+import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../../store';
 import HeaderEntry from './HeaderEntry';
 import { ProjectSortField } from '../../../enums';
 import { getRequest } from '../../../api';
@@ -9,8 +9,6 @@ import { errorAlert } from '../../../util';
 const ProjectsTable = () => {
     const unsortedProjects = useAdminStore((state) => state.projects);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [checked, setChecked] = useState<boolean[]>([]);
     const [flags, setFlags] = useState<Flag[]>([]);
     const [sortState, setSortState] = useState<SortState<ProjectSortField>>({
         field: ProjectSortField.None,
@@ -18,14 +16,9 @@ const ProjectsTable = () => {
     });
     const options = useOptionsStore((state) => state.options);
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
-    const currTrackScores = useOptionsStore((state) => state.currTrackScores);
-
-    const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>, i: number) => {
-        setChecked({
-            ...checked,
-            [i]: e.target.checked,
-        });
-    };
+    const setSelected = useAdminTableStore((state) => state.setSelected);
+    const projects = useAdminTableStore((state) => state.projects);
+    const setProjects = useAdminTableStore((state) => state.setProjects);
 
     const updateSort = (field: SortField) => {
         if (sortState.field === field) {
@@ -73,27 +66,23 @@ const ProjectsTable = () => {
 
     // When projects change, update projects and sort
     useEffect(() => {
-        setChecked(Array(unsortedProjects.length).fill(false));
+        setSelected(Array(unsortedProjects.length).fill(false));
 
+        sortAndFilterProjects();
+    }, [sortState, selectedTrack]);
+
+    useEffect(() => {
+        sortAndFilterProjects();
+    }, [unsortedProjects]);
+
+    const sortAndFilterProjects = () => {
         // Filter by track if enabled
         const filteredProjects =
-            options.judge_tracks && selectedTrack !== 'Main Judging'
+            options.judge_tracks && selectedTrack !== ''
                 ? unsortedProjects.filter(
                       (project) => project.challenge_list.indexOf(selectedTrack) !== -1
                   )
                 : unsortedProjects;
-
-        if (options.judge_tracks && selectedTrack !== 'Main Judging') {
-            // Add scores to project
-            filteredProjects.forEach((project) => {
-                const score = currTrackScores.find((s) => s.id === project.id);
-                if (score) {
-                    project.score = score.score;
-                } else {
-                    console.error('No track score found for project', project);
-                }
-            });
-        }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let sortFunc = (_: Project, b: Project) => 0;
@@ -122,15 +111,32 @@ const ProjectsTable = () => {
             case ProjectSortField.Score:
                 sortFunc = (a, b) => (a.score - b.score) * asc;
                 break;
+            case ProjectSortField.Stars:
+                sortFunc = (a, b) => {
+                    if (options.judge_tracks && selectedTrack !== '') {
+                        const ats = a.track_stars[selectedTrack] ?? 0;
+                        const bts = b.track_stars[selectedTrack] ?? 0;
+                        return (ats - bts) * asc;
+                    }
+                    return (a.stars - b.stars) * asc;
+                };
+                break;
             case ProjectSortField.Seen:
-                sortFunc = (a, b) => (a.seen - b.seen) * asc;
+                sortFunc = (a, b) => {
+                    if (options.judge_tracks && selectedTrack !== '') {
+                        const ats = a.track_seen[selectedTrack] ?? 0;
+                        const bts = b.track_seen[selectedTrack] ?? 0;
+                        return (ats - bts) * asc;
+                    }
+                    return (a.seen - b.seen) * asc;
+                };
                 break;
             case ProjectSortField.Updated:
                 sortFunc = (a, b) => (a.last_activity - b.last_activity) * asc;
                 break;
         }
-        setProjects(filteredProjects.sort(sortFunc));
-    }, [unsortedProjects, sortState, selectedTrack]);
+        setProjects(filteredProjects.toSorted(sortFunc));
+    };
 
     return (
         <div className="w-full px-8 pb-4">
@@ -157,7 +163,7 @@ const ProjectsTable = () => {
                             sortField={ProjectSortField.TableNumber}
                             sortState={sortState}
                         />
-                        {options.multi_group && (
+                        {options.multi_group && selectedTrack === '' && (
                             <HeaderEntry
                                 name="Group"
                                 updateSort={updateSort}
@@ -165,10 +171,18 @@ const ProjectsTable = () => {
                                 sortState={sortState}
                             />
                         )}
+                        {selectedTrack === '' && (
+                            <HeaderEntry
+                                name="Score"
+                                updateSort={updateSort}
+                                sortField={ProjectSortField.Score}
+                                sortState={sortState}
+                            />
+                        )}
                         <HeaderEntry
-                            name="Score"
+                            name="Stars"
                             updateSort={updateSort}
-                            sortField={ProjectSortField.Score}
+                            sortField={ProjectSortField.Stars}
                             sortState={sortState}
                         />
                         <HeaderEntry
@@ -185,22 +199,9 @@ const ProjectsTable = () => {
                         />
                         <th className="text-right w-24">Actions</th>
                     </tr>
-                    {projects.map((project: Project, idx) => {
-                        const projectFlags = flags
-                            .filter((flag) => !flag.reason.includes('busy'))
-                            .filter((flag) => flag.project_id === project.id);
-
-                        return (
-                            <ProjectRow
-                                key={idx}
-                                idx={idx}
-                                project={project}
-                                flags={projectFlags}
-                                checked={checked[idx]}
-                                handleCheckedChange={handleCheckedChange}
-                            />
-                        );
-                    })}
+                    {projects.map((project: Project, idx) => (
+                        <ProjectRow key={idx} idx={idx} project={project} />
+                    ))}
                 </tbody>
             </table>
         </div>

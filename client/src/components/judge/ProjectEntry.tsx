@@ -1,25 +1,34 @@
 import { twMerge } from 'tailwind-merge';
 import DragHamburger from './dnd/DragHamburger';
+import Star from './Star';
+import { useEffect, useState } from 'react';
+import { putRequest } from '../../api';
+import { errorAlert } from '../../util';
 
 interface ProjectEntryProps {
     project: SortableJudgedProject;
     ranking: number;
+    id: number;
+    starCallback?: (id: number, starred: boolean) => void;
+    noDrag?: boolean;
+    disabled?: boolean;
 }
 
-const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
-    if (!project) {
+const ProjectEntry = (props: ProjectEntryProps) => {
+    const [starred, setStarred] = useState(props.project.starred);
+
+    useEffect(() => {
+        if (!props.project) return;
+
+        setStarred(props.project.starred);
+    }, [props.project]);
+
+    if (!props.project) {
         return null;
     }
 
-    // Will truncate a string to 8 characters,
-    // adding a dot at the end if the length is > than 8 chars
-    const truncate = (s: string) => {
-        if (s.length <= 8) return s;
-        return s.substring(0, 4) + '.';
-    };
-
     let rankColor = 'text-lightest';
-    switch (ranking) {
+    switch (props.ranking) {
         case 1:
             rankColor = 'text-gold';
             break;
@@ -33,38 +42,62 @@ const ProjectEntry = ({ project, ranking }: ProjectEntryProps) => {
             break;
     }
 
+    const updateStar = async () => {
+        const res = await putRequest<OkResponse>(
+            `/judge/star/${props.project.project_id}`,
+            'judge',
+            {
+                starred: !starred,
+            }
+        );
+        if (res.status !== 200) {
+            // If deliberation, reload page
+            if (res.error.indexOf('deliberation') !== -1) {
+                window.location.reload();
+            }
+
+            errorAlert(res);
+            return;
+        }
+
+        if (props.starCallback) {
+            props.starCallback(props.id, !starred);
+        }
+    };
+
     return (
         <div className="flex items-center cursor-default">
-            {ranking !== -1 && (
+            {props.ranking !== -1 && (
                 <p className={twMerge('font-bold text-xl text-center w-8 shrink-0', rankColor)}>
-                    {ranking}
+                    {props.ranking}
                 </p>
             )}
             <div className="m-1 pl-2 py-1 bg-background border-solid border-2 border-lightest rounded-md grow">
                 <div className="flex flex-row">
-                    <div>
+                    <div className="grow">
                         <h3 className="text-lg leading-tight grow">
-                            <a href={`/judge/project/${project.project_id}`}>
-                                <b>Table {project.location}</b>
+                            <a href={`/judge/project/${props.project.project_id}`}>
+                                <b>Table {props.project.location}</b>
                                 {': '}
-                                {project.name}
+                                {props.project.name}
                             </a>
                         </h3>
-                        <p className="text-light text-xs line-clamp-1">{project.notes}</p>
-                        <div className="text-light flex flex-row">
-                            {Object.entries(project.categories).map(([name, score], i) => (
-                                <div key={i}>
-                                    <span className="text-lighter text-xs mr-1">
-                                        {truncate(name)}
-                                    </span>
-                                    <span className="mr-2">{score}</span>
-                                </div>
-                            ))}
+                        <p className="text-light text-xs line-clamp-1">{props.project.notes}</p>
+                    </div>
+                    <Star
+                        small
+                        active={starred}
+                        setActive={setStarred}
+                        onClick={updateStar}
+                        disabled={props.disabled}
+                    />
+                    {!props.noDrag ? (
+                        <div className="text-right flex items-center justify-end">
+                            <DragHamburger />
                         </div>
-                    </div>
-                    <div className="grow text-right flex items-center justify-end">
-                        <DragHamburger />
-                    </div>
+                    ) : (
+                        <div className="w-2"></div>
+                    )}
                 </div>
             </div>
         </div>

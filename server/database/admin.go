@@ -103,7 +103,7 @@ func AggregateStats(db *mongo.Database, track string) (*models.Stats, error) {
 // DropAll drops the entire database
 func DropAll(db *mongo.Database) error {
 	// Drop all collections
-	var collections = []string{"projects", "judges", "flags", "options"}
+	var collections = []string{"projects", "judges", "flags", "options", "logs"}
 	for _, c := range collections {
 		if err := db.Collection(c).Drop(context.Background()); err != nil {
 			return err
@@ -111,13 +111,6 @@ func DropAll(db *mongo.Database) error {
 	}
 
 	return nil
-}
-
-// UpdateCategories updates the categories in the database
-func UpdateCategories(db *mongo.Database, categories []string) error {
-	// Update the categories
-	_, err := db.Collection("options").UpdateOne(context.Background(), gin.H{}, gin.H{"$set": gin.H{"categories": categories}})
-	return err
 }
 
 // UpdateMinViews will update the min views setting

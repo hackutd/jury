@@ -1,0 +1,11 @@
+{
+    "position": 1,
+    "label": "Deploy Jury",
+    "collapsible": true,
+    "collapsed": true,
+    "link": {
+        "type": "generated-index",
+        "title": "Deploy Jury for your Hackathon!",
+        "description": "Jury is a stand-alone application used solely for the judging of hackathon projects. Follow the guides below to set up and deploy your own instance of Jury."
+    }
+}

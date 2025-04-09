@@ -12,7 +12,7 @@ interface DropdownProps {
     setSelected: React.Dispatch<React.SetStateAction<string>> | ((selected: string) => void);
 
     /* OnChange function */
-    onChange?: () => void;
+    onChange?: (() => void) | ((track: string) => void);
 
     /* Classname styling */
     className?: string;
@@ -27,8 +27,9 @@ const Dropdown = (props: DropdownProps) => {
             )}
             onChange={(e) => {
                 props.setSelected(e.target.value);
-                if (props.onChange) props.onChange();
+                if (props.onChange) props.onChange(e.target.value);
             }}
+            value={props.selected}
         >
             {props.options.map((option) => (
                 <option key={option} value={option}>

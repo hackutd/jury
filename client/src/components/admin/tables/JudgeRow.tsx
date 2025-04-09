@@ -1,25 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
-import { errorAlert, showTopFive, timeSince } from '../../../util';
+import { errorAlert, timeSince } from '../../../util';
 import DeletePopup from './DeletePopup';
 import EditJudgePopup from './EditJudgePopup';
-import { postRequest } from '../../../api';
-import { useAdminStore, useOptionsStore } from '../../../store';
+import { putRequest } from '../../../api';
+import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../../store';
 import { twMerge } from 'tailwind-merge';
+import ActionsDropdown from '../../ActionsDropdown';
+import MovePopup from './MovePopup';
+import JudgeRanksPopup from './JudgeRanksPopup';
 
 interface JudgeRowProps {
     judge: Judge;
     idx: number;
-    checked: boolean;
-    handleCheckedChange: (e: React.ChangeEvent<HTMLInputElement>, idx: number) => void;
 }
 
-const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) => {
+const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
     const [popup, setPopup] = useState(false);
     const [editPopup, setEditPopup] = useState(false);
+    const [movePopup, setMovePopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
+    const [ranksPopup, setRanksPopup] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
     const options = useOptionsStore((state) => state.options);
+    const selectedTrack = useOptionsStore((state) => state.selectedTrack);
+    const selected = useAdminTableStore((state) => state.selected);
+    const setSelected = useAdminTableStore((state) => state.setSelected);
+    const projects = useAdminStore((state) => state.projects);
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -36,47 +43,32 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
         };
     }, [ref]);
 
-    const doAction = (action: 'edit' | 'prioritize' | 'hide' | 'delete') => {
-        switch (action) {
-            case 'edit':
-                // Open edit popup
-                setEditPopup(true);
-                break;
-            case 'hide':
-                // Hide
-                hideJudge();
-                break;
-            case 'delete':
-                // Open delete popup
-                setDeletePopup(true);
-                break;
-        }
-
-        setPopup(false);
+    const handleCheckedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newSelected = selected.slice();
+        newSelected[idx] = e.target.checked;
+        setSelected(newSelected);
     };
 
     const hideJudge = async () => {
-        const res = await postRequest<OkResponse>(
-            judge.active ? '/judge/hide' : '/judge/unhide',
-            'admin',
-            { id: judge.id }
-        );
-        if (res.status === 200) {
-            alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
-            fetchJudges();
-        } else {
+        const res = await putRequest<OkResponse>(`/judge/hide/${judge.id}`, 'admin', {
+            hide: judge.active,
+        });
+        if (res.status !== 200) {
             errorAlert(res);
+            return;
         }
+
+        alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
+        fetchJudges();
     };
 
-    const getBestRanked = (judge: Judge) => {
-        if (judge.rankings.length === 0) {
-            return 'N/A';
+    const idToProj = (id: string) => {
+        if (!id || id === '') {
+            return 'None';
         }
 
-        const best = judge.rankings[0];
-        const bestName = judge.seen_projects.find((p) => p.project_id === best)?.name;
-        return bestName ? bestName : best;
+        const proj = projects.find((p) => p.id === id);
+        return proj ? `${proj.name} [T${proj.location}]` : 'None';
     };
 
     return (
@@ -85,64 +77,56 @@ const JudgeRow = ({ judge, idx, checked, handleCheckedChange }: JudgeRowProps) =
                 key={idx}
                 className={twMerge(
                     'border-t-2 border-backgroundDark duration-150',
-                    checked ? 'bg-primary/20' : !judge.active ? 'bg-lightest' : 'bg-background'
+                    !judge.active && 'bg-backgroundDark',
+                    selected && selected[idx] && 'bg-primary/20'
                 )}
             >
                 <td className="px-2">
                     <input
                         type="checkbox"
-                        checked={checked}
+                        checked={selected && selected[idx]}
                         onChange={(e) => {
-                            handleCheckedChange(e, idx);
+                            handleCheckedChange(e);
                         }}
                         className="cursor-pointer hover:text-primary duration-100"
                     ></input>
                 </td>
                 <td>{judge.name}</td>
                 <td className="text-center">{judge.code}</td>
-                {options.judge_tracks && <td className="text-center">{judge.track}</td>}
-                {options.multi_group && <td className="text-center">{judge.group}</td>}
+                {options.multi_group && selectedTrack === '' && (
+                    <td className="text-center">{judge.group}</td>
+                )}
                 <td className="text-center">{judge.seen}</td>
-                <td className="text-center">{getBestRanked(judge)}</td>
+                <td className="text-center">{idToProj(judge.current)}</td>
                 <td className="text-center">{timeSince(judge.last_activity)}</td>
                 <td className="text-right font-bold flex align-center justify-end">
-                    {popup && (
-                        <div
-                            className="absolute flex flex-col bg-background rounded-md border-lightest border-2 font-normal text-sm"
-                            ref={ref}
-                        >
-                            <div
-                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
-                                onClick={() => doAction('edit')}
-                            >
-                                Edit
-                            </div>
-                            <div
-                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150"
-                                onClick={() => doAction('hide')}
-                            >
-                                {judge.active ? 'Hide' : 'Un-hide'}
-                            </div>
-                            <div
-                                className="py-1 pl-4 pr-2 cursor-pointer hover:bg-primary/20 duration-150 text-error"
-                                onClick={() => doAction('delete')}
-                            >
-                                Delete
-                            </div>
-                        </div>
-                    )}
+                    <ActionsDropdown
+                        open={popup}
+                        setOpen={setPopup}
+                        actions={['Scores', 'Edit', judge.active ? 'Hide' : 'Unhide', 'Move Group', 'Delete']}
+                        actionFunctions={[
+                            setRanksPopup.bind(null, true),
+                            setEditPopup.bind(null, true),
+                            hideJudge,
+                            setMovePopup.bind(null, true),
+                            setDeletePopup.bind(null, true),
+                        ]}
+                        redIndices={[3]}
+                    />
                     <span
                         className="cursor-pointer px-1 hover:text-primary duration-150"
                         onClick={() => {
                             setPopup(!popup);
                         }}
                     >
-                        ...
+                        ···
                     </span>
                 </td>
             </tr>
+            <MovePopup enabled={movePopup} setEnabled={setMovePopup} item={judge} />
             <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={judge} />
             <EditJudgePopup enabled={editPopup} setEnabled={setEditPopup} judge={judge} />
+            <JudgeRanksPopup enabled={ranksPopup} setEnabled={setRanksPopup} judge={judge} />
         </>
     );
 };

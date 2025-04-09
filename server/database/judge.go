@@ -2,12 +2,15 @@ package database
 
 import (
 	"context"
+	"errors"
 	"server/models"
 	"server/util"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // UpdateJudgeLastActivity to the current time
@@ -85,13 +88,13 @@ func UpdateJudges(db *mongo.Database, sc, judges []*models.Judge) error {
 
 // UpdateJudgesWithTx updates multiple judges in the database with a transaction
 func UpdateJudgesWithTx(db *mongo.Database, sc mongo.SessionContext, judges []*models.Judge) error {
+	models := make([]mongo.WriteModel, 0, len(judges))
 	for _, judge := range judges {
-		err := UpdateJudge(db, judge, sc)
-		if err != nil {
-			return err
-		}
+		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": judge.Id}).SetUpdate(gin.H{"$set": judge}))
 	}
-	return nil
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := db.Collection("judges").BulkWrite(sc, models, opts)
+	return err
 }
 
 // FindAllJudges returns a list of all judges in the database
@@ -165,7 +168,7 @@ func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
 func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judge, seenProject *models.JudgedProject) error {
 	// Update the judge's seen projects
 	_, err := db.Collection("judges").UpdateOne(
-		context.Background(),
+		ctx,
 		gin.H{"_id": judge.Id},
 		gin.H{
 			"$push": gin.H{"seen_projects": seenProject},
@@ -173,15 +176,53 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 			"$set":  gin.H{"current": nil, "group": judge.Group, "group_seen": judge.GroupSeen, "last_activity": util.Now()},
 		},
 	)
-	return err
+	if err != nil {
+		return errors.New("error updating judge: " + err.Error())
+	}
+
+	star := 0
+	if seenProject.Starred {
+		star = 1
+	}
+
+	incData := gin.H{}
+	if judge.Track != "" {
+		incData["track_seen."+judge.Track] = 1
+		incData["track_stars."+judge.Track] = star
+	} else {
+		incData["seen"] = 1
+		incData["stars"] = star
+	}
+
+	// Update the project's seen count
+	_, err = db.Collection("projects").UpdateOne(
+		ctx,
+		gin.H{"_id": seenProject.ProjectId},
+		gin.H{"$inc": incData, "$set": gin.H{"last_activity": util.Now()}},
+	)
+	if err != nil {
+		return errors.New("error updating project: " + err.Error())
+	}
+
+	return nil
 }
 
-// SetJudgeHidden sets the active field of a judge
-func SetJudgeHidden(db *mongo.Database, id *primitive.ObjectID, hidden bool) error {
+// SetJudgeActive sets the active field of a judge
+func SetJudgeActive(db *mongo.Database, id *primitive.ObjectID, active bool) error {
 	_, err := db.Collection("judges").UpdateOne(
 		context.Background(),
 		gin.H{"_id": id},
-		gin.H{"$set": gin.H{"active": !hidden, "last_activity": util.Now()}},
+		gin.H{"$set": gin.H{"active": active, "last_activity": util.Now()}},
+	)
+	return err
+}
+
+// SetJudgesActive sets the active field of multiple judges
+func SetJudgesActive(db *mongo.Database, ids []primitive.ObjectID, active bool) error {
+	_, err := db.Collection("judges").UpdateMany(
+		context.Background(),
+		gin.H{"_id": gin.H{"$in": ids}},
+		gin.H{"$set": gin.H{"active": active, "last_activity": util.Now()}},
 	)
 	return err
 }
@@ -206,10 +247,25 @@ func UpdateJudgeRanking(db *mongo.Database, judge *models.Judge, rankings []prim
 	return err
 }
 
-// TODO: Move the stuff from UpdateJudgeRankings to here
-func UpdateJudgeSeenProjects(db *mongo.Database, judge *models.Judge) error {
-	_, err := db.Collection("judges").UpdateOne(context.Background(), gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
+// TODO: Can we separate all the functionality out of this?
+func UpdateJudgeSeenProjects(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
 	return err
+}
+
+// UpdateJudgeNotes updates the notes of a single seen project for a judge
+func UpdateJudgeNotes(db *mongo.Database, ctx context.Context, judgeId *primitive.ObjectID, projIndex int, notes string) error {
+	notesKey := "seen_projects." + strconv.Itoa(projIndex) + ".notes"
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{notesKey: notes}})
+	return err
+}
+
+// UpdateJudgeStars updates the star value of a single seen project for a judge
+func UpdateJudgeStars(db *mongo.Database, ctx context.Context, judgeId primitive.ObjectID, projIndex int, starred bool) error {
+	starredKey := "seen_projects." + strconv.Itoa(projIndex) + ".starred"
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{starredKey: starred}})
+	return err
+
 }
 
 // Reset list of projects that judge skipped due to busy
@@ -224,26 +280,15 @@ func ResetBusyProjectListForJudge(db *mongo.Database, ctx context.Context, judge
 	return nil
 }
 
-// Reset project status to non-busy by deleting all "busy" flag for a project
-func ResetBusyStatusByProject(db *mongo.Database, ctx context.Context, project *models.Project) error {
-	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{
-		"project_id": project.Id,
-		"reason":     "busy",
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetMinJudgeGroup(db *mongo.Database, track string) (int64, error) {
-	pipe := []gin.H{{"$group": gin.H{
+// GetMinJudgeGroup returns the group with the fewest judges
+func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
+	pipe := []gin.H{{"$match": gin.H{
+		"active": true,
+		"track":  "",
+	}}, {"$group": gin.H{
 		"_id":   "$group",
 		"count": gin.H{"$sum": 1},
 	}}}
-	if track != "" {
-		pipe = append([]gin.H{{"$match": gin.H{"track": track}}}, pipe...)
-	}
 
 	cursor, err := db.Collection("judges").Aggregate(context.Background(), pipe)
 	if err != nil {
@@ -261,7 +306,7 @@ func GetMinJudgeGroup(db *mongo.Database, track string) (int64, error) {
 	}
 
 	// Sort by count in ascending order
-	minGroups := util.SortMapByValue(groupCounts)
+	minGroups := util.SortMapByValue(groupCounts, false)
 
 	// Get options
 	options, err := GetOptions(db, context.Background())
@@ -304,6 +349,10 @@ func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset b
 	} else {
 		groupCounts = make(map[int64]int64)
 		cursor, err := db.Collection("judges").Aggregate(ctx, []gin.H{
+			{"$match": gin.H{
+				"active": true,
+				"track":  "",
+			}},
 			{"$group": gin.H{
 				"_id":   "$group",
 				"count": gin.H{"$sum": 1},
@@ -352,7 +401,7 @@ func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset b
 func PutJudgesInGroups(db *mongo.Database) error {
 	return WithTransaction(db, func(sc mongo.SessionContext) error {
 		// Get all judges
-		judges, err := FindAllJudges(db, sc)
+		judges, err := FindJudgesByTrack(db, sc, "")
 		if err != nil {
 			return err
 		}
@@ -373,4 +422,16 @@ func PutJudgesInGroups(db *mongo.Database) error {
 		err = UpdateJudgesWithTx(db, sc, judges)
 		return err
 	})
+}
+
+// SetJudgeGroup sets the group of a judge
+func SetJudgeGroup(db *mongo.Database, ctx context.Context, judgeId *primitive.ObjectID, group int64) error {
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{"group": group, "group_seen": 0}})
+	return err
+}
+
+// SetJudgesGroup sets the group of multiple judges
+func SetJudgesGroup(db *mongo.Database, ctx context.Context, judgeIds []primitive.ObjectID, group int64) error {
+	_, err := db.Collection("judges").UpdateMany(ctx, gin.H{"_id": gin.H{"$in": judgeIds}}, gin.H{"$set": gin.H{"group": group, "group_seen": 0}})
+	return err
 }

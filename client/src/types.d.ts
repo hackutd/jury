@@ -8,8 +8,12 @@ interface Project {
     video_link: string;
     challenge_list: string[];
     seen: number;
+    track_seen: { [track: string]: number };
     active: boolean;
+    prioritized: boolean;
     score: number;
+    stars: number;
+    track_stars: { [track: string]: number };
     group: number;
     last_activity: number;
 }
@@ -17,6 +21,7 @@ interface Project {
 interface PublicProject {
     name: string;
     location: number;
+    group: number;
     description: string;
     url: string;
     try_link: string;
@@ -76,8 +81,8 @@ interface TokenResponse {
 
 interface JudgedProject {
     project_id: string;
-    categories: { [name: string]: number };
     notes: string;
+    starred: boolean;
     name: string;
     location: number;
     description: string;
@@ -116,7 +121,6 @@ interface Options {
     curr_table_num: number;
     clock: ClockState;
     judging_timer: number;
-    categories: string[];
     min_views: number;
     clock_sync: boolean;
     judge_tracks: boolean;
@@ -125,15 +129,14 @@ interface Options {
     num_groups: number;
     group_sizes: number[];
     group_table_nums: number[][];
-    main_group: GroupsSwitchOps;
-}
-
-interface GroupsSwitchOps {
     switching_mode: string;
-    auto_switch_method: string;
-    auto_switch_count: number;
     auto_switch_prop: number;
     manual_switches: number;
+    deliberation: boolean;
+    group_names: string[];
+    ignore_tracks: string[];
+    block_reqs: boolean;
+    max_req_per_min: number;
 }
 
 interface FetchResponse<T> {
@@ -165,4 +168,12 @@ interface ProjectStats {
     num: number;
     avg_votes: number;
     avg_seen: number;
+}
+
+interface Log {
+    log: string;
+}
+
+interface Code {
+    qr_code: string;
 }

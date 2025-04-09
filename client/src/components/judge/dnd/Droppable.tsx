@@ -7,6 +7,7 @@ interface DroppableProps {
     id: string;
     projects: SortableJudgedProject[];
     active: string | null;
+    disabled?: boolean;
     children?: React.ReactNode;
 }
 
@@ -25,13 +26,14 @@ const Droppable = (props: DroppableProps) => {
         >
             <div
                 ref={setNodeRef}
-                className={twMerge('border-dashed border-2 duration-100 min-h-16', style)}
+                className={twMerge('border-dashed border-2 duration-100 min-h-16', props.disabled && 'bg-lightest/50', style)}
             >
                 {props.projects.map((p, i) => (
                     <SortableItem
                         key={p.id}
                         item={p}
                         ranking={props.id === 'ranked' ? i + 1 : -1}
+                        disabled={props.disabled}
                     />
                 ))}
             </div>
