@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"fmt"
 	"tests/src"
 )
 
@@ -23,7 +22,6 @@ func AdminLogin(context *src.Context) src.Result {
 
 func InvalidAdminAuth(context *src.Context) src.Result {
 	res := src.PostRequest(context.Logger, "/admin/auth", nil, "Bearer INVALID_TOKEN")
-	fmt.Println(res)
 	return src.AssertNotOk(res, "Invalid auth token should not be successful")
 }
 
