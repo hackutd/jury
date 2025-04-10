@@ -25,7 +25,8 @@ const useAdminStore = create<AdminStore>()((set) => ({
 
     fetchStats: async () => {
         const selectedTrack = useOptionsStore.getState().selectedTrack;
-        const statsRes = await getRequest<Stats>(`/admin/stats/${selectedTrack}`, 'admin');
+        const slash = selectedTrack === '' ? '' : '/';
+        const statsRes = await getRequest<Stats>(`/admin/stats${slash}${selectedTrack}`, 'admin');
         if (statsRes.status !== 200) {
             errorAlert(statsRes);
             return;
@@ -143,6 +144,11 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         switching_mode: '',
         auto_switch_prop: 0,
         manual_switches: 0,
+        deliberation: false,
+        group_names: [],
+        ignore_tracks: [],
+        block_reqs: false,
+        max_req_per_min: 0
     },
 
     selectedTrack: '',
