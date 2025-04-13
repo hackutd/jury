@@ -90,7 +90,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.POST("/project/csv", AddProjectsCsv)
 	adminRouter.GET("/project/list", ListProjects)
 	adminRouter.DELETE("/project/:id", DeleteProject)
-	// TODO: Add edit project route
+	adminRouter.PUT("/project/:id", EditProject)
 
 	// Admin panel - stats/data
 	adminRouter.GET("/admin/stats", GetAdminStats)
