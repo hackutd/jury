@@ -34,3 +34,12 @@ type AddJudgeRequest struct {
 	Notes  string `json:"notes"`
 	NoSend bool   `json:"no_send"`
 }
+
+type AddProjectRequest struct {
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	Url           string `json:"url"`
+	TryLink       string `json:"try_link"`
+	VideoLink     string `json:"video_link"`
+	ChallengeList string `json:"challenge_list"`
+}

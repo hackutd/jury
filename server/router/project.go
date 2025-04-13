@@ -75,15 +75,6 @@ func AddDevpostCsv(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-type AddProjectRequest struct {
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	Url           string `json:"url"`
-	TryLink       string `json:"try_link"`
-	VideoLink     string `json:"video_link"`
-	ChallengeList string `json:"challenge_list"`
-}
-
 // POST /project/new - AddProject adds a project to the database
 func AddProject(ctx *gin.Context) {
 	// Get the database from the context
@@ -96,7 +87,7 @@ func AddProject(ctx *gin.Context) {
 	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the projectReq from the request
-	var projectReq AddProjectRequest
+	var projectReq models.AddProjectRequest
 	err := ctx.BindJSON(&projectReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error binding project from request: " + err.Error()})
@@ -283,6 +274,52 @@ func AddProjectsCsv(ctx *gin.Context) {
 
 	// Send OK
 	logger.AdminLogf("Added %d projects from CSV", len(projects))
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// PUT /project/:id - EditProject edits a project in the database
+func EditProject(ctx *gin.Context) {
+	// Get the database from the context
+	db := ctx.MustGet("db").(*mongo.Database)
+
+	// Get the logger from the context
+	logger := ctx.MustGet("logger").(*logging.Logger)
+
+	// Get the body content
+	var projReq models.AddProjectRequest
+	err := ctx.BindJSON(&projReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the challenge list
+	challengeList := strings.Split(projReq.ChallengeList, ",")
+	if projReq.ChallengeList == "" {
+		challengeList = []string{}
+	}
+	for i := range challengeList {
+		challengeList[i] = strings.TrimSpace(challengeList[i])
+	}
+
+	// Get the id from the request
+	id := ctx.Param("id")
+
+	// Convert project ID string to ObjectID
+	projectObjectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
+	// Edit the project in the database
+	err = database.UpdateProjectBasicInfo(db, projectObjectId, &projReq, challengeList)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
+		return
+	}
+
+	logger.AdminLogf("Edited project %s: %s", id, util.StructToString(projReq))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 

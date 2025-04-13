@@ -78,6 +78,22 @@ func GetPrioritizedProjects(db *mongo.Database, ctx context.Context) ([]*models.
 	return projects, nil
 }
 
+func UpdateProjectBasicInfo(db *mongo.Database, projectId primitive.ObjectID, project *models.AddProjectRequest, challengeList []string) error {
+	_, err := db.Collection("projects").UpdateOne(
+		context.Background(),
+		gin.H{"_id": projectId},
+		gin.H{"$set": gin.H{
+			"name":           project.Name,
+			"description":    project.Description,
+			"url":            project.Url,
+			"try_link":       project.TryLink,
+			"video_link":     project.VideoLink,
+			"challenge_list": challengeList,
+		}},
+	)
+	return err
+}
+
 // DeleteProjectById deletes a project from the database by id
 func DeleteProjectById(db *mongo.Database, id primitive.ObjectID) error {
 	_, err := db.Collection("projects").DeleteOne(context.Background(), gin.H{"_id": id})
