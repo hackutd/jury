@@ -319,7 +319,7 @@ func EditProject(ctx *gin.Context) {
 		return
 	}
 
-	logger.AdminLogf("Edited project %s: %s", id, util.StructToString(projReq))
+	logger.AdminLogf("Edited project %s: %s", id, projReq.Name)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
