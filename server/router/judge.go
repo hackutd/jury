@@ -6,7 +6,6 @@ import (
 	"server/database"
 	"server/funcs"
 	"server/judging"
-	"server/logging"
 	"server/models"
 	"server/ranking"
 	"server/util"
@@ -27,11 +26,8 @@ func GetJudge(ctx *gin.Context) {
 
 // POST /judge/new - Endpoint to add a single judge
 func AddJudge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the request
 	var judgeReq models.AddJudgeRequest
@@ -54,7 +50,7 @@ func AddJudge(ctx *gin.Context) {
 	// Determine group judge should go in
 	group := int64(0)
 	if judgeReq.Track == "" {
-		group, err = database.GetMinJudgeGroup(db)
+		group, err = database.GetMinJudgeGroup(state.Db)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
 			return
@@ -84,7 +80,7 @@ func AddJudge(ctx *gin.Context) {
 	}
 
 	// Insert the judge into the database
-	err = database.InsertJudge(db, judge)
+	err = database.InsertJudge(state.Db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -95,7 +91,7 @@ func AddJudge(ctx *gin.Context) {
 	if track == "" {
 		track = "general"
 	}
-	logger.AdminLogf("Added judge %s (%s), track: %s", judge.Name, judge.Email, track)
+	state.Logger.AdminLogf("Added judge %s (%s), track: %s", judge.Name, judge.Email, track)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -105,11 +101,8 @@ type LoginJudgeRequest struct {
 
 // POST /judge/login - Endpoint to login a judge
 func LoginJudge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge code from the request
 	var loginReq LoginJudgeRequest
@@ -120,13 +113,13 @@ func LoginJudge(ctx *gin.Context) {
 	}
 
 	// Find judge by code
-	judge, err := database.FindJudgeByCode(db, loginReq.Code)
+	judge, err := database.FindJudgeByCode(state.Db, loginReq.Code)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judge in database: " + err.Error()})
 		return
 	}
 	if judge == nil {
-		logger.JudgeLogf(nil, "Invalid judge log in attempt with code %s", loginReq.Code)
+		state.Logger.JudgeLogf(nil, "Invalid judge log in attempt with code %s", loginReq.Code)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid code"})
 		return
 	}
@@ -140,32 +133,29 @@ func LoginJudge(ctx *gin.Context) {
 
 	// Update judge in database with new token
 	judge.Token = token
-	err = database.UpdateJudge(db, judge, ctx)
+	err = database.UpdateJudge(state.Db, judge, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.JudgeLogf(judge, "Log in, assigned token %s", token)
+	state.Logger.JudgeLogf(judge, "Log in, assigned token %s", token)
 	ctx.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-// TODO: Does this have to be a POST?
 // POST /judge/auth - Check to make sure a judge is authenticated
 func JudgeAuthenticated(ctx *gin.Context) {
 	// This route will run the middleware first, and if the middleware
 	// passes, then that means the judge is authenticated
+
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /judge/csv - Endpoint to add judges from a CSV file
 func AddJudgesCsv(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
@@ -220,7 +210,7 @@ func AddJudgesCsv(ctx *gin.Context) {
 	}
 
 	// Determine group numbers for the new judges
-	groups, err := database.GetNextNJudgeGroups(db, ctx, len(judges), false)
+	groups, err := database.GetNextNJudgeGroups(state.Db, ctx, len(judges), false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge groups: " + err.Error()})
 		return
@@ -232,14 +222,14 @@ func AddJudgesCsv(ctx *gin.Context) {
 	}
 
 	// Insert judges into the database
-	err = database.InsertJudges(db, judges)
+	err = database.InsertJudges(state.Db, judges)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judges into database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Added %d judges from CSV", len(judges))
+	state.Logger.AdminLogf("Added %d judges from CSV", len(judges))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -258,11 +248,8 @@ func CheckJudgeReadWelcome(ctx *gin.Context) {
 
 // POST /judge/welcome - Endpoint to set a judge's readWelcome field to true
 func SetJudgeReadWelcome(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
@@ -271,24 +258,24 @@ func SetJudgeReadWelcome(ctx *gin.Context) {
 	judge.ReadWelcome = true
 
 	// Update judge in database
-	err := database.UpdateJudge(db, judge, ctx)
+	err := database.UpdateJudge(state.Db, judge, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.JudgeLogf(judge, "Read welcome message")
+	state.Logger.JudgeLogf(judge, "Read welcome message")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // GET /judge/list - Endpoint to get a list of all judges
 func ListJudges(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get judges from database
-	judges, err := database.FindAllJudges(db, ctx)
+	judges, err := database.FindAllJudges(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judges in database: " + err.Error()})
 		return
@@ -300,11 +287,11 @@ func ListJudges(ctx *gin.Context) {
 
 // GET /judge/stats - Endpoint to get stats about the judges
 func JudgeStats(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Aggregate judge stats
-	stats, err := database.AggregateJudgeStats(db)
+	stats, err := database.AggregateJudgeStats(state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating judge stats: " + err.Error()})
 		return
@@ -316,11 +303,8 @@ func JudgeStats(ctx *gin.Context) {
 
 // DELETE /judge/:id - Endpoint to delete a judge
 func DeleteJudge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge ID from the URL
 	judgeId := ctx.Param("id")
@@ -333,33 +317,24 @@ func DeleteJudge(ctx *gin.Context) {
 	}
 
 	// Delete judge from database
-	err = database.DeleteJudgeById(db, judgeObjectId)
+	err = database.DeleteJudgeById(state.Db, judgeObjectId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting judge from database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Deleted judge %s", judgeId)
+	state.Logger.AdminLogf("Deleted judge %s", judgeId)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /judge/next - Endpoint to get the next project for a judge
 func GetNextJudgeProject(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Get the comparisons object
-	comps := ctx.MustGet("comps").(*judging.Comparisons)
-
-	// Get the clock from the context
-	clock := ctx.MustGet("clock").(*models.SafeClock)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// If the judge already has a next project, return that project
 	if judge.Current != nil {
@@ -368,22 +343,22 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	}
 
 	// Otherwise, get the next project for the judge
-	project_int, err := database.WithTransactionItem(db, func(sc mongo.SessionContext) (interface{}, error) {
+	project_int, err := database.WithTransactionItem(state.Db, func(sc mongo.SessionContext) (interface{}, error) {
 		// Get options
-		options, err := database.GetOptions(db, sc)
+		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
 			return nil, errors.New("error getting options: " + err.Error())
 		}
 
 		// If the clock is paused, return an empty object
 		// This is to ensure that no projects are gotten if the clock is paused
-		clock.Mutex.Lock()
-		if !clock.Clock.Running || options.Deliberation {
+		state.Clock.Mutex.Lock()
+		if !state.Clock.State.Running || options.Deliberation {
 			return nil, nil
 		}
-		clock.Mutex.Unlock()
+		state.Clock.Mutex.Unlock()
 
-		return judging.PickNextProject(db, judge, sc, comps)
+		return judging.PickNextProject(state.Db, judge, sc, state.Comps)
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
@@ -400,14 +375,14 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	project := project_int.(*models.Project)
 
 	// Update judge and project
-	err = database.UpdateAfterPicked(db, project, judge)
+	err = database.UpdateAfterPicked(state.Db, project, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating next project in database: " + err.Error()})
 		return
 	}
 
 	// Send OK and project ID
-	logger.JudgeLogf(judge, "Picked new project %s (%s)", project.Name, project.Id.Hex())
+	state.Logger.JudgeLogf(judge, "Picked new project %s (%s)", project.Name, project.Id.Hex())
 	ctx.JSON(http.StatusOK, gin.H{"project_id": project.Id.Hex()})
 }
 
@@ -441,11 +416,11 @@ func addUrlToJudgedProject(project *models.JudgedProject, url string) *JudgedPro
 
 // GET /judge/project/:id - Gets a project that's been judged by ID
 func GetJudgedProject(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
 
 	// Get the project ID from the URL
 	projectId := ctx.Param("id")
@@ -454,7 +429,7 @@ func GetJudgedProject(ctx *gin.Context) {
 	for _, p := range judge.SeenProjects {
 		if p.ProjectId.Hex() == projectId {
 			// Add URL to judged project
-			proj, err := database.FindProjectById(db, ctx, &p.ProjectId)
+			proj, err := database.FindProjectById(state.Db, ctx, &p.ProjectId)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project url: " + err.Error()})
 				return
@@ -477,20 +452,11 @@ type SkipRequest struct {
 
 // POST /judge/skip - Endpoint to skip a project
 func JudgeSkip(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Get the comparisons object
-	comps := ctx.MustGet("comps").(*judging.Comparisons)
-
-	// Get the clock from the context
-	clock := ctx.MustGet("clock").(*models.SafeClock)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the skip reason from the request
 	var skipReq SkipRequest
@@ -504,17 +470,17 @@ func JudgeSkip(ctx *gin.Context) {
 	id := judge.Current.Hex()
 
 	// Check if judging is paused
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
 	}
-	clock.Mutex.Lock()
-	newProj := clock.Clock.Running && !options.Deliberation
-	clock.Mutex.Unlock()
+	state.Clock.Mutex.Lock()
+	newProj := state.Clock.State.Running && !options.Deliberation
+	state.Clock.Mutex.Unlock()
 
 	// Skip the project
-	err = judging.SkipCurrentProject(db, judge, comps, skipReq.Reason, newProj)
+	err = judging.SkipCurrentProject(state.Db, judge, state.Comps, skipReq.Reason, newProj)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -522,20 +488,17 @@ func JudgeSkip(ctx *gin.Context) {
 
 	// Send OK
 	if skipReq.Reason == "busy" {
-		logger.JudgeLogf(judge, "Skipped busy project %s", id)
+		state.Logger.JudgeLogf(judge, "Skipped busy project %s", id)
 	} else {
-		logger.JudgeLogf(judge, "Flagged project %s due to %s", id, skipReq.Reason)
+		state.Logger.JudgeLogf(judge, "Flagged project %s due to %s", id, skipReq.Reason)
 	}
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /judge/hide/:id - Endpoint to hide a judge
 func HideJudge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get ID from URL
 	id := ctx.Param("id")
@@ -556,7 +519,7 @@ func HideJudge(ctx *gin.Context) {
 	}
 
 	// Hide judge in database
-	err = database.SetJudgeActive(db, &judgeObjectId, !hideReq.Hide)
+	err = database.SetJudgeActive(state.Db, &judgeObjectId, !hideReq.Hide)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error hiding judge in database: " + err.Error()})
 		return
@@ -567,17 +530,14 @@ func HideJudge(ctx *gin.Context) {
 	if hideReq.Hide {
 		action = "Hid"
 	}
-	logger.AdminLogf("%s judge %s", action, id)
+	state.Logger.AdminLogf("%s judge %s", action, id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /judge/hide - Endpoint to hide selected judges
 func HideSelectedJudges(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request object
 	var hideReq util.HideSelectedRequest
@@ -588,7 +548,7 @@ func HideSelectedJudges(ctx *gin.Context) {
 	}
 
 	// Hide judges in database
-	err = database.SetJudgesActive(db, hideReq.Items, !hideReq.Hide)
+	err = database.SetJudgesActive(state.Db, hideReq.Items, !hideReq.Hide)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error hiding judges in database: " + err.Error()})
 		return
@@ -599,17 +559,14 @@ func HideSelectedJudges(ctx *gin.Context) {
 	if hideReq.Hide {
 		action = "Hid"
 	}
-	logger.AdminLogf("%s %d judges", action, len(hideReq.Items))
+	state.Logger.AdminLogf("%s %d judges", action, len(hideReq.Items))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // PUT /judge/:id - Endpoint to edit a judge
 func EditJudge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the body content
 	var judgeReq models.AddJudgeRequest
@@ -630,14 +587,14 @@ func EditJudge(ctx *gin.Context) {
 	}
 
 	// Edit judge in database
-	err = database.UpdateJudgeBasicInfo(db, &judgeObjectId, &judgeReq)
+	err = database.UpdateJudgeBasicInfo(state.Db, &judgeObjectId, &judgeReq)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error editing judge in database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Edited judge %s: %s", judgeId, util.StructToString(judgeReq))
+	state.Logger.AdminLogf("Edited judge %s: %s", judgeId, util.StructToString(judgeReq))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -648,14 +605,11 @@ type JudgeScoreRequest struct {
 
 // POST /judge/score - Endpoint to finish judging a project
 func JudgeScore(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the request object
 	var scoreReq JudgeScoreRequest
@@ -666,7 +620,7 @@ func JudgeScore(ctx *gin.Context) {
 	}
 
 	// Get the options and return error if deliberations
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -679,15 +633,15 @@ func JudgeScore(ctx *gin.Context) {
 	projId := judge.Current.Hex()
 
 	// Wrap the database transaction
-	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
 		// Get the options
-		options, err := database.GetOptions(db, sc)
+		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
 			return errors.New("error getting options: " + err.Error())
 		}
 
 		// Get the project from the database
-		project, err := database.FindProjectById(db, sc, judge.Current)
+		project, err := database.FindProjectById(state.Db, sc, judge.Current)
 		if err != nil {
 			return errors.New("error finding project in database: " + err.Error())
 		}
@@ -697,20 +651,20 @@ func JudgeScore(ctx *gin.Context) {
 
 		// If groups are enabled and auto switch, move the judge to the next group conditionally
 		if options.MultiGroup && options.SwitchingMode == "auto" {
-			err = judging.MoveJudgeGroup(db, sc, judge, options)
+			err = judging.MoveJudgeGroup(state.Db, sc, judge, options)
 			if err != nil {
 				return errors.New("error moving judge group: " + err.Error())
 			}
 		}
 
 		// Update the judge and project
-		err = database.UpdateAfterSeen(db, sc, judge, judgedProject)
+		err = database.UpdateAfterSeen(state.Db, sc, judge, judgedProject)
 		if err != nil {
 			return errors.New("error storing scores in database: " + err.Error())
 		}
 
 		// Reset list of skipped projects due to busy status
-		err = database.ResetBusyProjectListForJudge(db, sc, judge)
+		err = database.ResetBusyProjectListForJudge(state.Db, sc, judge)
 		if err != nil {
 			return errors.New("error resetting busy project list in database: " + err.Error())
 		}
@@ -727,7 +681,7 @@ func JudgeScore(ctx *gin.Context) {
 	if scoreReq.Starred {
 		starred = " and starred project"
 	}
-	logger.JudgeLogf(judge, "Finished judging project %s%s", projId, starred)
+	state.Logger.JudgeLogf(judge, "Finished judging project %s%s", projId, starred)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -737,14 +691,11 @@ type RankRequest struct {
 
 // POST /judge/rank - Update the judge's ranking of projects
 func JudgeRank(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the request object
 	var rankReq RankRequest
@@ -755,7 +706,7 @@ func JudgeRank(ctx *gin.Context) {
 	}
 
 	// Get the options and return error if deliberations
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -777,15 +728,15 @@ func JudgeRank(ctx *gin.Context) {
 	}
 
 	// Wrap in transaction
-	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
 		// Update the judge's ranking
-		err = database.UpdateJudgeRanking(db, judge, rankReq.Ranking)
+		err = database.UpdateJudgeRanking(state.Db, judge, rankReq.Ranking)
 		if err != nil {
 			return errors.New("error updating judge ranking in database: " + err.Error())
 		}
 
 		// Update projects based on diff
-		err = database.UpdateProjectScores(db, sc, diff)
+		err = database.UpdateProjectScores(state.Db, sc, diff)
 		if err != nil {
 			return errors.New("error updating project scores in database: " + err.Error())
 		}
@@ -798,7 +749,7 @@ func JudgeRank(ctx *gin.Context) {
 	}
 
 	// Send OK
-	logger.JudgeLogf(judge, "Updated rankings from %s to %s", oldRanks, util.RankingToString(rankReq.Ranking))
+	state.Logger.JudgeLogf(judge, "Updated rankings from %s to %s", oldRanks, util.RankingToString(rankReq.Ranking))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -808,14 +759,11 @@ type JudgeStarRequest struct {
 
 // PUT /judge/star/:id - Update the judge's star status on a judged project
 func JudgeStar(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get the project id from the URL
 	rawProjectId := ctx.Param("id")
@@ -834,7 +782,7 @@ func JudgeStar(ctx *gin.Context) {
 	}
 
 	// Get the options and return error if deliberations
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -852,15 +800,15 @@ func JudgeStar(ctx *gin.Context) {
 	}
 
 	// Wrap in transaction
-	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
 		// Get the options
-		options, err := database.GetOptions(db, sc)
+		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
 			return errors.New("error getting options: " + err.Error())
 		}
 
 		// Update the judge's object for the project
-		err = database.UpdateJudgeStars(db, sc, judge.Id, index, starReq.Starred)
+		err = database.UpdateJudgeStars(state.Db, sc, judge.Id, index, starReq.Starred)
 		if err != nil {
 			return errors.New("error updating judge starred in database: " + err.Error())
 		}
@@ -868,9 +816,9 @@ func JudgeStar(ctx *gin.Context) {
 		// If the judge is in a track, update that track's comparisons
 		// Otherwise, update the project's starred status
 		if options.JudgeTracks && judge.Track != "" {
-			err = database.UpdateProjectTrackStars(db, sc, projectId, judge.Track, starReq.Starred)
+			err = database.UpdateProjectTrackStars(state.Db, sc, projectId, judge.Track, starReq.Starred)
 		} else {
-			err = database.UpdateProjectStars(db, sc, projectId, starReq.Starred)
+			err = database.UpdateProjectStars(state.Db, sc, projectId, starReq.Starred)
 		}
 		if err != nil {
 			return errors.New("error updating project starred status in database: " + err.Error())
@@ -888,23 +836,17 @@ func JudgeStar(ctx *gin.Context) {
 	if starReq.Starred {
 		starred = "Added"
 	}
-	logger.JudgeLogf(judge, "%s star for project %s", starred, rawProjectId)
+	state.Logger.JudgeLogf(judge, "%s star for project %s", starred, rawProjectId)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /judge/break - Allows a judge to take a break and free up their current project
 func JudgeBreak(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Get the comparisons from the context
-	comps := ctx.MustGet("comps").(*judging.Comparisons)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Error if the judge doesn't have a current project
 	if judge.Current == nil {
@@ -913,14 +855,14 @@ func JudgeBreak(ctx *gin.Context) {
 	}
 
 	// Basically skip the project for the judge
-	err := judging.SkipCurrentProject(db, judge, comps, "break", false)
+	err := judging.SkipCurrentProject(state.Db, judge, state.Comps, "break", false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error skipping project: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.JudgeLogf(judge, "Took a break from project %s", judge.Current.Hex())
+	state.Logger.JudgeLogf(judge, "Took a break from project %s", judge.Current.Hex())
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -930,8 +872,8 @@ type UpdateNotesRequest struct {
 
 // PUT /judge/notes/:id - Update the notes of a judge
 func JudgeUpdateNotes(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
@@ -963,7 +905,7 @@ func JudgeUpdateNotes(ctx *gin.Context) {
 	judge.SeenProjects[index].Notes = notesReq.Notes
 
 	// Update the judge's object for the project
-	err = database.UpdateJudgeSeenProjects(db, ctx, judge)
+	err = database.UpdateJudgeSeenProjects(state.Db, ctx, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge score in database: " + err.Error()})
 		return
@@ -975,14 +917,11 @@ func JudgeUpdateNotes(ctx *gin.Context) {
 
 // POST /judge/reassign - Reassigns judge numbers to all judges that are not in a track
 func ReassignJudgeGroups(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get options from database
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -995,24 +934,21 @@ func ReassignJudgeGroups(ctx *gin.Context) {
 	}
 
 	// Reassign judge groups
-	err = database.PutJudgesInGroups(db)
+	err = database.PutJudgesInGroups(state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning judge groups: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Reassigned judge groups")
+	state.Logger.AdminLogf("Reassigned judge groups")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // PUT /judge/move/:id - Move a judge to a different group
 func MoveJudge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the ID from the URL
 	id := ctx.Param("id")
@@ -1033,24 +969,21 @@ func MoveJudge(ctx *gin.Context) {
 	}
 
 	// Move the judge to the new group
-	err = database.SetJudgeGroup(db, ctx, &judgeObjectId, moveReq.Group)
+	err = database.SetJudgeGroup(state.Db, ctx, &judgeObjectId, moveReq.Group)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving judge group: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Moved judge %s to group %d", id, moveReq.Group)
+	state.Logger.AdminLogf("Moved judge %s to group %d", id, moveReq.Group)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /judge/move - Move selected judges to a different group
 func MoveSelectedJudges(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request object
 	var moveReq util.MoveSelectedRequest
@@ -1061,24 +994,21 @@ func MoveSelectedJudges(ctx *gin.Context) {
 	}
 
 	// Move the judges to the new group
-	err = database.SetJudgesGroup(db, ctx, moveReq.Items, moveReq.Group)
+	err = database.SetJudgesGroup(state.Db, ctx, moveReq.Items, moveReq.Group)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving judges group: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Moved %d judges to group %d", len(moveReq.Items), moveReq.Group)
+	state.Logger.AdminLogf("Moved %d judges to group %d", len(moveReq.Items), moveReq.Group)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // PUT /project/move/:id - Move a project to a different group
 func MoveProject(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the ID from the URL
 	rawId := ctx.Param("id")
@@ -1097,7 +1027,7 @@ func MoveProject(ctx *gin.Context) {
 	}
 
 	// Get options from database
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -1110,7 +1040,7 @@ func MoveProject(ctx *gin.Context) {
 	}
 
 	// Get max number in group
-	currMaxNum, err := database.GetGroupMaxNum(db, ctx, moveReq.Group)
+	currMaxNum, err := database.GetGroupMaxNum(state.Db, ctx, moveReq.Group)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
 		return
@@ -1136,24 +1066,21 @@ func MoveProject(ctx *gin.Context) {
 	}
 
 	// Move the project to the new group
-	err = database.SetProjectNum(db, ctx, id, currMaxNum+1, moveReq.Group)
+	err = database.SetProjectNum(state.Db, ctx, id, currMaxNum+1, moveReq.Group)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving project group: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Moved project %s to group %d", id.Hex(), moveReq.Group)
+	state.Logger.AdminLogf("Moved project %s to group %d", id.Hex(), moveReq.Group)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /project/move - Move selected projects to a different group
 func MoveSelectedProjects(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request object
 	var moveReq util.MoveSelectedRequest
@@ -1164,7 +1091,7 @@ func MoveSelectedProjects(ctx *gin.Context) {
 	}
 
 	// Get options from database
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -1177,7 +1104,7 @@ func MoveSelectedProjects(ctx *gin.Context) {
 	}
 
 	// Get max number in group
-	currMaxNum, err := database.GetGroupMaxNum(db, ctx, moveReq.Group)
+	currMaxNum, err := database.GetGroupMaxNum(state.Db, ctx, moveReq.Group)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
 		return
@@ -1203,14 +1130,14 @@ func MoveSelectedProjects(ctx *gin.Context) {
 	}
 
 	// Move the projects to the new group
-	err = database.SetProjectsNum(db, ctx, moveReq.Items, currMaxNum+1, moveReq.Group)
+	err = database.SetProjectsNum(state.Db, ctx, moveReq.Items, currMaxNum+1, moveReq.Group)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving projects group: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Moved %d projects to group %d", len(moveReq.Items), moveReq.Group)
+	state.Logger.AdminLogf("Moved %d projects to group %d", len(moveReq.Items), moveReq.Group)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -1223,11 +1150,8 @@ type AddJudgeFromQRRequest struct {
 
 // POST /judge/qr - Add a judge from a QR code
 func AddJudgeFromQR(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request object
 	var qrReq AddJudgeFromQRRequest
@@ -1238,7 +1162,7 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	}
 
 	// Get the options from the database
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -1258,7 +1182,7 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	}
 
 	// Check if the judge already exists
-	judge, err := database.FindJudgeByCode(db, qrReq.Code)
+	judge, err := database.FindJudgeByCode(state.Db, qrReq.Code)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judge in database: " + err.Error()})
 		return
@@ -1271,7 +1195,7 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	// Determine group judge should go in
 	group := int64(0)
 	if qrReq.Track == "" {
-		group, err = database.GetMinJudgeGroup(db)
+		group, err = database.GetMinJudgeGroup(state.Db)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
 			return
@@ -1300,7 +1224,7 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	}
 
 	// Insert the judge into the database
-	err = database.InsertJudge(db, judge)
+	err = database.InsertJudge(state.Db, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judge into database: " + err.Error()})
 		return
@@ -1311,17 +1235,17 @@ func AddJudgeFromQR(ctx *gin.Context) {
 	if qrReq.Track != "" {
 		track = ", track " + qrReq.Track
 	}
-	logger.AdminLogf("Added judge %s (%s) from QR code%s", judge.Name, judge.Email, track)
+	state.Logger.AdminLogf("Added judge %s (%s) from QR code%s", judge.Name, judge.Email, track)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // GET /judge/deliberation - Get the status of the deliberation
 func GetDeliberationStatus(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the options from the database
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return

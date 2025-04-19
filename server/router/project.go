@@ -5,27 +5,19 @@ import (
 	"server/database"
 	"server/funcs"
 	"server/judging"
-	"server/logging"
 	"server/models"
 	"server/util"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/exp/slices"
 )
 
 // POST /project/devpost - AddDevpostCsv adds a csv export from devpost to the database
 func AddDevpostCsv(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get comparison from the context
-	comps := ctx.MustGet("comps").(*judging.Comparisons)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
@@ -50,41 +42,35 @@ func AddDevpostCsv(ctx *gin.Context) {
 	}
 
 	// Parse the CSV file
-	projects, err := funcs.ParseDevpostCSV(string(content), db)
+	projects, err := funcs.ParseDevpostCSV(string(content), state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing CSV file: " + err.Error()})
 		return
 	}
 
 	// Insert projects into the database
-	err = database.InsertProjects(db, projects)
+	err = database.InsertProjects(state.Db, projects)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judges into database: " + err.Error()})
 		return
 	}
 
 	// Reload comparisons
-	err = judging.ReloadComparisons(db, comps)
+	err = judging.ReloadComparisons(state.Db, state.Comps)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Added %d projects from Devpost CSV", len(projects))
+	state.Logger.AdminLogf("Added %d projects from Devpost CSV", len(projects))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /project/new - AddProject adds a project to the database
 func AddProject(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get comparison from the context
-	comps := ctx.MustGet("comps").(*judging.Comparisons)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the projectReq from the request
 	var projectReq models.AddProjectRequest
@@ -110,7 +96,7 @@ func AddProject(ctx *gin.Context) {
 	}
 
 	// Get the options from the database
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
 		return
@@ -130,7 +116,7 @@ func AddProject(ctx *gin.Context) {
 	}
 
 	// Get max project number
-	tableNum, err := database.GetMaxTableNum(db, ctx)
+	tableNum, err := database.GetMaxTableNum(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting max project number from database: " + err.Error()})
 		return
@@ -140,31 +126,31 @@ func AddProject(ctx *gin.Context) {
 	project := models.NewProject(projectReq.Name, tableNum+1, util.GroupFromTable(options, tableNum+1), projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
 
 	// Insert project
-	err = database.InsertProject(db, ctx, project)
+	err = database.InsertProject(state.Db, ctx, project)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting project into database: " + err.Error()})
 		return
 	}
 
 	// Reload comparisons
-	err = judging.ReloadComparisons(db, comps)
+	err = judging.ReloadComparisons(state.Db, state.Comps)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Added project %s (%s)", project.Name, project.Id.Hex())
+	state.Logger.AdminLogf("Added project %s (%s)", project.Name, project.Id.Hex())
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // GET /project/list - ListProjects lists all projects in the database
 func ListProjects(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the projects from the database
-	projects, err := database.FindAllProjects(db, ctx)
+	projects, err := database.FindAllProjects(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects from database: " + err.Error()})
 		return
@@ -186,11 +172,11 @@ type PublicProject struct {
 }
 
 func ListPublicProjects(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the projects from the database
-	projects, err := database.FindAllProjects(db, ctx)
+	projects, err := database.FindAllProjects(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects from database: " + err.Error()})
 		return
@@ -217,14 +203,8 @@ func ListPublicProjects(ctx *gin.Context) {
 
 // POST /project/csv - Endpoint to add projects from a CSV file
 func AddProjectsCsv(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get comparison from the context
-	comps := ctx.MustGet("comps").(*judging.Comparisons)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the CSV file from the request
 	file, err := ctx.FormFile("csv")
@@ -252,38 +232,35 @@ func AddProjectsCsv(ctx *gin.Context) {
 	}
 
 	// Parse the CSV file
-	projects, err := funcs.ParseProjectCsv(string(content), hasHeader, db)
+	projects, err := funcs.ParseProjectCsv(string(content), hasHeader, state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing CSV file: " + err.Error()})
 		return
 	}
 
 	// Insert projects into the database
-	err = database.InsertProjects(db, projects)
+	err = database.InsertProjects(state.Db, projects)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting projects into database: " + err.Error()})
 		return
 	}
 
 	// Reload comparisons
-	err = judging.ReloadComparisons(db, comps)
+	err = judging.ReloadComparisons(state.Db, state.Comps)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Added %d projects from CSV", len(projects))
+	state.Logger.AdminLogf("Added %d projects from CSV", len(projects))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // PUT /project/:id - EditProject edits a project in the database
 func EditProject(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the body content
 	var projReq models.AddProjectRequest
@@ -313,23 +290,20 @@ func EditProject(ctx *gin.Context) {
 	}
 
 	// Edit the project in the database
-	err = database.UpdateProjectBasicInfo(db, projectObjectId, &projReq, challengeList)
+	err = database.UpdateProjectBasicInfo(state.Db, projectObjectId, &projReq, challengeList)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
 		return
 	}
 
-	logger.AdminLogf("Edited project %s: %s", id, projReq.Name)
+	state.Logger.AdminLogf("Edited project %s: %s", id, projReq.Name)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // DELETE /project/:id - DeleteProject deletes a project from the database
 func DeleteProject(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the id from the request
 	id := ctx.Param("id")
@@ -342,24 +316,24 @@ func DeleteProject(ctx *gin.Context) {
 	}
 
 	// Delete the project from the database
-	err = database.DeleteProjectById(db, projectObjectId)
+	err = database.DeleteProjectById(state.Db, projectObjectId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting project from database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Deleted project %s", id)
+	state.Logger.AdminLogf("Deleted project %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /project/stats - ProjectStats returns stats about projects
 func ProjectStats(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Aggregate project stats
-	stats, err := database.AggregateProjectStats(db)
+	stats, err := database.AggregateProjectStats(state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating project stats: " + err.Error()})
 		return
@@ -371,8 +345,8 @@ func ProjectStats(ctx *gin.Context) {
 
 // GET /project/:id - GetProject returns a project by ID
 func GetProject(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the id from the request
 	id := ctx.Param("id")
@@ -385,7 +359,7 @@ func GetProject(ctx *gin.Context) {
 	}
 
 	// Get the project from the database
-	project, err := database.FindProjectById(db, ctx, &projectObjectId)
+	project, err := database.FindProjectById(state.Db, ctx, &projectObjectId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project from database: " + err.Error()})
 		return
@@ -397,14 +371,14 @@ func GetProject(ctx *gin.Context) {
 
 // GET /project/count - GetProjectCount returns the number of projects in the database
 func GetProjectCount(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
 	// Get the options from the database
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
 		return
@@ -412,7 +386,7 @@ func GetProjectCount(ctx *gin.Context) {
 
 	if options.JudgeTracks && judge.Track != "" {
 		// Get the project from the database
-		count, err := database.CountTrackProjects(db, judge.Track)
+		count, err := database.CountTrackProjects(state.Db, judge.Track)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
 			return
@@ -424,7 +398,7 @@ func GetProjectCount(ctx *gin.Context) {
 	}
 
 	// Get the project from the database
-	count, err := database.CountProjectDocuments(db)
+	count, err := database.CountProjectDocuments(state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
 		return
@@ -436,11 +410,8 @@ func GetProjectCount(ctx *gin.Context) {
 
 // PUT /project/hide/:id - Sets the active status of a project
 func HideProject(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get ID from URL
 	id := ctx.Param("id")
@@ -461,7 +432,7 @@ func HideProject(ctx *gin.Context) {
 	}
 
 	// Update the project in the database
-	err = database.SetProjectActive(db, ctx, &projectObjectId, !hideReq.Hide)
+	err = database.SetProjectActive(state.Db, ctx, &projectObjectId, !hideReq.Hide)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
 		return
@@ -472,17 +443,14 @@ func HideProject(ctx *gin.Context) {
 	if hideReq.Hide {
 		action = "Hid"
 	}
-	logger.AdminLogf("%s project %s", action, id)
+	state.Logger.AdminLogf("%s project %s", action, id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /project/hide - HideSelectedProjects hides selected projects
 func HideSelectedProjects(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request
 	var hideReq util.HideSelectedRequest
@@ -493,7 +461,7 @@ func HideSelectedProjects(ctx *gin.Context) {
 	}
 
 	// Update the projects in the database
-	err = database.SetProjectsActive(db, ctx, hideReq.Items, !hideReq.Hide)
+	err = database.SetProjectsActive(state.Db, ctx, hideReq.Items, !hideReq.Hide)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating projects in database: " + err.Error()})
 		return
@@ -504,17 +472,14 @@ func HideSelectedProjects(ctx *gin.Context) {
 	if hideReq.Hide {
 		action = "Hid"
 	}
-	logger.AdminLogf("%s %d projects", action, len(hideReq.Items))
+	state.Logger.AdminLogf("%s %d projects", action, len(hideReq.Items))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // PUT /project/prioritize/:id - PrioritizeProject prioritizes a project
 func PrioritizeProject(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get ID from URL
 	id := ctx.Param("id")
@@ -535,7 +500,7 @@ func PrioritizeProject(ctx *gin.Context) {
 	}
 
 	// Update the project in the database
-	err = database.SetProjectPrioritized(db, &projectObjectId, priReq.Prioritize)
+	err = database.SetProjectPrioritized(state.Db, &projectObjectId, priReq.Prioritize)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project in database: " + err.Error()})
 		return
@@ -546,16 +511,13 @@ func PrioritizeProject(ctx *gin.Context) {
 	if !priReq.Prioritize {
 		action = "Unprioritized"
 	}
-	logger.AdminLogf("%s project %s", action, id)
+	state.Logger.AdminLogf("%s project %s", action, id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 func PrioritizeSelectedProjects(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request
 	var priReq util.PrioritizeSelectedRequest
@@ -566,7 +528,7 @@ func PrioritizeSelectedProjects(ctx *gin.Context) {
 	}
 
 	// Update the projects in the database
-	err = database.SetProjectsPrioritized(db, ctx, priReq.Items, priReq.Prioritize)
+	err = database.SetProjectsPrioritized(state.Db, ctx, priReq.Items, priReq.Prioritize)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating projects in database: " + err.Error()})
 		return
@@ -577,36 +539,33 @@ func PrioritizeSelectedProjects(ctx *gin.Context) {
 	if !priReq.Prioritize {
 		action = "Unprioritized"
 	}
-	logger.AdminLogf("%s %d projects", action, len(priReq.Items))
+	state.Logger.AdminLogf("%s %d projects", action, len(priReq.Items))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /project/reassign - ReassignProjectNums reassigns project numbers
 func ReassignProjectNums(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
-
-	err := funcs.ReassignNums(db)
+	err := funcs.ReassignNums(state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning project numbers: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Reassigned project numbers")
+	state.Logger.AdminLogf("Reassigned project numbers")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // GetChallenges returns the set of all challenges from the database
 func GetChallenges(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the challenges from the database
-	challenges, err := database.GetChallenges(db, ctx)
+	challenges, err := database.GetChallenges(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting challenges from database: " + err.Error()})
 		return
@@ -623,14 +582,14 @@ func BalanceProjectGroups(ctx *gin.Context) {
 	// db := ctx.MustGet("db").(*mongo.Database)
 
 	// // Get the options from the database
-	// options, err := database.GetOptions(db, ctx)
+	// options, err := database.GetOptions(state.Db, ctx)
 	// if err != nil {
 	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
 	// 	return
 	// }
 
 	// // Get all projects
-	// projects, err := database.FindAllProjects(db, ctx)
+	// projects, err := database.FindAllProjects(state.Db, ctx)
 	// if err != nil {
 	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects from database: " + err.Error()})
 	// 	return
@@ -688,11 +647,11 @@ func BalanceProjectGroups(ctx *gin.Context) {
 
 // GET /admin/log - Returns the log file
 func GetLog(ctx *gin.Context) {
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the log file
-	log := logger.Get()
+	log := state.Logger.Get()
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"log": log})
