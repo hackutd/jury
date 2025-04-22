@@ -8,6 +8,7 @@ import (
 )
 
 // CalculateScoreDiff calculates the score difference between two rankings
+// TODO: REMOVE THIS FUNCTION, INSTEAD JUST CALCULATE SCORE AT THE END
 func CalculateScoreDiff(rankings []primitive.ObjectID, oldRankings []primitive.ObjectID) *map[primitive.ObjectID]int {
 	// Create a map of project IDs to their index in the rankings
 	// Use negative numbers here because if there's in the previous but not current then they're removed

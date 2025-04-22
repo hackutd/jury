@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/exp/slices"
 )
 
@@ -48,17 +50,24 @@ func AddDevpostCsv(ctx *gin.Context) {
 		return
 	}
 
-	// Insert projects into the database
-	err = database.InsertProjects(state.Db, projects)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judges into database: " + err.Error()})
-		return
-	}
+	// Run the remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Insert projects into the database
+		err = database.InsertProjects(state.Db, sc, projects)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judges into database: " + err.Error()})
+			return err
+		}
 
-	// Reload comparisons
-	err = judging.ReloadComparisons(state.Db, state.Comps)
+		// Reload comparisons
+		err = judging.ReloadComparisons(state.Db, sc, state.Comps)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
 		return
 	}
 
@@ -95,47 +104,57 @@ func AddProject(ctx *gin.Context) {
 		challengeList[i] = strings.TrimSpace(challengeList[i])
 	}
 
-	// Get the options from the database
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
-		return
-	}
+	var project *models.Project
 
-	// If the challenge list contains the ignore track, skip the project
-	ignore := false
-	for _, ignoreTrack := range options.IgnoreTracks {
-		if slices.Contains(challengeList, ignoreTrack) {
-			ignore = true
-			break
+	// Run the remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Get the options from the database
+		options, err := database.GetOptions(state.Db, sc)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+			return err
 		}
-	}
-	if ignore {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "project is in an ignored track"})
-		return
-	}
 
-	// Get max project number
-	tableNum, err := database.GetMaxTableNum(state.Db, ctx)
+		// If the challenge list contains the ignore track, skip the project
+		ignore := false
+		for _, ignoreTrack := range options.IgnoreTracks {
+			if slices.Contains(challengeList, ignoreTrack) {
+				ignore = true
+				break
+			}
+		}
+		if ignore {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "project is in an ignored track"})
+			return errors.New("project is in an ignored track")
+		}
+
+		// Get max project number
+		tableNum, err := database.GetMaxTableNum(state.Db, sc)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting max project number from database: " + err.Error()})
+			return err
+		}
+
+		// Create the project
+		project = models.NewProject(projectReq.Name, tableNum+1, util.GroupFromTable(options, tableNum+1), projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
+
+		// Insert project
+		err = database.InsertProject(state.Db, sc, project)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting project into database: " + err.Error()})
+			return err
+		}
+
+		// Reload comparisons
+		err = judging.ReloadComparisons(state.Db, sc, state.Comps)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting max project number from database: " + err.Error()})
-		return
-	}
-
-	// Create the project
-	project := models.NewProject(projectReq.Name, tableNum+1, util.GroupFromTable(options, tableNum+1), projectReq.Description, projectReq.Url, projectReq.TryLink, projectReq.VideoLink, challengeList)
-
-	// Insert project
-	err = database.InsertProject(state.Db, ctx, project)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting project into database: " + err.Error()})
-		return
-	}
-
-	// Reload comparisons
-	err = judging.ReloadComparisons(state.Db, state.Comps)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
 		return
 	}
 
@@ -238,17 +257,25 @@ func AddProjectsCsv(ctx *gin.Context) {
 		return
 	}
 
-	// Insert projects into the database
-	err = database.InsertProjects(state.Db, projects)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting projects into database: " + err.Error()})
-		return
-	}
+	// Run the remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Insert projects into the database
+		err = database.InsertProjects(state.Db, sc, projects)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting projects into database: " + err.Error()})
+			return err
+		}
 
-	// Reload comparisons
-	err = judging.ReloadComparisons(state.Db, state.Comps)
+		// Reload comparisons
+		err = judging.ReloadComparisons(state.Db, sc, state.Comps)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reloading comparisons: " + err.Error()})
 		return
 	}
 
@@ -377,30 +404,41 @@ func GetProjectCount(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
-	// Get the options from the database
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
-		return
-	}
+	var count int64
 
-	if options.JudgeTracks && judge.Track != "" {
-		// Get the project from the database
-		count, err := database.CountTrackProjects(state.Db, judge.Track)
+	// Run the remaining actions in a transaction
+	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Get the options from the database
+		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
-			return
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+			return err
 		}
 
-		// Send OK
-		ctx.JSON(http.StatusOK, gin.H{"count": count})
-		return
-	}
+		// If the tracks option is enabled, get the project count for the judge's track
+		if options.JudgeTracks && judge.Track != "" {
+			// Get the project from the database
+			count, err := database.CountTrackProjects(state.Db, sc, judge.Track)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
+				return err
+			}
 
-	// Get the project from the database
-	count, err := database.CountProjectDocuments(state.Db)
+			// Send OK
+			ctx.JSON(http.StatusOK, gin.H{"count": count})
+			return nil
+		}
+
+		// Get the project from the database
+		count, err = database.CountProjectDocuments(state.Db, sc)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
 		return
 	}
 
@@ -416,7 +454,7 @@ func HideProject(ctx *gin.Context) {
 	// Get ID from URL
 	id := ctx.Param("id")
 
-	// Get the request
+	// Get request body
 	var hideReq util.HideRequest
 	err := ctx.BindJSON(&hideReq)
 	if err != nil {
@@ -452,7 +490,7 @@ func HideSelectedProjects(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
-	// Get the request
+	// Get request body
 	var hideReq util.HideSelectedRequest
 	err := ctx.BindJSON(&hideReq)
 	if err != nil {
@@ -484,7 +522,7 @@ func PrioritizeProject(ctx *gin.Context) {
 	// Get ID from URL
 	id := ctx.Param("id")
 
-	// Get ID from body
+	// Get request body
 	var priReq util.PrioritizeRequest
 	err := ctx.BindJSON(&priReq)
 	if err != nil {
@@ -573,6 +611,158 @@ func GetChallenges(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, challenges)
+}
+
+// PUT /project/move/:id - Move a project to a different group
+func MoveProject(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
+	// Get the ID from the URL
+	rawId := ctx.Param("id")
+	id, err := primitive.ObjectIDFromHex(rawId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
+	// Get the request object
+	var moveReq util.MoveRequest
+	err = ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Run the remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Get options from database
+		options, err := database.GetOptions(state.Db, sc)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+			return err
+		}
+
+		// Make sure valid group
+		if moveReq.Group < 0 || moveReq.Group >= options.NumGroups {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group number"})
+			return errors.New("invalid group number")
+		}
+
+		// Get max number in group
+		currMaxNum, err := database.GetGroupMaxNum(state.Db, sc, moveReq.Group)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
+			return err
+		}
+		if currMaxNum == -1 {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number"})
+			return errors.New("error getting group max number")
+		}
+
+		// Get maximum number for the given group
+		maxGroupNum := int64(0)
+		for i, size := range options.GroupSizes {
+			maxGroupNum += size
+			if int64(i) == moveReq.Group {
+				break
+			}
+		}
+
+		// Make sure the group has space (check for max group number and make sure it doesn't exceed)
+		if moveReq.Group < options.NumGroups-1 && currMaxNum >= maxGroupNum {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "group is full, cannot move project to provided group"})
+			return err
+		}
+
+		// Move the project to the new group
+		err = database.SetProjectNum(state.Db, sc, id, currMaxNum+1, moveReq.Group)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving project group: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
+
+	// Send OK
+	state.Logger.AdminLogf("Moved project %s to group %d", id.Hex(), moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /project/move - Move selected projects to a different group
+func MoveSelectedProjects(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
+	// Get the request object
+	var moveReq util.MoveSelectedRequest
+	err := ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Run the remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Get options from database
+		options, err := database.GetOptions(state.Db, sc)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+			return err
+		}
+
+		// Make sure valid group
+		if moveReq.Group < 0 || moveReq.Group >= options.NumGroups {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group number"})
+			return errors.New("invalid group number")
+		}
+
+		// Get max number in group
+		currMaxNum, err := database.GetGroupMaxNum(state.Db, ctx, moveReq.Group)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
+			return err
+		}
+		if currMaxNum == -1 {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number"})
+			return errors.New("error getting group max number")
+		}
+
+		// Get maximum number for the given group
+		maxGroupNum := int64(0)
+		for i, size := range options.GroupSizes {
+			maxGroupNum += size
+			if int64(i) == moveReq.Group {
+				break
+			}
+		}
+
+		// Check if the group has space (check for max group number and make sure it doesn't exceed)
+		if moveReq.Group < options.NumGroups-1 && currMaxNum+int64(len(moveReq.Items)) > maxGroupNum {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "group is full, cannot move projects to provided group"})
+			return errors.New("group is full, cannot move projects to provided group")
+		}
+
+		// Move the projects to the new group
+		err = database.SetProjectsNum(state.Db, ctx, moveReq.Items, currMaxNum+1, moveReq.Group)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving projects group: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
+
+	// Send OK
+	state.Logger.AdminLogf("Moved %d projects to group %d", len(moveReq.Items), moveReq.Group)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /project/balance-groups - BalanceProjectGroups balances project groups

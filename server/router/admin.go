@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type LoginAdminRequest struct {
@@ -402,9 +401,7 @@ func SetNumGroups(ctx *gin.Context) {
 	}
 
 	// Update number of groups in the database
-	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		return database.UpdateNumGroups(state.Db, sc, *req.NumGroups)
-	})
+	err = database.UpdateNumGroups(state.Db, *req.NumGroups)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving num groups to options: " + err.Error()})
 		return
@@ -435,9 +432,7 @@ func SetGroupSizes(ctx *gin.Context) {
 	}
 
 	// Update group sizes in the database
-	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		return database.UpdateGroupSizes(state.Db, sc, *req.GroupSizes)
-	})
+	err = database.UpdateGroupSizes(state.Db, *req.GroupSizes)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving group sizes to options: " + err.Error()})
 		return

@@ -14,69 +14,74 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// SkipCurrentProject skips the current project for a judge.
-// This is in the judging module instead of the database module to avoid dependency cycles.
-func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
-	return database.WithTransaction(db, func(ctx mongo.SessionContext) error {
-		// Get skipped project from database
-		skippedProject, err := database.FindProjectById(db, ctx, judge.Current)
-		if err != nil {
-			return errors.New("error finding skipped project in database: " + err.Error())
-		}
-
-		// If skipping for any reason other than wanting a break, add the project to the skipped list
-		if reason != "break" {
-			// Create a new skip object
-			skip, err := models.NewFlag(skippedProject, judge, reason)
-			if err != nil {
-				return errors.New("error creating flag object: " + err.Error())
-			}
-
-			// Add skipped project to flags database
-			err = database.InsertFlag(db, ctx, skip)
-			if err != nil {
-				return errors.New("error inserting flag into database: " + err.Error())
-			}
-		}
-
-		// Update the judge
-		_, err = db.Collection("judges").UpdateOne(
-			ctx,
-			gin.H{"_id": judge.Id},
-			gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
-		)
-		if err != nil {
-			return err
-		}
-
-		// Hide the project if it has been skipped more than 3 times
-		err = HideAbsentProject(db, ctx, judge.Current)
-		if err != nil {
-			return errors.New("error hiding absent project: " + err.Error())
-		}
-
-		// Don't get a new project if we're not supposed to
-		if !getNew {
-			return nil
-		}
-
-		// Get a new project
-		project, err := PickNextProject(db, judge, ctx, comps)
-		if err != nil {
-			return err
-		}
-
-		if project == nil {
-			return nil
-		}
-
-		// Update the judge
-		return database.UpdateAfterPickedWithTx(db, ctx, project, judge)
+func SkipCurrentProjectWithTx(db *mongo.Database, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
+	return database.WithTransaction(db, func(sc mongo.SessionContext) error {
+		return SkipCurrentProject(db, sc, judge, comps, reason, getNew)
 	})
 }
 
+// SkipCurrentProject skips the current project for a judge.
+// This is in the judging module instead of the database module to avoid dependency cycles.
+// This should be run in a transaction.
+func SkipCurrentProject(db *mongo.Database, ctx context.Context, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
+	// Get skipped project from database
+	skippedProject, err := database.FindProjectById(db, ctx, judge.Current)
+	if err != nil {
+		return errors.New("error finding skipped project in database: " + err.Error())
+	}
+
+	// If skipping for any reason other than wanting a break, add the project to the skipped list
+	if reason != "break" {
+		// Create a new skip object
+		skip, err := models.NewFlag(skippedProject, judge, reason)
+		if err != nil {
+			return errors.New("error creating flag object: " + err.Error())
+		}
+
+		// Add skipped project to flags database
+		err = database.InsertFlag(db, ctx, skip)
+		if err != nil {
+			return errors.New("error inserting flag into database: " + err.Error())
+		}
+	}
+
+	// Update the judge
+	_, err = db.Collection("judges").UpdateOne(
+		ctx,
+		gin.H{"_id": judge.Id},
+		gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
+	)
+	if err != nil {
+		return err
+	}
+
+	// Hide the project if it has been skipped more than 3 times
+	err = HideAbsentProject(db, ctx, judge.Current)
+	if err != nil {
+		return errors.New("error hiding absent project: " + err.Error())
+	}
+
+	// Don't get a new project if we're not supposed to
+	if !getNew {
+		return nil
+	}
+
+	// Get a new project
+	project, err := PickNextProject(db, ctx, judge, comps)
+	if err != nil {
+		return err
+	}
+
+	if project == nil {
+		return nil
+	}
+
+	// Update the judge
+	return database.UpdateAfterPicked(db, ctx, project, judge)
+}
+
 // HideAbsentProject hides a project if it has been absent more than 3 times.
-func HideAbsentProject(db *mongo.Database, ctx mongo.SessionContext, projectId *primitive.ObjectID) error {
+func HideAbsentProject(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID) error {
 	// Get absent count
 	absent, err := database.GetProjectAbsentCount(db, ctx, projectId)
 	if err != nil {
@@ -95,7 +100,7 @@ func HideAbsentProject(db *mongo.Database, ctx mongo.SessionContext, projectId *
 	}
 
 	// Delete all absent flags
-	err = database.DeleteAbsentFlags(db, projectId, ctx)
+	err = database.DeleteAbsentFlags(db, ctx, projectId)
 	if err != nil {
 		return errors.New("Error deleting absent flags: " + err.Error())
 	}
@@ -133,7 +138,7 @@ func MoveJudgeGroup(db *mongo.Database, ctx context.Context, judge *models.Judge
 //  4. Shuffle projects
 //  5. If any projects seen less than min views (set in admin side), only select from that list
 //  6. Otherwise, pick the project with the minimum number of comparisons with every other project
-func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext, comps *Comparisons) (*models.Project, error) {
+func PickNextProject(db *mongo.Database, ctx context.Context, judge *models.Judge, comps *Comparisons) (*models.Project, error) {
 	// Get items
 	items, err := FindAvaliableItems(db, ctx, judge)
 	if err != nil {
@@ -208,7 +213,7 @@ func PickNextProject(db *mongo.Database, judge *models.Judge, ctx mongo.SessionC
 //  7. If judging a track, return at this point (ignore last 2 conditions)
 //  8. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
 //  9. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
-func FindAvaliableItems(db *mongo.Database, ctx mongo.SessionContext, judge *models.Judge) ([]*models.Project, error) {
+func FindAvaliableItems(db *mongo.Database, ctx context.Context, judge *models.Judge) ([]*models.Project, error) {
 	// Get the list of all active projects
 	projects, err := database.FindActiveProjects(db, ctx)
 	if err != nil {
@@ -221,7 +226,7 @@ func FindAvaliableItems(db *mongo.Database, ctx mongo.SessionContext, judge *mod
 	}
 
 	// Get all flags for the judge
-	flags, err := database.FindFlagsByJudge(db, judge, ctx)
+	flags, err := database.FindFlagsByJudge(db, ctx, judge)
 	if err != nil {
 		return nil, err
 	}

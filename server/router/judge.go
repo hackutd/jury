@@ -47,42 +47,52 @@ func AddJudge(ctx *gin.Context) {
 		return
 	}
 
-	// Determine group judge should go in
-	group := int64(0)
-	if judgeReq.Track == "" {
-		group, err = database.GetMinJudgeGroup(state.Db)
+	var judge *models.Judge
+
+	// Run remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Determine group judge should go in
+		group := int64(0)
+		if judgeReq.Track == "" {
+			group, err = database.GetMinJudgeGroup(state.Db, sc)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+				return err
+			}
+		}
+
+		// Create the judge
+		judge = models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Track, judgeReq.Notes, group)
+
+		// Send email if no_send is false
+		if !judgeReq.NoSend {
+			// Get hostname from request
+			hostname := util.GetFullHostname(ctx)
+
+			// Make sure email is right
+			if !funcs.CheckEmail(judge.Email) {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
+				return errors.New("invalid email")
+			}
+
+			// Send email to judge
+			err = funcs.SendJudgeEmail(judge, hostname)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
+				return err
+			}
+		}
+
+		// Insert the judge into the database
+		err = database.InsertJudge(state.Db, sc, judge)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
-			return
-		}
-	}
-
-	// Create the judge
-	judge := models.NewJudge(judgeReq.Name, judgeReq.Email, judgeReq.Track, judgeReq.Notes, group)
-
-	// Send email if no_send is false
-	if !judgeReq.NoSend {
-		// Get hostname from request
-		hostname := util.GetFullHostname(ctx)
-
-		// Make sure email is right
-		if !funcs.CheckEmail(judge.Email) {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
-			return
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return err
 		}
 
-		// Send email to judge
-		err = funcs.SendJudgeEmail(judge, hostname)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
-			return
-		}
-	}
-
-	// Insert the judge into the database
-	err = database.InsertJudge(state.Db, judge)
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -112,30 +122,41 @@ func LoginJudge(ctx *gin.Context) {
 		return
 	}
 
-	// Find judge by code
-	judge, err := database.FindJudgeByCode(state.Db, loginReq.Code)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judge in database: " + err.Error()})
-		return
-	}
-	if judge == nil {
-		state.Logger.JudgeLogf(nil, "Invalid judge log in attempt with code %s", loginReq.Code)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid code"})
-		return
-	}
+	var judge *models.Judge
+	var token string
 
-	// Generate random 16-character token for judge
-	token, err := util.GenerateToken()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error generating token: " + err.Error()})
-		return
-	}
+	// Run remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Find judge by code
+		judge, err := database.FindJudgeByCode(state.Db, sc, loginReq.Code)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judge in database: " + err.Error()})
+			return err
+		}
+		if judge == nil {
+			state.Logger.JudgeLogf(nil, "Invalid judge log in attempt with code %s", loginReq.Code)
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid code"})
+			return err
+		}
 
-	// Update judge in database with new token
-	judge.Token = token
-	err = database.UpdateJudge(state.Db, judge, ctx)
+		// Generate random 16-character token for judge
+		token, err = util.GenerateToken()
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error generating token: " + err.Error()})
+			return err
+		}
+
+		// Update judge in database with new token
+		judge.Token = token
+		err = database.UpdateJudge(state.Db, sc, judge)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
 	}
 
@@ -209,22 +230,30 @@ func AddJudgesCsv(ctx *gin.Context) {
 		}
 	}
 
-	// Determine group numbers for the new judges
-	groups, err := database.GetNextNJudgeGroups(state.Db, ctx, len(judges), false)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge groups: " + err.Error()})
-		return
-	}
+	// Do the remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Determine group numbers for the new judges
+		groups, err := database.GetNextNJudgeGroups(state.Db, sc, len(judges), false)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge groups: " + err.Error()})
+			return err
+		}
 
-	// Assign group numbers to the new judges
-	for i, judge := range judges {
-		judge.Group = groups[i]
-	}
+		// Assign group numbers to the new judges
+		for i, judge := range judges {
+			judge.Group = groups[i]
+		}
 
-	// Insert judges into the database
-	err = database.InsertJudges(state.Db, judges)
+		// Insert judges into the database
+		err = database.InsertJudges(state.Db, sc, judges)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judges into database: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judges into database: " + err.Error()})
 		return
 	}
 
@@ -258,7 +287,7 @@ func SetJudgeReadWelcome(ctx *gin.Context) {
 	judge.ReadWelcome = true
 
 	// Update judge in database
-	err := database.UpdateJudge(state.Db, judge, ctx)
+	err := database.UpdateJudge(state.Db, ctx, judge)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
@@ -343,47 +372,49 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	}
 
 	// Otherwise, get the next project for the judge
-	project_int, err := database.WithTransactionItem(state.Db, func(sc mongo.SessionContext) (interface{}, error) {
+	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
 		// Get options
 		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
-			return nil, errors.New("error getting options: " + err.Error())
+			return errors.New("error getting options: " + err.Error())
 		}
 
 		// If the clock is paused, return an empty object
 		// This is to ensure that no projects are gotten if the clock is paused
 		state.Clock.Mutex.Lock()
 		if !state.Clock.State.Running || options.Deliberation {
-			return nil, nil
+			return nil
 		}
 		state.Clock.Mutex.Unlock()
 
-		return judging.PickNextProject(state.Db, judge, sc, state.Comps)
+		project, err := judging.PickNextProject(state.Db, sc, judge, state.Comps)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
+			return nil
+		}
+
+		// If there is no next project, return an empty object
+		if project == nil {
+			ctx.JSON(http.StatusOK, gin.H{})
+			return nil
+		}
+
+		// Update judge and project
+		err = database.UpdateAfterPicked(state.Db, sc, project, judge)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating next project in database: " + err.Error()})
+			return nil
+		}
+
+		// Send OK and project ID
+		state.Logger.JudgeLogf(judge, "Picked new project %s (%s)", project.Name, project.Id.Hex())
+		ctx.JSON(http.StatusOK, gin.H{"project_id": project.Id.Hex()})
+		return nil
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	// If there is no next project, return an empty object
-	if project_int == nil {
-		ctx.JSON(http.StatusOK, gin.H{})
-		return
-	}
-
-	// Cast the project to a Project object
-	project := project_int.(*models.Project)
-
-	// Update judge and project
-	err = database.UpdateAfterPicked(state.Db, project, judge)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating next project in database: " + err.Error()})
-		return
-	}
-
-	// Send OK and project ID
-	state.Logger.JudgeLogf(judge, "Picked new project %s (%s)", project.Name, project.Id.Hex())
-	ctx.JSON(http.StatusOK, gin.H{"project_id": project.Id.Hex()})
 }
 
 // GET /judge/projects - Endpoint to get a list of projects that a judge has seen
@@ -469,20 +500,27 @@ func JudgeSkip(ctx *gin.Context) {
 	// Skipped project ID
 	id := judge.Current.Hex()
 
-	// Check if judging is paused
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-	state.Clock.Mutex.Lock()
-	newProj := state.Clock.State.Running && !options.Deliberation
-	state.Clock.Mutex.Unlock()
+	// Run remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Check if judging is paused
+		options, err := database.GetOptions(state.Db, ctx)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+			return err
+		}
+		state.Clock.Mutex.Lock()
+		newProj := state.Clock.State.Running && !options.Deliberation
+		state.Clock.Mutex.Unlock()
 
-	// Skip the project
-	err = judging.SkipCurrentProject(state.Db, judge, state.Comps, skipReq.Reason, newProj)
+		// Skip the project
+		err = judging.SkipCurrentProject(state.Db, sc, judge, state.Comps, skipReq.Reason, newProj)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -619,31 +657,24 @@ func JudgeScore(ctx *gin.Context) {
 		return
 	}
 
-	// Get the options and return error if deliberations
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-	if options.Deliberation {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
-		return
-	}
-
-	projId := judge.Current.Hex()
-
-	// Wrap the database transaction
+	// Run remaining actions in a transaction
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get the options
-		options, err := database.GetOptions(state.Db, sc)
+		// Get the options and return error if deliberations
+		options, err := database.GetOptions(state.Db, ctx)
 		if err != nil {
-			return errors.New("error getting options: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+			return err
+		}
+		if options.Deliberation {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+			return err
 		}
 
 		// Get the project from the database
 		project, err := database.FindProjectById(state.Db, sc, judge.Current)
 		if err != nil {
-			return errors.New("error finding project in database: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding project in database: " + err.Error()})
+			return err
 		}
 
 		// Create the judged project object
@@ -653,26 +684,28 @@ func JudgeScore(ctx *gin.Context) {
 		if options.MultiGroup && options.SwitchingMode == "auto" {
 			err = judging.MoveJudgeGroup(state.Db, sc, judge, options)
 			if err != nil {
-				return errors.New("error moving judge group: " + err.Error())
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving judge group: " + err.Error()})
+				return err
 			}
 		}
 
 		// Update the judge and project
 		err = database.UpdateAfterSeen(state.Db, sc, judge, judgedProject)
 		if err != nil {
-			return errors.New("error storing scores in database: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error storing scores in database: " + err.Error()})
+			return err
 		}
 
 		// Reset list of skipped projects due to busy status
 		err = database.ResetBusyProjectListForJudge(state.Db, sc, judge)
 		if err != nil {
-			return errors.New("error resetting busy project list in database: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error resetting busy project list in database: " + err.Error()})
+			return err
 		}
 
 		return nil
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -681,6 +714,7 @@ func JudgeScore(ctx *gin.Context) {
 	if scoreReq.Starred {
 		starred = " and starred project"
 	}
+	projId := judge.Current.Hex()
 	state.Logger.JudgeLogf(judge, "Finished judging project %s%s", projId, starred)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
@@ -705,50 +739,49 @@ func JudgeRank(ctx *gin.Context) {
 		return
 	}
 
-	// Get the options and return error if deliberations
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-	if options.Deliberation {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
-		return
-	}
-
-	// Old ranks
-	oldRanks := util.RankingToString(judge.Rankings)
-
-	// Calculate diff of scores
-	diff := ranking.CalculateScoreDiff(rankReq.Ranking, judge.Rankings)
-
-	if len(*diff) == 0 {
-		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-		return
-	}
-
 	// Wrap in transaction
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Update the judge's ranking
-		err = database.UpdateJudgeRanking(state.Db, judge, rankReq.Ranking)
+		// Get the options and return error if deliberations
+		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
-			return errors.New("error updating judge ranking in database: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+			return err
+		}
+		if options.Deliberation {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+			return err
+		}
+
+		// Calculate diff of scores
+		diff := ranking.CalculateScoreDiff(rankReq.Ranking, judge.Rankings)
+
+		if len(*diff) == 0 {
+			ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+			return errors.New("no changes to rankings")
+		}
+
+		// Update the judge's ranking
+		err = database.UpdateJudgeRanking(state.Db, sc, judge, rankReq.Ranking)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge ranking in database: " + err.Error()})
+			return err
 		}
 
 		// Update projects based on diff
 		err = database.UpdateProjectScores(state.Db, sc, diff)
 		if err != nil {
-			return errors.New("error updating project scores in database: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project scores in database: " + err.Error()})
+			return err
 		}
 
 		return nil
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Send OK
+	oldRanks := util.RankingToString(judge.Rankings)
 	state.Logger.JudgeLogf(judge, "Updated rankings from %s to %s", oldRanks, util.RankingToString(rankReq.Ranking))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
@@ -781,53 +814,49 @@ func JudgeStar(ctx *gin.Context) {
 		return
 	}
 
-	// Get the options and return error if deliberations
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-	if options.Deliberation {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
-		return
-	}
-
-	// If the project isn't in the judge's seen projects, return an error
-	index := util.FindSeenProjectIndex(judge, projectId)
-	if index == -1 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
-		return
-	}
-
 	// Wrap in transaction
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get the options
+		// Get the options and return error if deliberations
 		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
-			return errors.New("error getting options: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+			return err
+		}
+		if options.Deliberation {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+			return err
+		}
+
+		// If the project isn't in the judge's seen projects, return an error
+		index := util.FindSeenProjectIndex(judge, projectId)
+		if index == -1 {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
+			return err
 		}
 
 		// Update the judge's object for the project
 		err = database.UpdateJudgeStars(state.Db, sc, judge.Id, index, starReq.Starred)
 		if err != nil {
-			return errors.New("error updating judge starred in database: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge starred in database: " + err.Error()})
+			return err
 		}
 
 		// If the judge is in a track, update that track's comparisons
 		// Otherwise, update the project's starred status
+		// TODO: REPLACE THIS WITH CALC ON EDIT
 		if options.JudgeTracks && judge.Track != "" {
 			err = database.UpdateProjectTrackStars(state.Db, sc, projectId, judge.Track, starReq.Starred)
 		} else {
 			err = database.UpdateProjectStars(state.Db, sc, projectId, starReq.Starred)
 		}
 		if err != nil {
-			return errors.New("error updating project starred status in database: " + err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project stars in database: " + err.Error()})
+			return err
 		}
 
 		return nil
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -855,7 +884,7 @@ func JudgeBreak(ctx *gin.Context) {
 	}
 
 	// Basically skip the project for the judge
-	err := judging.SkipCurrentProject(state.Db, judge, state.Comps, "break", false)
+	err := judging.SkipCurrentProjectWithTx(state.Db, judge, state.Comps, "break", false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error skipping project: " + err.Error()})
 		return
@@ -920,23 +949,30 @@ func ReassignJudgeGroups(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
-	// Get options from database
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
+	// Run the remaining actions in a transaction
+	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Get options from database
+		options, err := database.GetOptions(state.Db, ctx)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+			return err
+		}
 
-	// Don't do if not enabled
-	if !options.MultiGroup {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "multi-group not enabled"})
-		return
-	}
+		// Don't do if not enabled
+		if !options.MultiGroup {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "multi-group not enabled"})
+			return errors.New("multi-group not enabled")
+		}
 
-	// Reassign judge groups
-	err = database.PutJudgesInGroups(state.Db)
+		// Reassign judge groups
+		err = database.PutJudgesInGroups(state.Db)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning judge groups: " + err.Error()})
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning judge groups: " + err.Error()})
 		return
 	}
 
@@ -1005,142 +1041,6 @@ func MoveSelectedJudges(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// PUT /project/move/:id - Move a project to a different group
-func MoveProject(ctx *gin.Context) {
-	// Get the state from the context
-	state := GetState(ctx)
-
-	// Get the ID from the URL
-	rawId := ctx.Param("id")
-	id, err := primitive.ObjectIDFromHex(rawId)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
-		return
-	}
-
-	// Get the request object
-	var moveReq util.MoveRequest
-	err = ctx.BindJSON(&moveReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
-		return
-	}
-
-	// Get options from database
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Make sure valid group
-	if moveReq.Group < 0 || moveReq.Group >= options.NumGroups {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group number"})
-		return
-	}
-
-	// Get max number in group
-	currMaxNum, err := database.GetGroupMaxNum(state.Db, ctx, moveReq.Group)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
-		return
-	}
-	if currMaxNum == -1 {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number"})
-		return
-	}
-
-	// Get maximum number for the given group
-	maxGroupNum := int64(0)
-	for i, size := range options.GroupSizes {
-		maxGroupNum += size
-		if int64(i) == moveReq.Group {
-			break
-		}
-	}
-
-	// Make sure the group has space (check for max group number and make sure it doesn't exceed)
-	if moveReq.Group < options.NumGroups-1 && currMaxNum >= maxGroupNum {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "group is full, cannot move project to provided group"})
-		return
-	}
-
-	// Move the project to the new group
-	err = database.SetProjectNum(state.Db, ctx, id, currMaxNum+1, moveReq.Group)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving project group: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	state.Logger.AdminLogf("Moved project %s to group %d", id.Hex(), moveReq.Group)
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
-// POST /project/move - Move selected projects to a different group
-func MoveSelectedProjects(ctx *gin.Context) {
-	// Get the state from the context
-	state := GetState(ctx)
-
-	// Get the request object
-	var moveReq util.MoveSelectedRequest
-	err := ctx.BindJSON(&moveReq)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
-		return
-	}
-
-	// Get options from database
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Make sure valid group
-	if moveReq.Group < 0 || moveReq.Group >= options.NumGroups {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid group number"})
-		return
-	}
-
-	// Get max number in group
-	currMaxNum, err := database.GetGroupMaxNum(state.Db, ctx, moveReq.Group)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number: " + err.Error()})
-		return
-	}
-	if currMaxNum == -1 {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting group max number"})
-		return
-	}
-
-	// Get maximum number for the given group
-	maxGroupNum := int64(0)
-	for i, size := range options.GroupSizes {
-		maxGroupNum += size
-		if int64(i) == moveReq.Group {
-			break
-		}
-	}
-
-	// Check if the group has space (check for max group number and make sure it doesn't exceed)
-	if moveReq.Group < options.NumGroups-1 && currMaxNum+int64(len(moveReq.Items)) > maxGroupNum {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "group is full, cannot move projects to provided group"})
-		return
-	}
-
-	// Move the projects to the new group
-	err = database.SetProjectsNum(state.Db, ctx, moveReq.Items, currMaxNum+1, moveReq.Group)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving projects group: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	state.Logger.AdminLogf("Moved %d projects to group %d", len(moveReq.Items), moveReq.Group)
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
 type AddJudgeFromQRRequest struct {
 	Code  string `json:"code"`
 	Name  string `json:"name"`
@@ -1161,72 +1061,82 @@ func AddJudgeFromQR(ctx *gin.Context) {
 		return
 	}
 
-	// Get the options from the database
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Make sure the code is correct
-	if qrReq.Track == "" {
-		if qrReq.Code != options.QRCode {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
-			return
-		}
-	} else {
-		if qrReq.Code != options.TrackQRCodes[qrReq.Track] {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
-			return
-		}
-	}
-
-	// Check if the judge already exists
-	judge, err := database.FindJudgeByCode(state.Db, qrReq.Code)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judge in database: " + err.Error()})
-		return
-	}
-	if judge != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge already exists"})
-		return
-	}
-
-	// Determine group judge should go in
-	group := int64(0)
-	if qrReq.Track == "" {
-		group, err = database.GetMinJudgeGroup(state.Db)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
-			return
-		}
-	}
-
-	// Create the judge
-	judge = models.NewJudge(qrReq.Name, qrReq.Email, qrReq.Track, "", group)
-
-	// SEND EMAILS =============================
-
-	// Get hostname from request
+	// Get hostname from request for sending emails
 	hostname := util.GetFullHostname(ctx)
 
-	// Make sure email is right
-	if !funcs.CheckEmail(judge.Email) {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
-		return
-	}
+	var judge *models.Judge
 
-	// Send email to judge
-	err = funcs.SendJudgeEmail(judge, hostname)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
-		return
-	}
+	// Run the remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Get the options from the database
+		options, err := database.GetOptions(state.Db, sc)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+			return err
+		}
 
-	// Insert the judge into the database
-	err = database.InsertJudge(state.Db, judge)
+		// Make sure the code is correct
+		if qrReq.Track == "" {
+			if qrReq.Code != options.QRCode {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
+				return err
+			}
+		} else {
+			if qrReq.Code != options.TrackQRCodes[qrReq.Track] {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
+				return err
+			}
+		}
+
+		// Check if the judge already exists
+		judge, err = database.FindJudgeByCode(state.Db, sc, qrReq.Code)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding judge in database: " + err.Error()})
+			return err
+		}
+		if judge != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge already exists"})
+			return err
+		}
+
+		// Determine group judge should go in
+		group := int64(0)
+		if qrReq.Track == "" {
+			group, err = database.GetMinJudgeGroup(state.Db, sc)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judge group: " + err.Error()})
+				return err
+			}
+		}
+
+		// Create the judge
+		judge = models.NewJudge(qrReq.Name, qrReq.Email, qrReq.Track, "", group)
+
+		// SEND EMAILS =============================
+
+		// Make sure email is right
+		if !funcs.CheckEmail(judge.Email) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid email"})
+			return err
+		}
+
+		// Send email to judge
+		err = funcs.SendJudgeEmail(judge, hostname)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
+			return err
+		}
+
+		// Insert the judge into the database
+		err = database.InsertJudge(state.Db, sc, judge)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judge into database: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judge into database: " + err.Error()})
 		return
 	}
 

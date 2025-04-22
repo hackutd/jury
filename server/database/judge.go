@@ -22,18 +22,18 @@ func UpdateJudgeLastActivity(db *mongo.Database, ctx context.Context, id *primit
 }
 
 // InsertJudge inserts a judge into the database
-func InsertJudge(db *mongo.Database, judge *models.Judge) error {
-	_, err := db.Collection("judges").InsertOne(context.Background(), judge)
+func InsertJudge(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
+	_, err := db.Collection("judges").InsertOne(ctx, judge)
 	return err
 }
 
 // InsertJudges inserts multiple judges into the database
-func InsertJudges(db *mongo.Database, judges []*models.Judge) error {
-	var docs []interface{}
+func InsertJudges(db *mongo.Database, ctx context.Context, judges []*models.Judge) error {
+	var docs []any
 	for _, judge := range judges {
 		docs = append(docs, judge)
 	}
-	_, err := db.Collection("judges").InsertMany(context.Background(), docs)
+	_, err := db.Collection("judges").InsertMany(ctx, docs)
 	return err
 }
 
@@ -50,9 +50,9 @@ func FindJudgeByToken(db *mongo.Database, token string) (*models.Judge, error) {
 
 // FindJudgeByCode finds a judge by their code.
 // Returns judge as nil if no judge was found.
-func FindJudgeByCode(db *mongo.Database, code string) (*models.Judge, error) {
+func FindJudgeByCode(db *mongo.Database, ctx context.Context, code string) (*models.Judge, error) {
 	var judge models.Judge
-	err := db.Collection("judges").FindOne(context.Background(), gin.H{"code": code}).Decode(&judge)
+	err := db.Collection("judges").FindOne(ctx, gin.H{"code": code}).Decode(&judge)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	}
@@ -73,7 +73,7 @@ func FindJudgesByTrack(db *mongo.Database, ctx context.Context, track string) ([
 }
 
 // UpdateJudge updates a judge in the database
-func UpdateJudge(db *mongo.Database, judge *models.Judge, ctx context.Context) error {
+func UpdateJudge(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
 	judge.LastActivity = util.Now()
 	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": judge})
 	return err
@@ -164,7 +164,8 @@ func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
 	return err
 }
 
-// UpdateAfterSeen updates the judge's seen projects and increments the seen count
+// UpdateAfterSeen updates the judge's seen projects and increments the seen count.
+// This should be run in a transaction.
 func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judge, seenProject *models.JudgedProject) error {
 	// Update the judge's seen projects
 	_, err := db.Collection("judges").UpdateOne(
@@ -238,9 +239,9 @@ func UpdateJudgeBasicInfo(db *mongo.Database, judgeId *primitive.ObjectID, addRe
 }
 
 // UpdateJudgeRanking updates the judge's ranking array
-func UpdateJudgeRanking(db *mongo.Database, judge *models.Judge, rankings []primitive.ObjectID) error {
+func UpdateJudgeRanking(db *mongo.Database, ctx context.Context, judge *models.Judge, rankings []primitive.ObjectID) error {
 	_, err := db.Collection("judges").UpdateOne(
-		context.Background(),
+		ctx,
 		gin.H{"_id": judge.Id},
 		gin.H{"$set": gin.H{"rankings": rankings, "last_activity": util.Now()}},
 	)
@@ -281,7 +282,7 @@ func ResetBusyProjectListForJudge(db *mongo.Database, ctx context.Context, judge
 }
 
 // GetMinJudgeGroup returns the group with the fewest judges
-func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
+func GetMinJudgeGroup(db *mongo.Database, ctx context.Context) (int64, error) {
 	pipe := []gin.H{{"$match": gin.H{
 		"active": true,
 		"track":  "",
@@ -290,14 +291,14 @@ func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
 		"count": gin.H{"$sum": 1},
 	}}}
 
-	cursor, err := db.Collection("judges").Aggregate(context.Background(), pipe)
+	cursor, err := db.Collection("judges").Aggregate(ctx, pipe)
 	if err != nil {
 		return -1, err
 	}
 
 	groupCounts := make(map[int64]int64)
-	for cursor.Next(context.Background()) {
-		var result map[string]interface{}
+	for cursor.Next(ctx) {
+		var result map[string]any
 		err := cursor.Decode(&result)
 		if err != nil {
 			return -1, err
@@ -309,7 +310,7 @@ func GetMinJudgeGroup(db *mongo.Database) (int64, error) {
 	minGroups := util.SortMapByValue(groupCounts, false)
 
 	// Get options
-	options, err := GetOptions(db, context.Background())
+	options, err := GetOptions(db, ctx)
 	if err != nil {
 		return -1, err
 	}
@@ -363,7 +364,7 @@ func GetNextNJudgeGroups(db *mongo.Database, ctx context.Context, n int, reset b
 		}
 
 		for cursor.Next(ctx) {
-			var result map[string]interface{}
+			var result map[string]any
 			err := cursor.Decode(&result)
 			if err != nil {
 				return nil, err
