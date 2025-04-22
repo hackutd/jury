@@ -14,7 +14,7 @@ ARG NODE_ENV=production
 RUN yarn build
 
 # STEP 1: Compile backend
-FROM golang:1.22 AS builder
+FROM golang:1.23 AS builder
 WORKDIR /usr/src/jury
 
 # Copy over the app
@@ -23,6 +23,8 @@ RUN rm -rf public
 COPY --from=client-builder /client/build public
 
 # Install dependencies
+ENV GO111MODULE=on
+ENV GOPROXY=https://proxy.golang.org,direct
 RUN go mod download
 
 ARG MONGODB_URI=$MONGODB_URI
