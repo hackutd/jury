@@ -1,12 +1,10 @@
 FROM golang:1.23
 WORKDIR /jury
 
-RUN curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+RUN curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b /usr/local/bin
 
 COPY server/go.mod server/go.sum ./
 
-ENV GO111MODULE=on
-ENV GOPROXY=https://proxy.golang.org,direct
 RUN go mod download
 
 ENV MONGODB_URI=$MONGODB_URI
