@@ -55,7 +55,7 @@ func AddDevpostCsv(ctx *gin.Context) {
 		// Insert projects into the database
 		err = database.InsertProjects(state.Db, sc, projects)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting judges into database: " + err.Error()})
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error inserting projects into database: " + err.Error()})
 			return err
 		}
 

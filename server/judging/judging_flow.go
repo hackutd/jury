@@ -140,7 +140,7 @@ func MoveJudgeGroup(db *mongo.Database, ctx context.Context, judge *models.Judge
 //  6. Otherwise, pick the project with the minimum number of comparisons with every other project
 func PickNextProject(db *mongo.Database, ctx context.Context, judge *models.Judge, comps *Comparisons) (*models.Project, error) {
 	// Get items
-	items, err := FindAvaliableItems(db, ctx, judge)
+	items, err := FindAvailableItems(db, ctx, judge)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func PickNextProject(db *mongo.Database, ctx context.Context, judge *models.Judg
 	return comps.FindLeastCompared(items, judge.SeenProjects), nil
 }
 
-// FindAvaliableItems - List of projects to pick from for the judge.
+// FindAvailableItems - List of projects to pick from for the judge.
 // Find all projects that are higher priority with the following heuristic:
 //  1. Ignore all projects that are inactive
 //  2. Filter out all projects that the judge has already seen
@@ -213,7 +213,7 @@ func PickNextProject(db *mongo.Database, ctx context.Context, judge *models.Judg
 //  7. If judging a track, return at this point (ignore last 2 conditions)
 //  8. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
 //  9. Filter out all projects that have less than the minimum number of views (if no projects remain after filter, ignore step)
-func FindAvaliableItems(db *mongo.Database, ctx context.Context, judge *models.Judge) ([]*models.Project, error) {
+func FindAvailableItems(db *mongo.Database, ctx context.Context, judge *models.Judge) ([]*models.Project, error) {
 	// Get the list of all active projects
 	projects, err := database.FindActiveProjects(db, ctx)
 	if err != nil {
