@@ -30,7 +30,7 @@ func FindAllFlags(db *mongo.Database) ([]*models.Flag, error) {
 }
 
 // FindFlagsByJudge will find the flags that a judge has flagged
-func FindFlagsByJudge(db *mongo.Database, judge *models.Judge, ctx mongo.SessionContext) ([]*models.Flag, error) {
+func FindFlagsByJudge(db *mongo.Database, ctx context.Context, judge *models.Judge) ([]*models.Flag, error) {
 	flags := make([]*models.Flag, 0)
 	cursor, err := db.Collection("flags").Find(ctx, gin.H{"judge_id": judge.Id})
 	if err != nil {
@@ -69,7 +69,7 @@ func GetProjectAbsentCount(db *mongo.Database, ctx context.Context, projectId *p
 }
 
 // DeleteAbsentFlags deletes all flags with the reason "absent" for a given project ID
-func DeleteAbsentFlags(db *mongo.Database, projectId *primitive.ObjectID, ctx mongo.SessionContext) error {
+func DeleteAbsentFlags(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID) error {
 	_, err := db.Collection("flags").DeleteMany(ctx, gin.H{"project_id": projectId, "reason": "absent"})
 	return err
 }

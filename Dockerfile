@@ -14,7 +14,7 @@ ARG NODE_ENV=production
 RUN yarn build
 
 # STEP 1: Compile backend
-FROM golang:1.22 AS builder
+FROM golang:1.23 AS builder
 WORKDIR /usr/src/jury
 
 # Copy over the app

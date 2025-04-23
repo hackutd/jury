@@ -36,7 +36,7 @@ func ReassignNums(db *mongo.Database) error {
 		}
 
 		// Update all projects in the database
-		err = database.UpdateProjects(db, projects)
+		err = database.UpdateProjects(db, sc, projects)
 		if err != nil {
 			return errors.New("error updating projects in database: " + err.Error())
 		}
@@ -48,7 +48,7 @@ func ReassignNums(db *mongo.Database) error {
 
 // IncrementJudgeGroupNum increments every single judges' group number.
 func IncrementJudgeGroupNum(db *mongo.Database) error {
-	err := database.WithTransaction(db, func(sc mongo.SessionContext) error {
+	return database.WithTransaction(db, func(sc mongo.SessionContext) error {
 		// Get the options from the database
 		options, err := database.GetOptions(db, sc)
 		if err != nil {
@@ -81,6 +81,4 @@ func IncrementJudgeGroupNum(db *mongo.Database) error {
 
 		return nil
 	})
-
-	return err
 }

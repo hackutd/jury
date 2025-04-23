@@ -98,56 +98,60 @@ func UpdateClock(db *mongo.Database, clock *models.ClockState) error {
 }
 
 // UpdateNumGroups will update the number of groups and resize the group sizes if necessary
-func UpdateNumGroups(db *mongo.Database, ctx context.Context, numGroups int64) error {
-	// Get options
-	options, err := GetOptions(db, ctx)
-	if err != nil {
-		return err
-	}
-
-	// Resize group sizes if necessary
-	if numGroups < options.NumGroups {
-		options.GroupSizes = options.GroupSizes[:numGroups]
-	} else if numGroups > options.NumGroups {
-		for i := options.NumGroups; i < numGroups; i++ {
-			options.GroupSizes = append(options.GroupSizes, 30)
+func UpdateNumGroups(db *mongo.Database, numGroups int64) error {
+	return WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get options
+		options, err := GetOptions(db, sc)
+		if err != nil {
+			return err
 		}
-	}
 
-	// Reassign group numbers to all projects
-	ReassignAllGroupNums(db, ctx, options)
-
-	// Update options
-	return UpdateOptions(db, ctx, &models.OptionalOptions{NumGroups: &numGroups, GroupSizes: &options.GroupSizes})
-}
-
-func UpdateGroupSizes(db *mongo.Database, ctx context.Context, groupSizes []int64) error {
-	// Get options
-	options, err := GetOptions(db, ctx)
-	if err != nil {
-		return err
-	}
-
-	// If group sizes did not change, do nothing
-	if len(groupSizes) == len(options.GroupSizes) {
-		same := true
-		for i := range groupSizes {
-			if groupSizes[i] != options.GroupSizes[i] {
-				same = false
-				break
+		// Resize group sizes if necessary
+		if numGroups < options.NumGroups {
+			options.GroupSizes = options.GroupSizes[:numGroups]
+		} else if numGroups > options.NumGroups {
+			for i := options.NumGroups; i < numGroups; i++ {
+				options.GroupSizes = append(options.GroupSizes, 30)
 			}
 		}
-		if same {
-			return nil
+
+		// Reassign group numbers to all projects
+		ReassignAllGroupNums(db, sc, options)
+
+		// Update options
+		return UpdateOptions(db, sc, &models.OptionalOptions{NumGroups: &numGroups, GroupSizes: &options.GroupSizes})
+	})
+}
+
+func UpdateGroupSizes(db *mongo.Database, groupSizes []int64) error {
+	return WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get options
+		options, err := GetOptions(db, sc)
+		if err != nil {
+			return err
 		}
-	}
 
-	// Reassign group numbers to all projects
-	options.GroupSizes = groupSizes
-	ReassignAllGroupNums(db, ctx, options)
+		// If group sizes did not change, do nothing
+		if len(groupSizes) == len(options.GroupSizes) {
+			same := true
+			for i := range groupSizes {
+				if groupSizes[i] != options.GroupSizes[i] {
+					same = false
+					break
+				}
+			}
+			if same {
+				return nil
+			}
+		}
 
-	// Update options
-	return UpdateOptions(db, ctx, &models.OptionalOptions{GroupSizes: &groupSizes})
+		// Reassign group numbers to all projects
+		options.GroupSizes = groupSizes
+		ReassignAllGroupNums(db, sc, options)
+
+		// Update options
+		return UpdateOptions(db, sc, &models.OptionalOptions{GroupSizes: &groupSizes})
+	})
 }
 
 // IncrementManualSwitches increments the manual switches in the database

@@ -23,7 +23,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	clock := getClockFromDb(db)
 
 	// Create the comparisons object
-	comps, err := judging.LoadComparisons(db)
+	comps, err := judging.LoadComparisonsWithTx(db)
 	if err != nil {
 		log.Fatalf("error loading projects from the database: %s\n", err.Error())
 	}
@@ -32,11 +32,8 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	limiter := getLimiterFromDb(db)
 
 	// Add shared variables to router
-	router.Use(useVar("db", db))
-	router.Use(useVar("clock", clock))
-	router.Use(useVar("comps", comps))
-	router.Use(useVar("logger", logger))
-	router.Use(useVar("limiter", limiter))
+	state := NewState(db, clock, comps, logger, limiter)
+	router.Use(useVar("state", state))
 
 	// Rate limit login requests
 	router.Use(rateLimit(limiter))

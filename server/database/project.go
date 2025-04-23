@@ -21,12 +21,12 @@ func UpdateProjectLastActivity(db *mongo.Database, ctx context.Context, id *prim
 }
 
 // InsertProjects inserts a list of projects into the database
-func InsertProjects(db *mongo.Database, projects []*models.Project) error {
-	var docs []interface{}
+func InsertProjects(db *mongo.Database, ctx context.Context, projects []*models.Project) error {
+	var docs []any
 	for _, project := range projects {
 		docs = append(docs, project)
 	}
-	_, err := db.Collection("projects").InsertMany(context.Background(), docs)
+	_, err := db.Collection("projects").InsertMany(ctx, docs)
 	return err
 }
 
@@ -144,7 +144,7 @@ func AggregateProjectStats(db *mongo.Database) (*models.ProjectStats, error) {
 }
 
 // FindActiveProjects returns a list of all active projects in the database
-func FindActiveProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*models.Project, error) {
+func FindActiveProjects(db *mongo.Database, ctx context.Context) ([]*models.Project, error) {
 	var projects []*models.Project
 	cursor, err := db.Collection("projects").Find(ctx, gin.H{"active": true})
 	if err != nil {
@@ -160,7 +160,7 @@ func FindActiveProjects(db *mongo.Database, ctx mongo.SessionContext) ([]*models
 // FindBusyProjects returns a list of all projects that are currently being judged.
 // To do this, we collect all projects in the judge's "current" field.
 // We will return a map of project IDs to track names.
-func FindBusyProjects(db *mongo.Database, ctx mongo.SessionContext) (map[primitive.ObjectID]string, error) {
+func FindBusyProjects(db *mongo.Database, ctx context.Context) (map[primitive.ObjectID]string, error) {
 	// Get all judges that are currently judging a project
 	var judges []*models.Judge
 	cursor, err := db.Collection("judges").Find(ctx, gin.H{
@@ -200,16 +200,9 @@ func FindProjectById(db *mongo.Database, ctx context.Context, id *primitive.Obje
 	return &project, nil
 }
 
-// UpdateAfterPicked updates the seen value of the new project picked and the judge's current project
-func UpdateAfterPicked(db *mongo.Database, project *models.Project, judge *models.Judge) error {
-	err := WithTransaction(db, func(ctx mongo.SessionContext) error {
-		return UpdateAfterPickedWithTx(db, ctx, project, judge)
-	})
-	return err
-}
-
-// UpdateAfterPickedWithTx updates the seen value of the new project picked and the judge's current project
-func UpdateAfterPickedWithTx(db *mongo.Database, ctx context.Context, project *models.Project, judge *models.Judge) error {
+// UpdateAfterPicked updates the seen value of the new project picked and the judge's current project.
+// This should be called within a transaction.
+func UpdateAfterPicked(db *mongo.Database, ctx context.Context, project *models.Project, judge *models.Judge) error {
 	// De-prioritize project
 	_, err := db.Collection("projects").UpdateOne(
 		ctx,
@@ -230,13 +223,13 @@ func UpdateAfterPickedWithTx(db *mongo.Database, ctx context.Context, project *m
 }
 
 // CountProjectDocuments returns the number of documents in the projects collection
-func CountProjectDocuments(db *mongo.Database) (int64, error) {
-	return db.Collection("projects").EstimatedDocumentCount(context.Background())
+func CountProjectDocuments(db *mongo.Database, ctx context.Context) (int64, error) {
+	return db.Collection("projects").EstimatedDocumentCount(ctx)
 }
 
 // CountTrackProjects returns the number of projects in a specific track
-func CountTrackProjects(db *mongo.Database, track string) (int64, error) {
-	return db.Collection("projects").CountDocuments(context.Background(), gin.H{"challenge_list": track})
+func CountTrackProjects(db *mongo.Database, ctx context.Context, track string) (int64, error) {
+	return db.Collection("projects").CountDocuments(ctx, gin.H{"challenge_list": track})
 }
 
 // SetProjectActive sets the active field of a project (hide or unhide project)
@@ -264,14 +257,14 @@ func SetProjectsPrioritized(db *mongo.Database, ctx context.Context, ids []primi
 }
 
 // UpdateProjects will update ALL projects in the database
-func UpdateProjects(db *mongo.Database, projects []*models.Project) error {
+func UpdateProjects(db *mongo.Database, ctx context.Context, projects []*models.Project) error {
 	models := make([]mongo.WriteModel, 0, len(projects))
 	for _, project := range projects {
 		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": project.Id}).SetUpdate(gin.H{"$set": project}))
 	}
 
 	opts := options.BulkWrite().SetOrdered(false)
-	_, err := db.Collection("projects").BulkWrite(context.Background(), models, opts)
+	_, err := db.Collection("projects").BulkWrite(ctx, models, opts)
 	return err
 }
 

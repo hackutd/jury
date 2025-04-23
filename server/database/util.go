@@ -30,7 +30,7 @@ func WithTransaction(db *mongo.Database, fn func(mongo.SessionContext) error) er
 
 // WithTransactionItem runs a function with a transaction, returning the result of the function
 // and an error if the transaction fails.
-func WithTransactionItem(db *mongo.Database, fn func(mongo.SessionContext) (interface{}, error)) (interface{}, error) {
+func WithTransactionItem(db *mongo.Database, fn func(mongo.SessionContext) (any, error)) (any, error) {
 	wc := writeconcern.Majority()
 	txnOptions := options.Transaction().SetWriteConcern(wc)
 

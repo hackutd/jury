@@ -5,13 +5,11 @@ import (
 	"server/config"
 	"server/database"
 	"server/funcs"
-	"server/logging"
 	"server/models"
 	"server/util"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type LoginAdminRequest struct {
@@ -20,11 +18,11 @@ type LoginAdminRequest struct {
 
 // POST /admin/login - LoginAdmin authenticates an admin
 func LoginAdmin(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
 	// Get the password from the environmental variable
 	password := config.GetEnv("JURY_ADMIN_PASSWORD")
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
 
 	// Get password guess from request
 	var req LoginAdminRequest
@@ -36,13 +34,13 @@ func LoginAdmin(ctx *gin.Context) {
 
 	// Return status OK if the password matches
 	if req.Password == password {
-		logger.AdminLogf("Log in")
+		state.Logger.AdminLogf("Log in")
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 		return
 	}
 
 	// Return status Unauthorized if the password does not match
-	logger.AdminLogf("Invalid log in attempt with pass %s", req.Password)
+	state.Logger.AdminLogf("Invalid log in attempt with pass %s", req.Password)
 	ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid or missing password field"})
 }
 
@@ -56,11 +54,11 @@ func AdminAuthenticated(ctx *gin.Context) {
 
 // GET /admin/stats - GetAdminStats returns stats about the system
 func GetAdminStats(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Aggregate the stats
-	stats, err := database.AggregateStats(db, "")
+	stats, err := database.AggregateStats(state.Db, "")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating stats: " + err.Error()})
 		return
@@ -72,14 +70,14 @@ func GetAdminStats(ctx *gin.Context) {
 
 // GET /admin/stats/:track - GetAdminStats returns stats about the system
 func GetAdminTrackStats(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the track from the URL
 	track := ctx.Param("track")
 
 	// Aggregate the stats
-	stats, err := database.AggregateStats(db, track)
+	stats, err := database.AggregateStats(state.Db, track)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating stats: " + err.Error()})
 		return
@@ -91,25 +89,28 @@ func GetAdminTrackStats(ctx *gin.Context) {
 
 // GET /admin/clock - GetClock returns the current clock state
 func GetClock(ctx *gin.Context) {
-	// Get the clock from the context
-	sc := ctx.MustGet("clock").(*models.SafeClock)
+	// Get the state from the context
+	state := GetState(ctx)
 
-	// Send OK
-	sc.Mutex.Lock()
+	// Unlock the clock
+	state.Clock.Mutex.Lock()
+	defer state.Clock.Mutex.Unlock()
 
-	ctx.JSON(http.StatusOK, gin.H{"running": sc.Clock.Running, "time": sc.Clock.GetDuration()})
-	sc.Mutex.Unlock()
+	// Send clock state
+	ctx.JSON(http.StatusOK, gin.H{"running": state.Clock.State.Running, "time": state.Clock.State.GetDuration()})
 }
 
 // GET /admin/started - Returns true if the clock is running (NOT paused)
 func IsClockRunning(ctx *gin.Context) {
-	// Get the clock from the context
-	sc := ctx.MustGet("clock").(*models.SafeClock)
-	sc.Mutex.Lock()
-	defer sc.Mutex.Unlock()
+	// Get the state from the context
+	state := GetState(ctx)
+
+	// Unlock the clock
+	state.Clock.Mutex.Lock()
+	defer state.Clock.Mutex.Unlock()
 
 	// Send OK
-	if sc.Clock.Running {
+	if state.Clock.State.Running {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
@@ -118,108 +119,99 @@ func IsClockRunning(ctx *gin.Context) {
 
 // POST /admin/clock/pause - PauseClock pauses the clock
 func PauseClock(ctx *gin.Context) {
-	// Get the clock from the context
-	sc := ctx.MustGet("clock").(*models.SafeClock)
-	sc.Mutex.Lock()
-	defer sc.Mutex.Unlock()
+	// Get the state from the context
+	state := GetState(ctx)
 
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Unlock the clock
+	state.Clock.Mutex.Lock()
+	defer state.Clock.Mutex.Unlock()
 
 	// Pause the clock
-	sc.Clock.Pause()
+	state.Clock.State.Pause()
+
+	// Backup
+	err := database.UpdateClockConditional(state.Db, ctx, &state.Clock.State)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating clock: " + err.Error()})
+		return
+	}
 
 	// Send OK
-	logger.AdminLogf("Paused clock")
-	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock})
+	state.Logger.AdminLogf("Paused clock")
+	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State})
 }
 
 // POST /admin/clock/unpause - UnpauseClock unpauses the clock
 func UnpauseClock(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
-	// Get the clock from the context
-	sc := ctx.MustGet("clock").(*models.SafeClock)
-	sc.Mutex.Lock()
-	defer sc.Mutex.Unlock()
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Unlock the clock
+	state.Clock.Mutex.Lock()
+	defer state.Clock.Mutex.Unlock()
 
 	// Unpause the clock
-	sc.Clock.Resume()
+	state.Clock.State.Resume()
 
 	// Backup
-	err := database.UpdateClockConditional(db, ctx, &sc.Clock)
+	err := database.UpdateClockConditional(state.Db, ctx, &state.Clock.State)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating clock: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Unpaused clock")
-	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock})
+	state.Logger.AdminLogf("Unpaused clock")
+	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State})
 }
 
 // POST /admin/clock/reset - ResetClock resets the clock
 func ResetClock(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
-	// Get the clock from the context
-	sc := ctx.MustGet("clock").(*models.SafeClock)
-	sc.Mutex.Lock()
-	defer sc.Mutex.Unlock()
+	// Unlock the clock
+	state.Clock.Mutex.Lock()
+	defer state.Clock.Mutex.Unlock()
 
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
-
-	// Reset the clock
-	sc.Clock.Reset()
+	// Unpause the clock
+	state.Clock.State.Resume()
 
 	// Backup
-	err := database.UpdateClockConditional(db, ctx, &sc.Clock)
+	err := database.UpdateClockConditional(state.Db, ctx, &state.Clock.State)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating clock: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Reset clock")
-	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock, "ok": 1})
+	state.Logger.AdminLogf("Reset clock")
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /admin/clock/backup - BackupClock backups the clock
 func BackupClock(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
-	// Get the clock from the context
-	sc := ctx.MustGet("clock").(*models.SafeClock)
-	sc.Mutex.Lock()
-	defer sc.Mutex.Unlock()
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Unlock the clock
+	state.Clock.Mutex.Lock()
+	defer state.Clock.Mutex.Unlock()
 
 	// Backup the clock
-	database.UpdateClock(db, &sc.Clock)
+	database.UpdateClock(state.Db, &state.Clock.State)
 
 	// Send OK
-	logger.AdminLogf("Backed up clock")
-	ctx.JSON(http.StatusOK, gin.H{"clock": sc.Clock, "ok": 1})
+	state.Logger.AdminLogf("Backed up clock manually")
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /admin/options - sets the options (except for clock and num groups)
 func SetOptions(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
-
-	// Get the options
+	// Get the options from the request
 	var options models.OptionalOptions
 	err := ctx.BindJSON(&options)
 	if err != nil {
@@ -228,44 +220,41 @@ func SetOptions(ctx *gin.Context) {
 	}
 
 	// Save the options in the database
-	err = database.UpdateOptions(db, ctx, &options)
+	err = database.UpdateOptions(state.Db, ctx, &options)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving options: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Updated options: %s", util.StructToStringWithoutNils(options))
+	state.Logger.AdminLogf("Updated options: %s", util.StructToStringWithoutNils(options))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /admin/reset - ResetDatabase resets the database
 func ResetDatabase(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Reset the database
-	err := database.DropAll(db)
+	err := database.DropAll(state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error resetting database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("RESET ENTIRE DATABASE")
+	state.Logger.AdminLogf("RESET ENTIRE DATABASE")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // GET /admin/flags - returns all flags
 func GetFlags(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get all the flags
-	flags, err := database.FindAllFlags(db)
+	flags, err := database.FindAllFlags(state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting flags: " + err.Error()})
 		return
@@ -277,11 +266,11 @@ func GetFlags(ctx *gin.Context) {
 
 // GET /admin/options - returns all options
 func GetOptions(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the options
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -293,11 +282,11 @@ func GetOptions(ctx *gin.Context) {
 
 // POST /admin/export/judges - ExportJudges exports all judges to a CSV
 func ExportJudges(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get all the judges
-	judges, err := database.FindAllJudges(db, ctx)
+	judges, err := database.FindAllJudges(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
 		return
@@ -307,16 +296,17 @@ func ExportJudges(ctx *gin.Context) {
 	csvData := funcs.CreateJudgeCSV(judges)
 
 	// Send CSV
+	state.Logger.AdminLogf("Exported judges to CSV")
 	funcs.AddCsvData("judges", csvData, ctx)
 }
 
 // POST /admin/export/projects - ExportProjects exports all projects to a CSV
 func ExportProjects(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get all the projects
-	projects, err := database.FindAllProjects(db, ctx)
+	projects, err := database.FindAllProjects(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
 		return
@@ -326,17 +316,18 @@ func ExportProjects(ctx *gin.Context) {
 	csvData := funcs.CreateProjectCSV(projects)
 
 	// Send CSV
+	state.Logger.AdminLogf("Exported projects to CSV")
 	funcs.AddCsvData("projects", csvData, ctx)
 }
 
 // POST /admin/export/challenges - ExportProjectsByChallenge exports all projects to a zip file, with CSVs each
 // containing projects that only belong to a single challenge
 func ExportProjectsByChallenge(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get all the projects
-	projects, err := database.FindAllProjects(db, ctx)
+	projects, err := database.FindAllProjects(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting projects: " + err.Error()})
 		return
@@ -350,16 +341,17 @@ func ExportProjectsByChallenge(ctx *gin.Context) {
 	}
 
 	// Send zip file
+	state.Logger.AdminLogf("Exported projects by challenge to CSV")
 	funcs.AddZipFile("projects", zipData, ctx)
 }
 
 // POST /admin/export/rankings - ExportRankings exports the rankings of each judge as a CSV
 func ExportRankings(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get all the judges
-	judges, err := database.FindAllJudges(db, ctx)
+	judges, err := database.FindAllJudges(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting judges: " + err.Error()})
 		return
@@ -369,16 +361,17 @@ func ExportRankings(ctx *gin.Context) {
 	csvData := funcs.CreateJudgeRankingCSV(judges)
 
 	// Send CSV
+	state.Logger.AdminLogf("Exported rankings to CSV")
 	funcs.AddCsvData("rankings", csvData, ctx)
 }
 
 // GET /admin/timer - GetJudgingTimer returns the judging timer
 func GetJudgingTimer(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the options
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -390,11 +383,8 @@ func GetJudgingTimer(ctx *gin.Context) {
 
 // POST /admin/groups/num - SetNumGroups sets the number of groups
 func SetNumGroups(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request
 	var req models.OptionalOptions
@@ -411,26 +401,21 @@ func SetNumGroups(ctx *gin.Context) {
 	}
 
 	// Update number of groups in the database
-	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
-		return database.UpdateNumGroups(db, sc, *req.NumGroups)
-	})
+	err = database.UpdateNumGroups(state.Db, *req.NumGroups)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving num groups to options: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Set num groups to %d", req.NumGroups)
+	state.Logger.AdminLogf("Set num groups to %d", req.NumGroups)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /admin/groups/sizes - SetGroupSizes sets the sizes of each group
 func SetGroupSizes(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request
 	var req models.OptionalOptions
@@ -447,46 +432,38 @@ func SetGroupSizes(ctx *gin.Context) {
 	}
 
 	// Update group sizes in the database
-	err = database.WithTransaction(db, func(sc mongo.SessionContext) error {
-		return database.UpdateGroupSizes(db, sc, *req.GroupSizes)
-	})
+	err = database.UpdateGroupSizes(state.Db, *req.GroupSizes)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving group sizes to options: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Set group sizes to %s", util.StructToStringWithoutNils(req))
+	state.Logger.AdminLogf("Set group sizes to %s", util.StructToStringWithoutNils(req))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /admin/groups/swap - SwapJudgeGroups increments the group numbers of all judges
 func SwapJudgeGroups(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Swap the groups (increment the group number of each judge)
-	err := funcs.IncrementJudgeGroupNum(db)
+	err := funcs.IncrementJudgeGroupNum(state.Db)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error swapping groups: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Swapped judge groups")
+	state.Logger.AdminLogf("Swapped judge groups")
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // DELETE /admin/flag/:id - RemoveFlag deletes a flag
 func RemoveFlag(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the flag ID from the URL
 	id := ctx.Param("id")
@@ -497,24 +474,21 @@ func RemoveFlag(ctx *gin.Context) {
 	}
 
 	// Delete the flag
-	err = database.DeleteFlag(db, ctx, &flagId)
+	err = database.DeleteFlag(state.Db, ctx, &flagId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting flag: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Deleted flag %s", id)
+	state.Logger.AdminLogf("Deleted flag %s", id)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /admin/qr - generates a new QR code
 func GenerateQRCode(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Generate QR code
 	token, err := util.GenerateToken()
@@ -524,24 +498,21 @@ func GenerateQRCode(ctx *gin.Context) {
 	}
 
 	// Save the QR code
-	err = database.UpdateQRCode(db, ctx, token)
+	err = database.UpdateQRCode(state.Db, ctx, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving QR code: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Generated QR code")
+	state.Logger.AdminLogf("Generated QR code")
 	ctx.JSON(http.StatusOK, gin.H{"qr_code": token})
 }
 
 // POST /admin/qr/:track - generates a new QR code for a track
 func GenerateTrackQRCode(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the track from the URL
 	track := ctx.Param("track")
@@ -554,24 +525,24 @@ func GenerateTrackQRCode(ctx *gin.Context) {
 	}
 
 	// Save the QR code
-	err = database.UpdateTrackQRCode(db, ctx, track, token)
+	err = database.UpdateTrackQRCode(state.Db, ctx, track, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving QR code: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	logger.AdminLogf("Generated QR code for track %s", track)
+	state.Logger.AdminLogf("Generated QR code for track %s", track)
 	ctx.JSON(http.StatusOK, gin.H{"qr_code": token})
 }
 
 // GET /admin/qr - GetQRCode returns the QR code
 func GetQRCode(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the QR code
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -583,14 +554,14 @@ func GetQRCode(ctx *gin.Context) {
 
 // GET /admin/qr/:track - GetTrackQRCode returns the QR code for a track
 func GetTrackQRCode(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the track from the URL
 	track := ctx.Param("track")
 
 	// Get the QR code
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -606,11 +577,8 @@ type deliberationRequest struct {
 
 // POST /admin/deliberation - SetDeliberation sets the deliberation state
 func SetDeliberation(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request
 	var req deliberationRequest
@@ -621,7 +589,7 @@ func SetDeliberation(ctx *gin.Context) {
 	}
 
 	// Update the deliberation state
-	err = database.UpdateDeliberation(db, ctx, req.Start)
+	err = database.UpdateDeliberation(state.Db, ctx, req.Start)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating deliberation: " + err.Error()})
 		return
@@ -632,16 +600,17 @@ func SetDeliberation(ctx *gin.Context) {
 	if !req.Start {
 		hap = "Stopped"
 	}
-	logger.AdminLogf("%s deliberation", hap)
+	state.Logger.AdminLogf("%s deliberation", hap)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
+// GET /group-names - GetGroupNames returns the names of the groups
 func GetGroupNames(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the options
-	options, err := database.GetOptions(db, ctx)
+	options, err := database.GetOptions(state.Db, ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
@@ -653,14 +622,8 @@ func GetGroupNames(ctx *gin.Context) {
 
 // POST /admin/block-reqs - blocks or unblocks login requests
 func SetBlockReqs(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
-
-	// Get the limiter from the context
-	limiter := ctx.MustGet("limiter").(*Limiter)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request
 	var req models.OptionalOptions
@@ -677,30 +640,24 @@ func SetBlockReqs(ctx *gin.Context) {
 	}
 
 	// Update the block requests state
-	err = database.UpdateOptions(db, ctx, &req)
+	err = database.UpdateOptions(state.Db, ctx, &req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating block requests: " + err.Error()})
 		return
 	}
 
 	// Update the limiter
-	limiter.Block = *req.BlockReqs
+	state.Limiter.Block = *req.BlockReqs
 
 	// Send OK
-	logger.AdminLogf("Updated block requests to %t", *req.BlockReqs)
+	state.Logger.AdminLogf("Updated block requests to %t", *req.BlockReqs)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /admin/max-reqs - updates the maximum number of requests per minute
 func SetMaxReqs(ctx *gin.Context) {
-	// Get the database from the context
-	db := ctx.MustGet("db").(*mongo.Database)
-
-	// Get the logger from the context
-	logger := ctx.MustGet("logger").(*logging.Logger)
-
-	// Get the limiter from the context
-	limiter := ctx.MustGet("limiter").(*Limiter)
+	// Get the state from the context
+	state := GetState(ctx)
 
 	// Get the request
 	var req models.OptionalOptions
@@ -717,16 +674,16 @@ func SetMaxReqs(ctx *gin.Context) {
 	}
 
 	// Update the max requests state
-	err = database.UpdateOptions(db, ctx, &req)
+	err = database.UpdateOptions(state.Db, ctx, &req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating max requests: " + err.Error()})
 		return
 	}
 
 	// Update the limiter
-	limiter.MaxReqPerMin = int(*req.MaxReqPerMin)
+	state.Limiter.MaxReqPerMin = int(*req.MaxReqPerMin)
 
 	// Send OK
-	logger.AdminLogf("Updated max requests to %d", *req.MaxReqPerMin)
+	state.Logger.AdminLogf("Updated max requests to %d", *req.MaxReqPerMin)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }

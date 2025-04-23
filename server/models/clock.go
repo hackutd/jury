@@ -56,12 +56,12 @@ func (c *ClockState) GetDuration() int64 {
 // SafeClock wraps ClockState in a mutex so it can be used safely across threads
 type SafeClock struct {
 	Mutex sync.Mutex
-	Clock ClockState
+	State ClockState
 }
 
 func NewSafeClock(clock *ClockState) *SafeClock {
 	return &SafeClock{
 		Mutex: sync.Mutex{},
-		Clock: *clock,
+		State: *clock,
 	}
 }

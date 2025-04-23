@@ -2,6 +2,7 @@ package judging
 
 import (
 	"context"
+	"errors"
 	"server/database"
 	"server/models"
 	"sync"
@@ -52,16 +53,36 @@ func CreateComparisons(projects []*models.Project, judges []*models.Judge) *Comp
 	return &comps
 }
 
+func LoadComparisonsWithTx(db *mongo.Database) (*Comparisons, error) {
+	comps_any, err := database.WithTransactionItem(db, func(sc mongo.SessionContext) (any, error) {
+		comps, err := LoadComparisons(db, sc)
+		if err != nil {
+			return nil, err
+		}
+
+		return comps, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	comps, ok := comps_any.(*Comparisons)
+	if !ok {
+		return nil, errors.New("load comparisons did not return a comparisons object")
+	}
+	return comps, nil
+}
+
 // LoadComparisons will create the comparisons from the database
-func LoadComparisons(db *mongo.Database) (*Comparisons, error) {
+func LoadComparisons(db *mongo.Database, ctx context.Context) (*Comparisons, error) {
 	// Get all judges
-	judges, err := database.FindAllJudges(db, context.Background())
+	judges, err := database.FindAllJudges(db, ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get all project
-	projects, err := database.FindAllProjects(db, context.Background())
+	projects, err := database.FindAllProjects(db, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -159,8 +180,8 @@ func (c *Comparisons) FindLeastCompared(projects []*models.Project, prevSeen []m
 }
 
 // ReloadComparisons will reload the comparisons from the database
-func ReloadComparisons(db *mongo.Database, comparisons *Comparisons) error {
-	new_comps, err := LoadComparisons(db)
+func ReloadComparisons(db *mongo.Database, ctx context.Context, comparisons *Comparisons) error {
+	new_comps, err := LoadComparisons(db, ctx)
 	if err != nil {
 		return err
 	}
