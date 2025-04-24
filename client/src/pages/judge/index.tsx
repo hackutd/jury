@@ -95,7 +95,7 @@ const Judge = () => {
                 )}
                 <div className="w-full mb-6 mt-2">
                     <Button type="primary" full href="/judge/live">
-                        Next Project
+                        {judge.current !== null ? 'Resume Project' : 'Next Project'}
                     </Button>
                 </div>
                 <div className="flex justify-evenly">
