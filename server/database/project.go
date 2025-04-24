@@ -12,14 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// UpdateProjectLastActivity to the current time
-func UpdateProjectLastActivity(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) error {
-	// Get current time
-	lastActivity := util.Now()
-	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
-	return err
-}
-
 // InsertProjects inserts a list of projects into the database
 func InsertProjects(db *mongo.Database, ctx context.Context, projects []*models.Project) error {
 	var docs []any
@@ -223,13 +215,13 @@ func UpdateAfterPicked(db *mongo.Database, ctx context.Context, project *models.
 }
 
 // CountProjectDocuments returns the number of documents in the projects collection
-func CountProjectDocuments(db *mongo.Database, ctx context.Context) (int64, error) {
-	return db.Collection("projects").EstimatedDocumentCount(ctx)
+func CountProjectDocuments(db *mongo.Database) (int64, error) {
+	return db.Collection("projects").EstimatedDocumentCount(context.Background())
 }
 
 // CountTrackProjects returns the number of projects in a specific track
-func CountTrackProjects(db *mongo.Database, ctx context.Context, track string) (int64, error) {
-	return db.Collection("projects").CountDocuments(ctx, gin.H{"challenge_list": track})
+func CountTrackProjects(db *mongo.Database, track string) (int64, error) {
+	return db.Collection("projects").CountDocuments(context.Background(), gin.H{"challenge_list": track})
 }
 
 // SetProjectActive sets the active field of a project (hide or unhide project)

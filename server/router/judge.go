@@ -147,8 +147,7 @@ func LoginJudge(ctx *gin.Context) {
 		}
 
 		// Update judge in database with new token
-		judge.Token = token
-		err = database.UpdateJudge(state.Db, sc, judge)
+		err = database.UpdateJudgeToken(state.Db, sc, &judge.Id, token)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 			return err
@@ -283,11 +282,8 @@ func SetJudgeReadWelcome(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
-	// Set judge's readWelcome field to true
-	judge.ReadWelcome = true
-
 	// Update judge in database
-	err := database.UpdateJudge(state.Db, ctx, judge)
+	err := database.UpdateJudgeReadWelcome(state.Db, ctx, &judge.Id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge in database: " + err.Error()})
 		return
@@ -513,7 +509,7 @@ func JudgeSkip(ctx *gin.Context) {
 		state.Clock.Mutex.Unlock()
 
 		// Skip the project
-		err = judging.SkipCurrentProject(state.Db, sc, judge, state.Comps, skipReq.Reason, newProj)
+		err = judging.SkipCurrentProjectWithTx(state.Db, sc, judge, state.Comps, skipReq.Reason, newProj)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return err
@@ -884,7 +880,7 @@ func JudgeBreak(ctx *gin.Context) {
 	}
 
 	// Basically skip the project for the judge
-	err := judging.SkipCurrentProjectWithTx(state.Db, judge, state.Comps, "break", false)
+	err := judging.SkipCurrentProject(state.Db, judge, state.Comps, "break", false)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error skipping project: " + err.Error()})
 		return

@@ -23,7 +23,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	clock := getClockFromDb(db)
 
 	// Create the comparisons object
-	comps, err := judging.LoadComparisonsWithTx(db)
+	comps, err := judging.LoadComparisons(db)
 	if err != nil {
 		log.Fatalf("error loading projects from the database: %s\n", err.Error())
 	}

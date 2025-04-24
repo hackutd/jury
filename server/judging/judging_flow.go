@@ -14,16 +14,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func SkipCurrentProjectWithTx(db *mongo.Database, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
+func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
 	return database.WithTransaction(db, func(sc mongo.SessionContext) error {
-		return SkipCurrentProject(db, sc, judge, comps, reason, getNew)
+		return SkipCurrentProjectWithTx(db, sc, judge, comps, reason, getNew)
 	})
 }
 
-// SkipCurrentProject skips the current project for a judge.
+// SkipCurrentProjectWithTx skips the current project for a judge.
 // This is in the judging module instead of the database module to avoid dependency cycles.
 // This should be run in a transaction.
-func SkipCurrentProject(db *mongo.Database, ctx context.Context, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
+func SkipCurrentProjectWithTx(db *mongo.Database, ctx context.Context, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
 	// Get skipped project from database
 	skippedProject, err := database.FindProjectById(db, ctx, judge.Current)
 	if err != nil {

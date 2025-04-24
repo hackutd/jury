@@ -81,7 +81,6 @@ func GetAllDbLogs(db *mongo.Database) ([]*models.Log, error) {
 	return logs, nil
 }
 
-// TODO: Pass in context as a parameter to the log functions, then remove the transaction wrapper from here
 func (l *Logger) writeToDb(item string) error {
 	return database.WithTransaction(l.DbRef, func(sc mongo.SessionContext) error {
 		// Insert the log into the database
