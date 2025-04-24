@@ -12,14 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// UpdateProjectLastActivity to the current time
-func UpdateProjectLastActivity(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) error {
-	// Get current time
-	lastActivity := util.Now()
-	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
-	return err
-}
-
 // InsertProjects inserts a list of projects into the database
 func InsertProjects(db *mongo.Database, ctx context.Context, projects []*models.Project) error {
 	var docs []any

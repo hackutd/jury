@@ -67,8 +67,7 @@ func IncrementJudgeGroupNum(db *mongo.Database) error {
 		}
 
 		// Update all judges in the database
-		// TODO: Can we write a function that will only update that field instead of have to pass ALL the judge data to the db :(
-		err = database.UpdateJudgesWithTx(db, sc, judges)
+		err = database.UpdateJudgeGroups(db, sc, judges)
 		if err != nil {
 			return errors.New("error updating judges in database: " + err.Error())
 		}

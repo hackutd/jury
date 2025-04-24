@@ -13,14 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// UpdateJudgeLastActivity to the current time
-// TODO: Do we actually need this???
-func UpdateJudgeLastActivity(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) error {
-	lastActivity := util.Now()
-	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": gin.H{"last_activity": lastActivity}})
-	return err
-}
-
 // InsertJudge inserts a judge into the database
 func InsertJudge(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
 	_, err := db.Collection("judges").InsertOne(ctx, judge)
@@ -72,25 +64,23 @@ func FindJudgesByTrack(db *mongo.Database, ctx context.Context, track string) ([
 	return judges, nil
 }
 
-// UpdateJudge updates a judge in the database
-func UpdateJudge(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
-	judge.LastActivity = util.Now()
-	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": judge})
+// UpdateJudgeToken updates the token of a judge
+func UpdateJudgeToken(db *mongo.Database, ctx context.Context, judgeId *primitive.ObjectID, token string) error {
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{"token": token, "last_activity": util.Now()}})
 	return err
 }
 
-// UpdateJudges updates multiple judges in the database
-func UpdateJudges(db *mongo.Database, sc, judges []*models.Judge) error {
-	return WithTransaction(db, func(sc mongo.SessionContext) error {
-		return UpdateJudgesWithTx(db, sc, judges)
-	})
+// UpdateJudgeReadWelcome updates the read_welcome field of a judge to true
+func UpdateJudgeReadWelcome(db *mongo.Database, ctx context.Context, judgeId *primitive.ObjectID) error {
+	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judgeId}, gin.H{"$set": gin.H{"read_welcome": true, "last_activity": util.Now()}})
+	return err
 }
 
-// UpdateJudgesWithTx updates multiple judges in the database with a transaction
-func UpdateJudgesWithTx(db *mongo.Database, sc mongo.SessionContext, judges []*models.Judge) error {
+// UpdateJudgeGroups updates the group and group_seen fields of multiple judges
+func UpdateJudgeGroups(db *mongo.Database, sc mongo.SessionContext, judges []*models.Judge) error {
 	models := make([]mongo.WriteModel, 0, len(judges))
 	for _, judge := range judges {
-		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": judge.Id}).SetUpdate(gin.H{"$set": judge}))
+		models = append(models, mongo.NewUpdateOneModel().SetFilter(gin.H{"_id": judge.Id}).SetUpdate(gin.H{"$set": gin.H{"group": judge.Group, "group_seen": judge.GroupSeen}}))
 	}
 	opts := options.BulkWrite().SetOrdered(false)
 	_, err := db.Collection("judges").BulkWrite(sc, models, opts)
@@ -213,7 +203,7 @@ func SetJudgeActive(db *mongo.Database, id *primitive.ObjectID, active bool) err
 	_, err := db.Collection("judges").UpdateOne(
 		context.Background(),
 		gin.H{"_id": id},
-		gin.H{"$set": gin.H{"active": active, "last_activity": util.Now()}},
+		gin.H{"$set": gin.H{"active": active}},
 	)
 	return err
 }
@@ -223,7 +213,7 @@ func SetJudgesActive(db *mongo.Database, ids []primitive.ObjectID, active bool) 
 	_, err := db.Collection("judges").UpdateMany(
 		context.Background(),
 		gin.H{"_id": gin.H{"$in": ids}},
-		gin.H{"$set": gin.H{"active": active, "last_activity": util.Now()}},
+		gin.H{"$set": gin.H{"active": active}},
 	)
 	return err
 }
@@ -243,12 +233,12 @@ func UpdateJudgeRanking(db *mongo.Database, ctx context.Context, judge *models.J
 	_, err := db.Collection("judges").UpdateOne(
 		ctx,
 		gin.H{"_id": judge.Id},
-		gin.H{"$set": gin.H{"rankings": rankings, "last_activity": util.Now()}},
+		gin.H{"$set": gin.H{"rankings": rankings}},
 	)
 	return err
 }
 
-// TODO: Can we separate all the functionality out of this?
+// UpdateJudgeSeenProjects updates the seen projects of a judge
 func UpdateJudgeSeenProjects(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
 	_, err := db.Collection("judges").UpdateOne(ctx, gin.H{"_id": judge.Id}, gin.H{"$set": gin.H{"seen_projects": judge.SeenProjects}})
 	return err
@@ -420,7 +410,7 @@ func PutJudgesInGroups(db *mongo.Database) error {
 		}
 
 		// Update the judges in the database
-		err = UpdateJudgesWithTx(db, sc, judges)
+		err = UpdateJudgeGroups(db, sc, judges)
 		return err
 	})
 }
