@@ -4,6 +4,7 @@ import Loading from '../../Loading';
 import { useAdminStore } from '../../../store';
 import Button from '../../Button';
 import Card from '../../Card';
+import Checkbox from '../../Checkbox';
 
 interface UploadCSVFormProps {
     /* The format of the CSV file */
@@ -16,6 +17,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
     const [headerRow, setHeaderRow] = useState(false);
     const [error, setError] = useState<string | null>();
     const [msg, setMsg] = useState<string | null>();
+    const [noSend, setNoSend] = useState(false);
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const fetchJudgeStats = useAdminStore((state) => state.fetchJudgeStats);
     const fetchProjectStats = useAdminStore((state) => state.fetchProjectStats);
@@ -46,6 +48,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
         const formData = new FormData();
         formData.append('csv', file as Blob);
         formData.append('headerRow', headerRow.toString());
+        formData.append('noSend', noSend.toString());
 
         // Upload the file by calling the upload endpoint
         try {
@@ -75,6 +78,10 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
             // Reset the form and show success message
             setFile(null);
             setFileName('No file chosen');
+            setNoSend(false);
+            setHeaderRow(false);
+            setMsg(null);
+            setError(null);
             const resource = props.format === 'judge' ? 'judge' : 'project';
             setMsg(`Added ${resource}(s) successfully!`);
         } catch (err) {
@@ -168,6 +175,9 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                             File Chosen: {fileName}
                         </div>
                     )}
+                    <Checkbox checked={noSend} onChange={setNoSend} className="">
+                        Do not send an email
+                    </Checkbox>
                     <div className="flex flex-row w-full mt-4 space-x-6">
                         <Button
                             type="primary"

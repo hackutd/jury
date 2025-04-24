@@ -184,8 +184,9 @@ func AddJudgesCsv(ctx *gin.Context) {
 		return
 	}
 
-	// Get the hasHeader parameter from the request
+	// Get the hasHeader and noSend parameter from the request
 	hasHeader := ctx.PostForm("hasHeader") == "true"
+	noSend := ctx.PostForm("noSend") == "true"
 
 	// Open the file
 	f, err := file.Open()
@@ -221,11 +222,13 @@ func AddJudgesCsv(ctx *gin.Context) {
 	}
 
 	// Send emails to all judges
-	for _, judge := range judges {
-		err = funcs.SendJudgeEmail(judge, hostname)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge " + judge.Name + " email: " + err.Error()})
-			return
+	if !noSend {
+		for _, judge := range judges {
+			err = funcs.SendJudgeEmail(judge, hostname)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge " + judge.Name + " email: " + err.Error()})
+				return
+			}
 		}
 	}
 
