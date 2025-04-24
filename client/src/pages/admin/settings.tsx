@@ -13,6 +13,7 @@ import ChallengeBlock from '../../components/admin/ChallengeBlock';
 import Card from '../../components/Card';
 import ToTopButton from '../../components/ToTopButton';
 import { useNavigate } from 'react-router-dom';
+import { twMerge } from 'tailwind-merge';
 
 // Text components
 const Section = ({ children: c }: { children: string }) => (
@@ -516,11 +517,18 @@ const AdminSettings = () => {
                         still judge, but no new judges can log in. This is useful if you want to
                         prevent brute force enumeration attacks.
                     </Description>
-                    <SettingsButton onClick={updateBlockReqs} type="error">
-                        {blockReqs
-                            ? 'Enable Logins (Currently DISABLED)'
-                            : 'Disable Logins (Currently ENABLED)'}
-                    </SettingsButton>
+                    <div className="flex flex-row items-center gap-4">
+                        <SettingsButton onClick={updateBlockReqs} type={blockReqs ? 'primary' : 'error'}>
+                            {blockReqs
+                                ? 'Enable Logins'
+                                : 'Disable Logins'}
+                        </SettingsButton>
+                        <p className={twMerge('text-xl', blockReqs ? 'text-error' : 'text-primary')}>
+                            {blockReqs
+                                ? 'Logins currently BLOCKED'
+                                : 'Logins currently ENABLED'}
+                        </p>
+                    </div>
 
                     <SubSection>Max Logins Per Minute</SubSection>
                     <Description>
