@@ -56,13 +56,13 @@ const JudgeLive = () => {
         async function fetchData() {
             // Check to see if the user is logged in
             const loggedInRes = await postRequest<OkResponse>('/judge/auth', 'judge', null);
-            if (loggedInRes.status !== 200) {
-                errorAlert(loggedInRes);
-                return;
-            }
-            if (loggedInRes.data?.ok !== 1) {
+            if (loggedInRes.data?.ok !== 1 && loggedInRes.status === 401) {
                 console.error(`Judge is not logged in!`);
                 navigate('/judge/login');
+                return;
+            }
+            if (loggedInRes.status !== 200) {
+                errorAlert(loggedInRes);
                 return;
             }
 
