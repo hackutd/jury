@@ -1,6 +1,5 @@
 import Button from '../../Button';
 import Popup from '../../Popup';
-import { useNavigate } from 'react-router-dom';
 import Star from '../Star';
 import TextArea from '../../TextArea';
 
@@ -35,13 +34,10 @@ interface FinishPopupProps {
  * Component to show when the user clicks the "Submit" button
  */
 const FinishPopup = (props: FinishPopupProps) => {
-    const navigate = useNavigate();
-
     if (!props.enabled) return null;
 
     const done = async () => {
         await props.callback();
-        navigate('/judge');
     };
 
     return (

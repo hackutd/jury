@@ -245,22 +245,22 @@ const JudgeLive = () => {
         setPaused(true);
     };
 
-    const actionCallback = async (isVote?: boolean) => {
+    const actionCallback = async () => {
         setJudge(null);
-
-        // Call update endpoint if voting
-        if (isVote) {
-            const res = await postRequest<OkResponse>('/judge/score', 'judge', {
-                notes,
-                starred,
-            });
-            if (res.status !== 200) {
-                errorAlert(res);
-            }
-        }
-
         resetTimer();
         getJudgeData();
+    };
+
+    const finishJudging = async () => {
+        const res = await postRequest<OkResponse>('/judge/finish', 'judge', {
+            notes,
+            starred,
+        });
+        if (res.status !== 200) {
+            errorAlert(res);
+        }
+
+        navigate('/judge');
     };
 
     // Display an error page if an error condition holds
@@ -418,7 +418,7 @@ const JudgeLive = () => {
                     enabled={finishPopup}
                     setEnabled={setFinishPopup}
                     judge={judge}
-                    callback={actionCallback.bind(this, true)}
+                    callback={finishJudging}
                     notes={notes}
                     setNotes={setNotes}
                     starred={starred}

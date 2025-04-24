@@ -640,8 +640,8 @@ type JudgeScoreRequest struct {
 	Starred bool   `json:"starred"`
 }
 
-// POST /judge/score - Endpoint to finish judging a project
-func JudgeScore(ctx *gin.Context) {
+// POST /judge/finish - Endpoint to finish judging a project
+func JudgeFinish(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
