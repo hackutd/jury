@@ -35,9 +35,6 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	state := NewState(db, clock, comps, logger, limiter)
 	router.Use(useVar("state", state))
 
-	// Rate limit login requests
-	router.Use(rateLimit(limiter))
-
 	// CORS
 	router.Use(cors.New(cors.Config{
 		AllowAllOrigins:  true,
@@ -47,6 +44,9 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 		AllowCredentials: true,
 		MaxAge:           12 * 3600,
 	}))
+
+	// Rate limit login requests
+	router.Use(rateLimit(limiter))
 
 	// Create router groups for judge and admins
 	// This grouping allows us to add middleware to all routes in the group

@@ -70,7 +70,7 @@ const PasswordInput = (props: PasswordInputProps) => {
                 htmlFor="text-input"
                 id="text-input-label"
                 className={twMerge(
-                    'mt-4 text-2xl duration-200',
+                    'mt-4 text-2xl duration-200 text-center',
                     props.error ? 'text-error' : focused ? 'text-primary' : ''
                 )}
             >
