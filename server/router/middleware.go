@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Authenticate Judge with Bearer token
@@ -30,8 +29,8 @@ func AuthenticateJudge() gin.HandlerFunc {
 		token := authHeader[7:]
 
 		// Make sure the token is valid (check for judge in database)
-		db := ctx.MustGet("db").(*mongo.Database)
-		judge, err := database.FindJudgeByToken(db, token)
+		state := GetState(ctx)
+		judge, err := database.FindJudgeByToken(state.Db, token)
 		if err != nil {
 			ctx.AbortWithStatusJSON(500, gin.H{"error": fmt.Sprintf("Error finding judge in database: %s", err.Error())})
 			return

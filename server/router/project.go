@@ -406,39 +406,31 @@ func GetProjectCount(ctx *gin.Context) {
 
 	var count int64
 
-	// Run the remaining actions in a transaction
-	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get the options from the database
-		options, err := database.GetOptions(state.Db, sc)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
-			return err
-		}
+	// Get the options from the database
+	options, err := database.GetOptions(state.Db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options from database: " + err.Error()})
+		return
+	}
 
-		// If the tracks option is enabled, get the project count for the judge's track
-		if options.JudgeTracks && judge.Track != "" {
-			// Get the project from the database
-			count, err := database.CountTrackProjects(state.Db, sc, judge.Track)
-			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
-				return err
-			}
-
-			// Send OK
-			ctx.JSON(http.StatusOK, gin.H{"count": count})
-			return nil
-		}
-
+	// If the tracks option is enabled, get the project count for the judge's track
+	if options.JudgeTracks && judge.Track != "" {
 		// Get the project from the database
-		count, err = database.CountProjectDocuments(state.Db, sc)
+		count, err := database.CountTrackProjects(state.Db, judge.Track)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
-			return err
+			return
 		}
 
-		return nil
-	})
+		// Send OK
+		ctx.JSON(http.StatusOK, gin.H{"count": count})
+		return
+	}
+
+	// Get the project from the database
+	count, err = database.CountProjectDocuments(state.Db)
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project count from database: " + err.Error()})
 		return
 	}
 
