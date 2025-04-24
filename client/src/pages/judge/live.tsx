@@ -50,6 +50,7 @@ const JudgeLive = () => {
     const [paused, setPaused] = useState(false);
     const [notes, setNotes] = useState('');
     const [starred, setStarred] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchData() {
@@ -84,6 +85,8 @@ const JudgeLive = () => {
 
     // Once verification finishes, get the judge's next project to judge, as well as the timer
     async function getJudgeData() {
+        setLoading(true);
+
         // Check to see if judging has started
         const startedRes = await getRequest<OkResponse>('/admin/started', '');
         if (startedRes.status !== 200) {
@@ -134,6 +137,7 @@ const JudgeLive = () => {
         // If the judge has a current project, use that
         if (theJudge.current) {
             setJudge(theJudge);
+            setLoading(false);
             return;
         }
 
@@ -153,6 +157,7 @@ const JudgeLive = () => {
         // Set the judge's current project
         theJudge.current = newProject.data.project_id;
         setJudge(theJudge);
+        setLoading(false);
     }
 
     // Get judge data after verification
@@ -341,6 +346,7 @@ const JudgeLive = () => {
                             type="primary"
                             className="py-8 text-4xl md:text-5xl rounded-xl mb-4"
                             full
+                            disabled={loading}
                             onClick={startJudging}
                         >
                             Start Judging
@@ -368,7 +374,7 @@ const JudgeLive = () => {
                         <Button
                             type="error"
                             className="mr-2 py-1 text-xl basis-2/5"
-                            disabled={false}
+                            disabled={loading}
                             onClick={() => {
                                 openPopup('flag');
                             }}
@@ -378,7 +384,7 @@ const JudgeLive = () => {
                         <Button
                             type="primary"
                             className="bg-gold mx-2 py-1 text-xl basis-2/5 text-black disabled:bg-backgroundDark disabled:text-lighter hover:bg-goldDark hover:text-black"
-                            disabled={judge === null}
+                            disabled={judge === null || loading}
                             onClick={() => {
                                 openPopup('skip');
                             }}
@@ -388,7 +394,7 @@ const JudgeLive = () => {
                         <Button
                             type="primary"
                             className="ml-2 py-1 text-xl"
-                            disabled={judge === null || !started}
+                            disabled={judge === null || !started || loading}
                             onClick={() => {
                                 openPopup('vote');
                             }}
