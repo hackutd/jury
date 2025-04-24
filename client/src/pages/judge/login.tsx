@@ -16,7 +16,7 @@ const JudgeLogin = () => {
     const [disabled, setDisabled] = useState(true);
     const [code, setCode] = useState('');
     const [loginLock, setLoginLock] = useState(false);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState("");
     const navigate = useNavigate();
 
     // If token cookie is already defined and valid, redirect to judge page
@@ -76,10 +76,15 @@ const JudgeLogin = () => {
 
         // Make async call to check code
         const res = await postRequest<TokenResponse>('/judge/login', '', { code: cleanCode });
+        console.log(res.status)
 
-        // Invalid code
+        // Invalid code or rate limiting
         if (res.status === 400) {
-            setError(true);
+            setError("Invalid judging code");
+            setLoginLock(false);
+            return;
+        } else if (res.status === 429) {
+            setError("Login rate limit exceeded, please contact an organizer");
             setLoginLock(false);
             return;
         }
@@ -88,7 +93,7 @@ const JudgeLogin = () => {
         if (res.status !== 200) {
             errorAlert(res);
 
-            setError(true);
+            setError("Internal server error");
             setLoginLock(false);
             return;
         }
@@ -119,9 +124,9 @@ const JudgeLogin = () => {
                     placeholder="XXXXXX"
                     onKeyPress={handleEnter}
                     onChange={handleChange}
-                    error={error}
-                    setError={setError}
-                    errorMessage="Invalid judging code"
+                    error={error !== ""}
+                    setError={() => setError("")}
+                    errorMessage={error}
                     className="text-3xl md:text-6xl text-center w-4/5"
                 />
                 <p className="text-2xl text-light text-center mx-4 my-12">
