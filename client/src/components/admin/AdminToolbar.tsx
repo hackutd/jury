@@ -157,7 +157,8 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                         options={['Main Judging', ...options.tracks]}
                         selected={selectedTrack === '' ? 'Main Judging' : selectedTrack}
                         setSelected={setSelectedTrack}
-                        className="ml-4"
+                        large
+                        className="ml-4 text-center"
                     />
                 )}
                 {selectedIds.length > 0 && (
