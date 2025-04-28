@@ -52,7 +52,7 @@ const FinishPopup = (props: FinishPopupProps) => {
             </div>
             <h3 className="text-lighter text-sm text-left mt-2">Personal Notes</h3>
             <TextArea
-                placeholder="Type any personal comments here"
+                label="Type any personal comments here"
                 value={props.notes}
                 setValue={props.setNotes}
                 className='mt-1'

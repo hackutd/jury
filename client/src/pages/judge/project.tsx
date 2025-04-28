@@ -92,7 +92,7 @@ const Project = () => {
                     </p>
                 </div>
                 <TextArea
-                    placeholder="Your notes..."
+                    label="Personal Notes"
                     value={notes}
                     setValue={setNotes}
                     className="mb-4"

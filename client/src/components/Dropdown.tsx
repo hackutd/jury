@@ -14,6 +14,9 @@ interface DropdownProps {
     /* OnChange function */
     onChange?: (() => void) | ((track: string) => void);
 
+    /* Large text */
+    large?: boolean;
+
     /* Classname styling */
     className?: string;
 }
@@ -22,7 +25,8 @@ const Dropdown = (props: DropdownProps) => {
     return (
         <select
             className={twMerge(
-                'border-[2.5px] border-solid border-lightest outline-none focus:outline-none rounded-md bg-background cursor-pointer hover:bg-backgroundDark duration-150 text-xl text-center text-light',
+                'border-2 border-solid border-lightest outline-none focus:outline-none rounded-md bg-background cursor-pointer hover:bg-backgroundDark duration-150 text-light px-2',
+                props.large && 'text-xl',
                 props.className
             )}
             onChange={(e) => {

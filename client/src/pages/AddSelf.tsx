@@ -87,11 +87,11 @@ const AddSelf = () => {
                     need is your name and email. Once you hit submit, you will get an email with
                     your judging code.
                 </p>
-                <TextInput text={name} setText={setName} placeholder="Name" large />
+                <TextInput text={name} setText={setName} label="Name" large />
                 <TextInput
                     text={email}
                     setText={setEmail}
-                    placeholder="Email"
+                    label="Email"
                     large
                     className="mt-2 mb-8"
                 />

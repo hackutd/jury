@@ -42,7 +42,8 @@ const JudgeQrCodes = () => {
                                 options={[...options.tracks]}
                                 selected={track}
                                 setSelected={setTrack}
-                                className="ml-4 bg-white"
+                                large
+                                className="ml-4 bg-white text-center"
                             />
                         </div>
                     )}

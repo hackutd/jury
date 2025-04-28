@@ -40,7 +40,7 @@ const SettingsButton = ({
     className?: string;
     type?: 'primary' | 'error' | 'gold' | 'outline';
 }) => (
-    <Button type={type} onClick={onClick} small className={'my-2 ' + className}>
+    <Button type={type} onClick={onClick} small className={'my-2 h-max ' + className}>
         {children}
     </Button>
 );
@@ -518,15 +518,19 @@ const AdminSettings = () => {
                         prevent brute force enumeration attacks.
                     </Description>
                     <div className="flex flex-row items-center gap-4">
-                        <SettingsButton onClick={updateBlockReqs} type={blockReqs ? 'primary' : 'error'}>
-                            {blockReqs
-                                ? 'Enable Logins'
-                                : 'Disable Logins'}
+                        <SettingsButton
+                            onClick={updateBlockReqs}
+                            type={blockReqs ? 'primary' : 'error'}
+                        >
+                            {blockReqs ? 'Enable Logins' : 'Disable Logins'}
                         </SettingsButton>
-                        <p className={twMerge('text-xl', blockReqs ? 'text-error' : 'text-primary')}>
-                            {blockReqs
-                                ? 'Logins currently BLOCKED'
-                                : 'Logins currently ENABLED'}
+                        <p
+                            className={twMerge(
+                                'text-xl',
+                                blockReqs ? 'text-error' : 'text-primary'
+                            )}
+                        >
+                            {blockReqs ? 'Logins currently BLOCKED' : 'Logins currently ENABLED'}
                         </p>
                     </div>
 
@@ -535,10 +539,11 @@ const AdminSettings = () => {
                         Set the maximum number of requests that can be made to the login endpoint
                         per minute. This is also useful for preventing brute force attacks.
                     </Description>
-                    <div className="flex flex-row">
+                    <div className="flex flex-row items-end">
                         <TextInput
                             text={maxReqPerMin}
                             setText={setMaxReqPerMin}
+                            label="Max Logins Per Minute"
                             placeholder="Enter an integer..."
                             large
                             className="my-2 mr-4"
@@ -560,7 +565,7 @@ const AdminSettings = () => {
                         groups are enabled, projects will be assigned round-robin into groups.
                         Otherwise, projects will be assigned in order.
                     </Description>
-                    <div className="flex flex-row">
+                    <div className="flex flex-row items-end">
                         <SettingsButton
                             onClick={() => setReassignPopup(true)}
                             className="bg-gold text-black hover:bg-goldDark hover:text-black mr-4"
@@ -585,10 +590,11 @@ const AdminSettings = () => {
                         before switching over to the optimal method of assigning projects. Set to 0
                         to ignore this condition (recommended: 3-5).
                     </Description>
-                    <div className="flex flex-row">
+                    <div className="flex flex-row items-end">
                         <TextInput
                             text={minViews}
                             setText={setMinViews}
+                            label="Minimum Views"
                             placeholder="Enter an integer..."
                             large
                             className="my-2 mr-4"
@@ -607,6 +613,7 @@ const AdminSettings = () => {
                     <TextInput
                         text={ignoreTracks}
                         setText={setIgnoreTracks}
+                        label="Tracks to Ignore"
                         placeholder="Track 1, Track 2, ..."
                         large
                         full
@@ -651,10 +658,11 @@ const AdminSettings = () => {
                         timer that shows on the judging page. Leave this field blank (or 0) if you
                         do not wish to have a timer for each judge.
                     </Description>
-                    <div className="flex flex-row">
+                    <div className="flex flex-row items-end">
                         <TextInput
                             text={judgingTimer}
                             setText={setJudgingTimer}
+                            label="Judging Timer (MM:SS)"
                             placeholder="MM:SS"
                             large
                             className="my-2 mr-4"
@@ -693,6 +701,7 @@ const AdminSettings = () => {
                             <TextInput
                                 text={tracks}
                                 setText={setTracks}
+                                label="List of Tracks"
                                 placeholder="Track 1, Track 2, ..."
                                 large
                                 full
@@ -720,10 +729,11 @@ const AdminSettings = () => {
                             <Description>
                                 Set the number of groups judges will be split into.
                             </Description>
-                            <div className="flex flex-row">
+                            <div className="flex flex-row items-end">
                                 <TextInput
                                     text={numGroups}
                                     setText={setNumGroups}
+                                    label="Number of Groups"
                                     placeholder="Enter an integer..."
                                     large
                                     number
@@ -742,6 +752,7 @@ const AdminSettings = () => {
                                 last group will be used as overflow if all groups fill up.
                             </Description>
                             <TextInput
+                                label="Group Sizes"
                                 placeholder="30, 30, 30, ..."
                                 text={groupSizes}
                                 setText={setGroupSizes}
@@ -768,7 +779,7 @@ const AdminSettings = () => {
 
                             {switchingMode === 'auto' && (
                                 <>
-                                    <SubSection>Auto Switch Proportion</SubSection>
+                                    <SubSection>Auto Switch Proportions</SubSection>
                                     <Description>
                                         Set the proportion of projects judges will view before
                                         switching groups. This should be a decimal between 0 and 1.
@@ -779,10 +790,11 @@ const AdminSettings = () => {
                                         aggregated ranking results if judges do not visit enough
                                         different groups.
                                     </Description>
-                                    <div className="flex flex-row">
+                                    <div className="flex flex-row items-end">
                                         <TextInput
                                             text={autoSwitchProp}
                                             setText={setAutoSwitchProp}
+                                            label="Auto Switch Proportions"
                                             placeholder="Enter a decimal..."
                                             large
                                             number
@@ -802,6 +814,7 @@ const AdminSettings = () => {
                                 especially useful if you have multiple rooms or groups of judges.
                             </Description>
                             <TextInput
+                                label="Group Names"
                                 placeholder="Group 1, Group 2, Group 3, ..."
                                 text={groupNames}
                                 setText={setGroupNames}

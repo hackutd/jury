@@ -57,25 +57,27 @@ const NewJudgeForm = () => {
         <Card>
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Judge</h1>
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full space-y-2">
                     <div className="flex flex-row w-full mt-4 space-x-6">
-                        <TextInput placeholder="Name" text={name} setText={setName} large full />
-                        <TextInput placeholder="Email" text={email} setText={setEmail} large full />
+                        <TextInput label="Name" text={name} setText={setName} full />
+                        <TextInput label="Email" text={email} setText={setEmail} full />
                     </div>
-                    <p className="mt-2 font-bold text-lighter">Track</p>
-                    <Dropdown
-                        options={['', ...options.tracks]}
-                        selected={track}
-                        setSelected={setTrack}
-                        className="mt-0 mb-4 text-left text-xl bg-white rounded-sm hover:bg-background"
-                    />
+                    <div className="w-full">
+                        <p className="text-light text-sm mb-1">Track</p>
+                        <Dropdown
+                            options={['', ...options.tracks]}
+                            selected={track}
+                            setSelected={setTrack}
+                            className="bg-white rounded-sm hover:bg-background w-full"
+                        />
+                    </div>
                     <TextArea
                         value={notes}
                         setValue={setNotes}
-                        placeholder="Notes (optional)"
+                        label="Notes (optional)"
                         className="text-xl"
                     />
-                    <Checkbox checked={noSend} onChange={setNoSend} className="my-2">
+                    <Checkbox checked={noSend} onChange={setNoSend}>
                         Do not send an email
                     </Checkbox>
                     <Button type="primary" onClick={submit} full flat className="py-1 rounded-md">
