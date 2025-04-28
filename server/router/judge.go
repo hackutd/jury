@@ -184,7 +184,7 @@ func AddJudgesCsv(ctx *gin.Context) {
 		return
 	}
 
-	// Get the headers from the request
+	// Get the form fields from the request
 	hasHeader := ctx.PostForm("hasHeader") == "true"
 	noSend := ctx.PostForm("noSend") == "true"
 
