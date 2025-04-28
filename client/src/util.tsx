@@ -61,4 +61,102 @@ function errorAlert<T>(res: FetchResponse<T>) {
     console.error(err);
 }
 
-export { timeSince, arrow, fixIfFloat, fixIfFloatDigits, errorAlert, showTopFive };
+// Parse CSV data for preview (into string matrix)
+// Sourced from https://stackoverflow.com/a/14991797
+function parseCSV(str: string, delimiter: string): string[][] {
+    const arr: string[][] = [];
+    let quote = false;
+
+    for (let row = 0, col = 0, c = 0; c < str.length; c++) {
+        let cc = str[c],
+            nc = str[c + 1]; // Current character, next character
+        arr[row] = arr[row] || []; // Create a new row if necessary
+        arr[row][col] = arr[row][col] || ''; // Create a new column (start with empty string) if necessary
+
+        // If the current character is a quotation mark, and we're inside a
+        // quoted field, and the next character is also a quotation mark,
+        // add a quotation mark to the current column and skip the next character
+        if (cc == '"' && quote && nc == '"') {
+            arr[row][col] += cc;
+            ++c;
+            continue;
+        }
+
+        // If it's just one quotation mark, begin/end quoted field
+        if (cc == '"') {
+            quote = !quote;
+            continue;
+        }
+
+        // If it's a comma and we're not in a quoted field, move on to the next column
+        if (cc == ',' && !quote) {
+            ++col;
+            continue;
+        }
+
+        // If it's a newline (CRLF) and we're not in a quoted field, skip the next character
+        // and move on to the next row and move to column 0 of that new row
+        if (cc == '\r' && nc == '\n' && !quote) {
+            ++row;
+            col = 0;
+            ++c;
+            continue;
+        }
+
+        // If it's a newline (LF or CR) and we're not in a quoted field,
+        // move on to the next row and move to column 0 of that new row
+        if (cc == '\n' && !quote) {
+            ++row;
+            col = 0;
+            continue;
+        }
+        if (cc == '\r' && !quote) {
+            ++row;
+            col = 0;
+            continue;
+        }
+
+        // Otherwise, append the current character to the current column
+        arr[row][col] += cc;
+    }
+
+    return arr;
+}
+
+// Convert a file to a string using FileReader
+function fileToString(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            if (event.target && event.target.result) {
+                resolve(event.target.result as string);
+            } else {
+                reject(new Error('Failed to read file'));
+            }
+        };
+        reader.onerror = (error) => {
+            reject(error);
+        };
+        reader.readAsText(file);
+    });
+}
+
+function pad(str: string, max: number) {
+    if (str.length < max) {
+        return str;
+    }
+
+    return str.substring(0, max) + '...';
+}
+
+export {
+    timeSince,
+    arrow,
+    fixIfFloat,
+    fixIfFloatDigits,
+    errorAlert,
+    showTopFive,
+    parseCSV,
+    fileToString,
+    pad,
+};

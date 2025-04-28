@@ -61,7 +61,6 @@ interface SortState<T extends SortField> {
     ascending: boolean;
 }
 
-// TODO: Change this...
 type VotePopupState = 'vote' | 'skip' | 'flag';
 
 interface VotingProjectInfo {
@@ -176,4 +175,17 @@ interface Log {
 
 interface Code {
     qr_code: string;
+}
+
+interface CsvData {
+    csv: string;
+}
+
+interface CSVFormState {
+    file: File | null;
+    headerRow: boolean;
+    setHeaderRow: React.Dispatch<React.SetStateAction<boolean>>;
+    noSend: boolean;
+    setNoSend: React.Dispatch<React.SetStateAction<boolean>>;
+    format: 'project' | 'judge' | 'devpost';
 }

@@ -42,7 +42,7 @@ const Popup = (props: PopupProps) => {
     return (
         <>
             <div
-                className="fixed left-0 top-0 z-20 w-screen h-screen bg-black/30"
+                className="fixed left-0 top-0 mt-0 mb-0 z-20 w-screen h-screen bg-black/30"
                 onClick={() => props.setEnabled(false)}
             ></div>
             <div
