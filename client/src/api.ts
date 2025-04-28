@@ -9,7 +9,7 @@ export async function getRequest<T>(path: string, auth: string): Promise<FetchRe
             headers: createHeaders(auth, true),
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        
+
         try {
             const data = await response.json();
             return { status: response.status, error: data.error ? data.error : '', data };
@@ -28,16 +28,17 @@ export async function postRequest<T>(
     path: string,
     auth: string,
     // eslint-disable-next-line
-    body: any
+    body: any,
+    form?: boolean // Whether the body is a form data; otherwise it's JSON
 ): Promise<FetchResponse<T>> {
     try {
         const options: RequestInit = {
             method: 'POST',
-            headers: createHeaders(auth, true),
-            body: body ? JSON.stringify(body) : null,
+            headers: createHeaders(auth, !form),
+            body: !body ? null : form ? body : JSON.stringify(body)
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        
+
         try {
             const data = await response.json();
             return { status: response.status, error: data.error ? data.error : '', data };
@@ -65,7 +66,7 @@ export async function putRequest<T>(
             body: body ? JSON.stringify(body) : null,
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        
+
         try {
             const data = await response.json();
             return { status: response.status, error: data.error ? data.error : '', data };
@@ -90,7 +91,7 @@ export async function deleteRequest(
             headers: createHeaders(auth, true),
         };
         const response = await fetch(`${BACKEND_URL}${path}`, options);
-        
+
         try {
             const data = await response.json();
             return { status: response.status, error: data.error ? data.error : '', data };
