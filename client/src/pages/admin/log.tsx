@@ -33,8 +33,8 @@ const AdminLog = () => {
                     Here you can see a log of everything that has happened in the system.
                 </p>
             </div>
-            <div className="w-auto m-4 p-4 border-2 border-lightest rounded-md">
-                <pre className="w-full whitespace-pre-wrap">{log}</pre>
+            <div className="w-auto m-4 p-4 border-2 border-lightest rounded-md overflow-x-auto">
+                <pre className="w-full text-sm md:text-md">{log}</pre>
             </div>
             <Loading disabled={loaded} />
             <ToTopButton />
