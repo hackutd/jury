@@ -16,6 +16,10 @@ interface ActionsPopupProps {
     setEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+const ActionsItem = ({ children }: { children: React.ReactNode }) => {
+    return <div className="flex flex-col md:flex-row mb-4 md:mb-0 items-center gap-3">{children}</div>;
+};
+
 const ActionsPopup = (props: ActionsPopupProps) => {
     const navigate = useNavigate();
     const options = useOptionsStore((state) => state.options);
@@ -61,7 +65,7 @@ const ActionsPopup = (props: ActionsPopupProps) => {
             <Popup enabled={props.enabled} setEnabled={props.setEnabled}>
                 <h1 className="text-5xl text-center font-bold mb-6">Actions</h1>
                 <div className="flex flex-col w-full gap-3">
-                    <div className="flex flex-row items-center gap-3">
+                    <ActionsItem>
                         <Button
                             type="primary"
                             onClick={() => navigate('/admin/log')}
@@ -74,9 +78,9 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                             text="View all changes that have happened in Jury."
                             className="basis-1/2 grow-0 shrink-0"
                         />
-                    </div>
+                    </ActionsItem>
                     {options && options.multi_group && options.switching_mode === 'manual' && (
-                        <div className="flex flex-row items-center gap-3">
+                        <ActionsItem>
                             <div className="flex flex-col items-center basis-1/2 grow-0 shrink-0">
                                 <Button
                                     type="gold"
@@ -98,9 +102,9 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                                 text="Prevent judges from making changes to ranking and stars."
                                 className="basis-1/2 grow-0 shrink-0"
                             />
-                        </div>
+                        </ActionsItem>
                     )}
-                    <div className="flex flex-row items-center gap-3">
+                    <ActionsItem>
                         <Button
                             type={options.deliberation ? 'outline' : 'error'}
                             onClick={setDeliberationPopup.bind(null, true)}
@@ -114,7 +118,7 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                             text="Prevent judges from making changes to ranking and stars."
                             className="basis-1/2 grow-0 shrink-0"
                         />
-                    </div>
+                    </ActionsItem>
                 </div>
             </Popup>
             <ConfirmPopup
