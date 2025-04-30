@@ -1,15 +1,12 @@
-import { useEffect } from "react";
-import { useClockStore } from "../../store";
-import StatBlock from "../StatBlock";
-
-// Jank global variables for keeping track of drift in timer
-let start: number;
-let drift = 0;
+import { useEffect, useRef } from 'react';
+import { useClockStore } from '../../store';
+import StatBlock from '../StatBlock';
 
 const AdminClock = () => {
     const clock = useClockStore((state) => state.clock);
     const fetchClock = useClockStore((state) => state.fetchClock);
     const setTime = useClockStore((state) => state.setTime);
+    const start = useRef<number>(0);
 
     useEffect(() => {
         fetchClock();
@@ -37,10 +34,10 @@ const AdminClock = () => {
             if (!clock.running) return;
 
             // Calculate the drift based on the time since the last update
-            if (start) drift = Date.now() - start - 1000;
+            const drift = start.current === 0 ? 0 : Date.now() - start.current - 1000;
 
             // Update the time and set start to the current time
-            start = Date.now();
+            start.current = Date.now();
             setTime(clock.time + 1000 + drift);
         }, 1000);
 
