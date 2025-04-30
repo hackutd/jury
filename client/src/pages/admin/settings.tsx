@@ -17,15 +17,15 @@ import { twMerge } from 'tailwind-merge';
 
 // Text components
 const Section = ({ children: c }: { children: string }) => (
-    <h2 id={c.toLowerCase().replace(/ /g, '-')} className="text-4xl text-primary">
+    <h2 id={c.toLowerCase().replace(/ /g, '-')} className="text-3xl md:text-4xl text-primary">
         {c}
     </h2>
 );
 const SubSection = ({ children: c }: { children: React.ReactNode }) => (
-    <h3 className="text-xl mt-4 mb-1 font-bold">{c}</h3>
+    <h3 className="text-lg md:text-xl mt-4 mb-1 font-bold">{c}</h3>
 );
 const Description = ({ children: c }: { children: React.ReactNode }) => (
-    <p className="text-light mb-[0.125rem]">{c}</p>
+    <p className="text-sm md:text-md text-light mb-[0.125rem]">{c}</p>
 );
 
 // Custom button to use on settings page
@@ -40,7 +40,11 @@ const SettingsButton = ({
     className?: string;
     type?: 'primary' | 'error' | 'gold' | 'outline';
 }) => (
-    <Button type={type} onClick={onClick} small className={'my-2 h-max ' + className}>
+    <Button
+        type={type}
+        onClick={onClick}
+        className={twMerge('my-2 h-max text-lg md:text-2xl py-[2px] md:py-1', className)}
+    >
         {children}
     </Button>
 );
@@ -52,12 +56,15 @@ const NavButton = ({ children }: { children: string }) => (
         onClick={() => {
             window.location.href = `#${children.toLowerCase().replace(/ /g, '-')}`;
         }}
-        small
-        className="text-xl"
+        className="text-md px-2 md:px-6 py-[2px] md:py-1 md:text-xl"
     >
         {children}
     </Button>
 );
+
+const FieldButton = ({ children }: { children: React.ReactNode }) => {
+    return <div className="flex flex-col md:flex-row items-start md:items-end">{children}</div>;
+};
 
 const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
@@ -499,7 +506,7 @@ const AdminSettings = () => {
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
 
-                <div className="my-4 flex flex-row flex-wrap gap-4">
+                <div className="my-4 flex flex-row flex-wrap gap-1 md:gap-4">
                     <NavButton>Judge Login</NavButton>
                     <NavButton>Judging Parameters</NavButton>
                     <NavButton>Judging Clock and Timer</NavButton>
@@ -517,7 +524,7 @@ const AdminSettings = () => {
                         still judge, but no new judges can log in. This is useful if you want to
                         prevent brute force enumeration attacks.
                     </Description>
-                    <div className="flex flex-row items-center gap-4">
+                    <div className="flex flex-col md:flex-row items-center md:gap-4">
                         <SettingsButton
                             onClick={updateBlockReqs}
                             type={blockReqs ? 'primary' : 'error'}
@@ -539,7 +546,7 @@ const AdminSettings = () => {
                         Set the maximum number of requests that can be made to the login endpoint
                         per minute. This is also useful for preventing brute force attacks.
                     </Description>
-                    <div className="flex flex-row items-end">
+                    <FieldButton>
                         <TextInput
                             text={maxReqPerMin}
                             setText={setMaxReqPerMin}
@@ -552,7 +559,7 @@ const AdminSettings = () => {
                         <SettingsButton onClick={updateMaxReqPerMin}>
                             Update Max Requests
                         </SettingsButton>
-                    </div>
+                    </FieldButton>
                 </Card>
 
                 <Card>
@@ -565,14 +572,14 @@ const AdminSettings = () => {
                         groups are enabled, projects will be assigned round-robin into groups.
                         Otherwise, projects will be assigned in order.
                     </Description>
-                    <div className="flex flex-row items-end">
+                    <FieldButton>
                         <SettingsButton
                             onClick={() => setReassignPopup(true)}
                             className="bg-gold text-black hover:bg-goldDark hover:text-black mr-4"
                         >
                             Reassign
                         </SettingsButton>
-                    </div>
+                    </FieldButton>
 
                     <SubSection>Reassign Judge Groups</SubSection>
                     <Description>
@@ -590,7 +597,7 @@ const AdminSettings = () => {
                         before switching over to the optimal method of assigning projects. Set to 0
                         to ignore this condition (recommended: 3-5).
                     </Description>
-                    <div className="flex flex-row items-end">
+                    <FieldButton>
                         <TextInput
                             text={minViews}
                             setText={setMinViews}
@@ -601,7 +608,7 @@ const AdminSettings = () => {
                             number
                         />
                         <SettingsButton onClick={updateMinViews}>Update Min Views</SettingsButton>
-                    </div>
+                    </FieldButton>
 
                     <SubSection>Ignore Tracks</SubSection>
                     <Description>
@@ -658,7 +665,7 @@ const AdminSettings = () => {
                         timer that shows on the judging page. Leave this field blank (or 0) if you
                         do not wish to have a timer for each judge.
                     </Description>
-                    <div className="flex flex-row items-end">
+                    <FieldButton>
                         <TextInput
                             text={judgingTimer}
                             setText={setJudgingTimer}
@@ -668,7 +675,7 @@ const AdminSettings = () => {
                             className="my-2 mr-4"
                         />
                         <SettingsButton onClick={updateTimer}>Update Timer</SettingsButton>
-                    </div>
+                    </FieldButton>
                 </Card>
 
                 <Card>
@@ -729,7 +736,7 @@ const AdminSettings = () => {
                             <Description>
                                 Set the number of groups judges will be split into.
                             </Description>
-                            <div className="flex flex-row items-end">
+                            <FieldButton>
                                 <TextInput
                                     text={numGroups}
                                     setText={setNumGroups}
@@ -742,7 +749,7 @@ const AdminSettings = () => {
                                 <SettingsButton onClick={updateNumGroups}>
                                     Update Number of Groups
                                 </SettingsButton>
-                            </div>
+                            </FieldButton>
 
                             <SubSection>Group Sizes</SubSection>
                             <Description>
@@ -790,7 +797,7 @@ const AdminSettings = () => {
                                         aggregated ranking results if judges do not visit enough
                                         different groups.
                                     </Description>
-                                    <div className="flex flex-row items-end">
+                                    <FieldButton>
                                         <TextInput
                                             text={autoSwitchProp}
                                             setText={setAutoSwitchProp}
@@ -803,7 +810,7 @@ const AdminSettings = () => {
                                         <SettingsButton onClick={updateAutoSwitchProp}>
                                             Update Proportion
                                         </SettingsButton>
-                                    </div>
+                                    </FieldButton>
                                 </>
                             )}
 
@@ -836,17 +843,26 @@ const AdminSettings = () => {
                     <Description>
                         Export each collection individually as a CSV download.
                     </Description>
-                    <div className="flex">
-                        <SettingsButton onClick={() => exportCsv('judges')} className="mr-4">
+                    <div className="flex flex-col lg:flex-row mt-2 lg:mt-0 gap-4">
+                        <SettingsButton
+                            onClick={() => exportCsv('judges')}
+                            className="my-0 lg:my-2"
+                        >
                             Export Judges
                         </SettingsButton>
-                        <SettingsButton onClick={() => exportCsv('projects')} className="mr-4">
+                        <SettingsButton
+                            onClick={() => exportCsv('projects')}
+                            className="my-0 lg:my-2"
+                        >
                             Export Projects
                         </SettingsButton>
-                        <SettingsButton onClick={exportByChallenge} className="mr-4">
+                        <SettingsButton onClick={exportByChallenge} className="my-0 lg:my-2">
                             Export by Challenges
                         </SettingsButton>
-                        <SettingsButton onClick={() => exportCsv('rankings')}>
+                        <SettingsButton
+                            onClick={() => exportCsv('rankings')}
+                            className="my-0 lg:my-2"
+                        >
                             Export Rankings
                         </SettingsButton>
                     </div>
