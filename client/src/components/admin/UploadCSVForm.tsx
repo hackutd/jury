@@ -182,7 +182,6 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                                 type="primary"
                                 onClick={UploadCSV}
                                 full
-                                flat
                                 disabled={isUploading || !file || !fileName}
                                 className="py-1 rounded-md"
                             >

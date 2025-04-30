@@ -34,7 +34,6 @@ const InfoPopup = (props: InfoPopupProps) => {
                 <Button
                     type={props.red ? 'error' : 'primary'}
                     onClick={() => props.setEnabled(false)}
-                    flat
                     className="mt-4"
                 >
                     {props.submitText}

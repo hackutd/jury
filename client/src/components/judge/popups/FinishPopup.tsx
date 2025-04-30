@@ -57,7 +57,7 @@ const FinishPopup = (props: FinishPopupProps) => {
                 setValue={props.setNotes}
                 className='mt-1'
             />
-            <Button type="primary" onClick={done} className="mt-4" flat>
+            <Button type="primary" onClick={done} className="mt-4">
                 Submit
             </Button>
         </Popup>

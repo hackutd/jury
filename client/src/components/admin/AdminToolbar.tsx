@@ -133,7 +133,6 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                 <Button
                     type="outline"
                     bold
-                    small
                     className="py-2 px-4 rounded-md"
                     href={props.showProjects ? '/admin/add-projects' : '/admin/add-judges'}
                 >
@@ -143,7 +142,6 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                     <Button
                         type="outline"
                         bold
-                        small
                         className="py-2 px-4 rounded-md ml-4"
                         onClick={() => {
                             setShowFlags(true);
@@ -166,7 +164,6 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                         <Button
                             type="outline"
                             bold
-                            small
                             className="px-4 rounded-md ml-4"
                             onClick={setBatchPopup.bind(null, true)}
                         >

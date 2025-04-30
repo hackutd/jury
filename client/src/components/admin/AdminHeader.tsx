@@ -17,7 +17,6 @@ const AdminHeader = () => {
                     onClick={() => {
                         navigate('/admin/settings');
                     }}
-                    small
                     bold
                     className="ml-4 py-2"
                 >
@@ -27,7 +26,6 @@ const AdminHeader = () => {
                     <Button
                         type="outline"
                         onClick={setActionsPopup.bind(null, true)}
-                        small
                         bold
                         tooltip="Open actions menu"
                         className="ml-4 py-2"

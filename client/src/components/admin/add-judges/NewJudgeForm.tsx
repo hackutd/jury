@@ -80,7 +80,7 @@ const NewJudgeForm = () => {
                     <Checkbox checked={noSend} onChange={setNoSend}>
                         Do not send an email
                     </Checkbox>
-                    <Button type="primary" onClick={submit} full flat className="py-1 rounded-md">
+                    <Button type="primary" onClick={submit} full className="py-1 rounded-md">
                         Add
                     </Button>
                 </div>

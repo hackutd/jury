@@ -65,7 +65,6 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                         <Button
                             type="primary"
                             onClick={() => navigate('/admin/log')}
-                            small
                             bold
                             className="py-2 basis-1/2 grow-0 shrink-0"
                         >
@@ -84,7 +83,6 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                                     onClick={setSwapPopup.bind(null, true)}
                                     disabled={clock.running}
                                     tooltip="Groups can only be swapped when judging is paused"
-                                    small
                                     bold
                                     className="py-2"
                                 >
@@ -106,7 +104,6 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                         <Button
                             type={options.deliberation ? 'outline' : 'error'}
                             onClick={setDeliberationPopup.bind(null, true)}
-                            small
                             bold
                             tooltip="Stop judges from editing their rankings during deliberation"
                             className="py-2 basis-1/2 grow-0 shrink-0"

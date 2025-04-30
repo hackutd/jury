@@ -95,7 +95,7 @@ const AddSelf = () => {
                     large
                     className="mt-2 mb-8"
                 />
-                <Button type="primary" onClick={createJudge} flat>
+                <Button type="primary" onClick={createJudge}>
                     Submit
                 </Button>
                 <Loading disabled={loaded} />

@@ -6,7 +6,7 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import ProjectDisplay from '../../components/judge/ProjectDisplay';
 import Button from '../../components/Button';
-import FinishPopup from '../../components/judge/popups/VotePopup';
+import FinishPopup from '../../components/judge/popups/FinishPopup';
 import Back from '../../components/Back';
 import JudgeInfoPage from '../../components/judge/JudgeInfoPage';
 import InfoPopup from '../../components/InfoPopup';
@@ -287,7 +287,7 @@ const JudgeLive = () => {
     }
 
     // Open popup when clicked
-    const openPopup = (pop: VotePopupState) => {
+    const openPopup = (pop: JudgePopupState) => {
         // Pause the timer before opening popup
         pauseTimer();
 

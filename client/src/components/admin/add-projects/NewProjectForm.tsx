@@ -69,7 +69,7 @@ const NewProjectForm = () => {
                         text={challengeList}
                         setText={setChallengeList}
                     />
-                    <Button type="primary" onClick={submit} full flat className="py-1 rounded-md">
+                    <Button type="primary" onClick={submit} full className="py-1 rounded-md">
                         Add
                     </Button>
                 </div>
