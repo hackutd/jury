@@ -3,8 +3,7 @@ import StatBlock from '../StatBlock';
 import { useAdminStore } from '../../store';
 import AdminClock from './AdminClock';
 
-// Displays the admin stats, will be hidden on mobile
-const AdminStatsPanel = () => {
+const AdminStatsPanelMobile = () => {
     const stats = useAdminStore((state) => state.stats);
     const fetchStats = useAdminStore((state) => state.fetchStats);
 
@@ -14,18 +13,16 @@ const AdminStatsPanel = () => {
     }, []);
 
     return (
-        <div className="hidden md:flex flex-row mt-8 w-full">
-            <div className="flex justify-evenly basis-2/5">
-                <StatBlock name="Projects" value={stats.projects} />
-                <StatBlock name="Avg Project Seen" value={stats.avg_project_seen} />
-            </div>
+        <div className="flex md:hidden flex-col mt-4 w-full gap-2">
             <AdminClock />
-            <div className="flex justify-evenly basis-2/5">
-                <StatBlock name="Average Judge Seen" value={stats.avg_judge_seen} />
+            <div className="grid grid-cols-2 gap-2">
+                <StatBlock name="Projects" value={stats.projects} />
                 <StatBlock name="Judges" value={stats.judges} />
+                <StatBlock name="Avg Project Seen" value={stats.avg_project_seen} />
+                <StatBlock name="Average Judge Seen" value={stats.avg_judge_seen} />
             </div>
         </div>
     );
 };
 
-export default AdminStatsPanel;
+export default AdminStatsPanelMobile;

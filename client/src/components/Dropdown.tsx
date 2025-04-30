@@ -25,7 +25,7 @@ const Dropdown = (props: DropdownProps) => {
     return (
         <select
             className={twMerge(
-                'border-2 pl-2 border-solid border-lightest outline-none focus:outline-none rounded-md bg-background cursor-pointer hover:bg-backgroundDark duration-150 text-light',
+                'border-[2.5px] pl-2 border-solid border-lightest outline-none focus:outline-none rounded-md bg-background cursor-pointer hover:bg-backgroundDark duration-150 text-light',
                 props.large && 'text-xl',
                 props.className
             )}

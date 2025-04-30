@@ -88,7 +88,7 @@ const Button = (props: ButtonProps) => {
             {props.children}
         </button>
     ) : props.href ? (
-        <a href={props.href || ''} className={formatting + ' block'} title={props.tooltip}>
+        <a href={props.href || ''} className={formatting + ' block py-2'} title={props.tooltip}>
             {props.children}
         </a>
     ) : (
