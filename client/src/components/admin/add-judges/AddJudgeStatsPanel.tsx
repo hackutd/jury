@@ -15,7 +15,6 @@ const AddJudgeStatsPanel = () => {
             <div className="flex justify-evenly basis-2/5">
                 <StatBlock name="Total Judges" value={stats.num} />
                 <StatBlock name="Average Seen" value={stats.avg_seen} />
-                <StatBlock name="Active Judges" value={stats.num_active} />
             </div>
         </div>
     );

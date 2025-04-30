@@ -119,7 +119,7 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                             type="outline"
                             bold
                             href={props.showProjects ? '/admin/add-projects' : '/admin/add-judges'}
-                            className="text-md md:text-xl px-2 md:px-6"
+                            className="text-md md:text-xl px-2 md:px-6 py-1"
                         >
                             Add {props.showProjects ? 'Projects' : 'Judges'}
                         </Button>

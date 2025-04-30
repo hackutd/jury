@@ -57,8 +57,8 @@ const NewJudgeForm = () => {
         <Card>
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Judge</h1>
-                <div className="flex flex-col w-full space-y-2">
-                    <div className="flex flex-row w-full mt-4 space-x-6">
+                <div className="flex flex-col w-full gap-2">
+                    <div className="flex flex-col md:flex-row w-full mt-4 gap-2 md:gap-6">
                         <TextInput label="Name" text={name} setText={setName} full />
                         <TextInput label="Email" text={email} setText={setEmail} full />
                     </div>

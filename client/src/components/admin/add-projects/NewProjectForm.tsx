@@ -50,7 +50,7 @@ const NewProjectForm = () => {
                     <TextInput label="Name" text={name} setText={setName} />
                     <TextArea label="Description" value={description} setValue={setDescription} />
                     <TextInput label="URL" text={url} setText={setUrl} />
-                    <div className="flex flex-row w-full mt-4 space-x-6">
+                    <div className="flex flex-col md:flex-row w-full mt-4 md:gap-6">
                         <TextInput
                             label='"Try It" Link (optional)'
                             text={tryLink}
@@ -69,7 +69,7 @@ const NewProjectForm = () => {
                         text={challengeList}
                         setText={setChallengeList}
                     />
-                    <Button type="primary" onClick={submit} full className="py-1 rounded-md">
+                    <Button type="primary" onClick={submit} full>
                         Add
                     </Button>
                 </div>

@@ -68,7 +68,7 @@ const Button = (props: ButtonProps) => {
     const widthFormat = props.full && 'w-full';
 
     // Large style button
-    const largeFormat = props.large && 'w-3/4 md:w-2/3 px-8 py-3'
+    const largeFormat = props.large && 'w-3/4 md:w-2/3 px-8 py-3';
 
     // Combine all formats
     const formatting = twMerge(
@@ -88,8 +88,8 @@ const Button = (props: ButtonProps) => {
             {props.children}
         </button>
     ) : props.href ? (
-        <a href={props.href || ''} className={formatting + ' block py-2'} title={props.tooltip}>
-            {props.children}
+        <a href={props.href || ''} className={formatting + ' block'} title={props.tooltip}>
+            <div className="h-full flex items-center justify-center">{props.children}</div>
         </a>
     ) : (
         <button className={formatting} onClick={props.onClick} title={props.tooltip}>
