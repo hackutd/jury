@@ -115,7 +115,7 @@ const MovePopup = (props: MovePopupProps) => {
                     </p>
                 )}
                 <TextInput
-                    placeholder="New group"
+                    label="New group"
                     text={newGroup}
                     setText={setNewGroup}
                     large

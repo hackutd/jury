@@ -1,8 +1,11 @@
 import { twMerge } from 'tailwind-merge';
 
 interface TextInputProps {
-    /* Placeholder of the field */
-    placeholder: string;
+    /* Label for the field */
+    label: string;
+
+    /* Placeholder for the field */
+    placeholder?: string;
 
     /* State variable for input */
     text: string | number;
@@ -30,21 +33,31 @@ interface TextInputProps {
 
 const TextInput = (props: TextInputProps) => {
     return (
-        <input
-            type={props.number ? 'number' : 'text'}
+        <div
             className={twMerge(
-                'w-auto h-10 px-2 text-md rounded-sm border-lightest border-2 focus:border-primary outline-none',
+                'flex flex-col w-auto',
                 props.full && 'w-full',
-                props.large && 'text-xl h-12',
                 props.className
             )}
-            placeholder={props.placeholder}
-            defaultValue={props.defaultValue}
-            value={props.text}
-            onChange={(e) =>
-                props.setText(props.number ? Number(e.target.value) : (e.target.value as any))
-            }
-        />
+        >
+            <label htmlFor={props.label} className="text-sm text-light mb-[2px]">
+                {props.label}
+            </label>
+            <input
+                id={props.label}
+                type={props.number ? 'number' : 'text'}
+                className={twMerge(
+                    'w-full h-10 px-2 text-md rounded-sm border-lightest border-2 focus:border-primary outline-none',
+                    props.large && 'text-xl h-12'
+                )}
+                placeholder={props.placeholder || props.label}
+                defaultValue={props.defaultValue}
+                value={props.text}
+                onChange={(e) =>
+                    props.setText(props.number ? Number(e.target.value) : (e.target.value as any))
+                }
+            />
+        </div>
     );
 };
 

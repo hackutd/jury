@@ -3,6 +3,7 @@ import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../../sto
 import HeaderEntry from './HeaderEntry';
 import { JudgeSortField } from '../../../enums';
 import JudgeRow from './JudgeRow';
+import AdminTable from './AdminTable';
 
 const JudgesTable = () => {
     const unsortedJudges = useAdminStore((state) => state.judges);
@@ -98,58 +99,54 @@ const JudgesTable = () => {
     };
 
     return (
-        <div className="w-full px-8 pb-4">
-            <table className="table-fixed w-full text-lg">
-                <tbody>
-                    <tr>
-                        <th className="w-12"></th>
-                        <HeaderEntry
-                            name="Name"
-                            updateSort={updateSort}
-                            sortField={JudgeSortField.Name}
-                            sortState={sortState}
-                            align="left"
-                        />
-                        <HeaderEntry
-                            name="Code"
-                            updateSort={updateSort}
-                            sortField={JudgeSortField.Code}
-                            sortState={sortState}
-                        />
-                        {options.multi_group && selectedTrack === '' && (
-                            <HeaderEntry
-                                name="Group"
-                                updateSort={updateSort}
-                                sortField={JudgeSortField.Group}
-                                sortState={sortState}
-                            />
-                        )}
-                        <HeaderEntry
-                            name="Seen"
-                            updateSort={updateSort}
-                            sortField={JudgeSortField.Seen}
-                            sortState={sortState}
-                        />
-                        <HeaderEntry
-                            name="Curr Proj"
-                            updateSort={updateSort}
-                            sortField={JudgeSortField.Curr}
-                            sortState={sortState}
-                        />
-                        <HeaderEntry
-                            name="Updated"
-                            updateSort={updateSort}
-                            sortField={JudgeSortField.Updated}
-                            sortState={sortState}
-                        />
-                        <th className="text-right w-24">Actions</th>
-                    </tr>
-                    {judges.map((judge: Judge, idx) => (
-                        <JudgeRow key={idx} idx={idx} judge={judge} />
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <AdminTable>
+            <tr>
+                <th className="w-12"></th>
+                <HeaderEntry
+                    name="Name"
+                    updateSort={updateSort}
+                    sortField={JudgeSortField.Name}
+                    sortState={sortState}
+                    align="left"
+                />
+                <HeaderEntry
+                    name="Code"
+                    updateSort={updateSort}
+                    sortField={JudgeSortField.Code}
+                    sortState={sortState}
+                />
+                {options.multi_group && selectedTrack === '' && (
+                    <HeaderEntry
+                        name="Group"
+                        updateSort={updateSort}
+                        sortField={JudgeSortField.Group}
+                        sortState={sortState}
+                    />
+                )}
+                <HeaderEntry
+                    name="Seen"
+                    updateSort={updateSort}
+                    sortField={JudgeSortField.Seen}
+                    sortState={sortState}
+                />
+                <HeaderEntry
+                    name="Curr Proj"
+                    updateSort={updateSort}
+                    sortField={JudgeSortField.Curr}
+                    sortState={sortState}
+                />
+                <HeaderEntry
+                    name="Updated"
+                    updateSort={updateSort}
+                    sortField={JudgeSortField.Updated}
+                    sortState={sortState}
+                />
+                <th className="text-right w-24">Actions</th>
+            </tr>
+            {judges.map((judge: Judge, idx) => (
+                <JudgeRow key={idx} idx={idx} judge={judge} />
+            ))}
+        </AdminTable>
     );
 };
 

@@ -25,7 +25,7 @@ const HeaderEntry = <T extends SortField>(props: HeaderEntryProps<T>) => {
     return (
         <th
             className={
-                'text-left py-1 cursor-pointer hover:text-primary duration-100' +
+                'text-left py-1 min-w-20 cursor-pointer hover:text-primary duration-100 sticky top-0 bg-background' +
                 (props.sortState.field === props.sortField ? ' text-primary' : ' text-black') +
                 (props.align ? ' text-' + props.align : ' text-center')
             }

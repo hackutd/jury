@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { useNavigate } from 'react-router-dom';
+import { postRequest } from '../../api';
+import { errorAlert } from '../../util';
+import { useAdminStore, useClockStore, useFlagsStore, useOptionsStore } from '../../store';
 import AdminStatsPanel from '../../components/admin/AdminStatsPanel';
 import AdminTable from '../../components/admin/tables/AdminTable';
 import AdminToggleSwitch from '../../components/admin/AdminToggleSwitch';
 import AdminToolbar from '../../components/admin/AdminToolbar';
 import JuryHeader from '../../components/JuryHeader';
 import Loading from '../../components/Loading';
-import { postRequest } from '../../api';
-import { errorAlert } from '../../util';
-import { useNavigate } from 'react-router-dom';
-import { useAdminStore, useClockStore, useFlagsStore, useOptionsStore } from '../../store';
 import ToTopButton from '../../components/ToTopButton';
 import AdminHeader from '../../components/admin/AdminHeader';
-import { Helmet } from 'react-helmet';
+import AdminStatsPanelMobile from '../../components/admin/AdminStatsPanelMobile';
+import AdminHeaderMobile from '../../components/admin/AdminHeaderMobile';
+import ProjectsTable from '../../components/admin/tables/ProjectsTable';
+import JudgesTable from '../../components/admin/tables/JudgesTable';
 
 const Admin = () => {
     const navigate = useNavigate();
@@ -74,10 +78,12 @@ const Admin = () => {
             </Helmet>
             <JuryHeader withLogout isAdmin />
             <AdminHeader />
+            <AdminHeaderMobile />
             <AdminStatsPanel />
+            <AdminStatsPanelMobile />
             <AdminToggleSwitch state={showProjects} setState={setShowProjects} />
             <AdminToolbar showProjects={showProjects} lastUpdate={lastUpdate} />
-            <AdminTable showProjects={showProjects} />
+            {showProjects ? <ProjectsTable /> : <JudgesTable />}
             <ToTopButton />
         </>
     );

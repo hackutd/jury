@@ -9,21 +9,21 @@ import { errorAlert } from '../../util';
 import MovePopup from './tables/MovePopup';
 
 const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
-    const [showFlags, setShowFlags] = useState(false);
     const options = useOptionsStore((state) => state.options);
     const selectedTrack = useOptionsStore((state) => state.selectedTrack);
     const setSelectedTrack = useOptionsStore((state) => state.setSelectedTrack);
     const fetchStats = useAdminStore((state) => state.fetchStats);
-    const selected = useAdminTableStore((state) => state.selected);
-    const setSelected = useAdminTableStore((state) => state.setSelected);
-    const [batchPopup, setBatchPopup] = useState(false);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const projects = useAdminTableStore((state) => state.projects);
-    const judges = useAdminTableStore((state) => state.judges);
-    const [movePopup, setMovePopup] = useState(false);
-    const [projectMovePopup, setProjectMovePopup] = useState(false);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
+    const selected = useAdminTableStore((state) => state.selected);
+    const setSelected = useAdminTableStore((state) => state.setSelected);
+    const projects = useAdminTableStore((state) => state.projects);
+    const judges = useAdminTableStore((state) => state.judges);
+    const [showFlags, setShowFlags] = useState(false);
+    const [batchPopup, setBatchPopup] = useState(false);
+    const [movePopup, setMovePopup] = useState(false);
+    const [projectMovePopup, setProjectMovePopup] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     // Convert date to string
     const dateToString = (date: Date) => {
@@ -104,23 +104,6 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
         reset();
     };
 
-    const move = async (group: number) => {
-        if (!selected) return;
-
-        const res = await postRequest<OkResponse>('/judge/move', 'admin', {
-            items: selectedIds,
-            group,
-        });
-        if (res.status !== 200) {
-            errorAlert(res);
-            return;
-        }
-
-        alert(`Successfully moved ${selectedIds.length} judges to group ${group}!`);
-
-        reset();
-    };
-
     const reset = () => {
         props.showProjects ? fetchProjects() : fetchJudges();
         setSelected(new Array(selected.length).fill(false));
@@ -129,46 +112,41 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
 
     return (
         <>
-            <div className="flex flex-row px-8 py-4">
-                <Button
-                    type="outline"
-                    bold
-                    small
-                    className="py-2 px-4 rounded-md"
-                    href={props.showProjects ? '/admin/add-projects' : '/admin/add-judges'}
-                >
-                    Add {props.showProjects ? 'Projects' : 'Judges'}
-                </Button>
-                {props.showProjects && (
-                    <Button
-                        type="outline"
-                        bold
-                        small
-                        className="py-2 px-4 rounded-md ml-4"
-                        onClick={() => {
-                            setShowFlags(true);
-                        }}
-                    >
-                        See All Flags
-                    </Button>
-                )}
-                {options && options.judge_tracks && (
-                    <Dropdown
-                        options={['Main Judging', ...options.tracks]}
-                        selected={selectedTrack === '' ? 'Main Judging' : selectedTrack}
-                        setSelected={setSelectedTrack}
-                        className="ml-4"
-                    />
-                )}
-                {selectedIds.length > 0 && (
-                    <div className="flex flex-row relative">
+            <div className="flex xl:flex-row flex-col md:px-8 md:py-4 gap-4">
+                <div className="flex md:flex-row flex-col md:items-start items-center gap-4">
+                    <div className="flex flex-row gap-4 h-12">
                         <Button
                             type="outline"
                             bold
-                            small
-                            className="px-4 rounded-md ml-4"
-                            onClick={setBatchPopup.bind(null, true)}
+                            href={props.showProjects ? '/admin/add-projects' : '/admin/add-judges'}
+                            className="text-md md:text-xl px-2 md:px-6 py-1"
                         >
+                            Add {props.showProjects ? 'Projects' : 'Judges'}
+                        </Button>
+                        {props.showProjects && (
+                            <Button
+                                type="outline"
+                                bold
+                                onClick={setShowFlags.bind(null, true)}
+                                className="text-md md:text-xl px-2 md:px-6"
+                            >
+                                See All Flags
+                            </Button>
+                        )}
+                    </div>
+                    {options && options.judge_tracks && (
+                        <Dropdown
+                            options={['Main Judging', ...options.tracks]}
+                            selected={selectedTrack === '' ? 'Main Judging' : selectedTrack}
+                            setSelected={setSelectedTrack}
+                            large
+                            className="text-center text-md md:text-xl h-12"
+                        />
+                    )}
+                </div>
+                {selectedIds.length > 0 && (
+                    <div className="flex flex-row relative h-12">
+                        <Button type="outline" bold onClick={setBatchPopup.bind(null, true)}>
                             Batch Ops
                         </Button>
                         <ActionsDropdown
@@ -210,7 +188,7 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                     </div>
                 )}
 
-                <p className="grow self-end text-right text-lighter">
+                <p className="grow self-end text-center w-full md:w-auto md:text-right text-lighter text-sm md:text-md">
                     Last Update: {dateToString(props.lastUpdate)}
                 </p>
             </div>

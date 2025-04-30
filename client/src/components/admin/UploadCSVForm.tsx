@@ -100,7 +100,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                     <h1 className="text-3xl">
                         Upload {props.format === 'devpost' ? 'Devpost CSV' : 'CSV'}
                     </h1>
-                    <p className="text-lg text-light">
+                    <p className="md:text-lg text-light">
                         {props.format === 'devpost'
                             ? 'Upload a CSV file exported from Devpost. Make sure you select Projects data and "do not include personal info".'
                             : `CSV should be formatted in the order of ${displayText} separated by commas; each entry should be on a new line.`}
@@ -126,7 +126,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                                     onDrop={handleDrop}
                                     onDragOver={(e) => e.preventDefault()}
                                 >
-                                    <p className="text-2xl text-center">
+                                    <p className="text-xl md:text-2xl text-center">
                                         Drag & Drop files here to upload, <br />
                                         or <span className="text-primary"> Browse Files</span>
                                     </p>
@@ -182,7 +182,6 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                                 type="primary"
                                 onClick={UploadCSV}
                                 full
-                                flat
                                 disabled={isUploading || !file || !fileName}
                                 className="py-1 rounded-md"
                             >

@@ -23,17 +23,15 @@ const JudgeQrCodes = () => {
         <Card>
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Judge by QR Code</h1>
-                <div className="flex flex-row w-full justify-center">
-                    <Button type="primary" href="/admin/qr" small className="mr-4 rounded-md">
+                <div className="flex flex-col lg:flex-row w-full justify-center gap-4">
+                    <Button type="primary" href="/admin/qr">
                         General Judges
                     </Button>
                     {options && options.judge_tracks && (
-                        <div className='flex flex-row'>
-                            <div className="h-full w-12" />
+                        <div className='flex flex-col-reverse mt-6 md:mt-0 md:flex-row justify-center lg:justify-start gap-4'>
                             <Button
                                 type="primary"
                                 href={`/admin/qr?track=${track}`}
-                                small
                                 className="rounded-md"
                             >
                                 {track} Track Judges
@@ -42,7 +40,8 @@ const JudgeQrCodes = () => {
                                 options={[...options.tracks]}
                                 selected={track}
                                 setSelected={setTrack}
-                                className="ml-4 bg-white"
+                                large
+                                className="bg-white text-center"
                             />
                         </div>
                     )}

@@ -12,13 +12,13 @@ const App = () => {
             <h2 className="text-primary text-3xl text-center font-bold mb-24">
                 {import.meta.env.VITE_JURY_NAME}
             </h2>
-            <Button href="/judge/login" type="primary">
+            <Button href="/judge/login" type="primary" large>
                 Judging Portal
             </Button>
-            <Button href="/admin/login" type="primary" className="my-4 bg-primaryLight text-black hover:bg-primaryLight hover:brightness-95 hover:text-black">
+            <Button href="/admin/login" type="primary" large className="my-4 bg-primaryLight text-black hover:bg-primaryLight hover:brightness-95 hover:text-black">
                 Admin Portal
             </Button>
-            <Button href="/expo" type="outline" className="py-2 w-3/5 md:w-1/2 text-xl">
+            <Button href="/expo" type="outline" className="px-12 py-2 text-xl">
                 Project Expo
             </Button>
         </Container>

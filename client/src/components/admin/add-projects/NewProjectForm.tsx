@@ -47,33 +47,29 @@ const NewProjectForm = () => {
             <div className="flex flex-col items-start h-full">
                 <h1 className="text-3xl mb-4">Add Project</h1>
                 <div className="flex flex-col w-full space-y-3">
-                    <TextInput placeholder="Name" text={name} setText={setName} />
-                    <TextArea
-                        placeholder="Description"
-                        value={description}
-                        setValue={setDescription}
-                    />
-                    <TextInput placeholder="URL" text={url} setText={setUrl} />
-                    <div className="flex flex-row w-full mt-4 space-x-6">
+                    <TextInput label="Name" text={name} setText={setName} />
+                    <TextArea label="Description" value={description} setValue={setDescription} />
+                    <TextInput label="URL" text={url} setText={setUrl} />
+                    <div className="flex flex-col md:flex-row w-full mt-4 md:gap-6">
                         <TextInput
-                            placeholder='"Try It" Link (optional)'
+                            label='"Try It" Link (optional)'
                             text={tryLink}
                             setText={setTryLink}
                             full
                         />
                         <TextInput
-                            placeholder="Video Link (optional)"
+                            label="Video Link (optional)"
                             text={videoLink}
                             setText={setVideoLink}
                             full
                         />
                     </div>
                     <TextInput
-                        placeholder="Challenge List (comma separated, optional)"
+                        label="Challenge List (comma separated, optional)"
                         text={challengeList}
                         setText={setChallengeList}
                     />
-                    <Button type="primary" onClick={submit} full flat className="py-1 rounded-md">
+                    <Button type="primary" onClick={submit} full>
                         Add
                     </Button>
                 </div>

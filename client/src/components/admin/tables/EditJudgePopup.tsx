@@ -51,10 +51,10 @@ const EditJudgePopup = (props: EditJudgePopupProps) => {
         >
             <h2 className="text-2xl font-bold mb-2 text-center text-primary">{props.judge.name}</h2>
             <div className="flex flex-row w-full my-3 space-x-3">
-                <TextInput placeholder="Name" text={name} setText={setName} full />
-                <TextInput placeholder="Email" text={email} setText={setEmail} full />
+                <TextInput label="Name" text={name} setText={setName} full />
+                <TextInput label="Email" text={email} setText={setEmail} full />
             </div>
-            <TextArea placeholder="Notes (optional)" value={notes} setValue={setNotes} />
+            <TextArea label="Notes (optional)" value={notes} setValue={setNotes} />
         </ConfirmPopup>
     );
 };

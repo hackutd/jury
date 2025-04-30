@@ -5,6 +5,7 @@ import HeaderEntry from './HeaderEntry';
 import { ProjectSortField } from '../../../enums';
 import { getRequest } from '../../../api';
 import { errorAlert } from '../../../util';
+import AdminTable from './AdminTable';
 
 const ProjectsTable = () => {
     const unsortedProjects = useAdminStore((state) => state.projects);
@@ -139,72 +140,68 @@ const ProjectsTable = () => {
     };
 
     return (
-        <div className="w-full px-8 pb-4">
-            <table className="table-fixed w-full text-lg">
-                <tbody>
-                    <tr>
-                        <th className="w-12"></th>
-                        <HeaderEntry
-                            name="Name"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Name}
-                            sortState={sortState}
-                            align="left"
-                        />
-                        <HeaderEntry
-                            name="Flagged"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Flagged}
-                            sortState={sortState}
-                        />
-                        <HeaderEntry
-                            name="Table Number"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.TableNumber}
-                            sortState={sortState}
-                        />
-                        {options.multi_group && selectedTrack === '' && (
-                            <HeaderEntry
-                                name="Group"
-                                updateSort={updateSort}
-                                sortField={ProjectSortField.Group}
-                                sortState={sortState}
-                            />
-                        )}
-                        {selectedTrack === '' && (
-                            <HeaderEntry
-                                name="Score"
-                                updateSort={updateSort}
-                                sortField={ProjectSortField.Score}
-                                sortState={sortState}
-                            />
-                        )}
-                        <HeaderEntry
-                            name="Stars"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Stars}
-                            sortState={sortState}
-                        />
-                        <HeaderEntry
-                            name="Seen"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Seen}
-                            sortState={sortState}
-                        />
-                        <HeaderEntry
-                            name="Updated"
-                            updateSort={updateSort}
-                            sortField={ProjectSortField.Updated}
-                            sortState={sortState}
-                        />
-                        <th className="text-right w-24">Actions</th>
-                    </tr>
-                    {projects.map((project: Project, idx) => (
-                        <ProjectRow key={idx} idx={idx} project={project} />
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <AdminTable>
+            <tr>
+                <th className="w-12"></th>
+                <HeaderEntry
+                    name="Name"
+                    updateSort={updateSort}
+                    sortField={ProjectSortField.Name}
+                    sortState={sortState}
+                    align="left"
+                />
+                <HeaderEntry
+                    name="Flagged"
+                    updateSort={updateSort}
+                    sortField={ProjectSortField.Flagged}
+                    sortState={sortState}
+                />
+                <HeaderEntry
+                    name="Table #"
+                    updateSort={updateSort}
+                    sortField={ProjectSortField.TableNumber}
+                    sortState={sortState}
+                />
+                {options.multi_group && selectedTrack === '' && (
+                    <HeaderEntry
+                        name="Group"
+                        updateSort={updateSort}
+                        sortField={ProjectSortField.Group}
+                        sortState={sortState}
+                    />
+                )}
+                {selectedTrack === '' && (
+                    <HeaderEntry
+                        name="Score"
+                        updateSort={updateSort}
+                        sortField={ProjectSortField.Score}
+                        sortState={sortState}
+                    />
+                )}
+                <HeaderEntry
+                    name="Stars"
+                    updateSort={updateSort}
+                    sortField={ProjectSortField.Stars}
+                    sortState={sortState}
+                />
+                <HeaderEntry
+                    name="Seen"
+                    updateSort={updateSort}
+                    sortField={ProjectSortField.Seen}
+                    sortState={sortState}
+                />
+                <HeaderEntry
+                    name="Updated"
+                    updateSort={updateSort}
+                    sortField={ProjectSortField.Updated}
+                    sortState={sortState}
+                />
+                <th className="text-right w-24">Actions</th>
+            </tr>
+            {projects.map((project: Project, idx) => (
+                <ProjectRow key={idx} idx={idx} project={project} />
+            ))}
+        </AdminTable>
     );
 };
 

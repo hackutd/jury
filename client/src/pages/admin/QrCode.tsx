@@ -42,7 +42,7 @@ const QrCode = () => {
                 setCode(cd);
             }
 
-            setTrack(tr);
+            setTrack(tr === '' ? 'General' : tr);
         }
 
         fetchData();
@@ -53,7 +53,6 @@ const QrCode = () => {
 
         // Generate the code
         let cd = '';
-        console.log(track);
         if (track === '') {
             const res = await postRequest<Code>('/admin/qr', 'admin', {});
             if (res.status !== 200) {
@@ -68,7 +67,6 @@ const QrCode = () => {
                 return;
             }
             cd = res.data?.qr_code as string;
-            console.log(cd);
         }
         setCode(cd);
     };
@@ -80,8 +78,6 @@ const QrCode = () => {
         const origin = window.location.origin.toString();
         const track = searchParams.get('track') ?? '';
         const url = `${origin}/add-self?code=${code}&track=${track.replace(/\s/g, '%20')}`;
-
-        console.log("track url:", url);
 
         const qrCode = qr(url);
 

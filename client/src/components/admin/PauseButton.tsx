@@ -29,8 +29,7 @@ const PauseButton = () => {
         <Button
             type="outline-primary"
             bold
-            small
-            className="w-56 ml-4 py-2"
+            className="w-56 ml-4 py-2 shrink-0"
             onClick={() => handleClick(true)}
         >
             Pause Judging
@@ -39,8 +38,7 @@ const PauseButton = () => {
         <Button
             type="primary"
             bold
-            small
-            className="w-56 ml-4 py-2"
+            className="w-56 ml-4 py-2 shrink-0"
             onClick={() => handleClick(false)}
         >
             {resumeText} Judging
