@@ -4,31 +4,29 @@ import Button from '../Button';
 import PauseButton from './PauseButton';
 import ActionsPopup from './ActionsPopup';
 
-const AdminHeader = () => {
+const AdminHeaderMobile = () => {
     const navigate = useNavigate();
     const [actionsPopup, setActionsPopup] = useState(false);
 
     return (
         <>
-            <div className="absolute top-4 w-full hidden lg:flex items-center z-0">
+            <div className="w-full flex flex-col md:flex-row lg:hidden items-center gap-2 mt-4">
                 <PauseButton />
-                <Button
-                    type="outline"
-                    onClick={() => {
-                        navigate('/admin/settings');
-                    }}
-                    bold
-                    className="ml-4 py-2"
-                >
-                    Settings
-                </Button>
-                <div className="grow mr-36 flex flex-row justify-end items-center">
+                <div className="w-full flex flex-row items-center md:justify-start justify-center py-1 md:py-2 gap-4 md:pl-4">
+                    <Button
+                        type="outline"
+                        onClick={() => {
+                            navigate('/admin/settings');
+                        }}
+                        bold
+                    >
+                        Settings
+                    </Button>
                     <Button
                         type="outline"
                         onClick={setActionsPopup.bind(null, true)}
                         bold
                         tooltip="Open actions menu"
-                        className="ml-4 py-2"
                     >
                         Actions
                     </Button>
@@ -39,4 +37,4 @@ const AdminHeader = () => {
     );
 };
 
-export default AdminHeader;
+export default AdminHeaderMobile;

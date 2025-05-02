@@ -3,9 +3,9 @@ import Container from '../Container';
 
 const AppHub = () => {
     return (
-        <div className="bg-black h-full">
+        <div className="bg-black h-screen w-full">
             <Container>
-                <h1 className="text-7xl font-bold text-center mb-8 hover:animate-wiggle cursor-pointer text-white">
+                <h1 className="text-7xl font-bold text-center mb-4 hover:animate-wiggle cursor-pointer text-white">
                     <a
                         href="https://github.com/acmutd/jury"
                         target="_blank"
@@ -18,11 +18,19 @@ const AppHub = () => {
                 <h2 className="text-primary text-3xl text-center font-bold mb-24">
                     {import.meta.env.VITE_JURY_NAME}
                 </h2>
-                <Button href="/judge/login" type="primary">
+                <Button href="/judge/login" type="primary" large>
                     Judging Portal
                 </Button>
-                <Button href="/admin/login" type="text">
+                <Button
+                    href="/admin/login"
+                    type="primary"
+                    large
+                    className="my-4 bg-primaryLight text-black hover:bg-primaryLight hover:brightness-95 hover:text-black"
+                >
                     Admin Portal
+                </Button>
+                <Button href="/expo" type="outline" className="px-12 py-2 text-xl">
+                    Project Expo
                 </Button>
             </Container>
         </div>

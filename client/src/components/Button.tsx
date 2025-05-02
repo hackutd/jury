@@ -26,11 +26,8 @@ interface ButtonProps {
     /* Full width */
     full?: boolean;
 
-    /* Small width */
-    small?: boolean;
-
-    /* Flat and long */
-    flat?: boolean;
+    /* Large button */
+    large?: boolean;
 
     /* Classname styling */
     className?: string;
@@ -44,20 +41,22 @@ interface ButtonProps {
 const Button = (props: ButtonProps) => {
     // Define formatting
     const defaultFormat =
-        'py-3 text-center text-2xl no-underline outline-none border-solid border-transparent border-[2.5px] bg-transparent text-primary hover:text-primaryDark rounded-xl';
+        'py-1 px-6 w-auto text-center text-2xl no-underline outline-none border-solid border-transparent border-[2.5px] bg-transparent text-primary hover:text-primaryDark rounded-md';
 
     // Format borders
     const borderFormat =
         props.type.indexOf('outline') !== -1 &&
         'border-lightest hover:bg-backgroundDark text-light hover:text-light';
     const primaryBorderFormat =
-        props.type === 'outline-primary' && 'border-primary text-primary hover:text-primary hover:bg-primary/20';
+        props.type === 'outline-primary' &&
+        'border-primary text-primary hover:text-primary hover:bg-primary/20';
 
     // Format text
     const typeFormat =
         props.type === 'primary'
             ? 'bg-primary text-background hover:bg-primaryDark hover:text-background'
-            : props.type === 'gold' ? 'bg-gold text-black hover:bg-goldDark hover:text-black'
+            : props.type === 'gold'
+            ? 'bg-gold text-black hover:bg-goldDark hover:text-black'
             : props.type === 'error' &&
               'bg-error text-background hover:bg-errorDark hover:text-background';
     const varFormat = !props.disabled
@@ -66,13 +65,10 @@ const Button = (props: ButtonProps) => {
 
     // Format bold and width
     const boldFormat = props.bold && 'font-bold text-xl';
-    const widthFormat = props.full
-        ? 'w-full'
-        : props.small || props.flat
-        ? 'w-auto px-6 py-1 rounded-md'
-        : 'w-3/4 md:w-2/3';
+    const widthFormat = props.full && 'w-full';
 
-    const flatFormat = props.flat && 'px-16';
+    // Large style button
+    const largeFormat = props.large && 'w-3/4 md:w-2/3 px-8 py-3';
 
     // Combine all formats
     const formatting = twMerge(
@@ -82,7 +78,7 @@ const Button = (props: ButtonProps) => {
         varFormat,
         boldFormat,
         widthFormat,
-        flatFormat,
+        largeFormat,
         props.className
     );
 
@@ -93,7 +89,7 @@ const Button = (props: ButtonProps) => {
         </button>
     ) : props.href ? (
         <a href={props.href || ''} className={formatting + ' block'} title={props.tooltip}>
-            {props.children}
+            <div className="h-full flex items-center justify-center">{props.children}</div>
         </a>
     ) : (
         <button className={formatting} onClick={props.onClick} title={props.tooltip}>

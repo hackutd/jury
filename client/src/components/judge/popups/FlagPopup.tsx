@@ -93,7 +93,7 @@ const FlagPopup = (props: FlagPopupProps) => {
                 selected={selected}
                 setSelected={setSelected}
             />
-            <Button type="primary" onClick={handleClick} className="mt-4" flat>
+            <Button type="primary" onClick={handleClick} className="mt-4">
                 Submit
             </Button>
             <div className="hidden text-gold bg-gold/10 border-gold">

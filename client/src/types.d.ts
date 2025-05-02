@@ -61,7 +61,7 @@ interface SortState<T extends SortField> {
     ascending: boolean;
 }
 
-type VotePopupState = 'vote' | 'skip' | 'flag';
+type JudgePopupState = 'vote' | 'skip' | 'flag';
 
 interface VotingProjectInfo {
     curr_name: string;

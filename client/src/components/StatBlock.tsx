@@ -10,10 +10,10 @@ const StatBlock = (props: { name: string; value: string | number; className?: st
 
     return (
         <div className={twMerge('text-center', props.className)}>
-            <div className="text-6xl">
+            <div className="text-5xl lg:text-6xl">
                 {typeof props.value === 'number' ? fixIfFloat(props.value) : props.value}
             </div>
-            <div className="text-light">{props.name}</div>
+            <div className="text-light text-sm lg:text-md">{props.name}</div>
         </div>
     );
 };

@@ -29,20 +29,20 @@ const JuryHeader = (props: JuryHeaderProps) => {
 
     const backToAdmin = () => navigate(props.backLocation ?? '/admin');
 
-    const adminCenter = props.isAdmin ? 'text-center' : '';
+    const adminCenter = props.isAdmin ? 'lg:text-center' : '';
 
     return (
         <div
             className={twMerge(
                 'px-2 relative mx-auto pt-2 md:pt-6 w-full flex flex-col bg-background',
-                props.isAdmin ? 'items-center' : 'md:w-[30rem]'
+                props.isAdmin ? 'lg:items-center md:pt-2 lg:pt-6' : 'md:w-[30rem]'
             )}
         >
             <a
                 href="/"
                 className={twMerge(
                     'font-bold hover:text-primary duration-200 block max-w-fit z-10',
-                    props.isAdmin ? 'text-5xl' : 'text-4xl',
+                    props.isAdmin ? 'lg:text-5xl text-4xl' : 'text-4xl',
                     adminCenter
                 )}
             >
@@ -51,7 +51,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
             <div
                 className={twMerge(
                     'font-bold text-primary z-10',
-                    props.isAdmin && 'text-[1.5rem]',
+                    props.isAdmin && 'lg:text-[1.5rem]',
                     adminCenter
                 )}
             >
@@ -59,7 +59,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
             </div>
             {props.withBack && (
                 <div
-                    className="absolute top-6 left-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 text-light text-xl mr-2"
+                    className="lg:absolute lg:top-6 lg:left-6 mt-2 ml-2 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 text-light text-xl mr-2"
                     onClick={backToAdmin}
                 >
                     ◂&nbsp;&nbsp;Back
@@ -70,7 +70,7 @@ const JuryHeader = (props: JuryHeaderProps) => {
                     className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center cursor-pointer border-none bg-transparent hover:scale-110 duration-200 z-10"
                     onClick={logout}
                 >
-                    <div className="text-light text-xl mr-2">Logout</div>
+                    <div className="text-light lg:text-xl text-lg mr-2">Logout</div>
                     <img className="w-4 h-4" src={logoutButton} alt="logout icon" />
                 </div>
             )}

@@ -54,7 +54,7 @@ const ActionsDropdown = (props: ActionsDropdownProps) => {
     return (
         <div
             className={twMerge(
-                'absolute flex flex-col bg-background rounded-md border-lightest border-2 font-normal text-sm z-10',
+                'absolute flex flex-col bg-background rounded-md border-lightest border-2 font-normal text-sm z-10 right-0 md:right-6',
                 props.large && 'text-lg',
                 props.className
             )}

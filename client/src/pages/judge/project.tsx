@@ -31,23 +31,23 @@ const Project = () => {
         fetchData();
     }, []);
 
+    const updateNotes = async () => {
+        const url = `/judge/notes/${project?.project_id}`;
+        const res = await putRequest<OkResponse>(url, 'judge', {
+            notes,
+        });
+        if (res.status !== 200) {
+            errorAlert(res);
+        }
+    };
+
     // Update notes with a delay for typing
     useEffect(() => {
         if (!project) return;
 
-        async function updateNotes() {
-            const url = `/judge/notes/${project?.project_id}`;
-            const res = await putRequest<OkResponse>(url, 'judge', {
-                notes,
-            });
-            if (res.status !== 200) {
-                errorAlert(res);
-            }
-        }
         const delayDebounceFn = setTimeout(updateNotes, 1000);
 
         return () => {
-            updateNotes();
             clearTimeout(delayDebounceFn);
         };
     }, [notes]);
@@ -92,7 +92,7 @@ const Project = () => {
                     </p>
                 </div>
                 <TextArea
-                    placeholder="Your notes..."
+                    label="Personal Notes"
                     value={notes}
                     setValue={setNotes}
                     className="mb-4"

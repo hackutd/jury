@@ -62,24 +62,24 @@ const EditProjectPopup = (props: EditProjectPopupProps) => {
                 {props.project.name}
             </h2>
             <div className="flex flex-col gap-3">
-                <TextInput placeholder="Name" text={name} setText={setName} full />
+                <TextInput label="Name" text={name} setText={setName} full />
                 <TextInput
-                    placeholder="Challenge List"
+                    label="Challenge List"
                     text={challengeList}
                     setText={setChallengeList}
                     full
                 />
-                <TextInput placeholder="URL" text={url} setText={setUrl} full />
+                <TextInput label="URL" text={url} setText={setUrl} full />
                 <div className="flex flex-row w-full space-x-3">
-                    <TextInput placeholder="Try Link" text={tryLink} setText={setTryLink} full />
+                    <TextInput label="Try Link" text={tryLink} setText={setTryLink} full />
                     <TextInput
-                        placeholder="Video Link"
+                        label="Video Link"
                         text={videoLink}
                         setText={setVideoLink}
                         full
                     />
                 </div>
-                <TextArea placeholder="Description" value={description} setValue={setDescription} />
+                <TextArea label="Description" value={description} setValue={setDescription} />
             </div>
         </ConfirmPopup>
     );

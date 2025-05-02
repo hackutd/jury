@@ -6,7 +6,7 @@ import Container from '../../components/Container';
 import JuryHeader from '../../components/JuryHeader';
 import ProjectDisplay from '../../components/judge/ProjectDisplay';
 import Button from '../../components/Button';
-import FinishPopup from '../../components/judge/popups/VotePopup';
+import FinishPopup from '../../components/judge/popups/FinishPopup';
 import Back from '../../components/Back';
 import JudgeInfoPage from '../../components/judge/JudgeInfoPage';
 import InfoPopup from '../../components/InfoPopup';
@@ -287,7 +287,7 @@ const JudgeLive = () => {
     }
 
     // Open popup when clicked
-    const openPopup = (pop: VotePopupState) => {
+    const openPopup = (pop: JudgePopupState) => {
         // Pause the timer before opening popup
         pauseTimer();
 
@@ -405,10 +405,11 @@ const JudgeLive = () => {
                 </div>
                 {judge.current && <ProjectDisplay judge={judge} projectId={judge.current} />}
                 {/* Dummy div for fixed text input */}
-                <div className="w-full py-2 h-10"></div>
-                <div className="fixed bottom-0 flex justify-center p-2 w-full left-0 bg-background">
+                <div className="w-full py-2 h-16"></div>
+                <div className="fixed bottom-0 flex justify-center p-2 pt-1 w-full left-0 bg-background border-t-2 border-lightest">
                     <TextInput
-                        placeholder="Personal notes..."
+                        label="Personal notes"
+                        placeholder="Write your notes here..."
                         text={notes}
                         setText={setNotes}
                         className="w-full md:w-[30rem]"

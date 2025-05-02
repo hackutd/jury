@@ -1,8 +1,11 @@
 import { twMerge } from 'tailwind-merge';
 
 interface TextAreaProps {
-    /* Placeholder of the field */
-    placeholder: string;
+    /* Label of the field */
+    label: string;
+
+    /* Placeholder for the field */
+    placeholder?: string;
 
     /* State variable for the field */
     value: string;
@@ -16,15 +19,17 @@ interface TextAreaProps {
 
 const TextArea = (props: TextAreaProps) => {
     return (
-        <textarea
-            className={twMerge(
-                'w-full p-2 text-md border-lightest border-2 rounded-sm focus:border-primary focus:border-2 focus:outline-none',
-                props.className
-            )}
-            value={props.value}
-            onChange={(e) => props.setValue(e.target.value)}
-            placeholder={props.placeholder}
-        />
+        <div className={twMerge('flex flex-col', props.className)}>
+            <label htmlFor={props.label} className="text-sm text-light mb-[2px]">
+                {props.label}
+            </label>
+            <textarea
+                className="w-full p-2 text-md border-lightest border-2 rounded-sm focus:border-primary focus:border-2 focus:outline-none"
+                value={props.value}
+                onChange={(e) => props.setValue(e.target.value)}
+                placeholder={props.placeholder || props.label}
+            />
+        </div>
     );
 };
 
