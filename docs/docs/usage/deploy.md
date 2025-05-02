@@ -105,3 +105,11 @@ If you have any issues with setting up Jury, please feel free to reach out to me
 ### Custom Domain Name
 
 Follow the provided DigitalOcean guide to deploy to a [custom domain name](https://docs.digitalocean.com/products/app-platform/how-to/manage-domains/). Make sure you use **Option 2: Using a CNAME Pointer** if have your own domain hosting set up.
+
+### Continue Reading
+
+Make sure judging is set up for Jury by reading our [Physical Judging Setup](/docs/usage/judging-setup) page. If you would like to read what judging would roughly look like, refer to the [Judging Overview](/docs/usage/overview) page. Once everything is set up correctly, you should read through the following pages for a detailed guide on how to use every part of Jury:
+
+- [Jury Admin](/docs/usage/admin)
+- [Jury Judging](/docs/usage/judging)
+- [Jury Project Expo](/docs/usage/expo)

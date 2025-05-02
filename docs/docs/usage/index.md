@@ -22,5 +22,7 @@ For other information regarding the usage of Jury, refer to these following page
 
 - [Physical Judging Setup](/docs/usage/judging-setup) - How to set up the judging space for using Jury
 - [Judging Overview](/docs/usage/overview) - A quick runthrough of how judging will look using Jury
-- [Jury Admin](/docs/usage/admin) - Information on how to use the Jury Admin interface
-- [Jury Judging](/docs/usage/judging) - Information on how to use the Jury Judging interface
+- **Jury "How-to" Guide**:
+    - [Jury Admin](/docs/usage/admin) - Information on how to use the Jury Admin interface
+    - [Jury Judging](/docs/usage/judging) - Information on how to use the Jury Judging interface
+    - [Jury Project Expo](/docs/usage/expo) - Information on how to use the Jury Project Expo interface
