@@ -17,8 +17,9 @@ interface DeletePopupProps {
     setEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+// Type guard to check if the element is a Project
 function isProject(e: DeleteElement): e is Project {
-    return 'mu' in e;
+    return 'location' in e;
 }
 
 const DeletePopup = (props: DeletePopupProps) => {
