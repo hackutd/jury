@@ -11,7 +11,7 @@ import CalloutButton from '@site/src/components/CalloutButton';
 Whether you're interested in using Jury at your own hackathon or wanting to help develop and improve the software, we're glad you're here 💙. Continue reading for information to get Jury up and running in no time for your event. If you instead want to help develop Jury, go to the [Contributing information](/docs/contributing).
 
 :::info[How does it work?]
-For a walkthrough of the judging process using Jury, check out our [Judging Walkthrough](/docs/usage/walkthrough) page. For more technical details, read about how Jury works [here](/docs/details)!
+For a walkthrough of the judging process using Jury, check out our [Judging Overview](/docs/usage/overview) page. For more technical details, read about how Jury works [here](/docs/details)!
 :::
 
 Jury is a stand-alone application used solely for the judging of hackathon projects. Follow the guide below to set up your own instance of Jury:
