@@ -40,14 +40,12 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/j
 # STEP 2: Main running container
 FROM scratch
 
-# Extra dependencies needed
-# RUN apk add --no-cache ca-certificates openssl-dev bash openssl libgcc libstdc++
-
-EXPOSE $PORT
-
 COPY --from=builder /go/bin/jury .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=client-builder /client/build /public
 COPY ./server/email.html /email.html
+
+ENV GIN_MODE=release
+EXPOSE $PORT
 
 ENTRYPOINT [ "./jury" ]
