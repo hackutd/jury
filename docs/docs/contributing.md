@@ -4,25 +4,33 @@ sidebar_position: 2
 
 # Contributing
 
-First of all, thank you for your interest in contributing to Jury! This project would not be possible without open-source developers like you. Refer to the [Github Issues Page](https://github.com/hackutd/jury/issues) to find an issue you would like to work on. Please comment on the issue and a moderator will assign you to the issue. Once you have been assigned an issue, fork the project and work on the issue assigned. Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) on Github to have your changes reviewed and ultimately merged into the project.
+First of all, thank you for your interest in contributing to Jury! This project would not be possible without open-source developers like you. Refer to the [Github Issues Page](https://github.com/hackutd/jury/issues) to find an issue you would like to work on. Once you find an issue you would like to work on, follow these steps:
 
-This page will go over how to set up the Jury development environment.
+0. Before starting with the issue, set up your development environment (see [below](#development-setup)) and get familiar with the repo (also read up on the [Technical Details](/docs/details))
+1. Please comment on the issue and a moderator will assign you to the issue
+2. Once you have been assigned an issue, fork the project and work on the issue assigned
+3. Create a [pull request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) on Github to have your changes reviewed
+4. Finally, merge your changes into the project!
 
-:::info[Only developing frontend?]
+This page will go over how to set up the Jury development environment. Again, refer to the [Technical Details](/docs/details) page for more information about the specifics of the application.
+
+## Development Setup
+
+:::tip[Only developing frontend?]
 If you are ONLY developing frontend, you will only need `yarn` and `node` to run the frontend. See the [section below](#only-running-frontend) for more information.
 :::
 
 The entire development environment is set up using [Docker Compose](https://docs.docker.com/compose/). You simply need to have Docker and Docker Compose [installed](https://docs.docker.com/compose/install/) to run the application -- no other system dependencies required! (Though it may be nice to have `node`/`go` installed for debugging in your IDE).
 
-## With Docker (Recommended!)
+### With Docker (Recommended!)
 
-Copy `.env.template` into `.env` and fill in the environmental variables (see [environmental variables](/docs/reference/envs) for more details). Once finished, run the following command to start up the dev server:
+Copy `.env.template` into `.env` and fill in the environmental variables (see [environmental variables](/docs/reference/envs) for more details). Once finished, all you have to do is run the following command to start up the dev server:
 
 ```bash
 docker compose -f docker-compose.dev.yml up
 ```
 
-This may take a while to install all files and build, but you should see the following messages in the log when they are done:
+This may take a while to download and build the first time but will be must faster on subsequent runs. You should see the following messages in the log when they are done:
 
 Frontend:
 ```
@@ -42,7 +50,7 @@ jury-dev-backend   | [GIN-debug] GET    /favicon.ico              --> github.com
 jury-dev-backend   | [GIN-debug] HEAD   /favicon.ico              --> github.com/gin-gonic/gin.(*RouterGroup).StaticFile.func1 (7 handlers)
 ```
 
-### [Alternative] Local database development
+### With Docker + Local Database
 
 If you don't want to create a MongoDB instance or don't want to work online, you can use the local database development runtime. Note that this only works offline if you've **downloaded the packages before** (ie. you need to run this with a connection at least once).
 
@@ -62,7 +70,7 @@ docker compose -f docker-compose-mongo.dev.yml up
 As with above, you will need to wait for both the backend and frontend to load. Additionally, you will have to wait for the MongoDB database to intialize and create a replica set (takes more than 10 seconds).
 
 :::warning
-Make sure you don't define `MONGODB_URI` as that takes precedence over the manual username/password definition!
+Make sure you don't define `MONGODB_URI` when using the local database. It will take precedence over the manual username/password definition!
 :::
 
 #### Connecting to the MongoDB Container (running locally)
@@ -71,17 +79,17 @@ This is only applicable if you used the `docker-compose-mongo.dev.yml` compose f
 
 To reset the database and reload the sample data, completely remove the `data` folder that the Docker compose creates.
 
-:::info[Note]
+:::note
 If you are using MongoDB Atlas, your connection string will be different. It is easier to see the data from the [MongoDB Atlas Console](https://cloud.mongodb.com/). MongoDB Atlas has connection instructions from `mongosh` [here](https://www.mongodb.com/docs/atlas/mongo-shell-connection/).
 :::
 
-## Manual Installation
+### Manual Installation
 
-Although the easiest development environment is through docker compose, you may manually start the frontend and backend separately. 
+Although the easiest development environment is through docker compose, you can manually start the frontend and backend individually. 
 
 Requirements:
 
--   [yarn](https://yarnpkg.com/)
+-   [yarn](https://yarnpkg.com/) + [Node.js](https://nodejs.org/en)
 -   [go](https://go.dev/)
 
 Copy `.env.template` into `.env` and fill in the environmental variables (same as above). Additionally, copy `client/.env.template` into `client/.env` and copy over the relavent environmental variables from `.env`. This is used to expose the correct environmental variables to the running instance of the Vite frontend as you will not have Docker compose to automatically do that for you.
@@ -144,3 +152,7 @@ This should run through all the tests and output results to `tests/test-log.txt`
 ### Design File
 
 Here is the Figma design file: https://www.figma.com/file/qwBWs4i7pJMpFbcjMffDZU/Jury-(Gavel-Plus)?node-id=8%3A100&t=xYwfPwRAUeJw9jNr-1
+
+### Technical Details
+
+Keep reading on for the [Technical Details](/docs/details):

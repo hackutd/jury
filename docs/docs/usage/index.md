@@ -8,7 +8,7 @@ import CalloutButton from '@site/src/components/CalloutButton';
 
 # Welcome!
 
-Whether you're interested in using Jury at your own hackathon or wanting to help develop and improve the software, we're glad you're here 💙. Continue reading for information to get Jury up and running in no time for your event. Or, if you're interested in setting up a development environment, go to development setup.
+Whether you're interested in using Jury at your own hackathon or wanting to help develop and improve the software, we're glad you're here 💙. Continue reading for information to get Jury up and running in no time for your event. If you instead want to help develop Jury, go to the [Contributing information](/docs/contributing).
 
 :::info[How does it work?]
 For a walkthrough of the judging process using Jury, check out our [Judging Walkthrough](/docs/usage/walkthrough) page. For more technical details, read about how Jury works [here](/docs/details)!
