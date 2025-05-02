@@ -4,26 +4,18 @@ title: Deploying for your Hackathon
 description: Step-by-step instructions for how to deploy Jury for your Hackathon
 ---
 
-# Welcome!
+# Deploying for your Hackathon
 
-Whether you're interested in using Jury at your own hackathon or wanting to help develop and improve the software, we're glad you're here 💙. Continue reading for information to get Jury up and running in no time for your event. Or, if you're interested in setting up a development environment, go to [development setup](/docs/contributing).
-
-:::info[How does it work?]
-For a walkthrough of the judging process using Jury, check out our [Judging Walkthrough](/docs/usage/walkthrough) page. For more technical details, read about how Jury works [here](/docs/details)!
-:::
-
-## Deploying for your Hackathon
-
-Jury is a stand-alone application used solely for the judging of hackathon projects. Before using Jury, make sure that your hackathon is using the [recommended physical setup](/docs/usage/judging-setup).
+Jury is a self-hosted standalone app, meant to be used solely for judging a hackathon. Digital Ocean makes this process seamless, from providing a hosting service to allowing you to add your own resources! Before using Jury, make sure that your hackathon is using the [recommended physical setup](/docs/usage/judging-setup).
 
 ### Cost?
 
-We will be deploying Jury on **Digital Ocean's [App Platform](https://www.digitalocean.com/products/app-platform)**. Jury can be built into a [Docker container](https://www.docker.com/resources/what-container/), which is perfect for serving on the App Platform. For our tier of App Platform, we are playing [$5/month](https://www.digitalocean.com/pricing/app-platform). This might sound like a lot, but Digital Ocean's pricing is **prorated hourly**. This means that (given 31 days in a month, 744 hours in a month) if you have the judging application up for 2 days (48 hours), you would be charged a whole... **32 cents**!!! And to make this deal even better, if you sign up with the referral link below, you get $200 in free Digital Ocean credits for 60 days.
+We will be deploying Jury on **Digital Ocean's [App Platform](https://www.digitalocean.com/products/app-platform)**. Jury can be built into a [Docker container](https://www.docker.com/resources/what-container/), which is perfect for serving on the App Platform. For our tier of App Platform, we are playing [$5/month](https://www.digitalocean.com/pricing/app-platform). This might sound like a lot, but Digital Ocean's pricing is **prorated hourly**. This means that (given 28 days in a month (if you go over it's free), 672 hours in a month) if you have the judging application up for 2 days (48 hours), you would be charged a whole... **36 cents**!!! And to make this deal even better, if you sign up with the referral link below, you get $200 in free Digital Ocean credits for 60 days.
 
 The only other external resource we need is a [MongoDB Atlas Database](https://www.mongodb.com/atlas/database). Luckily, MongoDB Atlas is **completely free** at its lowest tier, which is all we need. We have used it for events that exceed 1000 participants and 200+ projects being judged simultaneously, with no issues at all. The free database gives you **512 MB** of data storage, which is plenty for text-only storage.
 
 :::tip[TL;DR]
-You are paying **16 cents** per **24 hours** of hosting, plus a database that is 100% free forever for your data.
+You are paying **18 cents** per **24 hours** of hosting, plus a database that is 100% free forever for your data.
 :::
 
 ## Step 0. Set up MongoDB Atlas
@@ -113,3 +105,11 @@ If you have any issues with setting up Jury, please feel free to reach out to me
 ### Custom Domain Name
 
 Follow the provided DigitalOcean guide to deploy to a [custom domain name](https://docs.digitalocean.com/products/app-platform/how-to/manage-domains/). Make sure you use **Option 2: Using a CNAME Pointer** if have your own domain hosting set up.
+
+### Continue Reading
+
+Make sure judging is set up for Jury by reading our [Physical Judging Setup](/docs/usage/judging-setup) page. If you would like to read what judging would roughly look like, refer to the [Judging Overview](/docs/usage/overview) page. Once everything is set up correctly, you should read through the following pages for a detailed guide on how to use every part of Jury:
+
+- [Jury Admin](/docs/usage/admin)
+- [Jury Judging](/docs/usage/judging)
+- [Jury Project Expo](/docs/usage/expo)

@@ -16,26 +16,39 @@ $ yarn start
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
 
-### Build
+## Structure
 
-```
-$ yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+- Using Jury
+    - Deploying for your Hackathon
+    - Physical Judging Setup
+    - Judging Overview
+    - Jury Admin
+        - Configuration
+        - Adding Projects
+        - Adding Judges
+        - Tracks
+        - Groups
+        - Admin Dashboard
+    - Jury Judging
+        - Judge Onboarding
+        - Judging Interface
+- Contributing
+- Technical Details
+    - Frontend
+        - Routing
+        - Components
+        - Styling
+        - Misc Conventions
+    - Backend
+        - API
+        - Database
+    - Development
+        - CI/CD
+        - Github
+    - Rank Aggregation
+    - Integration (w public API)
+- Reference
+    - Frontend
+    - Backend (Private API)
+    - Public API
+    - Environmental Variables

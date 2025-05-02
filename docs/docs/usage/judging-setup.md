@@ -1,5 +1,7 @@
 ---
 sidebar_position: 2
+title: Physical Judging Setup
+description: How to set up the physical judging space to use Jury 
 ---
 
 # Physical Judging Setup

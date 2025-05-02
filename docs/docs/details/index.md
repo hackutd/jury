@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 3
 title: Technical Details
 description: The nitty-gritty details behind how Jury and its algorithm works!
 ---
