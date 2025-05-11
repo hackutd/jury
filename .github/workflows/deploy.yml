@@ -16,8 +16,7 @@ jobs:
       # Build Docker image
       - name: Build image
         run: |
-          JURY_NAME="Test Hackathon Judging" 
-          docker compose build
+          JURY_NAME="Test Hackathon Judging" docker compose build
       
       # Log into Github Container Registry
       - name: Log in to registry
