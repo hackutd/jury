@@ -1,5 +1,5 @@
 #!/bin/bash
 
 docker compose build
-docker tag jury-main michaelzhao21/jury:latest
-docker push michaelzhao21/jury:latest
+docker tag jury-main ghcr.io/hackutd/jury:latest
+docker push ghcr.io/hackutd/jury:latest

@@ -1,0 +1,43 @@
+name: Deploy Test Application
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Build Docker image
+      - name: Build image
+        run: |
+          JURY_NAME="Test Hackathon Judging" 
+          docker compose build
+      
+      # Log into Github Container Registry
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # Push Image to Github Container Registry
+      - name: Push image
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/jury
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]') # Convert to lowercase
+          docker tag jury-main $IMAGE_ID:latest
+          docker push $IMAGE_ID:latest
+
+      # Connect to server
+      - name: Restart docker container on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            docker pull ghcr.io/hackutd/jury:latest
+            docker stop jury-main && sleep 2 && docker run --rm -d --name jury-main --env-file ./jury.env -p 8083:8080 ghcr.io/hackutd/jury:latest
