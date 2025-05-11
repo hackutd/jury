@@ -1,0 +1,30 @@
+name: deploy staging
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Build Docker image
+      - name: Build image
+        run: docker compose build
+      
+      # Log into Github Container Registry
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # Push Image to Github Container Registry
+      - name: Push image
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/jury
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]') # Convert to lowercase
+          docker tag jury-main $IMAGE_ID:latest
+          docker push $IMAGE_ID:latest
