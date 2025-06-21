@@ -56,13 +56,13 @@ const config: Config = {
             items: [
                 {
                     type: 'doc',
-                    position: 'left',
+                    position: 'right',
                     docId: 'usage/deploy',
                     label: 'Get Started',
                 },
                 {
                     type: 'doc',
-                    position: 'left',
+                    position: 'right',
                     docId: '/category/reference',
                     label: 'Reference',
                 },

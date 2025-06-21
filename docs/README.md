@@ -52,3 +52,11 @@ This command starts a local development server and opens up a browser window. Mo
     - Backend (Private API)
     - Public API
     - Environmental Variables
+
+## Image Compression
+
+Use the `compress` script to compress PNGs if they are larger than 1000px please! Usage:
+
+```
+compress <path_to_image>
+```

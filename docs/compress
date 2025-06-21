@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mogrify -strip -interlace Plane -sampling-factor 4:2:0 -quality 85 -resize 1000 $1
