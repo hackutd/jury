@@ -8,7 +8,7 @@ description: A quick walkthrough of the judging process through an admin and jud
 
 It's the end of your hackathon! You've made it through the event and just have one last thing left to do: judge the projects. This isn't as easy of a task as it may seem. The list can get quite long: organizing and orientating judges, setting up judging booths for participants, distributing projects to judges, tallying up scores, and figuring out the final result, all while dealing with the chaos of the ongoing problems. It's a LOT, even for a seasoned hackathon organizer. That's why we wanted to design an all-in-one solution to handle the hassles of judging hackathons: **✨ Jury ✨**.
 
-:::warning[Note]
+:::tip[Note]
 If you haven't read the [Physical Judging Setup](/docs/usage/judging-setup) doc, you should read that first!
 :::
 
