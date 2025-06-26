@@ -23,87 +23,87 @@ Note that this uses the `getRequest` and `errorAlert` frontend methods, which ar
 
 All routes are listed in `server/router/init.go` with their respective handlers.
 
-| Path                     | Method | Auth  | Description                                     |
-| ------------------------ | ------ | ----- | ----------------------------------------------- |
-| /                        | GET    |       | Heartbeat route                                 |
-| /judge/login             | POST   |       | Login judge                                     |
-| /admin/login             | POST   |       | Log into the admin dashboard                    |
-| /judge/auth              | POST   | judge | Checks to see if judge is logged in             |
-| /admin/auth              | POST   | admin | Checks to see if admin is logged in             |
-| /judge/new               | POST   | admin | Add a new judge                                 |
-| /judge/csv               | POST   | admin | Add judges by CSV                               |
-| /judge/list              | GET    | admin | Get list of all judges                          |
-| /judge/:id               | DELETE | admin | Deletes a judge by ID                           |
-| /judge/:id               | PUT    | admin | Edit judge info                                 |
-| /admin/groups/swap       | POST   | admin | Swaps the judge groups manually                 |
-| /admin/qr                | POST   | admin | Generate add judge QR code                      |
-| /admin/qr/:track         | POST   | admin | Generate add judge to track QR code             |
-| /qr                      | GET    |       | Gets add judge QR code                          |
-| /qr/:track               | GET    |       | Gets add judge to track QR code                 |
-| /qr/add                  | POST   |       | Add judge from QR code                          |
-| /project/new             | POST   | admin | Add a new project                               |
-| /project/devpost         | POST   | admin | Upload a Devpost CSV                            |
-| /project/csv             | POST   | admin | Add projects by CSV                             |
-| /project/list            | GET    | admin | get list of all projects                        |
-| /project/:id             | DELETE | admin | Delete project by ID                            |
-| /project/:id             | PUT    | admin | Edit project info                               |
-| /admin/stats             | GET    | admin | Get all stats                                   |
-| /admin/stats/:track      | GET    | admin | Get all stats for a track                       |
-| /project/stats           | GET    | admin | Get the stats for projects                      |
-| /judge/stats             | GET    | admin | Get the stats for judges                        |
-| /admin/flags             | GET    | admin | Gets all flags                                  |
-| /admin/clock             | GET    | admin | Gets the current clock state                    |
-| /admin/clock/pause       | POST   | admin | Pauses the clock                                |
-| /admin/clock/unpause     | POST   | admin | Resumes the clock                               |
-| /admin/clock/backup      | POST   | admin | Backs up the clock to the database              |
-| /admin/started           | GET    |       | Check if the clock is running                   |
-| /admin/clock/reset       | POST   | admin | Resets the clock                                |
-| /admin/reset             | POST   | admin | Resets the entire database                      |
-| /project/reassign        | POST   | admin | Reassign all project table numbers              |
-| /project/balance-groups  | POST   | admin | Balances project group numbers                  |
-| /project/reassign        | POST   | admin | Reassign all project table numbers              |
-| /admin/timer             | GET    | judge | Gets the judge timer length                     |
-| /admin/options           | GET    | admin | Gets all config options set                     |
-| /admin/options           | POST   | admin | Sets config options                             |
-| /admin/num-groups        | POST   | admin | Sets num of groups and reassigns nums           |
-| /admin/group-sizes       | POST   | admin | Sets the size of groups and reassigns nums      |
-| /admin/block-reqs        | POST   | admin | Sets whether to block login requests            |
-| /admin/max-reqs          | POST   | admin | Sets the maximum number of logins/min           |
-| /admin/export/judges     | GET    | admin | Exports judges as a CSV                         |
-| /admin/export/projects   | GET    | admin | Exports projects as a CSV                       |
-| /admin/export/challenges | GET    | admin | Exports projects by challenge as ZIP of CSVs    |
-| /admin/export/rankings   | GET    | admin | Exports a list of rankings for each judge       |
-| /judge/hide/:id          | PUT    | admin | Hides a judge                                   |
-| /project/hide/:id        | PUT    | admin | Hides a project                                 |
-| /judge/move/:id          | PUT    | admin | Moves a judge to a different group              |
-| /project/move/:id        | PUT    | admin | Moves a project to a different group            |
-| /project/prioritize/:id  | PUT    | admin | Prioritizes a project                           |
-| /project/prioritize      | POST   | admin | Prioritizes multiple projects                   |
-| /judge/hide              | POST   | admin | Hides multiple judges                           |
-| /project/hide            | POST   | admin | Hides multiple projects                         |
-| /judge/move              | POST   | admin | Moves multiple judges to a different group      |
-| /project/move            | POST   | admin | Moves multiple projects to a different group    |
-| /admin/flag/:id          | DELETE | admin | Removes a flag                                  |
-| /admin/deliberation      | POST   | admin | Toggles deliberation mode                       |
-| /admin/log               | GET    | admin | Gets the audit log                              |
-| /judge                   | GET    | judge | Gets judge from token cookie                    |
-| /judge/welcome           | GET    | judge | Checks for `read_welcome` for a judge           |
-| /judge/welcome           | PUT    | judge | Set `read_welcome` to true for a judge          |
-| /judge/projects          | GET    | judge | Gets the list of projects a judge has seen      |
-| /judge/next              | POST   | judge | Get next project for judge to view              |
-| /judge/skip              | POST   | judge | Skips the current project with a reason         |
-| /judge/finish            | POST   | judge | Finish viewing a project                        |
-| /judge/rank              | POST   | judge | Update judge rankings                           |
-| /judge/star/:id          | PUT    | judge | Update star ranking for a project               |
-| /judge/break             | POST   | judge | Removes active project for judge (take a break) |
-| /judge/notes/:id         | PUT    | judge | Update notes for a project                      |
-| /project/:id             | GET    | judge | Gets a project by ID                            |
-| /project/count           | GET    | judge | Gets the total number of projects               |
-| /judge/project/:id       | GET    | judge | Gets a judged project by a judge                |
-| /judge/deliberation      | GET    | judge | Returns if deliberation mode is on              |
-| /project/list/public     | GET    |       | Gets a list of all projects for expo            |
-| /challenges              | GET    |       | Gets a list of all challenges                   |
-| /group-names             | GET    |       | Gets a list of all group names                  |
+| Path                                                   | Method | Auth  | Description                                     |
+| ------------------------------------------------------ | ------ | ----- | ----------------------------------------------- |
+| [/](#get-)                                             | GET    |       | Heartbeat route                                 |
+| [/judge/login](#post-judgelogin)                       | POST   |       | Login judge                                     |
+| [/admin/login](#post-adminlogin)                       | POST   |       | Log into the admin dashboard                    |
+| [/judge/auth](#post-judgeauth)                         | POST   | judge | Checks to see if judge is logged in             |
+| [/admin/auth](#post-adminauth)                         | POST   | admin | Checks to see if admin is logged in             |
+| [/judge/new](#post-judgenew)                           | POST   | admin | Add a new judge                                 |
+| [/judge/csv](#post-judgecsv)                           | POST   | admin | Add judges by CSV                               |
+| [/judge/list](#get-judgelist)                          | GET    | admin | Get list of all judges                          |
+| [/judge/:id](#delete-judgeid)                          | DELETE | admin | Deletes a judge by ID                           |
+| [/judge/:id](#put-judgeid)                             | PUT    | admin | Edit judge info                                 |
+| [/admin/groups/swap](#post-admingroupsswap)            | POST   | admin | Swaps the judge groups manually                 |
+| [/admin/qr](#post-adminqr)                             | POST   | admin | Generate add judge QR code                      |
+| [/admin/qr/:track](#post-adminqrtrack)                 | POST   | admin | Generate add judge to track QR code             |
+| [/qr](#get-qr)                                         | GET    |       | Gets add judge QR code                          |
+| [/qr/:track](#get-qrtrack)                             | GET    |       | Gets add judge to track QR code                 |
+| [/qr/add](#post-qradd)                                 | POST   |       | Add judge from QR code                          |
+| [/project/new](#post-projectnew)                       | POST   | admin | Add a new project                               |
+| [/project/devpost](#post-projectdevpost)               | POST   | admin | Upload a Devpost CSV                            |
+| [/project/csv](#post-projectcsv)                       | POST   | admin | Add projects by CSV                             |
+| [/project/list](#get-projectlist)                      | GET    | admin | get list of all projects                        |
+| [/project/:id](#delete-projectid)                      | DELETE | admin | Delete project by ID                            |
+| [/project/:id](#put-projectid)                         | PUT    | admin | Edit project info                               |
+| [/admin/stats](#get-adminstats)                        | GET    | admin | Get all stats                                   |
+| [/admin/stats/:track](#get-adminstatstrack)            | GET    | admin | Get all stats for a track                       |
+| [/project/stats](#get-projectstats)                    | GET    | admin | Get the stats for projects                      |
+| [/judge/stats](#get-judgestats)                        | GET    | admin | Get the stats for judges                        |
+| [/admin/flags](#get-adminflags)                        | GET    | admin | Gets all flags                                  |
+| [/admin/clock](#get-adminclock)                        | GET    | admin | Gets the current clock state                    |
+| [/admin/clock/pause](#post-adminclockpause)            | POST   | admin | Pauses the clock                                |
+| [/admin/clock/unpause](#post-adminclockunpause)        | POST   | admin | Resumes the clock                               |
+| [/admin/clock/backup](#post-adminclockbackup)          | POST   | admin | Backs up the clock to the database              |
+| [/admin/started](#get-adminstarted)                    | GET    |       | Check if the clock is running                   |
+| [/admin/clock/reset](#post-adminclockreset)            | POST   | admin | Resets the clock                                |
+| [/admin/reset](#post-adminreset)                       | POST   | admin | Resets the entire database                      |
+| [/project/reassign](#post-projectreassign)             | POST   | admin | Reassign all project table numbers              |
+| [/project/balance-groups](#post-projectbalance-groups) | POST   | admin | Balances project group numbers                  |
+| [/project/reassign](#post-projectreassign)             | POST   | admin | Reassign all project table numbers              |
+| [/admin/timer](#get-admintimer)                        | GET    | judge | Gets the judge timer length                     |
+| [/admin/options](#get-adminoptions)                    | GET    | admin | Gets all config options set                     |
+| [/admin/options](#post-adminoptions)                   | POST   | admin | Sets config options                             |
+| [/admin/num-groups](#post-adminnum-groups)             | POST   | admin | Sets num of groups and reassigns nums           |
+| [/admin/group-sizes](#post-admingroup-sizes)           | POST   | admin | Sets the size of groups and reassigns nums      |
+| [/admin/block-reqs](#post-adminblock-reqs)             | POST   | admin | Sets whether to block login requests            |
+| [/admin/max-reqs](#post-adminmax-reqs)                 | POST   | admin | Sets the maximum number of logins/min           |
+| [/admin/export/judges](#get-adminexportjudges)         | GET    | admin | Exports judges as a CSV                         |
+| [/admin/export/projects](#get-adminexportprojects)     | GET    | admin | Exports projects as a CSV                       |
+| [/admin/export/challenges](#get-adminexportchallenges) | GET    | admin | Exports projects by challenge as ZIP of CSVs    |
+| [/admin/export/rankings](#get-adminexportrankings)     | GET    | admin | Exports a list of rankings for each judge       |
+| [/judge/hide/:id](#put-judgehideid)                    | PUT    | admin | Hides a judge                                   |
+| [/project/hide/:id](#put-projecthideid)                | PUT    | admin | Hides a project                                 |
+| [/judge/move/:id](#put-judgemoveid)                    | PUT    | admin | Moves a judge to a different group              |
+| [/project/move/:id](#put-projectmoveid)                | PUT    | admin | Moves a project to a different group            |
+| [/project/prioritize/:id](#put-projectprioritizeid)    | PUT    | admin | Prioritizes a project                           |
+| [/project/prioritize](#post-projectprioritize)         | POST   | admin | Prioritizes multiple projects                   |
+| [/judge/hide](#post-judgehide)                         | POST   | admin | Hides multiple judges                           |
+| [/project/hide](#post-projecthide)                     | POST   | admin | Hides multiple projects                         |
+| [/judge/move](#post-judgemove)                         | POST   | admin | Moves multiple judges to a different group      |
+| [/project/move](#post-projectmove)                     | POST   | admin | Moves multiple projects to a different group    |
+| [/admin/flag/:id](#delete-adminflagid)                 | DELETE | admin | Removes a flag                                  |
+| [/admin/deliberation](#post-admindeliberation)         | POST   | admin | Toggles deliberation mode                       |
+| [/admin/log](#get-adminlog)                            | GET    | admin | Gets the audit log                              |
+| [/judge](#get-judge)                                   | GET    | judge | Gets judge from token cookie                    |
+| [/judge/welcome](#get-judgewelcome)                    | GET    | judge | Checks for `read_welcome` for a judge           |
+| [/judge/welcome](#put-judgewelcome)                    | PUT    | judge | Set `read_welcome` to true for a judge          |
+| [/judge/projects](#get-judgeprojects)                  | GET    | judge | Gets the list of projects a judge has seen      |
+| [/judge/next](#post-judgenext)                         | POST   | judge | Get next project for judge to view              |
+| [/judge/skip](#post-judgeskip)                         | POST   | judge | Skips the current project with a reason         |
+| [/judge/finish](#post-judgefinish)                     | POST   | judge | Finish viewing a project                        |
+| [/judge/rank](#post-judgerank)                         | POST   | judge | Update judge rankings                           |
+| [/judge/star/:id](#put-judgestarid)                    | PUT    | judge | Update star ranking for a project               |
+| [/judge/break](#post-judgebreak)                       | POST   | judge | Removes active project for judge (take a break) |
+| [/judge/notes/:id](#put-judgenotesid)                  | PUT    | judge | Update notes for a project                      |
+| [/project/:id](#get-projectid)                         | GET    | judge | Gets a project by ID                            |
+| [/project/count](#get-projectcount)                    | GET    | judge | Gets the total number of projects               |
+| [/judge/project/:id](#get-judgeprojectid)              | GET    | judge | Gets a judged project by a judge                |
+| [/judge/deliberation](#get-judgedeliberation)          | GET    | judge | Returns if deliberation mode is on              |
+| [/project/list/public](#get-projectlistpublic)         | GET    |       | Gets a list of all projects for expo            |
+| [/challenges](#get-challenges)                         | GET    |       | Gets a list of all challenges                   |
+| [/group-names](#get-group-names)                       | GET    |       | Gets a list of all group names                  |
 
 ## Response Types
 
@@ -135,8 +135,8 @@ Errors will return with a non-success status (generally 4xx).
 
 Heartbeat route
 
-- **Auth**: none
-- **Response**: OK response
+-   **Auth**: none
+-   **Response**: OK response
 
 ## Login Routes
 
@@ -144,8 +144,8 @@ Heartbeat route
 
 Login judge
 
-- **Auth**: none
-- **Body**: JSON
+-   **Auth**: none
+-   **Body**: JSON
 
 ```json
 {
@@ -153,7 +153,7 @@ Login judge
 }
 ```
 
-- **Response**: JSON
+-   **Response**: JSON
 
 ```json
 {
@@ -163,10 +163,10 @@ Login judge
 
 ### POST /admin/login
 
-Log into the admin dashboard                    
+Log into the admin dashboard
 
-- **Auth**: none
-- **Body**: JSON
+-   **Auth**: none
+-   **Body**: JSON
 
 ```json
 {
@@ -174,21 +174,21 @@ Log into the admin dashboard
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ### POST /judge/auth
 
 Checks to see if judge is logged in
 
-- **Auth**: judge
-- **Response**: OK response
+-   **Auth**: judge
+-   **Response**: OK response
 
 ### POST /admin/auth
 
 Checks to see if admin is logged in
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ## Admin Panel (Judges) Routes
 
@@ -196,8 +196,8 @@ Checks to see if admin is logged in
 
 Add a new judge
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -207,25 +207,25 @@ Add a new judge
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ### POST /judge/csv
 
 Add judges by CSV
 
-- **Auth**: admin
-- **Body**: FormData
-    - `csv`: CSV file
-    - `hasHeader`: Boolean, true if CSV has a header
-    - `noSend`: Don't send email to judge if true
-- **Response**: OK response
+-   **Auth**: admin
+-   **Body**: FormData
+    -   `csv`: CSV file
+    -   `hasHeader`: Boolean, true if CSV has a header
+    -   `noSend`: Don't send email to judge if true
+-   **Response**: OK response
 
 ### GET /judge/list
 
 Get list of all judges
 
-- **Auth**: admin
-- **Response**: JSON | list of judges
+-   **Auth**: admin
+-   **Response**: JSON List
 
 ```json
 [
@@ -254,10 +254,7 @@ Get list of all judges
                 "description": "String"
             }
         ],
-        "rankings": [
-            "ObjectId",
-            "ObjectId | and so on for each ranked project"
-        ],
+        "rankings": ["ObjectId", "ObjectId | and so on for each ranked project"],
         "last_activity": "DateTime"
     }
 ]
@@ -267,16 +264,16 @@ Get list of all judges
 
 Deletes a judge by ID
 
-- **Auth**: admin
-- **Parameter**: ID, the ID of the judge to delete
-- **Response**: OK response
+-   **Auth**: admin
+-   **Parameter**: ID, the ID of the judge to delete
+-   **Response**: OK response
 
 ### PUT /judge/\:id
 
 Edit judge info
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -286,21 +283,21 @@ Edit judge info
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ### POST /admin/groups/swap
 
 Swaps the judge groups manually
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### POST /admin/qr
 
 Generate add judge QR code
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 {
@@ -312,8 +309,8 @@ Generate add judge QR code
 
 Generate add judge to track QR code
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 {
@@ -325,8 +322,8 @@ Generate add judge to track QR code
 
 Gets add judge QR code
 
-- **Auth**: none
-- **Response**: JSON
+-   **Auth**: none
+-   **Response**: JSON
 
 ```json
 {
@@ -338,8 +335,8 @@ Gets add judge QR code
 
 Gets add judge to track QR code
 
-- **Auth**: none
-- **Response**: JSON
+-   **Auth**: none
+-   **Response**: JSON
 
 ```json
 {
@@ -351,8 +348,8 @@ Gets add judge to track QR code
 
 Add judge from QR code
 
-- **Auth**: none
-- **Body**: JSON
+-   **Auth**: none
+-   **Body**: JSON
 
 ```json
 {
@@ -363,7 +360,7 @@ Add judge from QR code
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ## Admin Panel (Projects) Routes
 
@@ -371,8 +368,8 @@ Add judge from QR code
 
 Add a new project
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -381,37 +378,37 @@ Add a new project
     "url": "String",
     "try_link": "String",
     "video_link": "String",
-    "challenge_list": "String | comma-separated list of challenges/tracks",
+    "challenge_list": "String | comma-separated list of challenges/tracks"
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ### POST /project/devpost
 
 Upload a Devpost CSV
 
-- **Auth**: admin
-- **Body**: FormData
-    - `csv`: CSV file
-- **Response**: 
+-   **Auth**: admin
+-   **Body**: FormData
+    -   `csv`: CSV file
+-   **Response**:
 
 ### POST /project/csv
 
 Add projects by CSV
 
-- **Auth**: admin
-- **Body**: FormData
-    - `csv`: CSV file
-    - `hasHeader`: Boolean, true if CSV has a header
-- **Response**: OK response
+-   **Auth**: admin
+-   **Body**: FormData
+    -   `csv`: CSV file
+    -   `hasHeader`: Boolean, true if CSV has a header
+-   **Response**: OK response
 
 ### GET /project/list
 
 get list of all projects
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 [
@@ -427,13 +424,13 @@ get list of all projects
         "seen": "int",
         "track_seen": {
             "track1": "int",
-            "track2": "int",
+            "track2": "int"
         },
         "score": "int",
         "stars": "int",
         "track_stars": {
             "track1": "int",
-            "track2": "int",
+            "track2": "int"
         },
         "active": "bool",
         "prioritized": "bool",
@@ -447,16 +444,16 @@ get list of all projects
 
 Delete project by ID
 
-- **Auth**: admin
-- **Parameter**: ID of project to delete
-- **Response**: OK response
+-   **Auth**: admin
+-   **Parameter**: ID of project to delete
+-   **Response**: OK response
 
 ### PUT /project/\:id
 
 Edit project info
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -465,11 +462,11 @@ Edit project info
     "url": "String",
     "try_link": "String",
     "video_link": "String",
-    "challenge_list": "String | comma-separated list of challenges/tracks",
+    "challenge_list": "String | comma-separated list of challenges/tracks"
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ## Admin Panel (Stats/Data) Routes
 
@@ -477,8 +474,8 @@ Edit project info
 
 Get all stats
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 {
@@ -493,9 +490,9 @@ Get all stats
 
 Get all stats for a track
 
-- **Auth**: admin
-- **Parameter**: Track, the track to fetch stats for
-- **Response**: JSON
+-   **Auth**: admin
+-   **Parameter**: Track, the track to fetch stats for
+-   **Response**: JSON
 
 ```json
 {
@@ -510,8 +507,8 @@ Get all stats for a track
 
 Get the stats for projects
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 {
@@ -525,8 +522,8 @@ Get the stats for projects
 
 Get the stats for judges
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 {
@@ -540,8 +537,8 @@ Get the stats for judges
 
 Gets all flags
 
-- **Auth**: admin
-- **Response**: JSON List
+-   **Auth**: admin
+-   **Response**: JSON List
 
 ```json
 [
@@ -564,8 +561,8 @@ Gets all flags
 
 Gets the current clock state
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 {
@@ -578,29 +575,29 @@ Gets the current clock state
 
 Pauses the clock
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### POST /admin/clock/unpause
 
 Resumes the clock
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### POST /admin/clock/backup
 
 Backs up the clock to the database
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### GET /admin/started
 
 Check if the clock is running
 
-- **Auth**: admin
-- **Response**: OK response (1 if true)
+-   **Auth**: admin
+-   **Response**: OK response (1 if true)
 
 ## Admin Options/Settings Routes
 
@@ -608,43 +605,43 @@ Check if the clock is running
 
 Resets the clock
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### POST /admin/reset
 
 Resets the entire database
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### POST /project/reassign
 
 Reassign all project table numbers
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### POST /project/balance-groups
 
 Balances project group numbers
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### POST /project/reassign
 
 Reassign all project table numbers
 
-- **Auth**: admin
-- **Response**: OK response
+-   **Auth**: admin
+-   **Response**: OK response
 
 ### GET /admin/timer
 
 Gets the judge timer length
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 {
@@ -656,8 +653,8 @@ Gets the judge timer length
 
 Gets all config options set
 
-- **Auth**: admin
-- **Response**: JSON
+-   **Auth**: admin
+-   **Response**: JSON
 
 ```json
 {
@@ -696,8 +693,8 @@ Gets all config options set
 
 Sets config options
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -714,18 +711,18 @@ Sets config options
     "group_names": ["String"],
     "ignore_tracks": ["String"],
     "max_req_per_min": "int",
-    "block_reqs": "bool",
+    "block_reqs": "bool"
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ### POST /admin/num-groups
 
 Sets num of groups and reassigns nums
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -733,14 +730,14 @@ Sets num of groups and reassigns nums
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ### POST /admin/group-sizes
 
 Sets the size of groups and reassigns nums
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -748,14 +745,14 @@ Sets the size of groups and reassigns nums
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ### POST /admin/block-reqs
 
 Sets whether to block login requests
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -763,14 +760,14 @@ Sets whether to block login requests
 }
 ```
 
-- **Response**: OK response
+-   **Response**: OK response
 
 ### POST /admin/max-reqs
 
 Sets the maximum number of logins/min
 
-- **Auth**: admin
-- **Body**: JSON
+-   **Auth**: admin
+-   **Body**: JSON
 
 ```json
 {
@@ -778,7 +775,7 @@ Sets the maximum number of logins/min
 }
 ```
 
-- **Response**:
+-   **Response**:
 
 ## Admin Export Routes
 
@@ -786,29 +783,29 @@ Sets the maximum number of logins/min
 
 Exports judges as a CSV
 
-- **Auth**: admin
-- **Response**: CSV Blob
+-   **Auth**: admin
+-   **Response**: CSV Blob
 
 ### GET /admin/export/projects
 
 Exports projects as a CSV
 
-- **Auth**: admin
-- **Response**: CSV Blob
+-   **Auth**: admin
+-   **Response**: CSV Blob
 
 ### GET /admin/export/challenges
 
 Exports projects by challenge as ZIP of CSVs
 
-- **Auth**: admin
-- **Response**: ZIP Blob
+-   **Auth**: admin
+-   **Response**: ZIP Blob
 
 ### GET /admin/export/rankings
 
 Exports a list of rankings for each judge
 
-- **Auth**: admin
-- **Response**: CSV Blob
+-   **Auth**: admin
+-   **Response**: CSV Blob
 
 ## Admin Table Actions Routes
 
@@ -816,579 +813,457 @@ Exports a list of rankings for each judge
 
 Hides a judge
 
-- **Auth**: admin
-- **Parameter**: ID | judge ID to hide
-- **Response**: OK response
+-   **Auth**: admin
+-   **Parameter**: ID | judge ID to hide
+-   **Response**: OK response
 
 ### PUT /project/hide/\:id
 
 Hides a project
 
-- **Auth**: admin
-- **Parameter**: ID | judge ID to hide
-- **Response**: OK response
+-   **Auth**: admin
+-   **Parameter**: ID | judge ID to hide
+-   **Response**: OK response
 
 ### PUT /judge/move/\:id
 
 Moves a judge to a different group
 
-- **Auth**: admin
-- **Parameter**: ID | judge ID to hide
-- **Response**: OK response
+-   **Auth**: admin
+-   **Parameter**: ID | judge ID to hide
+-   **Response**: OK response
 
 ### PUT /project/move/\:id
 
 Moves a project to a different group
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Parameter**: ID | ID of project to move
+-   **Body**: JSON
+
+```json
+{
+    "group": "int | group number"
+}
+```
+
+-   **Response**: OK response
 
 ### PUT /project/prioritize/\:id
 
 Prioritizes a project
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Parameter**: ID | ID of project to prioritize
+-   **Body**: JSON
+
+```json
+{
+    "prioritize": "bool | true if prioritizing"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /project/prioritize
 
 Prioritizes multiple projects
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Body**: JSON
+
+```json
+{
+    "items": ["ObjectID"],
+    "prioritize": "bool | true if prioritizing"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /judge/hide
 
 Hides multiple judges
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Body**: JSON
+
+```json
+{
+    "items": ["ObjectID"],
+    "hide": "bool | true if hiding"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /project/hide
 
 Hides multiple projects
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Body**: JSON
+
+```json
+{
+    "items": ["ObjectID"],
+    "hide": "bool | true if hiding"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /judge/move
 
 Moves multiple judges to a different group
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Body**: JSON
+
+```json
+{
+    "items": ["ObjectID"],
+    "group": "int | group number"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /project/move
 
 Moves multiple projects to a different group
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Body**: JSON
+
+```json
+{
+    "items": ["ObjectID"],
+    "group": "int | group number"
+}
+```
+
+-   **Response**: OK response
 
 ### DELETE /admin/flag/\:id
 
 Removes a flag
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Parameter**: ID, the ID of the flag to delete
+-   **Response**: OK response
 
 ### POST /admin/deliberation
 
 Toggles deliberation mode
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Body**: JSON
+
+```json
+{
+    "start": "bool | true if starting deliberation"
+}
+```
+
+-   **Response**: OK response
+
+## Admin Panel (Log) Routes
 
 ### GET /admin/log
 
 Gets the audit log
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: admin
+-   **Response**: JSON
+
+```json
+{
+    "log": "String"
+}
+```
+
+## Judging Routes
 
 ### GET /judge
 
 Gets judge from token cookie
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Response**: JSON
+
+```json
+{
+    "id": "ObjectId",
+    "token": "String",
+    "code": "String",
+    "name": "String",
+    "email": "String",
+    "active": "bool",
+    "track": "String",
+    "group": "String",
+    "read_welcome": "bool",
+    "notes": "String",
+    "current": "ObjectId",
+    "last_location": "int",
+    "seen": "int",
+    "group_seen": "int",
+    "seen_projects": [
+        {
+            "project_id": "ObjectID",
+            "starred": "bool",
+            "notes": "String",
+            "name": "String",
+            "location": "int",
+            "description": "String"
+        }
+    ],
+    "rankings": ["ObjectId", "ObjectId | and so on for each ranked project"],
+    "last_activity": "DateTime"
+}
+```
 
 ### GET /judge/welcome
 
 Checks for `read_welcome` for a judge
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Response**: OK response
 
 ### PUT /judge/welcome
 
 Set `read_welcome` to true for a judge
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Response**: OK response
 
 ### GET /judge/projects
 
 Gets the list of projects a judge has seen
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Response**: JSON List
+
+```json
+[
+    {
+        "project_id": "ObjectID",
+        "name": "String",
+        "location": "int",
+        "description": "String",
+        "notes": "String",
+        "starred": "bool",
+        "url": "String"
+    }
+]
+```
 
 ### POST /judge/next
 
 Get next project for judge to view
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Response**: JSON
+
+```json
+{
+    "project_id": "ObjectID"
+}
+```
 
 ### POST /judge/skip
 
 Skips the current project with a reason
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Body**: JSON
+
+```json
+{
+    "reason": "String"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /judge/finish
 
 Finish viewing a project
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Body**: JSON
+
+```json
+{
+    "notes": "String",
+    "starred": "bool"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /judge/rank
 
 Update judge rankings
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Body**: JSON
+
+```json
+{
+    "ranking": ["ObjectID"]
+}
+```
+
+-   **Response**: OK response
 
 ### PUT /judge/star/\:id
 
 Update star ranking for a project
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Body**: JSON
+
+```json
+{
+    "starred": "bool"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /judge/break
 
 Removes active project for judge (take a break)
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Response**: OK response
 
 ### PUT /judge/notes/\:id
 
 Update notes for a project
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Parameter**: ID | ID for project to update notes for
+-   **Body**: JSON
+
+```json
+{
+    "notes": "String"
+}
+```
+
+-   **Response**: OK response
 
 ### GET /project/\:id
 
 Gets a project by ID
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Parameter**: ID | ID for project to get
+-   **Response**: JSON
+
+```json
+{
+    "id": "ObjectId",
+    "name": "String",
+    "location": "u64",
+    "description": "String",
+    "try_link": "String",
+    "video_link": "String",
+    "challenge_list": ["String"],
+    "seen": "u64",
+    "votes": "u64",
+    "mu": "f64",
+    "sigma_sq": "f64",
+    "active": "bool",
+    "prioritized": "bool",
+    "last_activity": "DateTime"
+}
+```
 
 ### GET /project/count
 
 Gets the total number of projects
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Response**: JSON
+
+```json
+{
+    "count": "int"
+}
+```
 
 ### GET /judge/project/\:id
 
 Gets a judged project by a judge
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Parameter**: ID | Project ID to get
+-   **Response**: JSON
+
+```json
+{
+    "project_id": "ObjectID",
+    "name": "String",
+    "location": "int",
+    "description": "String",
+    "notes": "String",
+    "starred": "bool",
+    "url": "String"
+}
+```
 
 ### GET /judge/deliberation
 
 Returns if deliberation mode is on
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: judge
+-   **Response**: OK response | 1 if deliberation mode is on
+
+## Project Expo Routes
 
 ### GET /project/list/public
 
 Gets a list of all projects for expo
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: none
+-   **Response**: JSON List
+
+```json
+[
+    {
+        "name": "String",
+        "location": "u64",
+        "description": "String",
+        "url": "String",
+        "try_link": "String",
+        "video_link": "String",
+        "challenge_list": ["String"],
+        "group": "int"
+    }
+]
+```
 
 ### GET /challenges
 
 Gets a list of all challenges
 
-- **Auth**: 
-- **Response**:
+-   **Auth**: none
+-   **Response**: JSON List
+
+```json
+["String | challenge 1", "String | challenge 2"]
+```
 
 ### GET /group-names
 
 Gets a list of all group names
 
-- **Auth**: 
-- **Response**:
-
-### GET /judge/list
-
-Get a list of all judges
-
-**Response**
-
-## OUTDATED DOCS!!!
-
-### POST /judge/new
-
-_Requires admin password_ | Add a singular new judge
-
-**Request Body**
+-   **Auth**: none
+-   **Response**: JSON List
 
 ```json
-{
-    "name": "String",
-    "email": "String",
-    "notes": "String"
-}
+["String | group 1", "String | group 2"]
 ```
-
-**Response**
-
--   `200 Ok`
--   Error + String
-
-### POST /judge/csv
-
-_Requires admin password_ | PREVIEW judge CSV file (does not upload)
-
-**Request Body**
-
-```
-Content-Type: multipart/form-data
-
-Fields:
-- csv: CSV file upload
-- hasHeader: Bool that is true if csv contains header
-```
-
-**Response**
-
-```json
-[
-    {
-        "name": "String",
-        "email": "String",
-        "notes": "String"
-    }
-    // ...
-]
-```
-
-or Error + String
-
-### POST /judge/csv/upload
-
-_Requires admin password_ | **Upload** judge CSV file
-
-**Request Body**
-
-```
-Content-Type: multipart/form-data
-
-Fields:
-- csv: CSV file upload
-- hasHeader: Bool that is true if csv contains header
-```
-
-**Response**
-
--   `200 Ok` + Number of added judges as String
--   Error + String
-
-### GET /judge/stats
-
-_Requires admin password_ | Get the stats to display on the add judges page
-
-**Response**
-
-```json
-{
-    "num": 0, // u64 - Total # of judges
-    "alpha": 0.0, // f64 - Average alpha of judges
-    "beta": 0.0, // f64 - Average beta of judges
-},
-```
-
-or Error + String
-
-### POST /judge/login
-
-Login request for a judge
-
-**Request Body**
-
-```json
-{
-    "code": "String (6-digit login code for judge)"
-}
-```
-
-**Response**
-
--   `200 Ok` + Token as String
--   Error + String
-
-### POST /judge/auth
-
-_Requires judge token_ | Checks to see if judge is logged in
-
-**Response**
-
--   `200 Ok` if token is valid
--   `401 Unauthorized` if token is invalid
--   `500 Internal Server Error`
-
-### GET /judge/welcome
-
-_Requires judge token_ | Checks to see if a judge has read the welcome page
-
-**Response**
-
-```json
-{
-    "ok": true // Boolean, true or false
-}
-```
-
-or Error
-
-### POST /judge/welcome
-
-_Requires judge token_ | Set the `read_welcome` field for a judge to true
-
-**Response**
-
--   `202 Accepted`
--   Error + String
-
-### GET /project/list
-
-Get a list of all projects
-
-**Response**
-
-```json
-[
-    {
-        "id": "ObjectId",
-        "name": "String",
-        "location": "u64",
-        "description": "String",
-        "try_link": "String",
-        "video_link": "String",
-        "challenge_list": ["String"],
-        "seen": "u64",
-        "votes": "u64",
-        "mu": "f64",
-        "sigma_sq": "f64",
-        "active": "bool",
-        "prioritized": "bool",
-        "last_activity": "DateTime"
-    }
-    // ...
-]
-```
-
-### POST /project/new
-
-_Requires admin password_ | Add a singular new project
-
-**Request Body**
-
-```json
-{
-    "name": "String",
-    "description": "String",
-    "try_link": "String (Optional)",
-    "video_link": "String (Optional)",
-    "challenge_list": "String (Optional)"
-}
-```
-
-**Response**
-
--   `200 Ok`
--   Error + String
-
-### POST /project/csv
-
-_Requires admin password_ | PREVIEW project CSV file (does not upload)
-
-**Request Body**
-
-```
-Content-Type: multipart/form-data
-
-Fields:
-- csv: CSV file upload
-- hasHeader: Bool that is true if csv contains header
-```
-
-**Response**
-
-```json
-[
-    {
-        "name": "String",
-        "location": "String",
-        "description": "String"
-    }
-    // ...
-]
-```
-
-or Error + String
-
-### POST /project/csv/upload
-
-_Requires admin password_ | **Upload** project CSV file
-
-**Request Body**
-
-```
-Content-Type: multipart/form-data
-
-Fields:
-- csv: CSV file upload
-- hasHeader: Bool that is true if csv contains header
-```
-
-**Response**
-
--   `200 Ok` + Number of added judges as String
--   Error + String
-
-### POST /project/devpost
-
-_Requires admin password_ | Upload CSV from devpost
-
-**Request Body**
-
-```
-Content-Type: multipart/form-data
-
-Fields:
-- csv: CSV file upload
-```
-
-**Response**
-
--   Ok 200
--   Error + String
-
-### GET /project/\:id
-
-_Requires judge token_ | Gets a project by ID
-
--   id - ID of the project
-
-**Response**
-
--   Ok 200 with project data as JSON
--   Error
-
-### POST /admin/login
-
-Login request for admins
-
-**Request Body**
-
-```json
-{
-    "password": "String (admin password)"
-}
-```
-
-**Response**
-
--   `200 Ok` + Password as String
--   Error + String
-
-### GET /admin/stats
-
-_Requires admin password_ | Get the stats to display on the admin dashboard
-
-**Response**
-
-```json
-{
-    "projects": 0, // u64 - Total # of projects
-    "seen": 0.0, // f64 - Average seen # of projects
-    "votes": 0.0, // f64 - Average votes of projects
-    "time": 0, // u64 - Current judging time in milliseconds
-    "avg_mu": 0.0, // f64 - Average mu value of projects
-    "avg_sigma": 0.0, // f64 - Average sigma^2 value of projects
-    "judges": 0 // u64 - Total # of judges
-},
-```
-
-or Error
-
-### GET /admin/sync
-
-_Requires admin password_ | Establish event stream with server
-
-**Request**
-
--   [EventStream](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
-
-**Response**
-
-```
-Content-Type: text/event-stream
-```
-
-### GET /admin/clock
-
-_Requires admin password_ | Get the current clock state
-
-**Response**
-
-```json
-{
-    "start": 0, // Start time in millis
-    "prev": 0, // Previously elapsed time, relavent if paused/previously paused
-    "paused": true // Bool, true if paused
-}
-```
-
-or Error
-
-### POST /admin/clock/pause
-
-_Requires admin password_ | Pauses the clock
-
-**Response**
-
--   Ok 200
--   InternalServerError 500 + String
-
-### POST /admin/clock/unpause
-
-_Requires admin password_ | Resumes the clock
-
-**Response**
-
--   Ok 200
--   InternalServerError 500 + String
-
-### POST /admin/clock/reset
-
-_Requires admin password_ | Resets the clock
-
-**Response**
-
--   Ok 200
--   InternalServerError 500 + String
