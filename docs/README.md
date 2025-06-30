@@ -55,7 +55,7 @@ This command starts a local development server and opens up a browser window. Mo
 
 ## Image Compression
 
-Use the `compress` script to compress PNGs if they are larger than 1000px please! Usage:
+Use the `compress` script to compress PNGs if they are larger than 1000px please! Note that you will need to install [imagemagick](https://imagemagick.org/script/download.php) to use this script. Usage:
 
 ```
 compress <path_to_image>
