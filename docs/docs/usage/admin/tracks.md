@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 5
 title: Tracks
 description: How to judge tracks/challenges with Jury
 ---

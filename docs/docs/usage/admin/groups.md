@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 title: Groups
 description: How to judge if you have multiple judging areas
 ---
