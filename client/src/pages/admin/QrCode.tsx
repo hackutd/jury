@@ -4,6 +4,7 @@ import JuryHeader from '../../components/JuryHeader';
 import { useSearchParams } from 'react-router-dom';
 import { getRequest, postRequest } from '../../api';
 import { errorAlert } from '../../util';
+import Button from '../../components/Button';
 
 const QrCode = () => {
     const [searchParams, _] = useSearchParams({ track: '' });
@@ -34,7 +35,6 @@ const QrCode = () => {
 
                 cd = res.data?.qr_code as string;
             }
-            console.log(cd)
 
             // If code is empty, generate new code
             if (cd === '') {
@@ -106,6 +106,9 @@ const QrCode = () => {
             <div className="flex items-center flex-col mt-4">
                 <h1 className="text-3xl mb-4 text-light font-bold">{track} Judging QR Code</h1>
                 <canvas width={500} height={500} ref={canvasRef} />
+                <Button type="outline" onClick={generateCode} className="mt-8">
+                    Generate New Code
+                </Button>
             </div>
         </>
     );
