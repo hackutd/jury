@@ -23,87 +23,88 @@ Note that this uses the `getRequest` and `errorAlert` frontend methods, which ar
 
 All routes are listed in `server/router/init.go` with their respective handlers.
 
-| Path                                                   | Method | Auth  | Description                                     |
-| ------------------------------------------------------ | ------ | ----- | ----------------------------------------------- |
-| [/](#get-)                                             | GET    |       | Heartbeat route                                 |
-| [/judge/login](#post-judgelogin)                       | POST   |       | Login judge                                     |
-| [/admin/login](#post-adminlogin)                       | POST   |       | Log into the admin dashboard                    |
-| [/judge/auth](#post-judgeauth)                         | POST   | judge | Checks to see if judge is logged in             |
-| [/admin/auth](#post-adminauth)                         | POST   | admin | Checks to see if admin is logged in             |
-| [/judge/new](#post-judgenew)                           | POST   | admin | Add a new judge                                 |
-| [/judge/csv](#post-judgecsv)                           | POST   | admin | Add judges by CSV                               |
-| [/judge/list](#get-judgelist)                          | GET    | admin | Get list of all judges                          |
-| [/judge/:id](#delete-judgeid)                          | DELETE | admin | Deletes a judge by ID                           |
-| [/judge/:id](#put-judgeid)                             | PUT    | admin | Edit judge info                                 |
-| [/admin/groups/swap](#post-admingroupsswap)            | POST   | admin | Swaps the judge groups manually                 |
-| [/admin/qr](#post-adminqr)                             | POST   | admin | Generate add judge QR code                      |
-| [/admin/qr/:track](#post-adminqrtrack)                 | POST   | admin | Generate add judge to track QR code             |
-| [/qr](#get-qr)                                         | GET    |       | Gets add judge QR code                          |
-| [/qr/:track](#get-qrtrack)                             | GET    |       | Gets add judge to track QR code                 |
-| [/qr/add](#post-qradd)                                 | POST   |       | Add judge from QR code                          |
-| [/project/new](#post-projectnew)                       | POST   | admin | Add a new project                               |
-| [/project/devpost](#post-projectdevpost)               | POST   | admin | Upload a Devpost CSV                            |
-| [/project/csv](#post-projectcsv)                       | POST   | admin | Add projects by CSV                             |
-| [/project/list](#get-projectlist)                      | GET    | admin | get list of all projects                        |
-| [/project/:id](#delete-projectid)                      | DELETE | admin | Delete project by ID                            |
-| [/project/:id](#put-projectid)                         | PUT    | admin | Edit project info                               |
-| [/admin/stats](#get-adminstats)                        | GET    | admin | Get all stats                                   |
-| [/admin/stats/:track](#get-adminstatstrack)            | GET    | admin | Get all stats for a track                       |
-| [/project/stats](#get-projectstats)                    | GET    | admin | Get the stats for projects                      |
-| [/judge/stats](#get-judgestats)                        | GET    | admin | Get the stats for judges                        |
-| [/admin/flags](#get-adminflags)                        | GET    | admin | Gets all flags                                  |
-| [/admin/clock](#get-adminclock)                        | GET    | admin | Gets the current clock state                    |
-| [/admin/clock/pause](#post-adminclockpause)            | POST   | admin | Pauses the clock                                |
-| [/admin/clock/unpause](#post-adminclockunpause)        | POST   | admin | Resumes the clock                               |
-| [/admin/clock/backup](#post-adminclockbackup)          | POST   | admin | Backs up the clock to the database              |
-| [/admin/started](#get-adminstarted)                    | GET    |       | Check if the clock is running                   |
-| [/admin/clock/reset](#post-adminclockreset)            | POST   | admin | Resets the clock                                |
-| [/admin/reset](#post-adminreset)                       | POST   | admin | Resets the entire database                      |
-| [/project/reassign](#post-projectreassign)             | POST   | admin | Reassign all project table numbers              |
-| [/project/balance-groups](#post-projectbalance-groups) | POST   | admin | Balances project group numbers                  |
-| [/project/reassign](#post-projectreassign)             | POST   | admin | Reassign all project table numbers              |
-| [/admin/timer](#get-admintimer)                        | GET    | judge | Gets the judge timer length                     |
-| [/admin/options](#get-adminoptions)                    | GET    | admin | Gets all config options set                     |
-| [/admin/options](#post-adminoptions)                   | POST   | admin | Sets config options                             |
-| [/admin/num-groups](#post-adminnum-groups)             | POST   | admin | Sets num of groups and reassigns nums           |
-| [/admin/group-sizes](#post-admingroup-sizes)           | POST   | admin | Sets the size of groups and reassigns nums      |
-| [/admin/block-reqs](#post-adminblock-reqs)             | POST   | admin | Sets whether to block login requests            |
-| [/admin/max-reqs](#post-adminmax-reqs)                 | POST   | admin | Sets the maximum number of logins/min           |
-| [/admin/export/judges](#get-adminexportjudges)         | GET    | admin | Exports judges as a CSV                         |
-| [/admin/export/projects](#get-adminexportprojects)     | GET    | admin | Exports projects as a CSV                       |
-| [/admin/export/challenges](#get-adminexportchallenges) | GET    | admin | Exports projects by challenge as ZIP of CSVs    |
-| [/admin/export/rankings](#get-adminexportrankings)     | GET    | admin | Exports a list of rankings for each judge       |
-| [/judge/hide/:id](#put-judgehideid)                    | PUT    | admin | Hides a judge                                   |
-| [/project/hide/:id](#put-projecthideid)                | PUT    | admin | Hides a project                                 |
-| [/judge/move/:id](#put-judgemoveid)                    | PUT    | admin | Moves a judge to a different group              |
-| [/project/move/:id](#put-projectmoveid)                | PUT    | admin | Moves a project to a different group            |
-| [/project/prioritize/:id](#put-projectprioritizeid)    | PUT    | admin | Prioritizes a project                           |
-| [/project/prioritize](#post-projectprioritize)         | POST   | admin | Prioritizes multiple projects                   |
-| [/judge/hide](#post-judgehide)                         | POST   | admin | Hides multiple judges                           |
-| [/project/hide](#post-projecthide)                     | POST   | admin | Hides multiple projects                         |
-| [/judge/move](#post-judgemove)                         | POST   | admin | Moves multiple judges to a different group      |
-| [/project/move](#post-projectmove)                     | POST   | admin | Moves multiple projects to a different group    |
-| [/admin/flag/:id](#delete-adminflagid)                 | DELETE | admin | Removes a flag                                  |
-| [/admin/deliberation](#post-admindeliberation)         | POST   | admin | Toggles deliberation mode                       |
-| [/admin/log](#get-adminlog)                            | GET    | admin | Gets the audit log                              |
-| [/judge](#get-judge)                                   | GET    | judge | Gets judge from token cookie                    |
-| [/judge/welcome](#get-judgewelcome)                    | GET    | judge | Checks for `read_welcome` for a judge           |
-| [/judge/welcome](#put-judgewelcome)                    | PUT    | judge | Set `read_welcome` to true for a judge          |
-| [/judge/projects](#get-judgeprojects)                  | GET    | judge | Gets the list of projects a judge has seen      |
-| [/judge/next](#post-judgenext)                         | POST   | judge | Get next project for judge to view              |
-| [/judge/skip](#post-judgeskip)                         | POST   | judge | Skips the current project with a reason         |
-| [/judge/finish](#post-judgefinish)                     | POST   | judge | Finish viewing a project                        |
-| [/judge/rank](#post-judgerank)                         | POST   | judge | Update judge rankings                           |
-| [/judge/star/:id](#put-judgestarid)                    | PUT    | judge | Update star ranking for a project               |
-| [/judge/break](#post-judgebreak)                       | POST   | judge | Removes active project for judge (take a break) |
-| [/judge/notes/:id](#put-judgenotesid)                  | PUT    | judge | Update notes for a project                      |
-| [/project/:id](#get-projectid)                         | GET    | judge | Gets a project by ID                            |
-| [/project/count](#get-projectcount)                    | GET    | judge | Gets the total number of projects               |
-| [/judge/project/:id](#get-judgeprojectid)              | GET    | judge | Gets a judged project by a judge                |
-| [/judge/deliberation](#get-judgedeliberation)          | GET    | judge | Returns if deliberation mode is on              |
-| [/project/list/public](#get-projectlistpublic)         | GET    |       | Gets a list of all projects for expo            |
-| [/challenges](#get-challenges)                         | GET    |       | Gets a list of all challenges                   |
-| [/group-names](#get-group-names)                       | GET    |       | Gets a list of all group names                  |
+| Path                                                   | Method | Auth  | Description                                  |
+| ------------------------------------------------------ | ------ | ----- | -------------------------------------------- |
+| [/](#get-)                                             | GET    |       | Heartbeat route                              |
+| [/judge/login](#post-judgelogin)                       | POST   |       | Login judge                                  |
+| [/admin/login](#post-adminlogin)                       | POST   |       | Log into the admin dashboard                 |
+| [/judge/auth](#post-judgeauth)                         | POST   | judge | Checks to see if judge is logged in          |
+| [/admin/auth](#post-adminauth)                         | POST   | admin | Checks to see if admin is logged in          |
+| [/judge/new](#post-judgenew)                           | POST   | admin | Add a new judge                              |
+| [/judge/csv](#post-judgecsv)                           | POST   | admin | Add judges by CSV                            |
+| [/judge/list](#get-judgelist)                          | GET    | admin | Get list of all judges                       |
+| [/judge/:id](#delete-judgeid)                          | DELETE | admin | Deletes a judge by ID                        |
+| [/judge/:id](#put-judgeid)                             | PUT    | admin | Edit judge info                              |
+| [/admin/groups/swap](#post-admingroupsswap)            | POST   | admin | Swaps the judge groups manually              |
+| [/admin/qr](#post-adminqr)                             | POST   | admin | Generate add judge QR code                   |
+| [/admin/qr/:track](#post-adminqrtrack)                 | POST   | admin | Generate add judge to track QR code          |
+| [/admin/qr](#get-adminqr)                                         | GET    | admin | Gets add judge QR code                       |
+| [/admin/qr/:track](#get-adminqrtrack)                             | GET    | admin | Gets add judge to track QR code              |
+| [/qr/check/](#post-qrcheck)                            | POST   |       | Check if QR code is right                    |
+| [/qr/check/:track](#post-qrchecktrack)                 | POST   |       | Check if track QR code is right              |
+| [/qr/add](#post-qradd)                                 | POST   |       | Add judge from QR code                       |
+| [/project/new](#post-projectnew)                       | POST   | admin | Add a new project                            |
+| [/project/devpost](#post-projectdevpost)               | POST   | admin | Upload a Devpost CSV                         |
+| [/project/csv](#post-projectcsv)                       | POST   | admin | Add projects by CSV                          |
+| [/project/list](#get-projectlist)                      | GET    | admin | get list of all projects                     |
+| [/project/:id](#delete-projectid)                      | DELETE | admin | Delete project by ID                         |
+| [/project/:id](#put-projectid)                         | PUT    | admin | Edit project info                            |
+| [/admin/stats](#get-adminstats)                        | GET    | admin | Get all stats                                |
+| [/admin/stats/:track](#get-adminstatstrack)            | GET    | admin | Get all stats for a track                    |
+| [/project/stats](#get-projectstats)                    | GET    | admin | Get the stats for projects                   |
+| [/judge/stats](#get-judgestats)                        | GET    | admin | Get the stats for judges                     |
+| [/admin/flags](#get-adminflags)                        | GET    | admin | Gets all flags                               |
+| [/admin/clock](#get-adminclock)                        | GET    | admin | Gets the current clock state                 |
+| [/admin/clock/pause](#post-adminclockpause)            | POST   | admin | Pauses the clock                             |
+| [/admin/clock/unpause](#post-adminclockunpause)        | POST   | admin | Resumes the clock                            |
+| [/admin/clock/backup](#post-adminclockbackup)          | POST   | admin | Backs up the clock to the database           |
+| [/admin/started](#get-adminstarted)                    | GET    |       | Check if the clock is running                |
+| [/admin/clock/reset](#post-adminclockreset)            | POST   | admin | Resets the clock                             |
+| [/admin/reset](#post-adminreset)                       | POST   | admin | Resets the entire database                   |
+| [/project/reassign](#post-projectreassign)             | POST   | admin | Reassign all project table numbers           |
+| [/project/balance-groups](#post-projectbalance-groups) | POST   | admin | Balances project group numbers               |
+| [/project/reassign](#post-projectreassign)             | POST   | admin | Reassign all project table numbers           |
+| [/admin/timer](#get-admintimer)                        | GET    | judge | Gets the judge timer length                  |
+| [/admin/options](#get-adminoptions)                    | GET    | admin | Gets all config options set                  |
+| [/admin/options](#post-adminoptions)                   | POST   | admin | Sets config options                          |
+| [/admin/num-groups](#post-adminnum-groups)             | POST   | admin | Sets num of groups and reassigns nums        |
+| [/admin/group-sizes](#post-admingroup-sizes)           | POST   | admin | Sets the size of groups and reassigns nums   |
+| [/admin/block-reqs](#post-adminblock-reqs)             | POST   | admin | Sets whether to block login requests         |
+| [/admin/max-reqs](#post-adminmax-reqs)                 | POST   | admin | Sets the maximum number of logins/min        |
+| [/admin/export/judges](#get-adminexportjudges)         | GET    | admin | Exports judges as a CSV                      |
+| [/admin/export/projects](#get-adminexportprojects)     | GET    | admin | Exports projects as a CSV                    |
+| [/admin/export/challenges](#get-adminexportchallenges) | GET    | admin | Exports projects by challenge as ZIP of CSVs |
+| [/admin/export/rankings](#get-adminexportrankings)     | GET    | admin | Exports a list of rankings for each judge    |
+| [/judge/hide/:id](#put-judgehideid)                    | PUT    | admin | Hides a judge                                |
+| [/project/hide/:id](#put-projecthideid)                | PUT    | admin | Hides a project                              |
+| [/judge/move/:id](#put-judgemoveid)                    | PUT    | admin | Moves a judge to a different group           |
+| [/project/move/:id](#put-projectmoveid)                | PUT    | admin | Moves a project to a different group         |
+| [/project/prioritize/:id](#put-projectprioritizeid)    | PUT    | admin | Prioritizes a project                        |
+| [/project/prioritize](#post-projectprioritize)         | POST   | admin | Prioritizes multiple projects                |
+| [/judge/hide](#post-judgehide)                         | POST   | admin | Hides multiple judges                        |
+| [/project/hide](#post-projecthide)                     | POST   | admin | Hides multiple projects                      |
+| [/judge/move](#post-judgemove)                         | POST   | admin | Moves multiple judges to a different group   |
+| [/project/move](#post-projectmove)                     | POST   | admin | Moves multiple projects to a different group |
+| [/admin/flag/:id](#delete-adminflagid)                 | DELETE | admin | Removes a flag                               |
+| [/admin/deliberation](#post-admindeliberation)         | POST   | admin | Toggles deliberation mode                    |
+| [/admin/log](#get-adminlog)                            | GET    | admin | Gets the audit log                           |
+| [/judge](#get-judge)                                   | GET    | judge | Gets judge from token cookie                 |
+| [/judge/welcome](#get-judgewelcome)                    | GET    | judge | Checks for `read_welcome` for a judge        |
+| [/judge/welcome](#put-judgewelcome)                    | PUT    | judge | Set `read_welcome` to true for a judge       |
+| [/judge/projects](#get-judgeprojects)                  | GET    | judge | Gets the list of projects a judge has seen   |
+| [/judge/next](#post-judgenext)                         | POST   | judge | Get next project for judge to view           |
+| [/judge/skip](#post-judgeskip)                         | POST   | judge | Skips the current project with a reason      |
+| [/judge/finish](#post-judgefinish)                     | POST   | judge | Finish viewing a project                     |
+| [/judge/rank](#post-judgerank)                         | POST   | judge | Update judge rankings                        |
+| [/judge/star/:id](#put-judgestarid)                    | PUT    | judge | Update star ranking for a project            |
+| [/judge/notes/:id](#put-judgenotesid)                  | PUT    | judge | Update notes for a project                   |
+| [/project/:id](#get-projectid)                         | GET    | judge | Gets a project by ID                         |
+| [/project/count](#get-projectcount)                    | GET    | judge | Gets the total number of projects            |
+| [/judge/project/:id](#get-judgeprojectid)              | GET    | judge | Gets a judged project by a judge             |
+| [/judge/deliberation](#get-judgedeliberation)          | GET    | judge | Returns if deliberation mode is on           |
+| [/project/list/public](#get-projectlistpublic)         | GET    |       | Gets a list of all projects for expo         |
+| [/challenges](#get-challenges)                         | GET    |       | Gets a list of all challenges                |
+| [/group-names](#get-group-names)                       | GET    |       | Gets a list of all group names               |
 
 ## Response Types
 
@@ -318,7 +319,7 @@ Generate add judge to track QR code
 }
 ```
 
-### GET /qr
+### GET /admin/qr
 
 Gets add judge QR code
 
@@ -331,7 +332,7 @@ Gets add judge QR code
 }
 ```
 
-### GET /qr/\:track
+### GET /admin/qr/\:track
 
 Gets add judge to track QR code
 
@@ -343,6 +344,36 @@ Gets add judge to track QR code
     "qr_code": "String"
 }
 ```
+
+### POST /qr/check
+
+Checks if QR code is correct
+
+-   **Auth**: none
+-   **Body**: JSON
+
+```json
+{
+    "code": "String"
+}
+```
+
+-   **Response**: OK response
+
+### POST /qr/check/\:track
+
+Checks if track QR code is correct
+
+-   **Auth**: none
+-   **Body**: JSON
+
+```json
+{
+    "code": "String"
+}
+```
+
+-   **Response**: OK response
 
 ### POST /qr/add
 
@@ -1130,13 +1161,6 @@ Update star ranking for a project
 }
 ```
 
--   **Response**: OK response
-
-### POST /judge/break
-
-Removes active project for judge (take a break)
-
--   **Auth**: judge
 -   **Response**: OK response
 
 ### PUT /judge/notes/\:id

@@ -21,7 +21,7 @@ The easiest way to add judges to Jury is using the QR code. This method works be
 This is convenient for the organizers as you won't need to manually add them to Jury. As judges add themselves, you should check to make sure they are registered judges (by looking at the admin dashboard). Once they fill out their name and email, judges will be sent an email with a link for them to start judging. Judges won't be able to see projects until you start judging, so you may add them to the system at any time.
 
 :::danger[Watch out!]
-Keep in mind that the QR code will let **anyone add themselves to Jury**, so make sure stray hackers don't get the QR code!
+Keep in mind that the QR code will let **anyone add themselves to Jury**, so make sure stray hackers don't get the QR code! If your QR code gets leaked, you can use the **Generate new code** button on the QR code page to change the QR code. Note that anyone who has scanned the code but have yet to add themselves to the system will have to scan the new code.
 :::
 
 ### Track QR Code
