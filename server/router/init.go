@@ -152,7 +152,6 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	judgeRouter.POST("/judge/finish", JudgeFinish)
 	judgeRouter.POST("/judge/rank", JudgeRank)
 	judgeRouter.PUT("/judge/star/:id", JudgeStar)
-	judgeRouter.POST("/judge/break", JudgeBreak)
 	judgeRouter.PUT("/judge/notes/:id", JudgeUpdateNotes)
 	judgeRouter.GET("/project/:id", GetProject)
 	judgeRouter.GET("/project/count", GetProjectCount)
