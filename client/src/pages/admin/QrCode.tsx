@@ -18,7 +18,7 @@ const QrCode = () => {
             // Get the code
             let cd = '';
             if (tr === '') {
-                const res = await getRequest<Code>('/qr', '');
+                const res = await getRequest<Code>('/admin/qr', 'admin');
                 if (res.status !== 200) {
                     errorAlert(res);
                     return;
@@ -26,7 +26,7 @@ const QrCode = () => {
 
                 cd = res.data?.qr_code as string;
             } else {
-                const res = await getRequest<Code>(`/qr/${tr}`, '');
+                const res = await getRequest<Code>(`/admin/qr/${tr}`, 'admin');
                 if (res.status !== 200) {
                     errorAlert(res);
                     return;
@@ -34,6 +34,7 @@ const QrCode = () => {
 
                 cd = res.data?.qr_code as string;
             }
+            console.log(cd)
 
             // If code is empty, generate new code
             if (cd === '') {
