@@ -868,32 +868,6 @@ func JudgeStar(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /judge/break - Allows a judge to take a break and free up their current project
-func JudgeBreak(ctx *gin.Context) {
-	// Get the state from the context
-	state := GetState(ctx)
-
-	// Get the judge from the context
-	judge := ctx.MustGet("judge").(*models.Judge)
-
-	// Error if the judge doesn't have a current project
-	if judge.Current == nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge doesn't have a current project"})
-		return
-	}
-
-	// Basically skip the project for the judge
-	err := judging.SkipCurrentProject(state.Db, judge, state.Comps, "break", false)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error skipping project: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	state.Logger.JudgeLogf(judge, "Took a break from project %s", judge.Current.Hex())
-	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-}
-
 type UpdateNotesRequest struct {
 	Notes string `json:"notes"`
 }
