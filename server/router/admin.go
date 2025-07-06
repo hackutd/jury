@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"server/config"
 	"server/database"
@@ -569,6 +570,72 @@ func GetTrackQRCode(ctx *gin.Context) {
 
 	// Send OK
 	ctx.JSON(http.StatusOK, gin.H{"qr_code": options.TrackQRCodes[track]})
+}
+
+type CheckQRRequest struct {
+	Code string `json:"code"`
+}
+
+// POST /qr/check - CheckQRCode checks to see if the QR code is right
+func CheckQRCode(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
+	// Get the request object
+	var qrReq CheckQRRequest
+	err := ctx.BindJSON(&qrReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the QR code
+	options, err := database.GetOptions(state.Db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	fmt.Println(options.QRCode)
+	fmt.Println(qrReq.Code)
+
+	// Send OK if QR code is right
+	if options.QRCode == qrReq.Code {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
+}
+
+// POST /admin/qr/:track - CheckTrackQRCode checks to see if the track QR code is right
+func CheckTrackQRCode(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
+	// Get the request object
+	var qrReq CheckQRRequest
+	err := ctx.BindJSON(&qrReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Get the track from the URL
+	track := ctx.Param("track")
+
+	// Get the QR code
+	options, err := database.GetOptions(state.Db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
+		return
+	}
+
+	// Send OK if QR code is right
+	if options.TrackQRCodes[track] == qrReq.Code {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
+	}
 }
 
 type deliberationRequest struct {

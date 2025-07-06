@@ -77,8 +77,10 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.POST("/admin/groups/swap", SwapJudgeGroups)
 	adminRouter.POST("/admin/qr", GenerateQRCode)
 	adminRouter.POST("/admin/qr/:track", GenerateTrackQRCode)
-	defaultRouter.GET("/qr", GetQRCode)
-	defaultRouter.GET("/qr/:track", GetTrackQRCode)
+	adminRouter.GET("/admin/qr", GetQRCode)
+	adminRouter.GET("/admin/qr/:track", GetTrackQRCode)
+	defaultRouter.POST("/qr/check", CheckQRCode)
+	defaultRouter.POST("/qr/check/:track", CheckTrackQRCode)
 	defaultRouter.POST("/qr/add", AddJudgeFromQR)
 
 	// Admin panel - projects
@@ -150,7 +152,6 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	judgeRouter.POST("/judge/finish", JudgeFinish)
 	judgeRouter.POST("/judge/rank", JudgeRank)
 	judgeRouter.PUT("/judge/star/:id", JudgeStar)
-	judgeRouter.POST("/judge/break", JudgeBreak)
 	judgeRouter.PUT("/judge/notes/:id", JudgeUpdateNotes)
 	judgeRouter.GET("/project/:id", GetProject)
 	judgeRouter.GET("/project/count", GetProjectCount)

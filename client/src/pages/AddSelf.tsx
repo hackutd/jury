@@ -22,29 +22,37 @@ const AddSelf = () => {
             // Get track
             const tr = searchParams.get('track') ?? '';
 
+            // Get code
+            const paramCode = searchParams.get('code');
+            if (!paramCode) {
+                alert('Code not found, please re-scan the QR code or ask an organizer.');
+                return;
+            }
+
             // Get QR code
             let correctCode;
             if (tr !== '') {
                 console.log(tr);
-                const res = await getRequest<Code>(`/qr/${tr}`, '');
+                const res = await postRequest<OkResponse>(`/qr/check/${tr}`, '', {
+                    code: paramCode,
+                });
                 if (res.status !== 200) {
                     errorAlert(res);
                     return;
                 }
 
-                correctCode = res.data?.qr_code;
+                correctCode = res.data?.ok;
             } else {
-                const res = await getRequest<Code>('/qr', '');
+                const res = await postRequest<OkResponse>('/qr/check', '', { code: paramCode });
                 if (res.status !== 200) {
                     errorAlert(res);
                     return;
                 }
-                correctCode = res.data?.qr_code;
+                correctCode = res.data?.ok;
             }
 
             // Check code
-            const paramCode = searchParams.get('code');
-            if (!paramCode || paramCode !== correctCode) {
+            if (!correctCode) {
                 alert('Invalid code, please re-scan the QR code or ask an organizer.');
                 return;
             }
