@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"server/config"
 	"server/database"
@@ -595,9 +594,6 @@ func CheckQRCode(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
 		return
 	}
-
-	fmt.Println(options.QRCode)
-	fmt.Println(qrReq.Code)
 
 	// Send OK if QR code is right
 	if options.QRCode == qrReq.Code {
