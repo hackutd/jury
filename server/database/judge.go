@@ -171,18 +171,11 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 		return errors.New("error updating judge: " + err.Error())
 	}
 
-	star := 0
-	if seenProject.Starred {
-		star = 1
-	}
-
 	incData := gin.H{}
 	if judge.Track != "" {
 		incData["track_seen."+judge.Track] = 1
-		incData["track_stars."+judge.Track] = star
 	} else {
 		incData["seen"] = 1
-		incData["stars"] = star
 	}
 
 	// Update the project's seen count
@@ -229,11 +222,11 @@ func UpdateJudgeBasicInfo(db *mongo.Database, judgeId *primitive.ObjectID, addRe
 }
 
 // UpdateJudgeRanking updates the judge's ranking array
-func UpdateJudgeRanking(db *mongo.Database, ctx context.Context, judge *models.Judge, rankings []primitive.ObjectID) error {
+func UpdateJudgeRanking(db *mongo.Database, ctx context.Context, id primitive.ObjectID, rankings []primitive.ObjectID, rankingsAgg []models.AggRanking) error {
 	_, err := db.Collection("judges").UpdateOne(
 		ctx,
-		gin.H{"_id": judge.Id},
-		gin.H{"$set": gin.H{"rankings": rankings}},
+		gin.H{"_id": id},
+		gin.H{"$set": gin.H{"rankings": rankings, "rankings_agg": rankingsAgg}},
 	)
 	return err
 }

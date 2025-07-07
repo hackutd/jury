@@ -28,6 +28,12 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 		log.Fatalf("error loading projects from the database: %s\n", err.Error())
 	}
 
+	// Recalculate aggregated scores for judges
+	err = judging.InitAggregateRankings(db)
+	if err != nil {
+		log.Fatalf("error re-calculating aggregate rankings for all judges: %s\n", err.Error())
+	}
+
 	// Get the limiter from the database
 	limiter := getLimiterFromDb(db)
 
