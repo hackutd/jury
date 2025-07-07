@@ -15,7 +15,7 @@ import RankItem from './RankItem';
 import CustomPointerSensor from './CustomPointerSensor';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useEffect, useState } from 'react';
-import { getRequest, postRequest } from '../../../api';
+import { postRequest } from '../../../api';
 import { errorAlert } from '../../../util';
 
 interface RankingProps {
@@ -86,13 +86,6 @@ const Ranking = ({ judge, deliberation }: RankingProps) => {
         const overRanked = isRankedObject(overId);
 
         setActiveDropzone(overRanked ? 'ranked' : 'unranked');
-
-        // If dragging from unranked to ranked and ranked has 5 items already, don't allow
-        if (!activeRanked && overRanked && ranked.length >= 5) {
-            setDisabled(true);
-            return;
-        }
-        setDisabled(false);
 
         // If moving to new container, swap the item to the new list
         if (activeRanked !== overRanked) {
@@ -196,7 +189,7 @@ const Ranking = ({ judge, deliberation }: RankingProps) => {
             )}
             <h2 className="text-primary text-xl font-bold mt-4">Ranked Projects</h2>
             <p className="text-light text-sm">
-                Rank at most 5 projects. Click on titles to edit scores and see details.
+                Rank as many projects as you can. Click on titles to edit scores and see details.
             </p>
             <div className="h-[1px] w-full bg-light my-2"></div>
             <Droppable

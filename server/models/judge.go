@@ -25,6 +25,7 @@ type Judge struct {
 	GroupSeen    int64                `bson:"group_seen" json:"group_seen"` // Projects seen in the group
 	SeenProjects []JudgedProject      `bson:"seen_projects" json:"seen_projects"`
 	Rankings     []primitive.ObjectID `bson:"rankings" json:"rankings"`
+	RankingsAgg  []AggRanking         `bson:"rankings_agg" json:"rankings_agg"` // Aggregation for ranking scoring
 	LastActivity primitive.DateTime   `bson:"last_activity" json:"last_activity"`
 }
 
@@ -35,6 +36,11 @@ type JudgedProject struct {
 	Name        string             `bson:"name" json:"name"`
 	Location    int64              `bson:"location" json:"location"`
 	Description string             `bson:"description" json:"description"`
+}
+
+type AggRanking struct {
+	ProjectId primitive.ObjectID `bson:"project_id,omitempty" json:"project_id"`
+	Score     int64              `bson:"score" json:"score"`
 }
 
 func NewJudge(name string, email string, track string, notes string, group int64) *Judge {
@@ -54,6 +60,7 @@ func NewJudge(name string, email string, track string, notes string, group int64
 		GroupSeen:    0,
 		SeenProjects: []JudgedProject{},
 		Rankings:     []primitive.ObjectID{},
+		RankingsAgg:  []AggRanking{},
 		LastActivity: primitive.DateTime(0),
 	}
 }
@@ -100,4 +107,11 @@ func (j *Judge) UnmarshalJSON(data []byte) error {
 	}
 	j.LastActivity = primitive.DateTime(aux.LastActivity)
 	return nil
+}
+
+func NewAggRanking(projectId primitive.ObjectID, score int64) *AggRanking {
+	return &AggRanking{
+		ProjectId: projectId,
+		Score:     score,
+	}
 }

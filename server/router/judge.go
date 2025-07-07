@@ -7,7 +7,6 @@ import (
 	"server/funcs"
 	"server/judging"
 	"server/models"
-	"server/ranking"
 	"server/util"
 
 	"github.com/gin-gonic/gin"
@@ -751,25 +750,14 @@ func JudgeRank(ctx *gin.Context) {
 			return err
 		}
 
-		// Calculate diff of scores
-		diff := ranking.CalculateScoreDiff(rankReq.Ranking, judge.Rankings)
-
-		if len(*diff) == 0 {
-			ctx.JSON(http.StatusOK, gin.H{"ok": 1})
-			return errors.New("no changes to rankings")
-		}
+		// Calculate updated rankings
+		judge.Rankings = rankReq.Ranking
+		agg := judging.AggregateRanking(judge)
 
 		// Update the judge's ranking
-		err = database.UpdateJudgeRanking(state.Db, sc, judge, rankReq.Ranking)
+		err = database.UpdateJudgeRanking(state.Db, sc, judge.Id, judge.Rankings, agg)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge ranking in database: " + err.Error()})
-			return err
-		}
-
-		// Update projects based on diff
-		err = database.UpdateProjectScores(state.Db, sc, diff)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project scores in database: " + err.Error()})
 			return err
 		}
 
@@ -837,19 +825,6 @@ func JudgeStar(ctx *gin.Context) {
 		err = database.UpdateJudgeStars(state.Db, sc, judge.Id, index, starReq.Starred)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating judge starred in database: " + err.Error()})
-			return err
-		}
-
-		// If the judge is in a track, update that track's comparisons
-		// Otherwise, update the project's starred status
-		// TODO: REPLACE THIS WITH CALC ON EDIT
-		if options.JudgeTracks && judge.Track != "" {
-			err = database.UpdateProjectTrackStars(state.Db, sc, projectId, judge.Track, starReq.Starred)
-		} else {
-			err = database.UpdateProjectStars(state.Db, sc, projectId, starReq.Starred)
-		}
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating project stars in database: " + err.Error()})
 			return err
 		}
 
