@@ -10,13 +10,11 @@ Jury's main feature revolves around its rank aggregation system. As judges view 
 
 ## Ranking
 
-The basis of Jury's algorithm is the [Borda Count](https://en.wikipedia.org/wiki/Borda_count) method. A judge will rank up to 5 projects they have seen:
+The basis of Jury's algorithm is the [Copeland Counting method](https://en.wikipedia.org/wiki/Copeland's_method). A judge will rank as many projects as they can (ideally as many as possible). See the [Judging Interface](/docs/usage/judging/interface) page for a visual on the judges' UI.
 
-![Judge ranking](./assets/judge-ranking.png)
+The Copeland method works by breaking down rankings into pairwise comparisons. For example, if a judge has ranked projects in the order `A, B, C`, it would mean the same as the following comparisons: `(A, B), (B, C), (A, C)`, where we make `(winner, loser)` pairs. For every time a project is a "winner," it will get one point; every time it's a "loser," it will lose a point. These point values are then aggregated across all judges' rankings to form a final score for each project.
 
-For each of the projects that they rank, the first place ranking will be assigned 5 points; the second place will be assigned 4 points; and so on. If, for example, a judge only ranks 3 projects, then the first place ranking will be assigned only 3 points. The points from all judges will be tallied up, resulting in the final score.
-
-This method of ranking was chosen for its simplicity yet accurate aggregated ranking, [with similar error rates to other ranking algorithms](https://arxiv.org/pdf/2204.05742).
+This method was chosen for its simplicity while supporting uneven counts of partial rankings between different judges.
 
 ## Starring
 
