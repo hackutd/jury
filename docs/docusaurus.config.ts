@@ -3,7 +3,7 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-    title: 'Jury',
+    title: 'Jury Documentation',
     tagline: 'A modern hackathon judging platform',
     favicon: 'img/favicon.ico',
 

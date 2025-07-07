@@ -1,6 +1,6 @@
 ---
 sidebar_position: 5
-title: Jury Judging
+title: Judging
 description: Guide on how to use the judging interface of Jury
 ---
 
