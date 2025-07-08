@@ -12,7 +12,7 @@ function HomepageHeader() {
         <header className={styles.heroBanner}>
             <div className="container">
                 <Heading as="h1" className={styles.heroTitle}>
-                    {siteConfig.title}
+                    Jury
                 </Heading>
                 <p className={styles.heroTagline}>{siteConfig.tagline}</p>
                 <div className={styles.buttons}>
