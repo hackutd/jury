@@ -197,3 +197,8 @@ interface ResetPopup {
     text: string;
     handler: null | (() => void);
 }
+
+interface GroupInfo {
+    names: string[];
+    enabled: boolean;
+}

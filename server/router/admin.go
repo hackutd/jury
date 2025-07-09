@@ -695,6 +695,13 @@ func SetDeliberation(ctx *gin.Context) {
 		return
 	}
 
+	// Also pause judging if deliberation has started
+	if req.Start {
+		state.Clock.Mutex.Lock()
+		state.Clock.State.Pause()
+		state.Clock.Mutex.Unlock()
+	}
+
 	// Send OK
 	hap := "Started"
 	if !req.Start {
@@ -704,8 +711,8 @@ func SetDeliberation(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// GET /group-names - GetGroupNames returns the names of the groups
-func GetGroupNames(ctx *gin.Context) {
+// GET /group-info - GetGroupInfo returns the names of the groups and if groups are enabled
+func GetGroupInfo(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
@@ -717,7 +724,10 @@ func GetGroupNames(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, options.GroupNames)
+	ctx.JSON(http.StatusOK, gin.H{
+		"names":   options.GroupNames,
+		"enabled": options.MultiGroup,
+	})
 }
 
 // POST /admin/block-reqs - blocks or unblocks login requests

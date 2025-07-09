@@ -17,7 +17,9 @@ interface ActionsPopupProps {
 }
 
 const ActionsItem = ({ children }: { children: React.ReactNode }) => {
-    return <div className="flex flex-col md:flex-row mb-4 md:mb-0 items-center gap-3">{children}</div>;
+    return (
+        <div className="flex flex-col md:flex-row mb-4 md:mb-0 items-center gap-3">{children}</div>
+    );
 };
 
 const ActionsPopup = (props: ActionsPopupProps) => {
@@ -25,7 +27,7 @@ const ActionsPopup = (props: ActionsPopupProps) => {
     const options = useOptionsStore((state) => state.options);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
-    const clock = useClockStore((state) => state.clock);
+    const fetchClock = useClockStore((state) => state.fetchClock);
     const [deliberationPopup, setDeliberationPopup] = useState(false);
     const [swapPopup, setSwapPopup] = useState(false);
 
@@ -58,6 +60,9 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                 'Deliberation has started! Judges will no longer be able to edit their rankings.'
             );
         }
+
+        fetchClock();
+        setDeliberationPopup(false);
     };
 
     return (
@@ -66,14 +71,16 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                 <h1 className="text-5xl text-center font-bold mb-6">Actions</h1>
                 <div className="flex flex-col w-full gap-3">
                     <ActionsItem>
-                        <Button
-                            type="primary"
-                            onClick={() => navigate('/admin/log')}
-                            bold
-                            className="py-2 basis-1/2 grow-0 shrink-0"
-                        >
-                            Audit Log
-                        </Button>
+                        <div className="basis-1/2 grow-0 shrink-0 flex items-center justify-center">
+                            <Button
+                                type="primary"
+                                onClick={() => navigate('/admin/log')}
+                                bold
+                                className="py-2"
+                            >
+                                Audit Log
+                            </Button>
+                        </div>
                         <Paragraph
                             text="View all changes that have happened in Jury."
                             className="basis-1/2 grow-0 shrink-0"
@@ -85,7 +92,6 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                                 <Button
                                     type="gold"
                                     onClick={setSwapPopup.bind(null, true)}
-                                    disabled={clock.running}
                                     tooltip="Groups can only be swapped when judging is paused"
                                     bold
                                     className="py-2"
@@ -99,21 +105,23 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                             </div>
 
                             <Paragraph
-                                text="Prevent judges from making changes to ranking and stars."
+                                text="Manually swap judge groups, sending every judge to the next group."
                                 className="basis-1/2 grow-0 shrink-0"
                             />
                         </ActionsItem>
                     )}
                     <ActionsItem>
-                        <Button
-                            type={options.deliberation ? 'outline' : 'error'}
-                            onClick={setDeliberationPopup.bind(null, true)}
-                            bold
-                            tooltip="Stop judges from editing their rankings during deliberation"
-                            className="py-2 basis-1/2 grow-0 shrink-0"
-                        >
-                            {options.deliberation ? 'End Deliberation' : 'Start Deliberation'}
-                        </Button>
+                        <div className="basis-1/2 grow-0 shrink-0 flex items-center justify-center">
+                            <Button
+                                type={options.deliberation ? 'outline' : 'error'}
+                                onClick={setDeliberationPopup.bind(null, true)}
+                                bold
+                                tooltip="Stop judges from editing their rankings during deliberation"
+                                className="py-2"
+                            >
+                                {options.deliberation ? 'End Deliberation' : 'Start Deliberation'}
+                            </Button>
+                        </div>
                         <Paragraph
                             text="Prevent judges from making changes to ranking and stars."
                             className="basis-1/2 grow-0 shrink-0"

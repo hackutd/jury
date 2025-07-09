@@ -27,7 +27,7 @@ const CSVPreview = (props: CSVPreviewProps) => {
     return (
         <div className="w-full flex flex-col p-2 border-lightest border-2 rounded-md">
             <h2 className="text-center text-2xl font-bold text-light">CSV Preview</h2>
-            <div className="w-full overflow-x-auto">
+            <div className="w-full overflow-x-auto max-h-[500px]">
                 <table className="table-fixed w-full text-lg">
                     <tbody>
                         {csvData.map((row, index) => (

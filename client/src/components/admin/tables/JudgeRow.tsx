@@ -111,7 +111,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
                             setMovePopup.bind(null, true),
                             setDeletePopup.bind(null, true),
                         ]}
-                        redIndices={[3]}
+                        redIndices={[4]}
                     />
                     <span
                         className="cursor-pointer px-1 hover:text-primary duration-150"
