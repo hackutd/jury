@@ -70,7 +70,6 @@ const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
     const [judgeReassignPopup, setJudgeReassignPopup] = useState(false);
     const [clockResetPopup, setClockResetPopup] = useState(false);
-    const [dropPopup, setDropPopup] = useState(false);
     const [judgingTimer, setJudgingTimer] = useState('');
     const [minViews, setMinViews] = useState(3);
     const [syncClock, setSyncClock] = useState(false);
@@ -87,6 +86,11 @@ const AdminSettings = () => {
     const [ignoreTracks, setIgnoreTracks] = useState<string>('');
     const [maxReqPerMin, setMaxReqPerMin] = useState(100);
     const [blockReqs, setBlockReqs] = useState(false);
+    const [resetPopup, setResetPopup] = useState<ResetPopup>({
+        open: false,
+        text: '',
+        handler: null,
+    });
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
     const navigate = useNavigate();
 
@@ -480,15 +484,15 @@ const AdminSettings = () => {
         alert('Clock data backed up!');
     };
 
-    const dropDatabase = async () => {
-        const res = await postRequest<OkResponse>('/admin/reset', 'admin', null);
+    const reset = async (type: string) => {
+        const res = await postRequest<OkResponse>('/admin/reset', 'admin', { type });
         if (res.status !== 200 || res.data?.ok !== 1) {
             errorAlert(res);
             return;
         }
 
-        alert('Database reset!');
-        setDropPopup(false);
+        alert(`Reset ${type}`);
+        setResetPopup({ open: false, text: '', handler: null });
     };
 
     const exportCsv = async (type: string) => {
@@ -926,14 +930,96 @@ const AdminSettings = () => {
                 </Card>
 
                 <Card>
-                    <Section>Reset Database</Section>
+                    <Section>Reset Data</Section>
+
+                    <SubSection>Clear Rankings and Stars</SubSection>
+                    <Description>
+                        Removes ALL rankings that judges have made. This will not change anything else but remove all judges' rankings and stars for projects.
+                    </Description>
+                    <SettingsButton
+                        onClick={() =>
+                            setResetPopup({
+                                open: true,
+                                text: 'Are you sure you want to delete all ranking data? This includes rankings and stars of ALL judges!',
+                                handler: reset.bind(this, 'rankings'),
+                            })
+                        }
+                        type="error"
+                    >
+                        Delete Rankings
+                    </SettingsButton>
+
+                    <SubSection>Clear Judging Data</SubSection>
+                    <Description>
+                        Remove all active judging data. This will keep judges, projects, and
+                        configurations; essentially it will revert Jury to a state before judging
+                        started. This is useful if you accidentally started judging and want to
+                        revert all judging without removing projects or judges.
+                    </Description>
+                    <SettingsButton
+                        onClick={() =>
+                            setResetPopup({
+                                open: true,
+                                text: 'Are you sure you want to delete all judging data? This will wipe all judging activity but retain projects/judges/settings.',
+                                handler: reset.bind(this, 'judging-data'),
+                            })
+                        }
+                        type="error"
+                    >
+                        Delete Judging Data
+                    </SettingsButton>
+
+                    <SubSection>Delete all Projects</SubSection>
+                    <Description>
+                        This will delete all projects in the database, along with any judging and
+                        flag data.
+                    </Description>
+                    <SettingsButton
+                        onClick={() =>
+                            setResetPopup({
+                                open: true,
+                                text: 'Are you sure you want to delete all projects? This will wipe everything except for judges and settings.',
+                                handler: reset.bind(this, 'projects'),
+                            })
+                        }
+                        type="error"
+                    >
+                        Delete Projects
+                    </SettingsButton>
+
+                    <SubSection>Delete all Judges</SubSection>
+                    <Description>
+                        This will delete all judges in the database, along with any judging and flag
+                        data.
+                    </Description>
+                    <SettingsButton
+                        onClick={() =>
+                            setResetPopup({
+                                open: true,
+                                text: 'Are you sure you want to delete all judges? This will wipe everything except for projects and settings.',
+                                handler: reset.bind(this, 'judges'),
+                            })
+                        }
+                        type="error"
+                    >
+                        Delete Judges
+                    </SettingsButton>
 
                     <SubSection>THIS WILL DELETE THE ENTIRE DATABASE</SubSection>
                     <Description>
                         Mostly used for testing purposes/before the event if you want to reset
                         everything bc something got messed up. Do NOT use this during judging (duh).
                     </Description>
-                    <SettingsButton onClick={() => setDropPopup(true)} type="error">
+                    <SettingsButton
+                        onClick={() => {
+                            setResetPopup({
+                                open: true,
+                                text: 'THIS WILL ACTUALLY DELETE ALL DATA!!!!! YOU NEED TO BE ABSOLUTELY SURE YOU WANT TO DO THIS. THIS IS YOUR LAST WARNING! Deleting the entire database will not only remove judges/projects/judging stats but also remove all configuration.',
+                                handler: reset.bind(this, 'all'),
+                            });
+                        }}
+                        type="error"
+                    >
                         Drop Database
                     </SettingsButton>
                 </Card>
@@ -972,15 +1058,14 @@ const AdminSettings = () => {
                 00:00:00.
             </ConfirmPopup>
             <ConfirmPopup
-                enabled={dropPopup}
-                setEnabled={setDropPopup}
-                onSubmit={dropDatabase}
+                enabled={resetPopup.open}
+                setEnabled={((e: boolean) => setResetPopup({ ...resetPopup, open: e })) as any}
+                onSubmit={resetPopup.handler as any}
                 submitText="RESET DATA"
                 title="Heads Up!"
                 red
             >
-                THIS WILL ACTUALLY DELETE ALL DATA!!!!! YOU NEED TO BE ABSOLUTELY SURE YOU WANT TO
-                DO THIS. THIS IS YOUR LAST WARNING!
+                {resetPopup.text}
             </ConfirmPopup>
             <Loading disabled={!loading} />
             <ToTopButton />

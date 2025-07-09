@@ -2,9 +2,11 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"server/models"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -111,6 +113,87 @@ func DropAll(db *mongo.Database) error {
 	}
 
 	return nil
+}
+
+// DropProjects removes all projects
+func DropProjects(db *mongo.Database) error {
+	fmt.Println("??????")
+	err := db.Collection("projects").Drop(context.Background())
+	return err
+}
+
+// DropJudges removes all judges
+func DropJudges(db *mongo.Database) error {
+	err := db.Collection("judges").Drop(context.Background())
+	return err
+}
+
+// DropJudgingData removes all fields from judges/projects pertaining to judging
+func DropJudgingData(db *mongo.Database) error {
+	_, err := db.Collection("judges").UpdateMany(
+		context.Background(),
+		gin.H{},
+		gin.H{"$set": gin.H{
+			"active":        true,
+			"current":       nil,
+			"last_location": -1,
+			"seen":          0,
+			"group_seen":    0,
+			"read_welcome":  false,
+			"seen_projects": []models.JudgedProject{},
+			"rankings":      []primitive.ObjectID{},
+			"rankings_agg":  []models.AggRanking{},
+		}},
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Collection("projects").UpdateMany(
+		context.Background(),
+		gin.H{},
+		gin.H{"$set": gin.H{
+			"active":      true,
+			"seen":        0,
+			"track_seen":  map[string]int64{},
+			"prioritized": false,
+		}},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = db.Collection("flags").Drop(context.Background())
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Collection("options").UpdateOne(
+		context.Background(),
+		gin.H{"ref": 0},
+		gin.H{"$set": gin.H{
+			"clock":           *models.NewClockState(),
+			"deliberation":    false,
+			"manual_switches": 0,
+			"qr_code":         "",
+			"track_qr_codes":  make(map[string]string),
+		}},
+	)
+	return err
+}
+
+// DropRankings removes the rankings from every judge
+func DropRankings(db *mongo.Database) error {
+	_, err := db.Collection("judges").UpdateMany(
+		context.Background(),
+		gin.H{},
+		gin.H{"$set": gin.H{
+			"rankings":                  []primitive.ObjectID{},
+			"rankings_agg":              []models.AggRanking{},
+			"seen_projects.$[].starred": false,
+		}},
+	)
+	return err
 }
 
 // UpdateMinViews will update the min views setting
