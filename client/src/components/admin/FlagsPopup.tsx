@@ -4,6 +4,16 @@ import Popup from '../Popup';
 import { useFlagsStore } from '../../store';
 import { deleteRequest } from '../../api';
 
+// Map reasons to text to display
+const REASON_MAP = {
+    busy: 'Busy',
+    absent: 'Absent',
+    'cannot-demo': "Can't demo",
+    'too-complex': 'Too Complex',
+    offensive: 'Offensive',
+    'hidden-absent': 'Hidden bc Absent',
+} as any;
+
 interface FlagsPopupProps {
     /* State variable for open/closed */
     enabled: boolean;
@@ -71,74 +81,80 @@ const FlagsPopup = (props: FlagsPopupProps) => {
     };
 
     return (
-        <Popup enabled={props.enabled} setEnabled={props.setEnabled} className="w-2/3 md:w-2/3">
+        <Popup enabled={props.enabled} setEnabled={props.setEnabled} className="overflow-hidden">
             <h1 className="text-5xl text-center font-bold mb-6">Flags</h1>
-            <div className="h-[50vh] overflow-y-auto">
-                <div className="flex flex-row items-center text-xl border-b-2 border-backgroundDark py-2">
-                    <h2
-                        className={
-                            'basis-2/6 text-left font-bold cursor-pointer ' +
-                            (sortMethod === 0 ? 'text-primary' : 'text-light')
-                        }
-                        onClick={() => setSortMethod(0)}
-                    >
-                        Name
-                    </h2>
-                    <h2
-                        className={
-                            'basis-1/6 text-center font-bold cursor-pointer ' +
-                            (sortMethod === 1 ? 'text-primary' : 'text-light')
-                        }
-                        onClick={() => setSortMethod(1)}
-                    >
-                        Judge
-                    </h2>
-                    <h2
-                        className={
-                            'basis-1/6 text-center font-bold cursor-pointer ' +
-                            (sortMethod === 2 ? 'text-primary' : 'text-light')
-                        }
-                        onClick={() => setSortMethod(2)}
-                    >
-                        Reason
-                    </h2>
-                    <h2
-                        className={
-                            'basis-1/6 text-center font-bold cursor-pointer ' +
-                            (sortMethod === 3 ? 'text-primary' : 'text-light')
-                        }
-                        onClick={() => setSortMethod(3)}
-                    >
-                        Time
-                    </h2>
-                    <h2
-                        className={
-                            'basis-1/6 text-right font-bold cursor-pointer ' +
-                            (sortMethod === 3 ? 'text-primary' : 'text-light')
-                        }
-                    >
-                        Resolve
-                    </h2>
-                </div>
-                {displayedFlags.map((flag) => (
-                    <div
-                        key={`${flag.id}`}
-                        className="flex flex-row items-center text-xl border-b-2 border-backgroundDark py-1"
-                    >
-                        <h2 className="basis-2/6 text-left text-lg">
-                            {`[${flag.project_location}] ${flag.project_name}`}
-                        </h2>
-                        <h2 className="basis-1/6 text-center text-lg">{flag.judge_name}</h2>
-                        <h2 className="basis-1/6 text-center text-lg">{flag.reason}</h2>
-                        <h2 className="basis-1/6 text-center text-lg">{timeSince(flag.time)}</h2>
-                        <button
-                            className="basis-1/6 text-right cursor-pointer text-error hover:text-errorDark duration-150"
-                            onClick={() => clearFlag(flag.id)}
+            <div className="overflow-x-scroll">
+                <div className="h-[50vh] overflow-y-auto sm:w-auto w-[200%]">
+                    <div className="flex flex-row sm:items-center gap-2 text-xl border-b-2 border-backgroundDark py-2">
+                        <h2
+                            className={
+                                'basis-2/6 text-left font-bold cursor-pointer ' +
+                                (sortMethod === 0 ? 'text-primary' : 'text-light')
+                            }
+                            onClick={() => setSortMethod(0)}
                         >
-                            resolve
-                        </button>
+                            Name
+                        </h2>
+                        <h2
+                            className={
+                                'basis-1/6 text-center font-bold cursor-pointer ' +
+                                (sortMethod === 1 ? 'text-primary' : 'text-light')
+                            }
+                            onClick={() => setSortMethod(1)}
+                        >
+                            Judge
+                        </h2>
+                        <h2
+                            className={
+                                'basis-1/6 text-center font-bold cursor-pointer ' +
+                                (sortMethod === 2 ? 'text-primary' : 'text-light')
+                            }
+                            onClick={() => setSortMethod(2)}
+                        >
+                            Reason
+                        </h2>
+                        <h2
+                            className={
+                                'basis-1/6 text-center font-bold cursor-pointer ' +
+                                (sortMethod === 3 ? 'text-primary' : 'text-light')
+                            }
+                            onClick={() => setSortMethod(3)}
+                        >
+                            Time
+                        </h2>
+                        <h2
+                            className={
+                                'basis-1/6 text-right font-bold cursor-pointer ' +
+                                (sortMethod === 3 ? 'text-primary' : 'text-light')
+                            }
+                        >
+                            Resolve
+                        </h2>
                     </div>
-                ))}
+                    {displayedFlags.map((flag) => (
+                        <div
+                            key={`${flag.id}`}
+                            className="flex flex-row items-center gap-2 text-xl border-b-2 border-backgroundDark py-1"
+                        >
+                            <h2 className="basis-2/6 text-left text-lg">
+                                {`[${flag.project_location}] ${flag.project_name}`}
+                            </h2>
+                            <h2 className="basis-1/6 text-center text-lg">{flag.judge_name}</h2>
+                            <h2 className="basis-1/6 text-center text-lg">
+                                {REASON_MAP[flag.reason] || flag.reason}
+                            </h2>
+                            <h2 className="basis-1/6 text-center text-lg">
+                                {timeSince(flag.time)}
+                            </h2>
+                            <button
+                                className="basis-1/6 text-right cursor-pointer text-error hover:text-errorDark duration-150"
+                                onClick={() => clearFlag(flag.id)}
+                            >
+                                resolve
+                            </button>
+                        </div>
+                    ))}
+                </div>
             </div>
         </Popup>
     );
