@@ -695,6 +695,13 @@ func SetDeliberation(ctx *gin.Context) {
 		return
 	}
 
+	// Also pause judging if deliberation has started
+	if req.Start {
+		state.Clock.Mutex.Lock()
+		state.Clock.State.Pause()
+		state.Clock.Mutex.Unlock()
+	}
+
 	// Send OK
 	hap := "Started"
 	if !req.Start {
