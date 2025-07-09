@@ -254,10 +254,13 @@ func FindAvailableItems(db *mongo.Database, ctx context.Context, judge *models.J
 		return nil, err
 	}
 
-	// Create a set of voted projects and skipped projects
+	// Create a set of voted, skipped, and flagged projects
 	done := make(map[string]bool)
 	for _, proj := range judge.SeenProjects {
 		done[proj.ProjectId.Hex()] = true
+	}
+	for _, f := range judge.Flagged {
+		done[f.Hex()] = true
 	}
 	for _, flag := range flags {
 		done[flag.ProjectId.Hex()] = true
