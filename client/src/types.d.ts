@@ -124,6 +124,7 @@ interface Options {
     clock_sync: boolean;
     judge_tracks: boolean;
     tracks: string[];
+    track_views: number[];
     multi_group: boolean;
     num_groups: number;
     group_sizes: number[];

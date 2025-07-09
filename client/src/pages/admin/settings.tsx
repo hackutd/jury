@@ -82,6 +82,7 @@ const AdminSettings = () => {
     const [groupSizes, setGroupSizes] = useState('30, 30');
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
+    const [trackViews, setTrackViews] = useState('');
     const [groupNames, setGroupNames] = useState('');
     const [ignoreTracks, setIgnoreTracks] = useState<string>('');
     const [maxReqPerMin, setMaxReqPerMin] = useState(100);
@@ -123,6 +124,7 @@ const AdminSettings = () => {
         setAutoSwitchProp(res.data.auto_switch_prop);
         setJudgeTracks(res.data.judge_tracks);
         setTracks(res.data.tracks.join(', '));
+        setTrackViews(res.data.track_views.join(', '));
         setGroupNames(res.data.group_names.join(', '));
         setIgnoreTracks(res.data.ignore_tracks.join(', '));
         setBlockReqs(res.data.block_reqs);
@@ -269,7 +271,7 @@ const AdminSettings = () => {
             .map((track) => track.trim())
             .filter((track) => track !== '');
 
-        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/tracks', 'admin', {
             tracks: filteredTracks,
         });
         if (res.status !== 200 || !res.data) {
@@ -278,6 +280,37 @@ const AdminSettings = () => {
         }
 
         alert('Tracks updated!');
+        getOptions();
+    };
+
+    const updateTrackViews = async () => {
+        const views = trackViews.split(',').map((v) => parseInt(v.trim()));
+        const ts = tracks
+            .split(',')
+            .map((t) => t.trim())
+            .filter((t) => t !== '');
+        if (views.some((v) => isNaN(v) || v < 1)) {
+            alert('Track views should be positive integers!');
+            return;
+        }
+
+        // Make sure number of views is equal to num of tracks
+        if (views.length !== ts.length) {
+            alert(
+                'Number of track views should be the same as number of tracks (you need a min number of views for each track)!'
+            );
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/track-views', 'admin', {
+            track_views: views,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Track views updated!');
     };
 
     const toggleMultiGroup = async () => {
@@ -510,7 +543,8 @@ const AdminSettings = () => {
                     <NavButton>Judge Login</NavButton>
                     <NavButton>Judging Parameters</NavButton>
                     <NavButton>Judging Clock and Timer</NavButton>
-                    <NavButton>Multi-Group and Track Judging</NavButton>
+                    <NavButton>Track Judging</NavButton>
+                    <NavButton>Multi-Group Judging</NavButton>
                     <NavButton>Export Data</NavButton>
                     <NavButton>Reset Database</NavButton>
                 </div>
@@ -679,7 +713,7 @@ const AdminSettings = () => {
                 </Card>
 
                 <Card>
-                    <Section>Multi-Group and Track Judging</Section>
+                    <Section>Track Judging</Section>
 
                     <SubSection>Enable Track Judging</SubSection>
                     <Description>
@@ -715,8 +749,31 @@ const AdminSettings = () => {
                                 className="my-2"
                             />
                             <SettingsButton onClick={updateTracks}>Update Tracks</SettingsButton>
+
+                            <SubSection>Set Track Min Views</SubSection>
+                            <Description>
+                                Set the number of views a track project should get across all
+                                judges. For example, if this is set to 3, then a project will be
+                                seen exactly 3 times by that track's judges. We suggest this to be
+                                set to around 2-4, depending on the size of the track.
+                            </Description>
+                            <TextInput
+                                label="Track min views"
+                                placeholder="3, 3, 2, ..."
+                                text={trackViews}
+                                setText={setTrackViews}
+                                full
+                                large
+                                className="my-2 mr-4"
+                            />
+                            <SettingsButton onClick={updateTrackViews}>
+                                Update Track Min Views
+                            </SettingsButton>
                         </>
                     )}
+                </Card>
+                <Card>
+                    <Section>Multi-group Judging</Section>
 
                     <SubSection>Enable Multiple Groups</SubSection>
                     <Description>

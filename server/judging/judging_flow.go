@@ -219,7 +219,7 @@ func PickNextProject(db *mongo.Database, ctx context.Context, judge *models.Judg
 //  2. Filter out all projects that the judge has already seen
 //  3. Filter out all projects that the judge has flagged (except for busy projects)
 //  4. Filter out all projects that is not in the judge's track (if tracks are enabled and the user has a track)
-//  5. If tracks are enabled, filter out all track projects that have been seen >2 times
+//  5. If tracks are enabled, filter out all track projects that have been seen >track_views[track] times
 //  6. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
 //  7. If judging a track, return at this point (ignore last 2 conditions)
 //  8. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
@@ -276,15 +276,16 @@ func FindAvailableItems(db *mongo.Database, ctx context.Context, judge *models.J
 	// Also filter out all track projects that have been seen >2 times OR is currently being judged by a track judge
 	if options.JudgeTracks && judge.Track != "" {
 		var trackProjects []*models.Project
+		trackIndex := slices.Index(options.Tracks, judge.Track)
 		for _, proj := range projects {
 			if slices.Contains(proj.ChallengeList, judge.Track) {
-				// If currently being judged by second track judge, do not assign
-				if proj.TrackSeen[judge.Track] == 1 && busyProjects[proj.Id] == judge.Track {
+				// If currently being judged by the last track judge, do not assign
+				if proj.TrackSeen[judge.Track] == options.TrackViews[trackIndex]-1 && busyProjects[proj.Id] == judge.Track {
 					continue
 				}
 
-				// Otherwise, only add to list if seen < 2 times
-				if proj.TrackSeen[judge.Track] < 2 {
+				// Otherwise, only add to list if seen < track_view times
+				if proj.TrackSeen[judge.Track] < options.TrackViews[trackIndex] {
 					trackProjects = append(trackProjects, proj)
 				}
 			}

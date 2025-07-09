@@ -36,11 +36,17 @@ func UpdateOptions(db *mongo.Database, ctx context.Context, options *models.Opti
 	if options.ClockSync != nil {
 		update["clock_sync"] = *options.ClockSync
 	}
+	if options.Deliberation != nil {
+		update["deliberation"] = *options.Deliberation
+	}
 	if options.JudgeTracks != nil {
 		update["judge_tracks"] = *options.JudgeTracks
 	}
 	if options.Tracks != nil {
 		update["tracks"] = *options.Tracks
+	}
+	if options.TrackViews != nil {
+		update["track_views"] = *options.TrackViews
 	}
 	if options.MultiGroup != nil {
 		update["multi_group"] = *options.MultiGroup
