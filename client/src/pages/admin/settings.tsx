@@ -8,7 +8,7 @@ import Loading from '../../components/Loading';
 import Checkbox from '../../components/Checkbox';
 import TextInput from '../../components/TextInput';
 import SelectionButton from '../../components/SelectionButton';
-import { useOptionsStore } from '../../store';
+import { useClockStore, useOptionsStore } from '../../store';
 import ChallengeBlock from '../../components/admin/ChallengeBlock';
 import Card from '../../components/Card';
 import ToTopButton from '../../components/ToTopButton';
@@ -32,17 +32,20 @@ const Description = ({ children: c }: { children: React.ReactNode }) => (
 const SettingsButton = ({
     children,
     onClick,
+    disabled,
     className,
     type = 'primary',
 }: {
     children: React.ReactNode;
     onClick: () => void;
+    disabled?: boolean;
     className?: string;
     type?: 'primary' | 'error' | 'gold' | 'outline';
 }) => (
     <Button
         type={type}
         onClick={onClick}
+        disabled={disabled}
         className={twMerge('my-2 h-max text-lg md:text-2xl py-[2px] md:py-1', className)}
     >
         {children}
@@ -91,22 +94,18 @@ const AdminSettings = () => {
         text: '',
         handler: null,
     });
+    const [running, setRunning] = useState(false);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
+    const options = useOptionsStore((state) => state.options);
+    const fetchClock = useClockStore((state) => state.fetchClock);
+    const clock = useClockStore((state) => state.clock);
     const navigate = useNavigate();
 
     async function getOptions() {
-        const res = await getRequest<Options>('/admin/options', 'admin');
-        if (res.status !== 200) {
-            errorAlert(res);
-            return;
-        }
-        if (!res.data) {
-            alert('error: could not get options data');
-            return;
-        }
+        await fetchOptions();
 
         // Calculate judging timer MM:SS
-        const timer = res.data.judging_timer;
+        const timer = options.judging_timer;
         if (timer) {
             const minutes = Math.floor(timer / 60);
             const seconds = timer % 60;
@@ -115,24 +114,28 @@ const AdminSettings = () => {
         }
 
         // Set min views
-        setMinViews(res.data.min_views);
+        setMinViews(options.min_views);
 
         // Set sync clock
-        setSyncClock(res.data.clock_sync);
+        setSyncClock(options.clock_sync);
 
         // Set group options
-        setMultiGroup(res.data.multi_group);
-        setNumGroups(res.data.num_groups);
-        setGroupSizes(res.data.group_sizes.join(', '));
-        setSwitchingMode(res.data.switching_mode);
-        setAutoSwitchProp(res.data.auto_switch_prop);
-        setJudgeTracks(res.data.judge_tracks);
-        setTracks(res.data.tracks.join(', '));
-        setTrackViews(res.data.track_views.join(', '));
-        setGroupNames(res.data.group_names.join(', '));
-        setIgnoreTracks(res.data.ignore_tracks.join(', '));
-        setBlockReqs(res.data.block_reqs);
-        setMaxReqPerMin(res.data.max_req_per_min);
+        setMultiGroup(options.multi_group);
+        setNumGroups(options.num_groups);
+        setGroupSizes(options.group_sizes.join(', '));
+        setSwitchingMode(options.switching_mode);
+        setAutoSwitchProp(options.auto_switch_prop);
+        setJudgeTracks(options.judge_tracks);
+        setTracks(options.tracks.join(', '));
+        setTrackViews(options.track_views.join(', '));
+        setGroupNames(options.group_names.join(', '));
+        setIgnoreTracks(options.ignore_tracks.join(', '));
+        setBlockReqs(options.block_reqs);
+        setMaxReqPerMin(options.max_req_per_min);
+
+        // Get active clock status
+        await fetchClock();
+        setRunning(clock.running);
 
         setLoading(false);
     }
@@ -543,7 +546,7 @@ const AdminSettings = () => {
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
 
-                <div className="my-4 flex flex-row flex-wrap gap-1 md:gap-4">
+                <div className="my-4 flex flex-row flex-wrap gap-1 md:gap-2">
                     <NavButton>Judge Login</NavButton>
                     <NavButton>Judging Parameters</NavButton>
                     <NavButton>Judging Clock and Timer</NavButton>
@@ -552,6 +555,14 @@ const AdminSettings = () => {
                     <NavButton>Export Data</NavButton>
                     <NavButton>Reset Database</NavButton>
                 </div>
+
+                {running && (
+                    <p className="p-2 text-center border-gold border-2 bg-gold/20 rounded-md">
+                        Judging has started. Some settings have been disabled to ensure consistency
+                        with judging assignments and rank aggregations. Please pause judging to
+                        change the disabled settings.
+                    </p>
+                )}
 
                 <Card>
                     <Section>Judge Login</Section>
@@ -613,7 +624,8 @@ const AdminSettings = () => {
                     <FieldButton>
                         <SettingsButton
                             onClick={() => setReassignPopup(true)}
-                            className="bg-gold text-black hover:bg-goldDark hover:text-black mr-4"
+                            disabled={running}
+                            type="gold"
                         >
                             Reassign
                         </SettingsButton>
@@ -676,7 +688,8 @@ const AdminSettings = () => {
                     <Description>Reset the clock back to 00:00:00</Description>
                     <SettingsButton
                         onClick={() => setClockResetPopup(true)}
-                        className="bg-gold text-black hover:bg-goldDark hover:text-black"
+                        disabled={running}
+                        type="gold"
                     >
                         Reset
                     </SettingsButton>
@@ -726,10 +739,9 @@ const AdminSettings = () => {
                         This does not affect the main general judging, and all projects will still
                         be considered for the main judging. However, if you have a different track
                         (eg. design), this feature will allow that track's judges to only see
-                        projects that have submitted to that track. Note that toggling this option
-                        during judging <span className="font-bold">is very very bad</span>.
+                        projects that have submitted to that track.
                     </Description>
-                    <Checkbox checked={judgeTracks} onChange={toggleJudgeTracks}>
+                    <Checkbox checked={judgeTracks} onChange={toggleJudgeTracks} disabled={running}>
                         Enable Track Judging
                     </Checkbox>
 
@@ -739,8 +751,7 @@ const AdminSettings = () => {
                             <Description>
                                 Set the tracks that will be judged. Note this should match the name
                                 under the 'Opt-In Prizes' category. Only the tracks listed here will
-                                be judged! As with the previous setting, DO NOT CHANGE THIS DURING
-                                JUDGING.
+                                be judged!
                             </Description>
                             <ChallengeBlock />
                             <TextInput
@@ -752,7 +763,9 @@ const AdminSettings = () => {
                                 full
                                 className="my-2"
                             />
-                            <SettingsButton onClick={updateTracks}>Update Tracks</SettingsButton>
+                            <SettingsButton disabled={running} onClick={updateTracks}>
+                                Update Tracks
+                            </SettingsButton>
 
                             <SubSection>Set Track Min Views</SubSection>
                             <Description>
@@ -787,7 +800,7 @@ const AdminSettings = () => {
                         toggling this option{' '}
                         <span className="font-bold">will reassign project numbers</span>.
                     </Description>
-                    <Checkbox checked={multiGroup} onChange={toggleMultiGroup}>
+                    <Checkbox checked={multiGroup} onChange={toggleMultiGroup} disabled={running}>
                         Enable Multi-Group Judging
                     </Checkbox>
 
@@ -807,7 +820,7 @@ const AdminSettings = () => {
                                     number
                                     className="my-2 mr-4"
                                 />
-                                <SettingsButton onClick={updateNumGroups}>
+                                <SettingsButton onClick={updateNumGroups} disabled={running}>
                                     Update Number of Groups
                                 </SettingsButton>
                             </FieldButton>
@@ -828,7 +841,7 @@ const AdminSettings = () => {
                                 large
                                 className="my-2 mr-4"
                             />
-                            <SettingsButton onClick={updateGroupSizes}>Update Sizes</SettingsButton>
+                            <SettingsButton onClick={updateGroupSizes} disabled={running}>Update Sizes</SettingsButton>
 
                             <SubSection>Switching Mode</SubSection>
                             <Description>
@@ -934,7 +947,8 @@ const AdminSettings = () => {
 
                     <SubSection>Clear Rankings and Stars</SubSection>
                     <Description>
-                        Removes ALL rankings that judges have made. This will not change anything else but remove all judges' rankings and stars for projects.
+                        Removes ALL rankings that judges have made. This will not change anything
+                        else but remove all judges' rankings and stars for projects.
                     </Description>
                     <SettingsButton
                         onClick={() =>
@@ -945,6 +959,7 @@ const AdminSettings = () => {
                             })
                         }
                         type="error"
+                        disabled={running}
                     >
                         Delete Rankings
                     </SettingsButton>
@@ -965,6 +980,7 @@ const AdminSettings = () => {
                             })
                         }
                         type="error"
+                        disabled={running}
                     >
                         Delete Judging Data
                     </SettingsButton>
@@ -983,6 +999,7 @@ const AdminSettings = () => {
                             })
                         }
                         type="error"
+                        disabled={running}
                     >
                         Delete Projects
                     </SettingsButton>
@@ -1001,6 +1018,7 @@ const AdminSettings = () => {
                             })
                         }
                         type="error"
+                        disabled={running}
                     >
                         Delete Judges
                     </SettingsButton>
@@ -1019,6 +1037,7 @@ const AdminSettings = () => {
                             });
                         }}
                         type="error"
+                        disabled={running}
                     >
                         Drop Database
                     </SettingsButton>
