@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { postRequest } from '../../api';
-import { useAdminStore, useOptionsStore } from '../../store';
+import { useAdminStore, useClockStore, useOptionsStore } from '../../store';
 import { errorAlert } from '../../util';
 import Button from '../Button';
 import ConfirmPopup from '../ConfirmPopup';
@@ -27,6 +27,7 @@ const ActionsPopup = (props: ActionsPopupProps) => {
     const options = useOptionsStore((state) => state.options);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
+    const fetchClock = useClockStore((state) => state.fetchClock);
     const [deliberationPopup, setDeliberationPopup] = useState(false);
     const [swapPopup, setSwapPopup] = useState(false);
 
@@ -59,6 +60,9 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                 'Deliberation has started! Judges will no longer be able to edit their rankings.'
             );
         }
+
+        fetchClock();
+        setDeliberationPopup(false);
     };
 
     return (
@@ -67,14 +71,16 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                 <h1 className="text-5xl text-center font-bold mb-6">Actions</h1>
                 <div className="flex flex-col w-full gap-3">
                     <ActionsItem>
-                        <Button
-                            type="primary"
-                            onClick={() => navigate('/admin/log')}
-                            bold
-                            className="py-2 basis-1/2 grow-0 shrink-0"
-                        >
-                            Audit Log
-                        </Button>
+                        <div className="basis-1/2 grow-0 shrink-0 flex items-center justify-center">
+                            <Button
+                                type="primary"
+                                onClick={() => navigate('/admin/log')}
+                                bold
+                                className="py-2"
+                            >
+                                Audit Log
+                            </Button>
+                        </div>
                         <Paragraph
                             text="View all changes that have happened in Jury."
                             className="basis-1/2 grow-0 shrink-0"
@@ -105,15 +111,17 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                         </ActionsItem>
                     )}
                     <ActionsItem>
-                        <Button
-                            type={options.deliberation ? 'outline' : 'error'}
-                            onClick={setDeliberationPopup.bind(null, true)}
-                            bold
-                            tooltip="Stop judges from editing their rankings during deliberation"
-                            className="py-2 basis-1/2 grow-0 shrink-0"
-                        >
-                            {options.deliberation ? 'End Deliberation' : 'Start Deliberation'}
-                        </Button>
+                        <div className="basis-1/2 grow-0 shrink-0 flex items-center justify-center">
+                            <Button
+                                type={options.deliberation ? 'outline' : 'error'}
+                                onClick={setDeliberationPopup.bind(null, true)}
+                                bold
+                                tooltip="Stop judges from editing their rankings during deliberation"
+                                className="py-2"
+                            >
+                                {options.deliberation ? 'End Deliberation' : 'Start Deliberation'}
+                            </Button>
+                        </div>
                         <Paragraph
                             text="Prevent judges from making changes to ranking and stars."
                             className="basis-1/2 grow-0 shrink-0"
