@@ -143,6 +143,7 @@ func DropJudgingData(db *mongo.Database) error {
 			"seen_projects": []models.JudgedProject{},
 			"rankings":      []primitive.ObjectID{},
 			"rankings_agg":  []models.AggRanking{},
+			"flagged":       []primitive.ObjectID{},
 		}},
 	)
 	if err != nil {

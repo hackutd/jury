@@ -29,32 +29,38 @@ func SkipCurrentProjectWithTx(db *mongo.Database, ctx context.Context, judge *mo
 		return errors.New("error finding skipped project in database: " + err.Error())
 	}
 
-	// If skipping for any reason other than wanting a break, add the project to the skipped list
-	if reason != "break" {
-		// Create a new skip object
-		skip, err := models.NewFlag(skippedProject, judge, reason)
-		if err != nil {
-			return errors.New("error creating flag object: " + err.Error())
-		}
+	// Create a new skip object
+	skip, err := models.NewFlag(skippedProject, judge, reason)
+	if err != nil {
+		return errors.New("error creating flag object: " + err.Error())
+	}
 
-		// Add skipped project to flags database
-		err = database.InsertFlag(db, ctx, skip)
-		if err != nil {
-			return errors.New("error inserting flag into database: " + err.Error())
-		}
+	// Add skipped project to flags database
+	err = database.InsertFlag(db, ctx, skip)
+	if err != nil {
+		return errors.New("error inserting flag into database: " + err.Error())
+	}
+
+	// Add to flagged project if reason is not busy or absent
+	push := make(gin.H)
+	if reason != "busy" && reason != "absent" {
+		push["flagged"] = skippedProject.Id
 	}
 
 	// Update the judge
 	_, err = db.Collection("judges").UpdateOne(
 		ctx,
 		gin.H{"_id": judge.Id},
-		gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
+		gin.H{
+			"$set":  gin.H{"current": nil, "last_activity": util.Now()},
+			"$push": push,
+		},
 	)
 	if err != nil {
 		return err
 	}
 
-	// Hide the project if it has been skipped more than 3 times
+	// Hide the project if it has been skipped for absent more than 3 times
 	err = HideAbsentProject(db, ctx, skippedProject)
 	if err != nil {
 		return errors.New("error hiding absent project: " + err.Error())

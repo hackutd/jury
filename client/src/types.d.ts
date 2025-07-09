@@ -44,6 +44,7 @@ interface Judge {
     active: boolean;
     group: number;
     current: string;
+    flagged: string[];
     last_activity: number;
 }
 
