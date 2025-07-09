@@ -99,7 +99,7 @@ const Judge = () => {
                     </Button>
                 </div>
                 <div className="flex justify-evenly">
-                    <StatBlock name="Seen" value={judge.seen_projects.length as number} />
+                    <StatBlock name="Seen" value={judge.seen_projects.length + judge.flagged.length} />
                     <StatBlock name="Total Projects" value={projCount} />
                 </div>
                 {judge.track === '' ? (
