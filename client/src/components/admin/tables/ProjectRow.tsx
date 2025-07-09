@@ -150,7 +150,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
                             project.active ? 'Hide' : 'Unhide',
                             project.prioritized ? 'Unprioritize' : 'Prioritize',
                             'Move Table',
-                            'Move Groups',
+                            'Move Group',
                             'Delete',
                         ]}
                         actionFunctions={[
