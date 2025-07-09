@@ -22,8 +22,12 @@ type PrioritizeSelectedRequest struct {
 	Prioritize bool                 `json:"prioritize"`
 }
 
-type MoveRequest struct {
+type MoveGroupRequest struct {
 	Group int64 `json:"group"`
+}
+
+type MoveRequest struct {
+	Location int64 `json:"location"`
 }
 
 type MoveSelectedRequest struct {

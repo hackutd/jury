@@ -6,7 +6,7 @@ import { putRequest } from '../../../api';
 import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../../store';
 import { twMerge } from 'tailwind-merge';
 import ActionsDropdown from '../../ActionsDropdown';
-import MovePopup from './MovePopup';
+import MoveGroupPopup from './MoveGroupPopup';
 import JudgeRanksPopup from './JudgeRanksPopup';
 
 interface JudgeRowProps {
@@ -123,7 +123,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
                     </span>
                 </td>
             </tr>
-            <MovePopup enabled={movePopup} setEnabled={setMovePopup} item={judge} />
+            <MoveGroupPopup enabled={movePopup} setEnabled={setMovePopup} item={judge} />
             <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={judge} />
             <EditJudgePopup enabled={editPopup} setEnabled={setEditPopup} judge={judge} />
             <JudgeRanksPopup enabled={ranksPopup} setEnabled={setRanksPopup} judge={judge} />

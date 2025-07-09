@@ -419,3 +419,16 @@ func SetJudgesGroup(db *mongo.Database, ctx context.Context, judgeIds []primitiv
 	_, err := db.Collection("judges").UpdateMany(ctx, gin.H{"_id": gin.H{"$in": judgeIds}}, gin.H{"$set": gin.H{"group": group, "group_seen": 0}})
 	return err
 }
+
+// UpdateSeenProjectNumber will change the table number for all instances of a seen project
+func UpdateSeenProjectNumber(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID, newLocation int64) error {
+	_, err := db.Collection("judges").UpdateMany(
+		ctx,
+		gin.H{"seen_projects.project_id": projectId},
+		gin.H{"$set": gin.H{"seen_projects.$[elem].location": newLocation}},
+		options.Update().SetArrayFilters(options.ArrayFilters{
+			Filters: []any{gin.H{"elem.project_id": projectId}},
+		}),
+	)
+	return err
+}

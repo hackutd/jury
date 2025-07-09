@@ -938,7 +938,7 @@ func MoveJudge(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	// Get the request object
-	var moveReq util.MoveRequest
+	var moveReq util.MoveGroupRequest
 	err := ctx.BindJSON(&moveReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
