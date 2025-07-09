@@ -6,7 +6,7 @@ import { useAdminStore, useAdminTableStore, useOptionsStore } from '../../store'
 import ActionsDropdown from '../ActionsDropdown';
 import { postRequest } from '../../api';
 import { errorAlert } from '../../util';
-import MovePopup from './tables/MovePopup';
+import MoveGroupPopup from './tables/MoveGroupPopup';
 
 const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
     const options = useOptionsStore((state) => state.options);
@@ -193,8 +193,8 @@ const AdminToolbar = (props: { showProjects: boolean; lastUpdate: Date }) => {
                 </p>
             </div>
             <FlagsPopup enabled={showFlags} setEnabled={setShowFlags} />
-            <MovePopup enabled={movePopup} setEnabled={setMovePopup} items={selectedIds} />
-            <MovePopup
+            <MoveGroupPopup enabled={movePopup} setEnabled={setMovePopup} items={selectedIds} />
+            <MoveGroupPopup
                 enabled={projectMovePopup}
                 setEnabled={setProjectMovePopup}
                 items={selectedIds}

@@ -56,6 +56,16 @@ func FindProjectsByTrack(db *mongo.Database, ctx context.Context, track string) 
 	return projects, nil
 }
 
+// FindProjectByLocation returns a project given its location. There should only be ONE project in a given location
+func FindProjectByLocation(db *mongo.Database, ctx context.Context, location int64) (*models.Project, error) {
+	var project models.Project
+	err := db.Collection("projects").FindOne(ctx, gin.H{"location": location}).Decode(&project)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	return &project, err
+}
+
 // GetPrioritizedProjects returns a list of all prioritized projects in the database
 func GetPrioritizedProjects(db *mongo.Database, ctx context.Context) ([]*models.Project, error) {
 	projects := make([]*models.Project, 0)
@@ -87,8 +97,8 @@ func UpdateProjectBasicInfo(db *mongo.Database, projectId primitive.ObjectID, pr
 }
 
 // DeleteProjectById deletes a project from the database by id
-func DeleteProjectById(db *mongo.Database, id primitive.ObjectID) error {
-	_, err := db.Collection("projects").DeleteOne(context.Background(), gin.H{"_id": id})
+func DeleteProjectById(db *mongo.Database, ctx context.Context, id primitive.ObjectID) error {
+	_, err := db.Collection("projects").DeleteOne(ctx, gin.H{"_id": id})
 	return err
 }
 
@@ -179,8 +189,8 @@ func FindBusyProjects(db *mongo.Database, ctx context.Context) (map[primitive.Ob
 	return output, nil
 }
 
-// FindProjectById returns a project from the database by id
-func FindProjectById(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) (*models.Project, error) {
+// FindProject returns a project from the database by id
+func FindProject(db *mongo.Database, ctx context.Context, id *primitive.ObjectID) (*models.Project, error) {
 	var project models.Project
 	err := db.Collection("projects").FindOne(ctx, gin.H{"_id": id}).Decode(&project)
 	if err == mongo.ErrNoDocuments {
@@ -408,8 +418,12 @@ func GetGroupMaxNum(db *mongo.Database, ctx context.Context, group int64) (int64
 }
 
 // SetProjectNum sets the table number of the project
-func SetProjectNum(db *mongo.Database, ctx context.Context, id primitive.ObjectID, num int64, group int64) error {
-	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": gin.H{"location": num, "group": group}})
+func SetProjectNum(db *mongo.Database, ctx context.Context, id primitive.ObjectID, num int64, group *int64) error {
+	set := gin.H{"location": num}
+	if group != nil {
+		set["group"] = *group
+	}
+	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": id}, gin.H{"$set": set})
 	return err
 }
 
@@ -422,5 +436,22 @@ func SetProjectsNum(db *mongo.Database, ctx context.Context, ids []primitive.Obj
 
 	opts := options.BulkWrite().SetOrdered(false)
 	_, err := db.Collection("projects").BulkWrite(ctx, models, opts)
+	return err
+}
+
+// DecrementDeletedJudgeSeen will decrement the seen count of each project seen by the deleted judge
+func DecrementDeletedJudgeSeen(db *mongo.Database, ctx context.Context, judge *models.Judge) error {
+	// Get a list of all project IDs that the judge has seen
+	seenProjects := make([]primitive.ObjectID, 0, len(judge.SeenProjects))
+	for _, p := range judge.SeenProjects {
+		seenProjects = append(seenProjects, p.ProjectId)
+	}
+
+	// Decrement all projects
+	_, err := db.Collection("projects").UpdateMany(
+		ctx,
+		gin.H{"_id": gin.H{"$in": seenProjects}},
+		gin.H{"$inc": gin.H{"seen": -1}},
+	)
 	return err
 }

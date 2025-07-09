@@ -7,6 +7,7 @@ import { putRequest } from '../../../api';
 import FlagsPopup from '../FlagsPopup';
 import { twMerge } from 'tailwind-merge';
 import ActionsDropdown from '../../ActionsDropdown';
+import MoveGroupPopup from './MoveGroupPopup';
 import MovePopup from './MovePopup';
 
 interface ProjectRowProps {
@@ -21,6 +22,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
     const [flagPopupProjectId, setFlagPopupProjectId] = useState('');
     const [editPopup, setEditPopup] = useState(false);
     const [deletePopup, setDeletePopup] = useState(false);
+    const [moveGroupPopup, setMoveGroupPopup] = useState(false);
     const [movePopup, setMovePopup] = useState(false);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const options = useOptionsStore((state) => state.options);
@@ -147,6 +149,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
                             'Edit',
                             project.active ? 'Hide' : 'Unhide',
                             project.prioritized ? 'Unprioritize' : 'Prioritize',
+                            'Move Table',
                             'Move Groups',
                             'Delete',
                         ]}
@@ -155,9 +158,10 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
                             hideProject,
                             prioritizeProject,
                             setMovePopup.bind(null, true),
+                            setMoveGroupPopup.bind(null, true),
                             setDeletePopup.bind(null, true),
                         ]}
-                        redIndices={[4]}
+                        redIndices={[5]}
                     />
                     <div
                         className="cursor-pointer hover:text-primary duration-150 mr-2"
@@ -176,7 +180,8 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
             />
             <DeletePopup enabled={deletePopup} setEnabled={setDeletePopup} element={project} />
             <EditProjectPopup enabled={editPopup} setEnabled={setEditPopup} project={project} />
-            <MovePopup enabled={movePopup} setEnabled={setMovePopup} item={project} isProject />
+            <MovePopup enabled={movePopup} setEnabled={setMovePopup} item={project} />
+            <MoveGroupPopup enabled={moveGroupPopup} setEnabled={setMoveGroupPopup} item={project} isProject />
         </>
     );
 };
