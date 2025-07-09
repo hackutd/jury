@@ -8,7 +8,7 @@ import { deleteRequest } from '../../api';
 const REASON_MAP = {
     busy: 'Busy',
     absent: 'Absent',
-    'cannot-demo': "Can't demo",
+    'cannot-demo': "Can't Demo",
     'too-complex': 'Too Complex',
     offensive: 'Offensive',
     'hidden-absent': 'Hidden bc Absent',
