@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"server/config"
 	"server/database"
@@ -231,20 +232,56 @@ func SetOptions(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /admin/reset - ResetDatabase resets the database
+type ResetDatabaseReq struct {
+	Type string `json:"type"` // Possible types: all, projects, judges, judging-data, rankings
+}
+
+// POST /admin/reset - ResetDatabase resets parts of the database
 func ResetDatabase(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
-	// Reset the database
-	err := database.DropAll(state.Db)
+	// Get type from request
+	var req ResetDatabaseReq
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	fmt.Println(req.Type)
+
+	// Drop based on type
+	switch req.Type {
+	case "all":
+		err = database.DropAll(state.Db)
+	case "projects":
+		err = database.DropProjects(state.Db)
+		if err == nil {
+			err = database.DropJudgingData(state.Db)
+		}
+	case "judges":
+		err = database.DropJudges(state.Db)
+		if err == nil {
+			err = database.DropJudgingData(state.Db)
+		}
+	case "judging-data":
+		database.DropJudgingData(state.Db)
+	case "rankings":
+		database.DropRankings(state.Db)
+	default:
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid type for reset"})
+		return
+	}
+
+	// Check for errors
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error resetting database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	state.Logger.AdminLogf("RESET ENTIRE DATABASE")
+	state.Logger.AdminLogf("Reset database: " + req.Type)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 

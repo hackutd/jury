@@ -190,3 +190,9 @@ interface CSVFormState {
     setNoSend: React.Dispatch<React.SetStateAction<boolean>>;
     format: 'project' | 'judge' | 'devpost';
 }
+
+interface ResetPopup {
+    open: boolean;
+    text: string;
+    handler: null | (() => void);
+}
