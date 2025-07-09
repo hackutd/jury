@@ -120,6 +120,8 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.GET("/admin/options", GetOptions)
 	adminRouter.POST("/admin/options", SetOptions)
+	adminRouter.POST("/admin/tracks", SetTracks)
+	adminRouter.POST("/admin/track-views", SetTrackViews)
 	adminRouter.POST("/admin/num-groups", SetNumGroups)
 	adminRouter.POST("/admin/group-sizes", SetGroupSizes)
 	adminRouter.POST("/admin/block-reqs", SetBlockReqs)

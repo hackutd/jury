@@ -11,8 +11,9 @@ type Options struct {
 	ClockSync      bool               `bson:"clock_sync" json:"clock_sync"`
 	Deliberation   bool               `bson:"deliberation" json:"deliberation"`
 	JudgeTracks    bool               `bson:"judge_tracks" json:"judge_tracks"`
-	Tracks         []string           `bson:"tracks" json:"tracks"`
 	MultiGroup     bool               `bson:"multi_group" json:"multi_group"`
+	Tracks         []string           `bson:"tracks" json:"tracks"`                     // Names of each track
+	TrackViews     []int64            `bson:"track_views" json:"track_views"`           // Number of views per track (same len as tracks)
 	NumGroups      int64              `bson:"num_groups" json:"num_groups"`             // Number of groups to split projects into
 	GroupSizes     []int64            `bson:"group_sizes" json:"group_sizes"`           // Number of projects in each group except last (last group will be remainder, size = numGroups - 1)
 	SwitchingMode  string             `bson:"switching_mode" json:"switching_mode"`     // "auto" or "manual"
@@ -36,6 +37,7 @@ func NewOptions() *Options {
 		Deliberation:   false,
 		JudgeTracks:    false,
 		Tracks:         []string{},
+		TrackViews:     []int64{},
 		MultiGroup:     false,
 		NumGroups:      3,
 		GroupSizes:     []int64{30, 30, 30},
@@ -55,8 +57,10 @@ type OptionalOptions struct {
 	JudgingTimer   *int64    `bson:"judging_timer,omitempty" json:"judging_timer,omitempty"`
 	MinViews       *int64    `bson:"min_views,omitempty" json:"min_views,omitempty"`
 	ClockSync      *bool     `bson:"clock_sync,omitempty" json:"clock_sync,omitempty"`
+	Deliberation   *bool     `bson:"deliberation" json:"deliberation"`
 	JudgeTracks    *bool     `bson:"judge_tracks,omitempty" json:"judge_tracks,omitempty"`
 	Tracks         *[]string `bson:"tracks,omitempty" json:"tracks,omitempty"`
+	TrackViews     *[]int64  `bson:"track_views,omitempty" json:"track_views,omitempty"`
 	MultiGroup     *bool     `bson:"multi_group,omitempty" json:"multi_group,omitempty"`
 	NumGroups      *int64    `bson:"num_groups,omitempty" json:"num_groups,omitempty"`
 	GroupSizes     *[]int64  `bson:"group_sizes,omitempty" json:"group_sizes,omitempty"`
