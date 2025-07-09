@@ -115,3 +115,11 @@ func NewAggRanking(projectId primitive.ObjectID, score int64) *AggRanking {
 		Score:     score,
 	}
 }
+
+// NewDummyJudge creates a dummy judge that acts as a placeholder for system actions
+// This is used for things like hiding projects when absent >3 times automatically
+func NewDummyJudge() *Judge {
+	dummyJudge := NewJudge("system", "", "", "", 0)
+	dummyJudge.Id = primitive.NilObjectID
+	return dummyJudge
+}

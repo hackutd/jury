@@ -10,7 +10,6 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -56,7 +55,7 @@ func SkipCurrentProjectWithTx(db *mongo.Database, ctx context.Context, judge *mo
 	}
 
 	// Hide the project if it has been skipped more than 3 times
-	err = HideAbsentProject(db, ctx, judge.Current)
+	err = HideAbsentProject(db, ctx, skippedProject)
 	if err != nil {
 		return errors.New("error hiding absent project: " + err.Error())
 	}
@@ -81,14 +80,16 @@ func SkipCurrentProjectWithTx(db *mongo.Database, ctx context.Context, judge *mo
 }
 
 // HideAbsentProject hides a project if it has been absent more than 3 times.
-func HideAbsentProject(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID) error {
+func HideAbsentProject(db *mongo.Database, ctx context.Context, project *models.Project) error {
+	projectId := &project.Id
+
 	// Get absent count
 	absent, err := database.GetProjectAbsentCount(db, ctx, projectId)
 	if err != nil {
 		return errors.New("Error getting absent count: " + err.Error())
 	}
 
-	// If no more than 3 absences, ignore
+	// If no more than 3 absences, don't do anything
 	if absent < 3 {
 		return nil
 	}
@@ -103,6 +104,16 @@ func HideAbsentProject(db *mongo.Database, ctx context.Context, projectId *primi
 	err = database.DeleteAbsentFlags(db, ctx, projectId)
 	if err != nil {
 		return errors.New("Error deleting absent flags: " + err.Error())
+	}
+
+	// Add a flag to notate that we are automatically hiding the project
+	hideFlag, err := models.NewFlag(project, models.NewDummyJudge(), "hidden-absent")
+	if err != nil {
+		return errors.New("error creating hidden flag object: " + err.Error())
+	}
+	err = database.InsertFlag(db, ctx, hideFlag)
+	if err != nil {
+		return errors.New("error inserting hidden flag into database: " + err.Error())
 	}
 
 	return nil
