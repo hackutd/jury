@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { postRequest } from '../../api';
-import { useAdminStore, useClockStore, useOptionsStore } from '../../store';
+import { useAdminStore, useOptionsStore } from '../../store';
 import { errorAlert } from '../../util';
 import Button from '../Button';
 import ConfirmPopup from '../ConfirmPopup';
@@ -17,7 +17,9 @@ interface ActionsPopupProps {
 }
 
 const ActionsItem = ({ children }: { children: React.ReactNode }) => {
-    return <div className="flex flex-col md:flex-row mb-4 md:mb-0 items-center gap-3">{children}</div>;
+    return (
+        <div className="flex flex-col md:flex-row mb-4 md:mb-0 items-center gap-3">{children}</div>
+    );
 };
 
 const ActionsPopup = (props: ActionsPopupProps) => {
@@ -25,7 +27,6 @@ const ActionsPopup = (props: ActionsPopupProps) => {
     const options = useOptionsStore((state) => state.options);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
     const fetchJudges = useAdminStore((state) => state.fetchJudges);
-    const clock = useClockStore((state) => state.clock);
     const [deliberationPopup, setDeliberationPopup] = useState(false);
     const [swapPopup, setSwapPopup] = useState(false);
 
@@ -85,7 +86,6 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                                 <Button
                                     type="gold"
                                     onClick={setSwapPopup.bind(null, true)}
-                                    disabled={clock.running}
                                     tooltip="Groups can only be swapped when judging is paused"
                                     bold
                                     className="py-2"
@@ -99,7 +99,7 @@ const ActionsPopup = (props: ActionsPopupProps) => {
                             </div>
 
                             <Paragraph
-                                text="Prevent judges from making changes to ranking and stars."
+                                text="Manually swap judge groups, sending every judge to the next group."
                                 className="basis-1/2 grow-0 shrink-0"
                             />
                         </ActionsItem>
