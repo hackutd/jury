@@ -44,6 +44,7 @@ interface Judge {
     active: boolean;
     group: number;
     current: string;
+    flagged: string[];
     last_activity: number;
 }
 
@@ -124,6 +125,7 @@ interface Options {
     clock_sync: boolean;
     judge_tracks: boolean;
     tracks: string[];
+    track_views: number[];
     multi_group: boolean;
     num_groups: number;
     group_sizes: number[];
@@ -188,4 +190,15 @@ interface CSVFormState {
     noSend: boolean;
     setNoSend: React.Dispatch<React.SetStateAction<boolean>>;
     format: 'project' | 'judge' | 'devpost';
+}
+
+interface ResetPopup {
+    open: boolean;
+    text: string;
+    handler: null | (() => void);
+}
+
+interface GroupInfo {
+    names: string[];
+    enabled: boolean;
 }

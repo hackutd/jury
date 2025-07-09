@@ -8,7 +8,7 @@ import Loading from '../../components/Loading';
 import Checkbox from '../../components/Checkbox';
 import TextInput from '../../components/TextInput';
 import SelectionButton from '../../components/SelectionButton';
-import { useOptionsStore } from '../../store';
+import { useClockStore, useOptionsStore } from '../../store';
 import ChallengeBlock from '../../components/admin/ChallengeBlock';
 import Card from '../../components/Card';
 import ToTopButton from '../../components/ToTopButton';
@@ -32,17 +32,20 @@ const Description = ({ children: c }: { children: React.ReactNode }) => (
 const SettingsButton = ({
     children,
     onClick,
+    disabled,
     className,
     type = 'primary',
 }: {
     children: React.ReactNode;
     onClick: () => void;
+    disabled?: boolean;
     className?: string;
     type?: 'primary' | 'error' | 'gold' | 'outline';
 }) => (
     <Button
         type={type}
         onClick={onClick}
+        disabled={disabled}
         className={twMerge('my-2 h-max text-lg md:text-2xl py-[2px] md:py-1', className)}
     >
         {children}
@@ -70,7 +73,6 @@ const AdminSettings = () => {
     const [reassignPopup, setReassignPopup] = useState(false);
     const [judgeReassignPopup, setJudgeReassignPopup] = useState(false);
     const [clockResetPopup, setClockResetPopup] = useState(false);
-    const [dropPopup, setDropPopup] = useState(false);
     const [judgingTimer, setJudgingTimer] = useState('');
     const [minViews, setMinViews] = useState(3);
     const [syncClock, setSyncClock] = useState(false);
@@ -82,26 +84,28 @@ const AdminSettings = () => {
     const [groupSizes, setGroupSizes] = useState('30, 30');
     const [judgeTracks, setJudgeTracks] = useState(false);
     const [tracks, setTracks] = useState<string>('');
+    const [trackViews, setTrackViews] = useState('');
     const [groupNames, setGroupNames] = useState('');
     const [ignoreTracks, setIgnoreTracks] = useState<string>('');
     const [maxReqPerMin, setMaxReqPerMin] = useState(100);
     const [blockReqs, setBlockReqs] = useState(false);
+    const [resetPopup, setResetPopup] = useState<ResetPopup>({
+        open: false,
+        text: '',
+        handler: null,
+    });
+    const [running, setRunning] = useState(false);
     const fetchOptions = useOptionsStore((state) => state.fetchOptions);
+    const options = useOptionsStore((state) => state.options);
+    const fetchClock = useClockStore((state) => state.fetchClock);
+    const clock = useClockStore((state) => state.clock);
     const navigate = useNavigate();
 
     async function getOptions() {
-        const res = await getRequest<Options>('/admin/options', 'admin');
-        if (res.status !== 200) {
-            errorAlert(res);
-            return;
-        }
-        if (!res.data) {
-            alert('error: could not get options data');
-            return;
-        }
+        await fetchOptions();
 
         // Calculate judging timer MM:SS
-        const timer = res.data.judging_timer;
+        const timer = options.judging_timer;
         if (timer) {
             const minutes = Math.floor(timer / 60);
             const seconds = timer % 60;
@@ -110,23 +114,28 @@ const AdminSettings = () => {
         }
 
         // Set min views
-        setMinViews(res.data.min_views);
+        setMinViews(options.min_views);
 
         // Set sync clock
-        setSyncClock(res.data.clock_sync);
+        setSyncClock(options.clock_sync);
 
         // Set group options
-        setMultiGroup(res.data.multi_group);
-        setNumGroups(res.data.num_groups);
-        setGroupSizes(res.data.group_sizes.join(', '));
-        setSwitchingMode(res.data.switching_mode);
-        setAutoSwitchProp(res.data.auto_switch_prop);
-        setJudgeTracks(res.data.judge_tracks);
-        setTracks(res.data.tracks.join(', '));
-        setGroupNames(res.data.group_names.join(', '));
-        setIgnoreTracks(res.data.ignore_tracks.join(', '));
-        setBlockReqs(res.data.block_reqs);
-        setMaxReqPerMin(res.data.max_req_per_min);
+        setMultiGroup(options.multi_group);
+        setNumGroups(options.num_groups);
+        setGroupSizes(options.group_sizes.join(', '));
+        setSwitchingMode(options.switching_mode);
+        setAutoSwitchProp(options.auto_switch_prop);
+        setJudgeTracks(options.judge_tracks);
+        setTracks(options.tracks.join(', '));
+        setTrackViews(options.track_views.join(', '));
+        setGroupNames(options.group_names.join(', '));
+        setIgnoreTracks(options.ignore_tracks.join(', '));
+        setBlockReqs(options.block_reqs);
+        setMaxReqPerMin(options.max_req_per_min);
+
+        // Get active clock status
+        await fetchClock();
+        setRunning(clock.running);
 
         setLoading(false);
     }
@@ -269,7 +278,7 @@ const AdminSettings = () => {
             .map((track) => track.trim())
             .filter((track) => track !== '');
 
-        const res = await postRequest<OkResponse>('/admin/options', 'admin', {
+        const res = await postRequest<OkResponse>('/admin/tracks', 'admin', {
             tracks: filteredTracks,
         });
         if (res.status !== 200 || !res.data) {
@@ -278,6 +287,37 @@ const AdminSettings = () => {
         }
 
         alert('Tracks updated!');
+        getOptions();
+    };
+
+    const updateTrackViews = async () => {
+        const views = trackViews.split(',').map((v) => parseInt(v.trim()));
+        const ts = tracks
+            .split(',')
+            .map((t) => t.trim())
+            .filter((t) => t !== '');
+        if (views.some((v) => isNaN(v) || v < 1)) {
+            alert('Track views should be positive integers!');
+            return;
+        }
+
+        // Make sure number of views is equal to num of tracks
+        if (views.length !== ts.length) {
+            alert(
+                'Number of track views should be the same as number of tracks (you need a min number of views for each track)!'
+            );
+            return;
+        }
+
+        const res = await postRequest<OkResponse>('/admin/track-views', 'admin', {
+            track_views: views,
+        });
+        if (res.status !== 200 || res.data?.ok !== 1) {
+            errorAlert(res);
+            return;
+        }
+
+        alert('Track views updated!');
     };
 
     const toggleMultiGroup = async () => {
@@ -447,15 +487,15 @@ const AdminSettings = () => {
         alert('Clock data backed up!');
     };
 
-    const dropDatabase = async () => {
-        const res = await postRequest<OkResponse>('/admin/reset', 'admin', null);
+    const reset = async (type: string) => {
+        const res = await postRequest<OkResponse>('/admin/reset', 'admin', { type });
         if (res.status !== 200 || res.data?.ok !== 1) {
             errorAlert(res);
             return;
         }
 
-        alert('Database reset!');
-        setDropPopup(false);
+        alert(`Reset ${type}`);
+        setResetPopup({ open: false, text: '', handler: null });
     };
 
     const exportCsv = async (type: string) => {
@@ -506,14 +546,23 @@ const AdminSettings = () => {
             <div className="flex flex-col items-start justify-center w-full px-8 py-4 md:px-16 md:py-8">
                 <h1 className="text-4xl font-bold">Settings</h1>
 
-                <div className="my-4 flex flex-row flex-wrap gap-1 md:gap-4">
+                <div className="my-4 flex flex-row flex-wrap gap-1 md:gap-2">
                     <NavButton>Judge Login</NavButton>
                     <NavButton>Judging Parameters</NavButton>
                     <NavButton>Judging Clock and Timer</NavButton>
-                    <NavButton>Multi-Group and Track Judging</NavButton>
+                    <NavButton>Track Judging</NavButton>
+                    <NavButton>Multi-Group Judging</NavButton>
                     <NavButton>Export Data</NavButton>
                     <NavButton>Reset Database</NavButton>
                 </div>
+
+                {running && (
+                    <p className="p-2 text-center border-gold border-2 bg-gold/20 rounded-md">
+                        Judging has started. Some settings have been disabled to ensure consistency
+                        with judging assignments and rank aggregations. Please pause judging to
+                        change the disabled settings.
+                    </p>
+                )}
 
                 <Card>
                     <Section>Judge Login</Section>
@@ -575,7 +624,8 @@ const AdminSettings = () => {
                     <FieldButton>
                         <SettingsButton
                             onClick={() => setReassignPopup(true)}
-                            className="bg-gold text-black hover:bg-goldDark hover:text-black mr-4"
+                            disabled={running}
+                            type="gold"
                         >
                             Reassign
                         </SettingsButton>
@@ -638,7 +688,8 @@ const AdminSettings = () => {
                     <Description>Reset the clock back to 00:00:00</Description>
                     <SettingsButton
                         onClick={() => setClockResetPopup(true)}
-                        className="bg-gold text-black hover:bg-goldDark hover:text-black"
+                        disabled={running}
+                        type="gold"
                     >
                         Reset
                     </SettingsButton>
@@ -679,7 +730,7 @@ const AdminSettings = () => {
                 </Card>
 
                 <Card>
-                    <Section>Multi-Group and Track Judging</Section>
+                    <Section>Track Judging</Section>
 
                     <SubSection>Enable Track Judging</SubSection>
                     <Description>
@@ -688,10 +739,9 @@ const AdminSettings = () => {
                         This does not affect the main general judging, and all projects will still
                         be considered for the main judging. However, if you have a different track
                         (eg. design), this feature will allow that track's judges to only see
-                        projects that have submitted to that track. Note that toggling this option
-                        during judging <span className="font-bold">is very very bad</span>.
+                        projects that have submitted to that track.
                     </Description>
-                    <Checkbox checked={judgeTracks} onChange={toggleJudgeTracks}>
+                    <Checkbox checked={judgeTracks} onChange={toggleJudgeTracks} disabled={running}>
                         Enable Track Judging
                     </Checkbox>
 
@@ -701,8 +751,7 @@ const AdminSettings = () => {
                             <Description>
                                 Set the tracks that will be judged. Note this should match the name
                                 under the 'Opt-In Prizes' category. Only the tracks listed here will
-                                be judged! As with the previous setting, DO NOT CHANGE THIS DURING
-                                JUDGING.
+                                be judged!
                             </Description>
                             <ChallengeBlock />
                             <TextInput
@@ -714,9 +763,34 @@ const AdminSettings = () => {
                                 full
                                 className="my-2"
                             />
-                            <SettingsButton onClick={updateTracks}>Update Tracks</SettingsButton>
+                            <SettingsButton disabled={running} onClick={updateTracks}>
+                                Update Tracks
+                            </SettingsButton>
+
+                            <SubSection>Set Track Min Views</SubSection>
+                            <Description>
+                                Set the number of views a track project should get across all
+                                judges. For example, if this is set to 3, then a project will be
+                                seen exactly 3 times by that track's judges. We suggest this to be
+                                set to around 2-4, depending on the size of the track.
+                            </Description>
+                            <TextInput
+                                label="Track min views"
+                                placeholder="3, 3, 2, ..."
+                                text={trackViews}
+                                setText={setTrackViews}
+                                full
+                                large
+                                className="my-2 mr-4"
+                            />
+                            <SettingsButton onClick={updateTrackViews}>
+                                Update Track Min Views
+                            </SettingsButton>
                         </>
                     )}
+                </Card>
+                <Card>
+                    <Section>Multi-group Judging</Section>
 
                     <SubSection>Enable Multiple Groups</SubSection>
                     <Description>
@@ -726,7 +800,7 @@ const AdminSettings = () => {
                         toggling this option{' '}
                         <span className="font-bold">will reassign project numbers</span>.
                     </Description>
-                    <Checkbox checked={multiGroup} onChange={toggleMultiGroup}>
+                    <Checkbox checked={multiGroup} onChange={toggleMultiGroup} disabled={running}>
                         Enable Multi-Group Judging
                     </Checkbox>
 
@@ -746,7 +820,7 @@ const AdminSettings = () => {
                                     number
                                     className="my-2 mr-4"
                                 />
-                                <SettingsButton onClick={updateNumGroups}>
+                                <SettingsButton onClick={updateNumGroups} disabled={running}>
                                     Update Number of Groups
                                 </SettingsButton>
                             </FieldButton>
@@ -767,7 +841,7 @@ const AdminSettings = () => {
                                 large
                                 className="my-2 mr-4"
                             />
-                            <SettingsButton onClick={updateGroupSizes}>Update Sizes</SettingsButton>
+                            <SettingsButton onClick={updateGroupSizes} disabled={running}>Update Sizes</SettingsButton>
 
                             <SubSection>Switching Mode</SubSection>
                             <Description>
@@ -869,14 +943,102 @@ const AdminSettings = () => {
                 </Card>
 
                 <Card>
-                    <Section>Reset Database</Section>
+                    <Section>Reset Data</Section>
+
+                    <SubSection>Clear Rankings and Stars</SubSection>
+                    <Description>
+                        Removes ALL rankings that judges have made. This will not change anything
+                        else but remove all judges' rankings and stars for projects.
+                    </Description>
+                    <SettingsButton
+                        onClick={() =>
+                            setResetPopup({
+                                open: true,
+                                text: 'Are you sure you want to delete all ranking data? This includes rankings and stars of ALL judges!',
+                                handler: reset.bind(this, 'rankings'),
+                            })
+                        }
+                        type="error"
+                        disabled={running}
+                    >
+                        Delete Rankings
+                    </SettingsButton>
+
+                    <SubSection>Clear Judging Data</SubSection>
+                    <Description>
+                        Remove all active judging data. This will keep judges, projects, and
+                        configurations; essentially it will revert Jury to a state before judging
+                        started. This is useful if you accidentally started judging and want to
+                        revert all judging without removing projects or judges.
+                    </Description>
+                    <SettingsButton
+                        onClick={() =>
+                            setResetPopup({
+                                open: true,
+                                text: 'Are you sure you want to delete all judging data? This will wipe all judging activity but retain projects/judges/settings.',
+                                handler: reset.bind(this, 'judging-data'),
+                            })
+                        }
+                        type="error"
+                        disabled={running}
+                    >
+                        Delete Judging Data
+                    </SettingsButton>
+
+                    <SubSection>Delete all Projects</SubSection>
+                    <Description>
+                        This will delete all projects in the database, along with any judging and
+                        flag data.
+                    </Description>
+                    <SettingsButton
+                        onClick={() =>
+                            setResetPopup({
+                                open: true,
+                                text: 'Are you sure you want to delete all projects? This will wipe everything except for judges and settings.',
+                                handler: reset.bind(this, 'projects'),
+                            })
+                        }
+                        type="error"
+                        disabled={running}
+                    >
+                        Delete Projects
+                    </SettingsButton>
+
+                    <SubSection>Delete all Judges</SubSection>
+                    <Description>
+                        This will delete all judges in the database, along with any judging and flag
+                        data.
+                    </Description>
+                    <SettingsButton
+                        onClick={() =>
+                            setResetPopup({
+                                open: true,
+                                text: 'Are you sure you want to delete all judges? This will wipe everything except for projects and settings.',
+                                handler: reset.bind(this, 'judges'),
+                            })
+                        }
+                        type="error"
+                        disabled={running}
+                    >
+                        Delete Judges
+                    </SettingsButton>
 
                     <SubSection>THIS WILL DELETE THE ENTIRE DATABASE</SubSection>
                     <Description>
                         Mostly used for testing purposes/before the event if you want to reset
                         everything bc something got messed up. Do NOT use this during judging (duh).
                     </Description>
-                    <SettingsButton onClick={() => setDropPopup(true)} type="error">
+                    <SettingsButton
+                        onClick={() => {
+                            setResetPopup({
+                                open: true,
+                                text: 'THIS WILL ACTUALLY DELETE ALL DATA!!!!! YOU NEED TO BE ABSOLUTELY SURE YOU WANT TO DO THIS. THIS IS YOUR LAST WARNING! Deleting the entire database will not only remove judges/projects/judging stats but also remove all configuration.',
+                                handler: reset.bind(this, 'all'),
+                            });
+                        }}
+                        type="error"
+                        disabled={running}
+                    >
                         Drop Database
                     </SettingsButton>
                 </Card>
@@ -915,15 +1077,14 @@ const AdminSettings = () => {
                 00:00:00.
             </ConfirmPopup>
             <ConfirmPopup
-                enabled={dropPopup}
-                setEnabled={setDropPopup}
-                onSubmit={dropDatabase}
+                enabled={resetPopup.open}
+                setEnabled={((e: boolean) => setResetPopup({ ...resetPopup, open: e })) as any}
+                onSubmit={resetPopup.handler as any}
                 submitText="RESET DATA"
                 title="Heads Up!"
                 red
             >
-                THIS WILL ACTUALLY DELETE ALL DATA!!!!! YOU NEED TO BE ABSOLUTELY SURE YOU WANT TO
-                DO THIS. THIS IS YOUR LAST WARNING!
+                {resetPopup.text}
             </ConfirmPopup>
             <Loading disabled={!loading} />
             <ToTopButton />

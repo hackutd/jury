@@ -10,7 +10,6 @@ import (
 	"slices"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -25,38 +24,44 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 // This should be run in a transaction.
 func SkipCurrentProjectWithTx(db *mongo.Database, ctx context.Context, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
 	// Get skipped project from database
-	skippedProject, err := database.FindProjectById(db, ctx, judge.Current)
+	skippedProject, err := database.FindProject(db, ctx, judge.Current)
 	if err != nil {
 		return errors.New("error finding skipped project in database: " + err.Error())
 	}
 
-	// If skipping for any reason other than wanting a break, add the project to the skipped list
-	if reason != "break" {
-		// Create a new skip object
-		skip, err := models.NewFlag(skippedProject, judge, reason)
-		if err != nil {
-			return errors.New("error creating flag object: " + err.Error())
-		}
+	// Create a new skip object
+	skip, err := models.NewFlag(skippedProject, judge, reason)
+	if err != nil {
+		return errors.New("error creating flag object: " + err.Error())
+	}
 
-		// Add skipped project to flags database
-		err = database.InsertFlag(db, ctx, skip)
-		if err != nil {
-			return errors.New("error inserting flag into database: " + err.Error())
-		}
+	// Add skipped project to flags database
+	err = database.InsertFlag(db, ctx, skip)
+	if err != nil {
+		return errors.New("error inserting flag into database: " + err.Error())
+	}
+
+	// Add to flagged project if reason is not busy or absent
+	push := make(gin.H)
+	if reason != "busy" && reason != "absent" {
+		push["flagged"] = skippedProject.Id
 	}
 
 	// Update the judge
 	_, err = db.Collection("judges").UpdateOne(
 		ctx,
 		gin.H{"_id": judge.Id},
-		gin.H{"$set": gin.H{"current": nil, "last_activity": util.Now()}},
+		gin.H{
+			"$set":  gin.H{"current": nil, "last_activity": util.Now()},
+			"$push": push,
+		},
 	)
 	if err != nil {
 		return err
 	}
 
-	// Hide the project if it has been skipped more than 3 times
-	err = HideAbsentProject(db, ctx, judge.Current)
+	// Hide the project if it has been skipped for absent more than 3 times
+	err = HideAbsentProject(db, ctx, skippedProject)
 	if err != nil {
 		return errors.New("error hiding absent project: " + err.Error())
 	}
@@ -81,14 +86,16 @@ func SkipCurrentProjectWithTx(db *mongo.Database, ctx context.Context, judge *mo
 }
 
 // HideAbsentProject hides a project if it has been absent more than 3 times.
-func HideAbsentProject(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID) error {
+func HideAbsentProject(db *mongo.Database, ctx context.Context, project *models.Project) error {
+	projectId := &project.Id
+
 	// Get absent count
 	absent, err := database.GetProjectAbsentCount(db, ctx, projectId)
 	if err != nil {
 		return errors.New("Error getting absent count: " + err.Error())
 	}
 
-	// If no more than 3 absences, ignore
+	// If no more than 3 absences, don't do anything
 	if absent < 3 {
 		return nil
 	}
@@ -103,6 +110,16 @@ func HideAbsentProject(db *mongo.Database, ctx context.Context, projectId *primi
 	err = database.DeleteAbsentFlags(db, ctx, projectId)
 	if err != nil {
 		return errors.New("Error deleting absent flags: " + err.Error())
+	}
+
+	// Add a flag to notate that we are automatically hiding the project
+	hideFlag, err := models.NewFlag(project, models.NewDummyJudge(), "hidden-absent")
+	if err != nil {
+		return errors.New("error creating hidden flag object: " + err.Error())
+	}
+	err = database.InsertFlag(db, ctx, hideFlag)
+	if err != nil {
+		return errors.New("error inserting hidden flag into database: " + err.Error())
 	}
 
 	return nil
@@ -208,7 +225,7 @@ func PickNextProject(db *mongo.Database, ctx context.Context, judge *models.Judg
 //  2. Filter out all projects that the judge has already seen
 //  3. Filter out all projects that the judge has flagged (except for busy projects)
 //  4. Filter out all projects that is not in the judge's track (if tracks are enabled and the user has a track)
-//  5. If tracks are enabled, filter out all track projects that have been seen >2 times
+//  5. If tracks are enabled, filter out all track projects that have been seen >track_views[track] times
 //  6. Filter out projects that are currently being judged (if no projects remain after filter, ignore step)
 //  7. If judging a track, return at this point (ignore last 2 conditions)
 //  8. Filter out projects not in the judge's group (if no projects remain after filter, try subsequent groups until a project is found OR all projects have been judged)
@@ -237,10 +254,13 @@ func FindAvailableItems(db *mongo.Database, ctx context.Context, judge *models.J
 		return nil, err
 	}
 
-	// Create a set of voted projects and skipped projects
+	// Create a set of voted, skipped, and flagged projects
 	done := make(map[string]bool)
 	for _, proj := range judge.SeenProjects {
 		done[proj.ProjectId.Hex()] = true
+	}
+	for _, f := range judge.Flagged {
+		done[f.Hex()] = true
 	}
 	for _, flag := range flags {
 		done[flag.ProjectId.Hex()] = true
@@ -265,15 +285,16 @@ func FindAvailableItems(db *mongo.Database, ctx context.Context, judge *models.J
 	// Also filter out all track projects that have been seen >2 times OR is currently being judged by a track judge
 	if options.JudgeTracks && judge.Track != "" {
 		var trackProjects []*models.Project
+		trackIndex := slices.Index(options.Tracks, judge.Track)
 		for _, proj := range projects {
 			if slices.Contains(proj.ChallengeList, judge.Track) {
-				// If currently being judged by second track judge, do not assign
-				if proj.TrackSeen[judge.Track] == 1 && busyProjects[proj.Id] == judge.Track {
+				// If currently being judged by the last track judge, do not assign
+				if proj.TrackSeen[judge.Track] == options.TrackViews[trackIndex]-1 && busyProjects[proj.Id] == judge.Track {
 					continue
 				}
 
-				// Otherwise, only add to list if seen < 2 times
-				if proj.TrackSeen[judge.Track] < 2 {
+				// Otherwise, only add to list if seen < track_view times
+				if proj.TrackSeen[judge.Track] < options.TrackViews[trackIndex] {
 					trackProjects = append(trackProjects, proj)
 				}
 			}

@@ -26,6 +26,7 @@ type Judge struct {
 	SeenProjects []JudgedProject      `bson:"seen_projects" json:"seen_projects"`
 	Rankings     []primitive.ObjectID `bson:"rankings" json:"rankings"`
 	RankingsAgg  []AggRanking         `bson:"rankings_agg" json:"rankings_agg"` // Aggregation for ranking scoring
+	Flagged      []primitive.ObjectID `bson:"flagged" json:"flagged"`           // Projects that the judge has flagged (not ranked)
 	LastActivity primitive.DateTime   `bson:"last_activity" json:"last_activity"`
 }
 
@@ -61,6 +62,7 @@ func NewJudge(name string, email string, track string, notes string, group int64
 		SeenProjects: []JudgedProject{},
 		Rankings:     []primitive.ObjectID{},
 		RankingsAgg:  []AggRanking{},
+		Flagged:      []primitive.ObjectID{},
 		LastActivity: primitive.DateTime(0),
 	}
 }
@@ -114,4 +116,12 @@ func NewAggRanking(projectId primitive.ObjectID, score int64) *AggRanking {
 		ProjectId: projectId,
 		Score:     score,
 	}
+}
+
+// NewDummyJudge creates a dummy judge that acts as a placeholder for system actions
+// This is used for things like hiding projects when absent >3 times automatically
+func NewDummyJudge() *Judge {
+	dummyJudge := NewJudge("system", "", "", "", 0)
+	dummyJudge.Id = primitive.NilObjectID
+	return dummyJudge
 }

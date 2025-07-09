@@ -137,6 +137,7 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         clock_sync: false,
         judge_tracks: false,
         tracks: [],
+        track_views: [],
         multi_group: false,
         num_groups: 0,
         group_sizes: [],

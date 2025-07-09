@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"server/config"
 	"server/database"
@@ -231,20 +232,56 @@ func SetOptions(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// POST /admin/reset - ResetDatabase resets the database
+type ResetDatabaseReq struct {
+	Type string `json:"type"` // Possible types: all, projects, judges, judging-data, rankings
+}
+
+// POST /admin/reset - ResetDatabase resets parts of the database
 func ResetDatabase(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
-	// Reset the database
-	err := database.DropAll(state.Db)
+	// Get type from request
+	var req ResetDatabaseReq
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	fmt.Println(req.Type)
+
+	// Drop based on type
+	switch req.Type {
+	case "all":
+		err = database.DropAll(state.Db)
+	case "projects":
+		err = database.DropProjects(state.Db)
+		if err == nil {
+			err = database.DropJudgingData(state.Db)
+		}
+	case "judges":
+		err = database.DropJudges(state.Db)
+		if err == nil {
+			err = database.DropJudgingData(state.Db)
+		}
+	case "judging-data":
+		database.DropJudgingData(state.Db)
+	case "rankings":
+		database.DropRankings(state.Db)
+	default:
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid type for reset"})
+		return
+	}
+
+	// Check for errors
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error resetting database: " + err.Error()})
 		return
 	}
 
 	// Send OK
-	state.Logger.AdminLogf("RESET ENTIRE DATABASE")
+	state.Logger.AdminLogf("Reset database: " + req.Type)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
@@ -652,10 +689,17 @@ func SetDeliberation(ctx *gin.Context) {
 	}
 
 	// Update the deliberation state
-	err = database.UpdateDeliberation(state.Db, ctx, req.Start)
+	err = database.UpdateOptions(state.Db, ctx, &models.OptionalOptions{Deliberation: &req.Start})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating deliberation: " + err.Error()})
 		return
+	}
+
+	// Also pause judging if deliberation has started
+	if req.Start {
+		state.Clock.Mutex.Lock()
+		state.Clock.State.Pause()
+		state.Clock.Mutex.Unlock()
 	}
 
 	// Send OK
@@ -667,8 +711,8 @@ func SetDeliberation(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
-// GET /group-names - GetGroupNames returns the names of the groups
-func GetGroupNames(ctx *gin.Context) {
+// GET /group-info - GetGroupInfo returns the names of the groups and if groups are enabled
+func GetGroupInfo(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
@@ -680,7 +724,10 @@ func GetGroupNames(ctx *gin.Context) {
 	}
 
 	// Send OK
-	ctx.JSON(http.StatusOK, options.GroupNames)
+	ctx.JSON(http.StatusOK, gin.H{
+		"names":   options.GroupNames,
+		"enabled": options.MultiGroup,
+	})
 }
 
 // POST /admin/block-reqs - blocks or unblocks login requests
@@ -748,5 +795,104 @@ func SetMaxReqs(ctx *gin.Context) {
 
 	// Send OK
 	state.Logger.AdminLogf("Updated max requests to %d", *req.MaxReqPerMin)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /admin/tracks - updates the tracks to judge
+func SetTracks(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
+	// Get the options
+	options, err := database.GetOptions(state.Db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not get settings: " + err.Error()})
+		return
+	}
+
+	// Get the request
+	var req models.OptionalOptions
+	err = ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Make sure the tracks field is valid
+	if req.Tracks == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid tracks field"})
+		return
+	}
+
+	// Make sure track views are equal length. If not, cut or add
+	diff := len(*req.Tracks) - len(options.TrackViews)
+	changeViews := true
+	if diff > 0 { // More tracks = add to views
+		for range diff {
+			options.TrackViews = append(options.TrackViews, 3) // Default track views = 3
+		}
+	} else if diff < 0 { // Less tracks = remove from views
+		options.TrackViews = options.TrackViews[:len(options.TrackViews)+diff]
+	} else {
+		changeViews = false
+	}
+
+	// Update options
+	update := models.OptionalOptions{Tracks: req.Tracks}
+	if changeViews {
+		update.TrackViews = &options.TrackViews
+	}
+	err = database.UpdateOptions(state.Db, ctx, &update)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating tracks: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	state.Logger.AdminLogf("Updated tracks to %s", util.StructToStringWithoutNils(req))
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// POST /admin/track-views - updates the number of views per track
+func SetTrackViews(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
+	// Get the options
+	options, err := database.GetOptions(state.Db, ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not get settings: " + err.Error()})
+		return
+	}
+
+	// Get the request
+	var req models.OptionalOptions
+	err = ctx.BindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
+		return
+	}
+
+	// Make sure the track views field is valid
+	if req.TrackViews == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid track views field"})
+		return
+	}
+
+	// Make sure the track views field is the same length as the tracks
+	if len(options.Tracks) != len(*req.TrackViews) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "track views must be the same length as tracks"})
+		return
+	}
+
+	// Update the options
+	err = database.UpdateOptions(state.Db, ctx, &models.OptionalOptions{TrackViews: req.TrackViews})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating track views: " + err.Error()})
+		return
+	}
+
+	// Send OK
+	state.Logger.AdminLogf("Updated track views to %s", util.StructToStringWithoutNils(req))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }

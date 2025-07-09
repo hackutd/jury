@@ -343,10 +343,39 @@ func DeleteJudge(ctx *gin.Context) {
 		return
 	}
 
-	// Delete judge from database
-	err = database.DeleteJudgeById(state.Db, judgeObjectId)
+	// Run in transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Get judge data
+		judge, err := database.FindJudge(state.Db, sc, judgeObjectId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not get judge: " + err.Error()})
+			return err
+		}
+
+		// Delete judge from database
+		err = database.DeleteJudgeById(state.Db, sc, judgeObjectId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting judge from database: " + err.Error()})
+			return err
+		}
+
+		// Decrement the seen number of all projects in the judge's seen_projects array
+		err = database.DecrementDeletedJudgeSeen(state.Db, sc, judge)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not decrement seen for judged projects: " + err.Error()})
+			return err
+		}
+
+		// Delete all flags for judge
+		err = database.DeleteFlagsCascade(state.Db, sc, nil, &judgeObjectId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting flags for judge: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting judge from database: " + err.Error()})
 		return
 	}
 
@@ -458,7 +487,7 @@ func GetJudgedProject(ctx *gin.Context) {
 	for _, p := range judge.SeenProjects {
 		if p.ProjectId.Hex() == projectId {
 			// Add URL to judged project
-			proj, err := database.FindProjectById(state.Db, ctx, &p.ProjectId)
+			proj, err := database.FindProject(state.Db, ctx, &p.ProjectId)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project url: " + err.Error()})
 				return
@@ -669,7 +698,7 @@ func JudgeFinish(ctx *gin.Context) {
 		}
 
 		// Get the project from the database
-		project, err := database.FindProjectById(state.Db, sc, judge.Current)
+		project, err := database.FindProject(state.Db, sc, judge.Current)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding project in database: " + err.Error()})
 			return err
@@ -938,7 +967,7 @@ func MoveJudge(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	// Get the request object
-	var moveReq util.MoveRequest
+	var moveReq util.MoveGroupRequest
 	err := ctx.BindJSON(&moveReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})

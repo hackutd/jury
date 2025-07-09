@@ -120,6 +120,8 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	judgeRouter.GET("/admin/timer", GetJudgingTimer)
 	adminRouter.GET("/admin/options", GetOptions)
 	adminRouter.POST("/admin/options", SetOptions)
+	adminRouter.POST("/admin/tracks", SetTracks)
+	adminRouter.POST("/admin/track-views", SetTrackViews)
 	adminRouter.POST("/admin/num-groups", SetNumGroups)
 	adminRouter.POST("/admin/group-sizes", SetGroupSizes)
 	adminRouter.POST("/admin/block-reqs", SetBlockReqs)
@@ -138,11 +140,12 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.POST("/project/prioritize", PrioritizeSelectedProjects)
 	adminRouter.POST("/project/hide", HideSelectedProjects)
 	adminRouter.POST("/judge/hide", HideSelectedJudges)
-	adminRouter.POST("/judge/move", MoveSelectedJudges)
+	adminRouter.PUT("/judge/move/group/:id", MoveJudge)
+	adminRouter.POST("/judge/move/group", MoveSelectedJudges)
 	adminRouter.DELETE("/admin/flag/:id", RemoveFlag)
-	adminRouter.PUT("/judge/move/:id", MoveJudge)
 	adminRouter.PUT("/project/move/:id", MoveProject)
-	adminRouter.POST("/project/move", MoveSelectedProjects)
+	adminRouter.PUT("/project/move/group/:id", MoveProjectGroup)
+	adminRouter.POST("/project/move/group", MoveSelectedProjectsGroup)
 	adminRouter.POST("/admin/deliberation", SetDeliberation)
 
 	// Admin panel - log
@@ -167,7 +170,7 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	// Project expo routes
 	defaultRouter.GET("/project/list/public", ListPublicProjects)
 	defaultRouter.GET("/challenges", GetChallenges)
-	defaultRouter.GET("/group-names", GetGroupNames)
+	defaultRouter.GET("/group-info", GetGroupInfo)
 
 	// ######################
 	// ##### END ROUTES #####

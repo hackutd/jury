@@ -9,7 +9,7 @@ import (
 )
 
 // List of valid reasons for skipping a project
-var validReasons = []string{"busy", "absent", "cannot-demo", "too-complex", "offensive"}
+var validReasons = []string{"busy", "absent", "cannot-demo", "too-complex", "offensive", "hidden-absent"}
 
 // Defines an instance where the judge skips a project.
 // This can be one of these reasons:
@@ -19,6 +19,7 @@ var validReasons = []string{"busy", "absent", "cannot-demo", "too-complex", "off
 //  3. cannot-demo: Cannot Demo Project
 //  4. too-complex: Too Complex
 //  5. offensive: Offensive Project
+//  6. hidden-absent: Hidden due to being absent 3 times
 //
 // With the exception of the 1st reason, all other reasons are grounds for
 // flagging, which is defined by the `flag` field.

@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -351,6 +352,8 @@ func DeleteProject(ctx *gin.Context) {
 	// Get the id from the request
 	id := ctx.Param("id")
 
+	fmt.Println("hello1")
+
 	// Convert judge ID string to ObjectID
 	projectObjectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -358,12 +361,51 @@ func DeleteProject(ctx *gin.Context) {
 		return
 	}
 
-	// Delete the project from the database
-	err = database.DeleteProjectById(state.Db, projectObjectId)
+	// Run in transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Delete the project from the database
+		err = database.DeleteProjectById(state.Db, sc, projectObjectId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting project from database: " + err.Error()})
+			return err
+		}
+
+		fmt.Println("hello2")
+
+		// Delete all instances of this project from judges' seen projects array and rankings
+		err = database.DeleteSeenProject(state.Db, sc, &projectObjectId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting instances of project from judges' seen project: " + err.Error()})
+			return err
+		}
+
+		fmt.Println("hello3")
+
+		// Delete all flags for this project
+		err = database.DeleteFlagsCascade(state.Db, sc, &projectObjectId, nil)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting flags for project: " + err.Error()})
+			return err
+		}
+
+		fmt.Println("hello4")
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting project from database: " + err.Error()})
 		return
 	}
+
+	fmt.Println("hello3.5")
+
+	// Update all judge rankings
+	err = judging.InitAggregateRankings(state.Db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error re-calculating aggregate rankings for all judges: " + err.Error()})
+		return
+	}
+
+	fmt.Println("hello5")
 
 	// Send OK
 	state.Logger.AdminLogf("Deleted project %s", id)
@@ -402,7 +444,7 @@ func GetProject(ctx *gin.Context) {
 	}
 
 	// Get the project from the database
-	project, err := database.FindProjectById(state.Db, ctx, &projectObjectId)
+	project, err := database.FindProject(state.Db, ctx, &projectObjectId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project from database: " + err.Error()})
 		return
@@ -621,8 +663,8 @@ func GetChallenges(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, challenges)
 }
 
-// PUT /project/move/:id - Move a project to a different group
-func MoveProject(ctx *gin.Context) {
+// PUT /project/move/group/:id - Move a project to a different group
+func MoveProjectGroup(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
@@ -635,7 +677,7 @@ func MoveProject(ctx *gin.Context) {
 	}
 
 	// Get the request object
-	var moveReq util.MoveRequest
+	var moveReq util.MoveGroupRequest
 	err = ctx.BindJSON(&moveReq)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
@@ -684,9 +726,16 @@ func MoveProject(ctx *gin.Context) {
 		}
 
 		// Move the project to the new group
-		err = database.SetProjectNum(state.Db, sc, id, currMaxNum+1, moveReq.Group)
+		err = database.SetProjectNum(state.Db, sc, id, currMaxNum+1, &moveReq.Group)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving project group: " + err.Error()})
+			return err
+		}
+
+		// Update judge seen_projects' location
+		err = database.UpdateSeenProjectNumber(state.Db, sc, &id, currMaxNum+1)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "cannot update judges' seen projects: " + err.Error()})
 			return err
 		}
 
@@ -701,8 +750,63 @@ func MoveProject(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
+// PUT /project/move/:id - Move a project to a different table number
+func MoveProject(ctx *gin.Context) {
+	// Get the state from the context
+	state := GetState(ctx)
+
+	// Get the ID from the URL
+	rawId := ctx.Param("id")
+	id, err := primitive.ObjectIDFromHex(rawId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid project ID"})
+		return
+	}
+
+	// Get the request object
+	var moveReq util.MoveRequest
+	err = ctx.BindJSON(&moveReq)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
+		return
+	}
+
+	// Run the remaining actions in a transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Check if there's another project in the new location
+		clash, err := database.FindProjectByLocation(state.Db, sc, moveReq.Location)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error in finding project at new location: " + err.Error()})
+			return err
+		}
+		if clash != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "there is already another project in that location"})
+			return err
+		}
+
+		// Move the project!
+		err = database.SetProjectNum(state.Db, sc, id, moveReq.Location, nil)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "cannot set project num: " + err.Error()})
+			return err
+		}
+
+		// Update judge seen_projects' location
+		err = database.UpdateSeenProjectNumber(state.Db, sc, &id, moveReq.Location)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "cannot update judges' seen projects: " + err.Error()})
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
+}
+
 // POST /project/move - Move selected projects to a different group
-func MoveSelectedProjects(ctx *gin.Context) {
+func MoveSelectedProjectsGroup(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 

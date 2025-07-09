@@ -14,7 +14,7 @@ const Expo = () => {
     const [nameSort, setNameSort] = useState(false);
     const [track, setTrack] = useState('');
     const [challenges, setChallenges] = useState<string[]>([]);
-    const [groupNames, setGroupNames] = useState<string[]>([]);
+    const [groupInfo, setGroupInfo] = useState<GroupInfo>({ enabled: false, names: [] });
     const [searchParams, _] = useSearchParams();
     const navigate = useNavigate();
 
@@ -36,12 +36,13 @@ const Expo = () => {
                 return;
             }
 
-            const groupRes = await getRequest<string[]>('/group-names', '');
+            const groupRes = await getRequest<GroupInfo>('/group-info', '');
             if (groupRes.status !== 200) {
                 errorAlert(groupRes);
                 return;
             }
-            setGroupNames(groupRes.data as string[]);
+            const gi = groupRes.data as GroupInfo;
+            setGroupInfo({ enabled: gi.enabled && gi.names.length > 0, names: gi.names });
 
             setChallenges(['', ...(res.data as string[])]);
         }
@@ -86,7 +87,7 @@ const Expo = () => {
                 <table className="table-fixed">
                     <thead className="text-left">
                         <tr>
-                            <th className="pr-2">Group</th>
+                            {groupInfo.enabled && <th className="pr-2">Group</th>}
                             <th className="pr-2">Table</th>
                             <th className="pr-2">Name</th>
                         </tr>
@@ -94,7 +95,9 @@ const Expo = () => {
                     <tbody>
                         {projects.map((project, idx) => (
                             <tr key={idx}>
-                                <td className="pr-2">{groupNames[project.group]}</td>
+                                {groupInfo.enabled && (
+                                    <td className="pr-2">{groupInfo.names[project.group]}</td>
+                                )}
                                 <td className="pr-2">{project.location}</td>
                                 <td className="pr-2">{project.name}</td>
                             </tr>
@@ -128,7 +131,7 @@ const Expo = () => {
                         navigate('/expo/' + t.replace(/\s/g, '%20'));
                     }}
                     options={challenges ?? []}
-                    className="my-2"
+                    className="my-2 md:mx-0 mx-4"
                 />
                 <h3 className="text-center font-bold text-lighter text-2xl">
                     Count: {projects.length}
@@ -142,8 +145,8 @@ const Expo = () => {
                         Print this page
                     </Button>
                 </div>
-                <table className="mb-4">
-                    <thead>
+                <table className="mb-4 table-fixed w-full">
+                    <thead className="w-full">
                         <tr>
                             <th
                                 onClick={() => setNameSort(true)}
@@ -157,12 +160,13 @@ const Expo = () => {
                             <th
                                 onClick={() => setNameSort(false)}
                                 className={
-                                    'px-4 py-2 cursor-pointer text-left ' +
+                                    'px-4 py-2 cursor-pointer text-left w-12 ' +
                                     (!nameSort && 'underline')
                                 }
                             >
                                 Table
                             </th>
+                            {groupInfo.enabled && <th className="px-4 py-2 text-left w-32">Group</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -179,6 +183,9 @@ const Expo = () => {
                                     </a>
                                 </td>
                                 <td className="px-4 py-2">{project.location}</td>
+                                {groupInfo.enabled && (
+                                    <td className="px-4 py-2">{groupInfo.names[project.group]}</td>
+                                )}
                             </tr>
                         ))}
                     </tbody>

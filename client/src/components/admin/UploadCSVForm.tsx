@@ -147,7 +147,7 @@ const UploadCSVForm = (props: UploadCSVFormProps) => {
                             </label>
                         </div>
                         {file && (
-                            <div className="flex w-full h-11 px-4 text-2xl border-2 border-lightest rounded-md text-start items-center">
+                            <div className="flex w-full px-4 py-2 md:text-xl text-md border-2 border-lightest rounded-md text-start items-center">
                                 File Chosen: {fileName}
                             </div>
                         )}
