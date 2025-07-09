@@ -79,3 +79,18 @@ func DeleteFlag(db *mongo.Database, ctx context.Context, flagId *primitive.Objec
 	_, err := db.Collection("flags").DeleteOne(ctx, gin.H{"_id": flagId})
 	return err
 }
+
+// DeleteFlagsCascade will delete flags based on either the project ID and/or judge ID
+// This is used in a cascade deletion when projects/judges are deleted
+func DeleteFlagsCascade(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID, judgeId *primitive.ObjectID) error {
+	filter := make(gin.H)
+	if projectId != nil {
+		filter["project_id"] = projectId
+	}
+	if judgeId != nil {
+		filter["judge_id"] = judgeId
+	}
+
+	_, err := db.Collection("flags").DeleteMany(ctx, filter)
+	return err
+}

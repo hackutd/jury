@@ -29,6 +29,16 @@ func InsertJudges(db *mongo.Database, ctx context.Context, judges []*models.Judg
 	return err
 }
 
+// FindJudge finds a judge by ID
+func FindJudge(db *mongo.Database, ctx context.Context, id primitive.ObjectID) (*models.Judge, error) {
+	var judge models.Judge
+	err := db.Collection("judges").FindOne(ctx, gin.H{"_id": id}).Decode(&judge)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	return &judge, err
+}
+
 // FindJudgeByToken finds a judge by their token.
 // Returns judge as nil if no judge was found.
 func FindJudgeByToken(db *mongo.Database, token string) (*models.Judge, error) {
@@ -149,8 +159,8 @@ func AggregateJudgeStats(db *mongo.Database) (*models.JudgeStats, error) {
 }
 
 // DeleteJudgeById deletes a judge from the database by their id
-func DeleteJudgeById(db *mongo.Database, id primitive.ObjectID) error {
-	_, err := db.Collection("judges").DeleteOne(context.Background(), gin.H{"_id": id})
+func DeleteJudgeById(db *mongo.Database, ctx context.Context, id primitive.ObjectID) error {
+	_, err := db.Collection("judges").DeleteOne(ctx, gin.H{"_id": id})
 	return err
 }
 
@@ -429,6 +439,17 @@ func UpdateSeenProjectNumber(db *mongo.Database, ctx context.Context, projectId 
 		options.Update().SetArrayFilters(options.ArrayFilters{
 			Filters: []any{gin.H{"elem.project_id": projectId}},
 		}),
+	)
+	return err
+}
+
+// DeleteSeenProject will delete all instances of a given project from both judge seen and judge ranking arrays
+// This will also decrement the seen count for those judges by 1
+func DeleteSeenProject(db *mongo.Database, ctx context.Context, projectId *primitive.ObjectID) error {
+	_, err := db.Collection("judges").UpdateMany(
+		ctx,
+		gin.H{"seen_projects.project_id": projectId},
+		gin.H{"$pull": gin.H{"seen_projects": gin.H{"project_id": projectId}, "rankings": projectId}, "$inc": gin.H{"seen": -1}},
 	)
 	return err
 }

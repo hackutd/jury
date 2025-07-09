@@ -24,7 +24,7 @@ func SkipCurrentProject(db *mongo.Database, judge *models.Judge, comps *Comparis
 // This should be run in a transaction.
 func SkipCurrentProjectWithTx(db *mongo.Database, ctx context.Context, judge *models.Judge, comps *Comparisons, reason string, getNew bool) error {
 	// Get skipped project from database
-	skippedProject, err := database.FindProjectById(db, ctx, judge.Current)
+	skippedProject, err := database.FindProject(db, ctx, judge.Current)
 	if err != nil {
 		return errors.New("error finding skipped project in database: " + err.Error())
 	}

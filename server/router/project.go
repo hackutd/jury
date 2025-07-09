@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -351,6 +352,8 @@ func DeleteProject(ctx *gin.Context) {
 	// Get the id from the request
 	id := ctx.Param("id")
 
+	fmt.Println("hello1")
+
 	// Convert judge ID string to ObjectID
 	projectObjectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -358,12 +361,51 @@ func DeleteProject(ctx *gin.Context) {
 		return
 	}
 
-	// Delete the project from the database
-	err = database.DeleteProjectById(state.Db, projectObjectId)
+	// Run in transaction
+	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
+		// Delete the project from the database
+		err = database.DeleteProjectById(state.Db, sc, projectObjectId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting project from database: " + err.Error()})
+			return err
+		}
+
+		fmt.Println("hello2")
+
+		// Delete all instances of this project from judges' seen projects array and rankings
+		err = database.DeleteSeenProject(state.Db, sc, &projectObjectId)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting instances of project from judges' seen project: " + err.Error()})
+			return err
+		}
+
+		fmt.Println("hello3")
+
+		// Delete all flags for this project
+		err = database.DeleteFlagsCascade(state.Db, sc, &projectObjectId, nil)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting flags for project: " + err.Error()})
+			return err
+		}
+
+		fmt.Println("hello4")
+
+		return nil
+	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting project from database: " + err.Error()})
 		return
 	}
+
+	fmt.Println("hello3.5")
+
+	// Update all judge rankings
+	err = judging.InitAggregateRankings(state.Db)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error re-calculating aggregate rankings for all judges: " + err.Error()})
+		return
+	}
+
+	fmt.Println("hello5")
 
 	// Send OK
 	state.Logger.AdminLogf("Deleted project %s", id)
@@ -402,7 +444,7 @@ func GetProject(ctx *gin.Context) {
 	}
 
 	// Get the project from the database
-	project, err := database.FindProjectById(state.Db, ctx, &projectObjectId)
+	project, err := database.FindProject(state.Db, ctx, &projectObjectId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting project from database: " + err.Error()})
 		return
