@@ -38,8 +38,8 @@ All routes are listed in `server/router/init.go` with their respective handlers.
 | [/admin/groups/swap](#post-admingroupsswap)            | POST   | admin | Swaps the judge groups manually              |
 | [/admin/qr](#post-adminqr)                             | POST   | admin | Generate add judge QR code                   |
 | [/admin/qr/:track](#post-adminqrtrack)                 | POST   | admin | Generate add judge to track QR code          |
-| [/admin/qr](#get-adminqr)                                         | GET    | admin | Gets add judge QR code                       |
-| [/admin/qr/:track](#get-adminqrtrack)                             | GET    | admin | Gets add judge to track QR code              |
+| [/admin/qr](#get-adminqr)                              | GET    | admin | Gets add judge QR code                       |
+| [/admin/qr/:track](#get-adminqrtrack)                  | GET    | admin | Gets add judge to track QR code              |
 | [/qr/check/](#post-qrcheck)                            | POST   |       | Check if QR code is right                    |
 | [/qr/check/:track](#post-qrchecktrack)                 | POST   |       | Check if track QR code is right              |
 | [/qr/add](#post-qradd)                                 | POST   |       | Add judge from QR code                       |
@@ -67,6 +67,8 @@ All routes are listed in `server/router/init.go` with their respective handlers.
 | [/admin/timer](#get-admintimer)                        | GET    | judge | Gets the judge timer length                  |
 | [/admin/options](#get-adminoptions)                    | GET    | admin | Gets all config options set                  |
 | [/admin/options](#post-adminoptions)                   | POST   | admin | Sets config options                          |
+| [/admin/tracks](#post-admintracks)                     | POST   | admin | Update the list of tracks                    |
+| [/admin/track-views](#post-admintrack-views)           | POST   | admin | Update the min views per track               |
 | [/admin/num-groups](#post-adminnum-groups)             | POST   | admin | Sets num of groups and reassigns nums        |
 | [/admin/group-sizes](#post-admingroup-sizes)           | POST   | admin | Sets the size of groups and reassigns nums   |
 | [/admin/block-reqs](#post-adminblock-reqs)             | POST   | admin | Sets whether to block login requests         |
@@ -77,14 +79,15 @@ All routes are listed in `server/router/init.go` with their respective handlers.
 | [/admin/export/rankings](#get-adminexportrankings)     | GET    | admin | Exports a list of rankings for each judge    |
 | [/judge/hide/:id](#put-judgehideid)                    | PUT    | admin | Hides a judge                                |
 | [/project/hide/:id](#put-projecthideid)                | PUT    | admin | Hides a project                              |
-| [/judge/move/:id](#put-judgemoveid)                    | PUT    | admin | Moves a judge to a different group           |
-| [/project/move/:id](#put-projectmoveid)                | PUT    | admin | Moves a project to a different group         |
+| [/judge/move/group/:id](#put-judgemovegroupid)         | PUT    | admin | Moves a judge to a different group           |
+| [/project/move/group/:id](#put-projectmovegroupid)     | PUT    | admin | Moves a project to a different group         |
+| [/project/move/:id](#put-projectmoveid)                | PUT    | admin | Moves a project to a different table number  |
 | [/project/prioritize/:id](#put-projectprioritizeid)    | PUT    | admin | Prioritizes a project                        |
 | [/project/prioritize](#post-projectprioritize)         | POST   | admin | Prioritizes multiple projects                |
 | [/judge/hide](#post-judgehide)                         | POST   | admin | Hides multiple judges                        |
 | [/project/hide](#post-projecthide)                     | POST   | admin | Hides multiple projects                      |
-| [/judge/move](#post-judgemove)                         | POST   | admin | Moves multiple judges to a different group   |
-| [/project/move](#post-projectmove)                     | POST   | admin | Moves multiple projects to a different group |
+| [/judge/move/group](#post-judgemovegroup)              | POST   | admin | Moves multiple judges to a different group   |
+| [/project/move/group](#post-projectmovegroup)          | POST   | admin | Moves multiple projects to a different group |
 | [/admin/flag/:id](#delete-adminflagid)                 | DELETE | admin | Removes a flag                               |
 | [/admin/deliberation](#post-admindeliberation)         | POST   | admin | Toggles deliberation mode                    |
 | [/admin/log](#get-adminlog)                            | GET    | admin | Gets the audit log                           |
@@ -104,7 +107,7 @@ All routes are listed in `server/router/init.go` with their respective handlers.
 | [/judge/deliberation](#get-judgedeliberation)          | GET    | judge | Returns if deliberation mode is on           |
 | [/project/list/public](#get-projectlistpublic)         | GET    |       | Gets a list of all projects for expo         |
 | [/challenges](#get-challenges)                         | GET    |       | Gets a list of all challenges                |
-| [/group-names](#get-group-names)                       | GET    |       | Gets a list of all group names               |
+| [/group-info](#get-group-info)                         | GET    |       | Gets a list of all group names               |
 
 ## Response Types
 
@@ -748,6 +751,36 @@ Sets config options
 
 -   **Response**: OK response
 
+### POST /admin/tracks
+
+Update the list of tracks
+
+-   **Auth**: admin
+-   **Body**: JSON
+
+```json
+{
+    "tracks": ["String"]
+}
+```
+
+-   **Response**: OK response
+
+### POST /admin/track-views
+
+Update the min views per track
+
+-   **Auth**: admin
+-   **Body**: JSON
+
+```json
+{
+    "track_views": ["int"]
+}
+```
+
+-   **Response**: OK response
+
 ### POST /admin/num-groups
 
 Sets num of groups and reassigns nums
@@ -856,15 +889,23 @@ Hides a project
 -   **Parameter**: ID | judge ID to hide
 -   **Response**: OK response
 
-### PUT /judge/move/\:id
+### PUT /judge/move/group/\:id
 
 Moves a judge to a different group
 
 -   **Auth**: admin
 -   **Parameter**: ID | judge ID to hide
+-   **Body**: JSON
+
+```json
+{
+    "group": "int | group number"
+}
+```
+
 -   **Response**: OK response
 
-### PUT /project/move/\:id
+### PUT /project/move/group/\:id
 
 Moves a project to a different group
 
@@ -875,6 +916,22 @@ Moves a project to a different group
 ```json
 {
     "group": "int | group number"
+}
+```
+
+-   **Response**: OK response
+
+### PUT /project/move/\:id
+
+Moves a project to a different table number
+
+-   **Auth**: admin
+-   **Parameter**: ID | ID of project to move
+-   **Body**: JSON
+
+```json
+{
+    "location": "int"
 }
 ```
 
@@ -944,7 +1001,7 @@ Hides multiple projects
 
 -   **Response**: OK response
 
-### POST /judge/move
+### POST /judge/move/group
 
 Moves multiple judges to a different group
 
@@ -960,7 +1017,7 @@ Moves multiple judges to a different group
 
 -   **Response**: OK response
 
-### POST /project/move
+### POST /project/move/group
 
 Moves multiple projects to a different group
 
@@ -1281,13 +1338,16 @@ Gets a list of all challenges
 ["String | challenge 1", "String | challenge 2"]
 ```
 
-### GET /group-names
+### GET /group-info
 
-Gets a list of all group names
+Gets a list of all group names and if groups are enabled
 
 -   **Auth**: none
--   **Response**: JSON List
+-   **Response**: JSON
 
 ```json
-["String | group 1", "String | group 2"]
+{
+    "names": ["String | group 1", "String | group 2"],
+    "enabled": "bool"
+}
 ```
