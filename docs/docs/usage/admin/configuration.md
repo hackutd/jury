@@ -7,6 +7,7 @@ description: How to configure your Jury instance once set up
 # Configuration and Settings
 
 ## Logging In
+
 Once you have Jury up and running, make sure everything is working by logging into the admin portal. Use the admin password that you set in the environmental variables when setting up Jury. Once in the portal, you should see the admin dashboard shown below (though without any projects or judging progress):
 
 ![Admin Dashboard](./assets/dashboard.png)
