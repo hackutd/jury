@@ -60,3 +60,48 @@ func UpdateJudgeReadWelcome(db *mongo.Database, ctx context.Context, judgeId *pr
 ```
 
 Note that we will return only the `err` object in this case, ignoring the result object from the db update.
+
+## Multiple Instances of Jury
+
+Jury is not designed to run with multiple instances of the app connecting to the same database. This will cause many problems such as the following:
+
+- Comparisons matrix will not be correct due to it being maintained on the server
+- Judging Clock will not be synced across instances
+
+## Transactions
+
+A lot of the database functions run multiple database operations in a row. We want these operations to all happen at the same time otherwise there may be race conditions and inconsistencies among the DB. The solution to this is to use [transactions](https://www.mongodb.com/docs/manual/core/transactions/). We have written a wrapper function for this, so you only need to call the wrapper and make sure all database functions pass in the context with a `ctx context.Context` parameter:
+
+```go
+func PutJudgesInGroups(db *mongo.Database) error {
+	return WithTransaction(db, func(sc mongo.SessionContext) error {
+		// Get all judges
+		judges, err := FindJudgesByTrack(db, sc, "")
+		if err != nil {
+			return err
+		}
+
+		// Get the next n groups to assign judges to
+		groups, err := GetNextNJudgeGroups(db, sc, len(judges), true)
+		if err != nil {
+			return err
+		}
+
+		// Assign each judge to a group
+		for i, judge := range judges {
+			judge.Group = groups[i]
+			judge.GroupSeen = 0
+		}
+
+		// Update the judges in the database
+		err = UpdateJudgeGroups(db, sc, judges)
+		return err
+	})
+}
+```
+
+Notice how here we are getting the judges, figuring out which groups to assign judges to, and updating all judges in one transaction. If any of these fail, the entire transaction should fail. Also, no DB operations are done between these operations.
+
+## Exporting the Database
+
+To do a full database export you can use the [mongoexport](https://www.mongodb.com/docs/database-tools/mongoexport/) tool. There is unfortunately no good way to do it through the driver and thus that functionality is not avaliable in Jury.
