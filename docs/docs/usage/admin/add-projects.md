@@ -27,6 +27,10 @@ You may also choose to upload a CSV of all projects. This is used if you have a 
 - Video link
 - Comma separated challenge list (in quotes)
 
+When uploading CSVs, you will see a preview of the CSV with each row and column. Use this to confirm whether or not the CSV has a header (you can use the checkbox). Note that [Devpost uploads](#devpost-upload) will ignore this field as all Devpost CSVs will have a header.
+
+![CSV Upload Preview](./assets/csv-preview.png)
+
 ## Devpost Upload
 
 For hackathons that use Devpost, you may simply upload the CSV of projects exported from Devpost. To obtain this CSV, go to your hackathon’s **manage page** on Devpost. On that page, you should see a tab labeled **Metrics**. Click this tab and you should see an option to download the CSV. Make sure you do NOT include personal information as its unnecessary for Jury. See the image below for reference. Click the **Generate Report** button. Devpost will refresh the page and show a download link after a few moments (may take longer for bigger events).

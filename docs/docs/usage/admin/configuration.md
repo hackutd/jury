@@ -21,7 +21,7 @@ The settings page should look like the following:
 
 ![Admin Settings](./assets/admin-settings.png)
 
-All settings will have a description describing their functionality, but we will go through each section one-by-one here for completeness.
+All settings will have a description describing their functionality, but we will go through each section one-by-one here for completeness. Note that a lot of the more destructive settings will be **disabled while judging is running**. This is to minimize the chance accidents happen and mess up judging.
 
 ### Judge Login
 
@@ -63,6 +63,12 @@ This section allows you to export data from Jury as a CSV. There are 4 groupings
 - **Export Rankings** - Exports only the judges and their individual rankings of projects
 - **Export by Challenges** - Exports a zip file, with each CSV file containing only the projects that submitted to a specific challenge; each CSV will be titled with that challenge name
 
-### Reset Database
+### Reset Data
 
-This button will reset the database. It's pretty destructive, so obviously do not click it unless you are sure you want to COMPLETELY CLEAR Jury!!!
+At the bottom of the settings page, there are multiple ways to reset data in Jury:
+
+- **Clear Rankings and Stars**: This will remove all rankings that judges have made but keep all other info (judges, projects, settings).
+- **Clear Judging Data**: On top of removing scores, this will also remove all views and judging progress, resetting Jury to right before judging started.
+- **Delete all Projects**: This will delete all projects, judging data, and flags. It will not delete settings and judges.
+- **Delete all Judges**: This will delete all judges, judging data, and flags. It will not delete settings and projects.
+- **Drop Database**: This button will reset the database. It's pretty destructive, so obviously do not click it unless you are sure you want to COMPLETELY CLEAR Jury!!!
