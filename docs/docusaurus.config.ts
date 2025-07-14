@@ -88,8 +88,8 @@ const config: Config = {
                             to: '/docs/contributing',
                         },
                         {
-                            label: 'Public API',
-                            to: '/docs/reference/public-api',
+                            label: 'Technical Details',
+                            to: '/docs/details',
                         },
                         {
                             label: 'Internal API Reference',
@@ -104,6 +104,10 @@ const config: Config = {
                             label: 'GitHub',
                             href: 'https://github.com/hackutd/jury',
                         },
+                        {
+                            label: 'Staging App',
+                            href: 'https://jury-dev.mikz.dev',
+                        }
                     ],
                 },
             ],
