@@ -1,10 +1,10 @@
 ---
-sidebar_position: 1
-title: Judging Interface
+sidebar_position: 5
+title: Judge Interface
 description: How to use Jury to judge and rank projects as a judge
 ---
 
-# Judging Interface
+# Judge Interface
 
 Jury is designed to be as easy as possible for judges. It provides for a seamless and easy-to-use judging interface, from initial onboarding to ranking projects. This page will outline the process that judges go through and aim to answer any questions judges might have about the system.
 
