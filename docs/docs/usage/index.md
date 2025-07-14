@@ -24,5 +24,6 @@ For other information regarding the usage of Jury, refer to these following page
 - [Judging Overview](/docs/usage/overview) - A quick runthrough of how judging will look using Jury
 - **Jury "How-to" Guide**:
     - [Jury Admin](/docs/usage/admin) - Information on how to use the Jury Admin interface
-    - [Jury Judging](/docs/usage/judging) - Information on how to use the Jury Judging interface
+    - [Jury Judge Interface](/docs/usage/judge) - Information on how to use the Jury Judging interface
     - [Jury Project Expo](/docs/usage/expo) - Information on how to use the Jury Project Expo interface
+    - [Tips and Contingencies](/docs/usage/tips) - Tips for using Jury and possible contingency plans

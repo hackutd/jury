@@ -3,7 +3,7 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-    title: 'Jury',
+    title: 'Jury Documentation',
     tagline: 'A modern hackathon judging platform',
     favicon: 'img/favicon.ico',
 
@@ -56,13 +56,13 @@ const config: Config = {
             items: [
                 {
                     type: 'doc',
-                    position: 'left',
+                    position: 'right',
                     docId: 'usage/deploy',
                     label: 'Get Started',
                 },
                 {
                     type: 'doc',
-                    position: 'left',
+                    position: 'right',
                     docId: '/category/reference',
                     label: 'Reference',
                 },
@@ -88,8 +88,8 @@ const config: Config = {
                             to: '/docs/contributing',
                         },
                         {
-                            label: 'Public API',
-                            to: '/docs/reference/public-api',
+                            label: 'Technical Details',
+                            to: '/docs/details',
                         },
                         {
                             label: 'Internal API Reference',
@@ -104,6 +104,10 @@ const config: Config = {
                             label: 'GitHub',
                             href: 'https://github.com/hackutd/jury',
                         },
+                        {
+                            label: 'Staging App',
+                            href: 'https://jury-dev.mikz.dev',
+                        }
                     ],
                 },
             ],
@@ -112,6 +116,7 @@ const config: Config = {
         prism: {
             theme: prismThemes.github,
             darkTheme: prismThemes.dracula,
+            additionalLanguages: ['json'],
         },
     } satisfies Preset.ThemeConfig,
 };

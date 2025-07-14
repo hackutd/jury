@@ -11,16 +11,18 @@ description: The nitty-gritty details behind how Jury and its algorithm works!
 ### Frontend
 
 The frontend itself is a simple single-page, statically built [Vite](https://vite.dev/) application using Typescript and React. Here are some libraries that are used:
-- **Tailwind** - used for styling, preferred over CSS
+- [**Tailwind**](https://tailwindcss.com/) - used for styling, preferred over CSS
 - [**React Router**](https://reactrouter.com/en/main) - simple browser-level routing
 - [**ESLint**](https://eslint.org/) - static analysis and linting
 - [**Zustand**](https://github.com/pmndrs/zustand) - simple global store/state management solution
+- [**Typescript**](https://www.typescriptlang.org/) - strong types for js
 
 Some other minor libraries were also used to do specific things:
 - [**dnd kit**](https://dndkit.com/) - the main drag and drop functionality
-- **React Hook Form** - form state management library
-- **React Range** - used to create range sliders
-- **Tailwind Merge** - simple library that will merge different tailwind class strings together
+- [**Tailwind Merge**](https://www.npmjs.com/package/tailwind-merge) - simple library that will merge different tailwind class strings together
+- [**qr.js**](https://www.npmjs.com/package/qr.js) - qr encoding in pure js
+- [**React Helmet**](https://www.npmjs.com/package/react-helmet) - used to manage document head tags (like title)
+- [**Universal Cookie**](https://www.npmjs.com/package/universal-cookie) - handles frontend getting and setting cookies
 
 ### Backend
 
@@ -44,8 +46,12 @@ This built container can now be served anywhere that can host a single docker im
 
 ## Rank Aggregation Algorithm
 
-[Borda Count](https://en.wikipedia.org/wiki/Borda_count)
+See the [scoring page](/docs/usage/admin/scoring) for more information about the Copeland Counting Method used!
 
-:::warning[WIP]
-🚧 The technical details page is still under construction and will be split into sub-pages 🚧
-:::
+## Subsections
+
+<!-- Index list -->
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />

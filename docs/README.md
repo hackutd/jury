@@ -16,7 +16,7 @@ $ yarn start
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
 
-## Structure
+## Documentation Structure
 
 - Using Jury
     - Deploying for your Hackathon
@@ -52,3 +52,11 @@ This command starts a local development server and opens up a browser window. Mo
     - Backend (Private API)
     - Public API
     - Environmental Variables
+
+## Image Compression
+
+Use the `compress` script to compress PNGs if they are larger than 1000px please! Note that you will need to install [imagemagick](https://imagemagick.org/script/download.php) to use this script. Usage:
+
+```
+compress <path_to_image>
+```

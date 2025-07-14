@@ -8,7 +8,7 @@ description: A quick walkthrough of the judging process through an admin and jud
 
 It's the end of your hackathon! You've made it through the event and just have one last thing left to do: judge the projects. This isn't as easy of a task as it may seem. The list can get quite long: organizing and orientating judges, setting up judging booths for participants, distributing projects to judges, tallying up scores, and figuring out the final result, all while dealing with the chaos of the ongoing problems. It's a LOT, even for a seasoned hackathon organizer. That's why we wanted to design an all-in-one solution to handle the hassles of judging hackathons: **✨ Jury ✨**.
 
-:::warning[Note]
+:::tip[Note]
 If you haven't read the [Physical Judging Setup](/docs/usage/judging-setup) doc, you should read that first!
 :::
 
@@ -45,9 +45,9 @@ Once you click "Start Judging", you will be presented with a randomly assigned p
 
 If the group is not there or is currently in the process of being judged, you can click the "Skip" button, which will allow you to skip the project. This will have no net effect on the ranking/status of that given project. If you see a project that may violate our rules or code of conduct, you can flag it for organizers to look at.
 
-Once a group is finished presenting, click the "Finish" button to open the rating popup. This menu will ask you to rate the judges on a 1-10 scale in a multitude of categories. These numbers will be considered in the final deliberation but doesn't directly impact the project's ranking. Once finished, click "Done". You will be taken back to the inital menu, which should now show 1 project. Click the "Next Project" button to move to the second project. You will once again be presented with another random project. Go to that table, listen to their project, then rate their project. Once you get back to the initial page again, you now should have 2 projects. You can now drag and drop the projects into the ranking, where the top project is your highest-ranked project.
+Once a group is finished presenting, click the "Finish" button. A dialog will open for you to complete your notes or star the project. Once finished here, click the "Done" button. You will be taken back to the inital menu, which should now show 1 project. Click the "Next Project" button to move to the second project. You will once again be presented with another random project. Go to that table, listen to their project, then complete your notes. Once you get back to the initial page again, you now should have 2 projects. You can now drag and drop the projects into the ranking, where the top project is your highest-ranked project.
 
-You will continue this process until you see all projects or the judging session ends. If at any time you would like to take a break, you can click the "I want to take a break!" button, which allows you to take a break for as long as you need. To resume judging, simply click the "Next Project" button.
+You will continue this process until you see all projects or the judging session ends. If at any time you would like to take a break, simply don't click "Next Project," which allows you to take a break for as long as you need. To resume judging, click that "Next Project" button to keep going.
 
 ### As an Admin (Organizer)
 
@@ -60,7 +60,3 @@ At any time, you may pause judging for everyone. This will prevent new projects 
 ## Final Deliberation
 
 Once judging has ended, organizers will get together and decide on the winners. The admin dashboard will show you a list of scores for each project, which is the aggregated Borda count score for each project. For more details on this algorithm, refer to the [technical details](/docs/details) page.
-
-:::warning[WIP]
-🚧 The judging walkthrough page is almost done but still under construction (need to add pictures!) 🚧
-:::

@@ -100,11 +100,11 @@ func UpdateJudgeGroups(db *mongo.Database, sc mongo.SessionContext, judges []*mo
 // FindAllJudges returns a list of all judges in the database
 func FindAllJudges(db *mongo.Database, ctx context.Context) ([]*models.Judge, error) {
 	judges := make([]*models.Judge, 0)
-	cursor, err := db.Collection("judges").Find(context.Background(), gin.H{})
+	cursor, err := db.Collection("judges").Find(ctx, gin.H{})
 	if err != nil {
 		return nil, err
 	}
-	for cursor.Next(context.Background()) {
+	for cursor.Next(ctx) {
 		var judge models.Judge
 		err := cursor.Decode(&judge)
 		if err != nil {
