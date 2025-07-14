@@ -46,8 +46,12 @@ This built container can now be served anywhere that can host a single docker im
 
 ## Rank Aggregation Algorithm
 
-[Borda Count](https://en.wikipedia.org/wiki/Borda_count)
+See the [scoring page](/docs/admin/usage/scoring) for more information about the Copeland Counting Method used!
 
-:::warning[WIP]
-🚧 The technical details page is still under construction and will be split into sub-pages 🚧
-:::
+## Subsections
+
+<!-- Index list -->
+
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
