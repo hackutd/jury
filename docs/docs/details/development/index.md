@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 4
 title: Development Notes
 description: Specifics on how to develop Jury and its deployment process.
 ---
