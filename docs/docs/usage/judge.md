@@ -10,7 +10,7 @@ Jury is designed to be as easy as possible for judges. It provides for a seamles
 
 ## Initial Onboarding
 
-When judges are [added to the system](/docs/admin/usage/add-judges), they will recieve an email with the subject line **Jury Judging Platform [VITE_JURY_NAME env]** and should look like the following:
+When judges are [added to the system](/docs/usage/admin/add-judges), they will recieve an email with the subject line **Jury Judging Platform [VITE_JURY_NAME env]** and should look like the following:
 
 ![Jury Email](./assets/email.png)
 

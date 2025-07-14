@@ -46,7 +46,7 @@ This built container can now be served anywhere that can host a single docker im
 
 ## Rank Aggregation Algorithm
 
-See the [scoring page](/docs/admin/usage/scoring) for more information about the Copeland Counting Method used!
+See the [scoring page](/docs/usage/admin/scoring) for more information about the Copeland Counting Method used!
 
 ## Subsections
 

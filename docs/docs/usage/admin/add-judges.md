@@ -38,7 +38,7 @@ The add judge form is the same as the add projects form (except simpler). Enter 
 
 ## CSV Upload
 
-You can upload a CSV of all judges as well. The fields are as following:
+You can upload a CSV of all judges in the same as [adding project by CSV](/docs/usage/admin/add-projects#csv-upload). The fields are as following:
 
 - Name
 - Email
