@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import DiscordIcon from './discord.svg';
 
 import styles from './index.module.css';
 
@@ -44,6 +45,15 @@ function HomepageHeader() {
                         Try it Out Online, right now!
                     </Link>
                     <p>^ Admin password is "admin"</p>
+                    <h1 style={{ marginTop: '2rem' }}>Join our Discord support server!</h1>
+                    <Link
+                        href="https://discord.gg/b2VQsMsakS"
+                        className="button button--secondary button--lg"
+                        style={{ display: 'flex', alignItems: 'center' }}
+                    >
+                        <DiscordIcon />
+                        <div style={{ marginLeft: '1rem' }}>Jury Support Discord</div>
+                    </Link>
                 </div>
             </div>
         </header>

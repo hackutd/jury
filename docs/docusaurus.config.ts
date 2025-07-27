@@ -105,6 +105,10 @@ const config: Config = {
                             href: 'https://github.com/hackutd/jury',
                         },
                         {
+                            label: 'Discord',
+                            href: 'https://discord.gg/b2VQsMsakS'
+                        },
+                        {
                             label: 'Staging App',
                             href: 'https://jury-dev.mikz.dev',
                         }
