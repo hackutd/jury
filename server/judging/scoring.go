@@ -57,6 +57,11 @@ func InitAggregateRankings(db *mongo.Database) error {
 			return err
 		}
 
+		// Early return if no judges exist
+		if len(judges) == 0 {
+			return nil
+		}
+
 		// Use bulk write to update all judges' aggregated rankings
 		models := make([]mongo.WriteModel, 0, len(judges))
 		for _, judge := range judges {
