@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -15,17 +16,24 @@ import (
 type H map[string]any
 
 // WaitForBackend will wait for the backend to load, checking the URL every 5 seconds
-func WaitForBackend(logger *Logger) {
+func WaitForBackend(logger *Logger) error {
 	logger.Log(Info, "Waiting for backend to load...\n")
 
 	url := getBaseUrl()
+	retry := 3	// Retry 3 times before giving up
 
 	for {
 		// Send a GET request to the backend
 		res, err := http.Get(url)
 		if err != nil {
+			if (retry < 0) {
+				logger.Log(Error, "Error: failed to connect to backend. Aborting.")
+				return errors.New("failed to connect to backend")
+			}
+
 			logger.Log(Info, "Error sending GET request to %s, waiting 5 seconds: %s\n", url, err.Error())
 			time.Sleep(5 * time.Second)
+			retry--
 			continue
 		}
 
@@ -34,6 +42,7 @@ func WaitForBackend(logger *Logger) {
 			break
 		}
 	}
+	return nil
 }
 
 func GetRequest(logger *Logger, url string, authHeader string) string {

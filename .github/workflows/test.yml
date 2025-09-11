@@ -1,0 +1,24 @@
+name: Run Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  backend-test:
+    name: Run Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Test Script
+        run: |
+          cat > .env <<EOF
+          JURY_ADMIN_PASSWORD=admin
+          EMAIL_FROM=test@example.com
+          EMAIL_HOST=smtp.example.com
+          EMAIL_USERNAME=test
+          EMAIL_PASSWORD=test
+          EOF
+          ./scripts/test-runner.sh

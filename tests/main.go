@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"tests/src"
 	"tests/tests"
 )
@@ -21,7 +22,10 @@ func main() {
 	defer db.Client().Disconnect(context.Background())
 
 	// Wait for backend to load
-	src.WaitForBackend(logger)
+	err := src.WaitForBackend(logger)
+	if err != nil {
+		os.Exit(1)
+	}
 
 	// Create a context with the database and logger
 	context := &src.Context{
