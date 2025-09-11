@@ -14,5 +14,11 @@ jobs:
       
       - name: Run Test Script
         run: |
-          echo "JURY_ADMIN_PASSWORD=admin\nEMAIL_FROM=test@example.com\nEMAIL_HOST=smtp.example.com\nEMAIL_USERNAME=test\nEMAIL_PASSWORD=test" >> .env
+          cat > .env <<EOF
+          JURY_ADMIN_PASSWORD=admin
+          EMAIL_FROM=test@example.com
+          EMAIL_HOST=smtp.example.com
+          EMAIL_USERNAME=test
+          EMAIL_PASSWORD=test
+          EOF
           ./scripts/test-runner.sh
