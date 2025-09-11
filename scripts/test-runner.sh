@@ -7,8 +7,8 @@
 # Finally, it will exit and kill the docker compose containers
 
 # Start docker containers and wait a second (just for fun)
-# docker compose -f docker-compose.test.yml up -d
-# sleep 1
+docker compose -f docker-compose.test.yml up -d
+sleep 1
 
 echo "Running tests..."
 
@@ -22,7 +22,7 @@ done
 
 # Get logs and get rid of containers
 logs=$(docker logs jury-testing)
-# docker compose -f docker-compose.test.yml down
+docker compose -f docker-compose.test.yml down
 
 # If no failed lines, exit with success
 failed=$(echo "$logs" | grep "failed")
