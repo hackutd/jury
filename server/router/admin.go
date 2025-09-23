@@ -175,8 +175,8 @@ func ResetClock(ctx *gin.Context) {
 	state.Clock.Mutex.Lock()
 	defer state.Clock.Mutex.Unlock()
 
-	// Unpause the clock
-	state.Clock.State.Resume()
+	// Reset the clock
+	state.Clock.State.Reset()
 
 	// Backup
 	err := database.UpdateClockConditional(state.Db, ctx, &state.Clock.State)
