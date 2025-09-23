@@ -463,6 +463,7 @@ const AdminSettings = () => {
 
         alert('Clock reset!');
         setClockResetPopup(false);
+        fetchClock();
     };
 
     const toggleSyncClock = async () => {
