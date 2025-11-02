@@ -44,12 +44,12 @@ const ProjectDisplay = (props: ProjectDisplayProps) => {
 
     return (
         <div className={twMerge('px-2', props.className)}>
-            <h1 className="text-3xl mb-1 font-bold">
+            <h1 className="text-3xl mb-0 font-bold">
                 <a href={project.url} target="_blank" rel="noopener noreferrer">
                     {project.name}
                 </a>
             </h1>
-            <h2 className="text-xl mb-1">
+            <h2 className="text-xl mb-2">
                 Table {project.location}
                 {groupsEnabled && (
                     <span className="ml-4 text-lighter">[{groupNames[project.group]}]</span>
