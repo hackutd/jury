@@ -121,7 +121,7 @@ const useClockStore = create<ClockStore>()((set) => ({
 interface OptionsStore {
     options: Options;
     selectedTrack: string;
-    fetchOptions: () => Promise<void>;
+    fetchOptions: () => Promise<Options | null>;
     setSelectedTrack: (track: string) => void;
 }
 
@@ -149,7 +149,7 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         group_names: [],
         ignore_tracks: [],
         block_reqs: false,
-        max_req_per_min: 0
+        max_req_per_min: 0,
     },
 
     selectedTrack: '',
@@ -158,9 +158,11 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         const optionsRes = await getRequest<Options>('/admin/options', 'admin');
         if (optionsRes.status !== 200) {
             errorAlert(optionsRes);
-            return;
+            return null;
         }
-        set({ options: optionsRes.data as Options });
+        const data = optionsRes.data as Options;
+        set({ options: data });
+        return data;
     },
 
     setSelectedTrack: async (track: string) => {
@@ -193,12 +195,12 @@ const useFlagsStore = create<FlagsStore>((set) => ({
 }));
 
 interface AdminTableStore {
-    projects: Project[],
-    judges: Judge[],
-    selected: boolean[],
-    setProjects: (projects: Project[]) => void,
-    setJudges: (judges: Judge[]) => void,
-    setSelected: (selected: boolean[]) => void,
+    projects: Project[];
+    judges: Judge[];
+    selected: boolean[];
+    setProjects: (projects: Project[]) => void;
+    setJudges: (judges: Judge[]) => void;
+    setSelected: (selected: boolean[]) => void;
 }
 
 const useAdminTableStore = create<AdminTableStore>((set) => ({
@@ -219,4 +221,33 @@ const useAdminTableStore = create<AdminTableStore>((set) => ({
     },
 }));
 
-export { useAdminStore, useClockStore, useOptionsStore, useFlagsStore, useAdminTableStore };
+interface GroupInfoStore {
+    names: string[];
+    enabled: boolean;
+    fetchGroupInfo: () => Promise<void>;
+}
+
+const useGroupInfoStore = create<GroupInfoStore>((set) => ({
+    names: [],
+    enabled: false,
+
+    fetchGroupInfo: async () => {
+        const groupRes = await getRequest<GroupInfo>('/group-info', '');
+        if (groupRes.status !== 200) {
+            errorAlert(groupRes);
+            return;
+        }
+        const groupInfo = groupRes.data as GroupInfo;
+        console.log(groupInfo)
+        set({ names: groupInfo.names, enabled: groupInfo.enabled && groupInfo.names.length > 0 });
+    },
+}));
+
+export {
+    useAdminStore,
+    useClockStore,
+    useOptionsStore,
+    useFlagsStore,
+    useAdminTableStore,
+    useGroupInfoStore,
+};

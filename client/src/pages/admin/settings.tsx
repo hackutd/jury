@@ -102,10 +102,10 @@ const AdminSettings = () => {
     const navigate = useNavigate();
 
     async function getOptions() {
-        await fetchOptions();
+        const newOptions = await fetchOptions() ?? options;
 
         // Calculate judging timer MM:SS
-        const timer = options.judging_timer;
+        const timer = newOptions.judging_timer;
         if (timer) {
             const minutes = Math.floor(timer / 60);
             const seconds = timer % 60;
@@ -114,24 +114,24 @@ const AdminSettings = () => {
         }
 
         // Set min views
-        setMinViews(options.min_views);
+        setMinViews(newOptions.min_views);
 
         // Set sync clock
-        setSyncClock(options.clock_sync);
+        setSyncClock(newOptions.clock_sync);
 
         // Set group options
-        setMultiGroup(options.multi_group);
-        setNumGroups(options.num_groups);
-        setGroupSizes(options.group_sizes.join(', '));
-        setSwitchingMode(options.switching_mode);
-        setAutoSwitchProp(options.auto_switch_prop);
-        setJudgeTracks(options.judge_tracks);
-        setTracks(options.tracks.join(', '));
-        setTrackViews(options.track_views.join(', '));
-        setGroupNames(options.group_names.join(', '));
-        setIgnoreTracks(options.ignore_tracks.join(', '));
-        setBlockReqs(options.block_reqs);
-        setMaxReqPerMin(options.max_req_per_min);
+        setMultiGroup(newOptions.multi_group);
+        setNumGroups(newOptions.num_groups);
+        setGroupSizes(newOptions.group_sizes.join(', '));
+        setSwitchingMode(newOptions.switching_mode);
+        setAutoSwitchProp(newOptions.auto_switch_prop);
+        setJudgeTracks(newOptions.judge_tracks);
+        setTracks(newOptions.tracks.join(', '));
+        setTrackViews(newOptions.track_views.join(', '));
+        setGroupNames(newOptions.group_names.join(', '));
+        setIgnoreTracks(newOptions.ignore_tracks.join(', '));
+        setBlockReqs(newOptions.block_reqs);
+        setMaxReqPerMin(newOptions.max_req_per_min);
 
         // Get active clock status
         await fetchClock();
