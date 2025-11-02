@@ -18,6 +18,7 @@ import alarm from '../../assets/alarm.mp3';
 import data from '../../data.json';
 import TextInput from '../../components/TextInput';
 import { Helmet } from 'react-helmet';
+import { useGroupInfoStore } from '../../store';
 
 const infoPages = ['paused', 'hidden', 'no-projects', 'done', 'doneTrack'];
 const infoData = [
@@ -32,6 +33,7 @@ const audio = new Audio(alarm);
 
 const JudgeLive = () => {
     const navigate = useNavigate();
+    const fetchGroupInfo = useGroupInfoStore((state) => state.fetchGroupInfo);
     const [verified, setVerified] = useState(false);
     const [judge, setJudge] = useState<Judge | null>(null);
     const [finishPopup, setFinishPopup] = useState<boolean>(false);
@@ -133,6 +135,9 @@ const JudgeLive = () => {
             setInfoPage('hidden');
             return;
         }
+
+        // Fetch group info
+        await fetchGroupInfo();
 
         // If the judge has a current project, use that
         if (theJudge.current) {

@@ -3,6 +3,7 @@ import { twMerge } from 'tailwind-merge';
 import Paragraph from '../Paragraph';
 import { getRequest } from '../../api';
 import { errorAlert } from '../../util';
+import { useGroupInfoStore } from '../../store';
 
 interface ProjectDisplayProps {
     /* Project ID to display */
@@ -17,6 +18,8 @@ interface ProjectDisplayProps {
 
 const ProjectDisplay = (props: ProjectDisplayProps) => {
     const [project, setProject] = useState<Project | null>(null);
+    const groupsEnabled = useGroupInfoStore((state) => state.enabled);
+    const groupNames = useGroupInfoStore((state) => state.names);
 
     useEffect(() => {
         async function fetchData() {
@@ -46,7 +49,12 @@ const ProjectDisplay = (props: ProjectDisplayProps) => {
                     {project.name}
                 </a>
             </h1>
-            <h2 className="text-xl mb-1">Table {project.location}</h2>
+            <h2 className="text-xl mb-1">
+                Table {project.location}
+                {groupsEnabled && (
+                    <span className="ml-4 text-lighter">[{groupNames[project.group]}]</span>
+                )}
+            </h2>
             <Paragraph className="text-light" text={project.description} />
         </div>
     );

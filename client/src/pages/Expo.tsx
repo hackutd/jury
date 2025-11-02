@@ -6,6 +6,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Dropdown from '../components/Dropdown';
 import Button from '../components/Button';
 import { Helmet } from 'react-helmet';
+import { useGroupInfoStore } from '../store';
 
 const Expo = () => {
     const { track: trackParam } = useParams();
@@ -14,7 +15,7 @@ const Expo = () => {
     const [nameSort, setNameSort] = useState(false);
     const [track, setTrack] = useState('');
     const [challenges, setChallenges] = useState<string[]>([]);
-    const [groupInfo, setGroupInfo] = useState<GroupInfo>({ enabled: false, names: [] });
+    const groupInfo = useGroupInfoStore();
     const [searchParams, _] = useSearchParams();
     const navigate = useNavigate();
 
@@ -36,13 +37,7 @@ const Expo = () => {
                 return;
             }
 
-            const groupRes = await getRequest<GroupInfo>('/group-info', '');
-            if (groupRes.status !== 200) {
-                errorAlert(groupRes);
-                return;
-            }
-            const gi = groupRes.data as GroupInfo;
-            setGroupInfo({ enabled: gi.enabled && gi.names.length > 0, names: gi.names });
+            await groupInfo.fetchGroupInfo();
 
             setChallenges(['', ...(res.data as string[])]);
         }
