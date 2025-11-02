@@ -121,7 +121,7 @@ const useClockStore = create<ClockStore>()((set) => ({
 interface OptionsStore {
     options: Options;
     selectedTrack: string;
-    fetchOptions: () => Promise<void>;
+    fetchOptions: () => Promise<Options | null>;
     setSelectedTrack: (track: string) => void;
 }
 
@@ -158,9 +158,11 @@ const useOptionsStore = create<OptionsStore>((set) => ({
         const optionsRes = await getRequest<Options>('/admin/options', 'admin');
         if (optionsRes.status !== 200) {
             errorAlert(optionsRes);
-            return;
+            return null;
         }
-        set({ options: optionsRes.data as Options });
+        const data = optionsRes.data as Options;
+        set({ options: data });
+        return data;
     },
 
     setSelectedTrack: async (track: string) => {
