@@ -100,7 +100,7 @@ const JudgeLive = () => {
         }
 
         // Check to see if deliberation has started
-        const deliberationRes = await getRequest<OkResponse>('/admin/deliberation', '');
+        const deliberationRes = await getRequest<OkResponse>('/judge/deliberation', 'judge');
         if (deliberationRes.status !== 200) {
             errorAlert(deliberationRes);
             return;
