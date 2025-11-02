@@ -277,9 +277,8 @@ func DecrementProjectSeenCount(db *mongo.Database, ctx context.Context, project 
 }
 
 // GetNumProjectsInGroup returns the number of projects in a group
-// TODO: Can we pre-aggregate this value?
 func GetNumProjectsInGroup(db *mongo.Database, ctx context.Context, group int64) (int64, error) {
-	return db.Collection("projects").CountDocuments(ctx, gin.H{"group": group})
+	return db.Collection("projects").CountDocuments(ctx, gin.H{"group": group, "active": true})
 }
 
 // GetChallenges gets the list of all challenges from the database
