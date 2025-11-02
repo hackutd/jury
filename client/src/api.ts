@@ -2,6 +2,38 @@ import Cookies from 'universal-cookie';
 
 const BACKEND_URL = import.meta.env.VITE_JURY_URL;
 
+/**
+ * Represents the standardized structure of a response from the API helpers.
+ * @template T The type of the data returned in the response.
+ */
+export interface FetchResponse<T> {
+    /** The HTTP status code of the response. */
+    status: number;
+    /** An error message if the request failed, otherwise an empty string. */
+    error: string;
+    /** The parsed JSON data from the response, or null if an error occurred. */
+    data: T | null;
+}
+
+/**
+ * Represents a standard success response with a message.
+ */
+export interface OkResponse {
+    message: string;
+}
+
+/**
+ * Represents a judge in the system.
+ */
+export interface Judge {
+    /** The unique identifier of the judge. */
+    id: string;
+    /** The name of the judge. */
+    name: string;
+    /** The unique login code for the judge. */
+    code: string;
+}
+
 export async function getRequest<T>(path: string, auth: string): Promise<FetchResponse<T>> {
     try {
         const options: RequestInit = {
