@@ -9,6 +9,7 @@ import { twMerge } from 'tailwind-merge';
 import ActionsDropdown from '../../ActionsDropdown';
 import MoveGroupPopup from './MoveGroupPopup';
 import MovePopup from './MovePopup';
+import ProjectNotesPopup from './ProjectNotesPopup';
 
 interface ProjectRowProps {
     project: Project;
@@ -24,6 +25,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
     const [deletePopup, setDeletePopup] = useState(false);
     const [moveGroupPopup, setMoveGroupPopup] = useState(false);
     const [movePopup, setMovePopup] = useState(false);
+    const [notesPopup, setNotesPopup] = useState(false);
     const fetchProjects = useAdminStore((state) => state.fetchProjects);
     const options = useOptionsStore((state) => state.options);
     const track = useOptionsStore((state) => state.selectedTrack);
@@ -147,6 +149,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
                         setOpen={setPopup}
                         actions={[
                             'Edit',
+                            'Notes',
                             project.active ? 'Hide' : 'Unhide',
                             project.prioritized ? 'Unprioritize' : 'Prioritize',
                             'Move Table',
@@ -155,13 +158,14 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
                         ]}
                         actionFunctions={[
                             setEditPopup.bind(null, true),
+                            setNotesPopup.bind(null, true),
                             hideProject,
                             prioritizeProject,
                             setMovePopup.bind(null, true),
                             setMoveGroupPopup.bind(null, true),
                             setDeletePopup.bind(null, true),
                         ]}
-                        redIndices={[5]}
+                        redIndices={[6]}
                     />
                     <div
                         className="cursor-pointer hover:text-primary duration-150 mr-2"
@@ -182,6 +186,7 @@ const ProjectRow = ({ project, idx }: ProjectRowProps) => {
             <EditProjectPopup enabled={editPopup} setEnabled={setEditPopup} project={project} />
             <MovePopup enabled={movePopup} setEnabled={setMovePopup} item={project} />
             <MoveGroupPopup enabled={moveGroupPopup} setEnabled={setMoveGroupPopup} item={project} isProject />
+            <ProjectNotesPopup enabled={notesPopup} setEnabled={setNotesPopup} project={project} />
         </>
     );
 };
