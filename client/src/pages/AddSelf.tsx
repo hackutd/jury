@@ -33,7 +33,7 @@ const AddSelf = () => {
             let correctCode;
             if (tr !== '') {
                 console.log(tr);
-                const res = await postRequest<OkResponse>(`/qr/check/${tr}`, '', {
+                const res = await postRequest<OkResponse>(`/qr/check/${encodeURIComponent(tr)}`, '', {
                     code: paramCode,
                 });
                 if (res.status !== 200) {
