@@ -319,13 +319,22 @@ func UpdateProjectStars(db *mongo.Database, ctx context.Context, projId primitiv
 
 // UpdateProjectTrackStars updates the starred count of a project in a specific track, incrementing or decrementing it
 func UpdateProjectTrackStars(db *mongo.Database, ctx context.Context, projId primitive.ObjectID, track string, increment bool) error {
-	change := -1
-	if increment {
-		change = 1
+	project, err := FindProject(db, ctx, &projId)
+	if err != nil {
+		return err
 	}
-	track_str := "track_stars." + track
-
-	_, err := db.Collection("projects").UpdateOne(ctx, gin.H{"_id": projId}, gin.H{"$inc": gin.H{track_str: change}})
+	if project == nil {
+		return errors.New("project not found")
+	}
+	change := int64(1)
+	if !increment {
+		change = -1
+	}
+	if project.TrackStars == nil {
+		project.TrackStars = make(map[string]int64)
+	}
+	project.TrackStars[track] += change
+	_, err = db.Collection("projects").UpdateOne(ctx, gin.H{"_id": projId}, gin.H{"$set": gin.H{"track_stars": project.TrackStars}})
 	return err
 }
 

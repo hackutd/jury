@@ -174,8 +174,12 @@ func UpdateQRCode(db *mongo.Database, ctx context.Context, qrCode string) error 
 
 // UpdateTrackQRCode updates the QR code for a track in the database
 func UpdateTrackQRCode(db *mongo.Database, ctx context.Context, track string, qrCode string) error {
-	key := "track_qr_codes." + track
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{key: qrCode}})
+	options, err := GetOptions(db, ctx)
+	if err != nil {
+		return err
+	}
+	options.TrackQRCodes[track] = qrCode
+	_, err = db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{"track_qr_codes": options.TrackQRCodes}})
 	return err
 }
 
