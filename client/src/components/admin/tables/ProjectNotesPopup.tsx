@@ -1,6 +1,11 @@
 import { useAdminStore } from '../../../store';
 import InfoPopup from '../../InfoPopup';
 
+interface JudgeNote {
+    judgeName: string;
+    notes: string;
+}
+
 interface ProjectNotesPopupProps {
     enabled: boolean;
     setEnabled: React.Dispatch<React.SetStateAction<boolean>>;
@@ -15,12 +20,12 @@ const ProjectNotesPopup = (props: ProjectNotesPopupProps) => {
             const seenProject = judge.seen_projects.find(
                 (sp) => sp.project_id === props.project.id
             );
-            if (seenProject && seenProject.notes && seenProject.notes.trim() !== '') {
+            if (seenProject && seenProject.notes && seenProject.notes.trim()) {
                 return { judgeName: judge.name, notes: seenProject.notes };
             }
             return null;
         })
-        .filter((entry): entry is { judgeName: string; notes: string } => entry !== null);
+        .filter((entry): entry is JudgeNote => !!entry);
 
     return (
         <InfoPopup
