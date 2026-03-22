@@ -8,6 +8,7 @@ import { twMerge } from 'tailwind-merge';
 import ActionsDropdown from '../../ActionsDropdown';
 import MoveGroupPopup from './MoveGroupPopup';
 import JudgeRanksPopup from './JudgeRanksPopup';
+import { useNavigate } from 'react-router-dom';
 
 interface JudgeRowProps {
     judge: Judge;
@@ -27,6 +28,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
     const selected = useAdminTableStore((state) => state.selected);
     const setSelected = useAdminTableStore((state) => state.setSelected);
     const projects = useAdminStore((state) => state.projects);
+    const navigate = useNavigate();
 
     useEffect(() => {
         function closeClick(event: MouseEvent) {
@@ -61,6 +63,10 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
         alert(`Judge ${judge.active ? 'hidden' : 'un-hidden'} successfully!`);
         fetchJudges();
     };
+
+    const loginAsJudge = () => {
+        navigate(`/judge/login?code=${judge.code}`);
+    }
 
     const idToProj = (id: string) => {
         if (!id || id === '') {
@@ -103,15 +109,16 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
                     <ActionsDropdown
                         open={popup}
                         setOpen={setPopup}
-                        actions={['Scores', 'Edit', judge.active ? 'Hide' : 'Unhide', 'Move Group', 'Delete']}
+                        actions={['Scores', 'Edit', judge.active ? 'Hide' : 'Unhide', 'Move Group', 'Login', 'Delete']}
                         actionFunctions={[
                             setRanksPopup.bind(null, true),
                             setEditPopup.bind(null, true),
                             hideJudge,
                             setMovePopup.bind(null, true),
+                            loginAsJudge,
                             setDeletePopup.bind(null, true),
                         ]}
-                        redIndices={[4]}
+                        redIndices={[5]}
                     />
                     <span
                         className="cursor-pointer px-1 hover:text-primary duration-150"
