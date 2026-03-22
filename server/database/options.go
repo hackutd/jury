@@ -174,9 +174,15 @@ func UpdateQRCode(db *mongo.Database, ctx context.Context, qrCode string) error 
 
 // UpdateTrackQRCode updates the QR code for a track in the database
 func UpdateTrackQRCode(db *mongo.Database, ctx context.Context, track string, qrCode string) error {
-	key := "track_qr_codes." + track
-	_, err := db.Collection("options").UpdateOne(ctx, gin.H{}, gin.H{"$set": gin.H{key: qrCode}})
-	return err
+	return WithTransaction(db, func(sc mongo.SessionContext) error {
+		options, err := GetOptions(db, sc)
+		if err != nil {
+			return err
+		}
+		options.TrackQRCodes[track] = qrCode
+		_, err = db.Collection("options").UpdateOne(sc, gin.H{}, gin.H{"$set": gin.H{"track_qr_codes": options.TrackQRCodes}})
+		return err
+	})
 }
 
 // UpdateDeliberation updates the deliberation in the database
