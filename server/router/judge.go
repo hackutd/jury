@@ -398,22 +398,27 @@ func GetNextJudgeProject(ctx *gin.Context) {
 		return
 	}
 
+	// Read options from the in-memory cache — no DB round-trip required.
+	options := state.GetCachedOptions()
+
+	// Check clock state under the mutex, but release it before entering the
+	// transaction to avoid holding two locks simultaneously.
+	// Previously this code had a deadlock: the mutex was acquired, then an
+	// early return was taken without releasing it, permanently blocking all
+	// subsequent clock operations.
+	clockRunning := func() bool {
+		state.Clock.Mutex.Lock()
+		defer state.Clock.Mutex.Unlock()
+		return state.Clock.State.Running
+	}()
+
+	if !clockRunning || options.Deliberation {
+		ctx.JSON(http.StatusOK, gin.H{})
+		return
+	}
+
 	// Otherwise, get the next project for the judge
 	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get options
-		options, err := database.GetOptions(state.Db, sc)
-		if err != nil {
-			return errors.New("error getting options: " + err.Error())
-		}
-
-		// If the clock is paused, return an empty object
-		// This is to ensure that no projects are gotten if the clock is paused
-		state.Clock.Mutex.Lock()
-		if !state.Clock.State.Running || options.Deliberation {
-			return nil
-		}
-		state.Clock.Mutex.Unlock()
-
 		project, err := judging.PickNextProject(state.Db, sc, judge, state.Comps)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
@@ -527,18 +532,17 @@ func JudgeSkip(ctx *gin.Context) {
 	// Skipped project ID
 	id := judge.Current.Hex()
 
+	// Determine whether to assign the judge a new project after skipping.
+	// Read options from cache and clock state from in-memory state — no DB needed.
+	options := state.GetCachedOptions()
+	newProj := func() bool {
+		state.Clock.Mutex.Lock()
+		defer state.Clock.Mutex.Unlock()
+		return state.Clock.State.Running && !options.Deliberation
+	}()
+
 	// Run remaining actions in a transaction
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Check if judging is paused
-		options, err := database.GetOptions(state.Db, ctx)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-			return err
-		}
-		state.Clock.Mutex.Lock()
-		newProj := state.Clock.State.Running && !options.Deliberation
-		state.Clock.Mutex.Unlock()
-
 		// Skip the project
 		err = judging.SkipCurrentProjectWithTx(state.Db, sc, judge, state.Comps, skipReq.Reason, newProj)
 		if err != nil {
@@ -684,19 +688,16 @@ func JudgeFinish(ctx *gin.Context) {
 		return
 	}
 
+	// Read options from cache before the transaction — eliminates one DB
+	// round-trip per judge finish action.
+	options := state.GetCachedOptions()
+	if options.Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+		return
+	}
+
 	// Run remaining actions in a transaction
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get the options and return error if deliberations
-		options, err := database.GetOptions(state.Db, ctx)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-			return err
-		}
-		if options.Deliberation {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
-			return err
-		}
-
 		// Get the project from the database
 		project, err := database.FindProject(state.Db, sc, judge.Current)
 		if err != nil {
@@ -766,19 +767,14 @@ func JudgeRank(ctx *gin.Context) {
 		return
 	}
 
+	// Guard against deliberation mode before opening a transaction.
+	if state.GetCachedOptions().Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+		return
+	}
+
 	// Wrap in transaction
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get the options and return error if deliberations
-		options, err := database.GetOptions(state.Db, sc)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-			return err
-		}
-		if options.Deliberation {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
-			return err
-		}
-
 		// Calculate updated rankings
 		judge.Rankings = rankReq.Ranking
 		agg := judging.AggregateRanking(judge)
@@ -830,26 +826,21 @@ func JudgeStar(ctx *gin.Context) {
 		return
 	}
 
+	// Guard against deliberation mode before opening a transaction.
+	if state.GetCachedOptions().Deliberation {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
+		return
+	}
+
+	// If the project isn't in the judge's seen projects, return an error
+	index := util.FindSeenProjectIndex(judge, projectId)
+	if index == -1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
+		return
+	}
+
 	// Wrap in transaction
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get the options and return error if deliberations
-		options, err := database.GetOptions(state.Db, sc)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-			return err
-		}
-		if options.Deliberation {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
-			return err
-		}
-
-		// If the project isn't in the judge's seen projects, return an error
-		index := util.FindSeenProjectIndex(judge, projectId)
-		if index == -1 {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "judge hasn't seen project or project is invalid"})
-			return err
-		}
-
 		// Update the judge's object for the project
 		err = database.UpdateJudgeStars(state.Db, sc, judge.Id, index, starReq.Starred)
 		if err != nil {
@@ -926,23 +917,16 @@ func ReassignJudgeGroups(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
+	// Check multi-group from cache before starting a transaction.
+	if !state.GetCachedOptions().MultiGroup {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "multi-group not enabled"})
+		return
+	}
+
 	// Run the remaining actions in a transaction
 	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get options from database
-		options, err := database.GetOptions(state.Db, ctx)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-			return err
-		}
-
-		// Don't do if not enabled
-		if !options.MultiGroup {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "multi-group not enabled"})
-			return errors.New("multi-group not enabled")
-		}
-
 		// Reassign judge groups
-		err = database.PutJudgesInGroups(state.Db)
+		err := database.PutJudgesInGroups(state.Db)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error reassigning judge groups: " + err.Error()})
 			return err
@@ -1043,27 +1027,22 @@ func AddJudgeFromQR(ctx *gin.Context) {
 
 	var judge *models.Judge
 
+	// Validate the QR code against the cached options before starting a transaction.
+	options := state.GetCachedOptions()
+	if qrReq.Track == "" {
+		if qrReq.Code != options.QRCode {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
+			return
+		}
+	} else {
+		if qrReq.Code != options.TrackQRCodes[qrReq.Track] {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
+			return
+		}
+	}
+
 	// Run the remaining actions in a transaction
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get the options from the database
-		options, err := database.GetOptions(state.Db, sc)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-			return err
-		}
-
-		// Make sure the code is correct
-		if qrReq.Track == "" {
-			if qrReq.Code != options.QRCode {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
-				return err
-			}
-		} else {
-			if qrReq.Code != options.TrackQRCodes[qrReq.Track] {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
-				return err
-			}
-		}
 
 		// Check if the judge already exists
 		judge, err = database.FindJudgeByCode(state.Db, sc, qrReq.Code)
@@ -1128,17 +1107,8 @@ func AddJudgeFromQR(ctx *gin.Context) {
 
 // GET /judge/deliberation - Get the status of the deliberation
 func GetDeliberationStatus(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
-
-	// Get the options from the database
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	if options.Deliberation {
+	if state.GetCachedOptions().Deliberation {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})

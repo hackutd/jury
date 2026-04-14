@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"server/config"
@@ -8,6 +9,7 @@ import (
 	"server/funcs"
 	"server/models"
 	"server/util"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -55,36 +57,24 @@ func AdminAuthenticated(ctx *gin.Context) {
 
 // GET /admin/stats - GetAdminStats returns stats about the system
 func GetAdminStats(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
-
-	// Aggregate the stats
-	stats, err := database.AggregateStats(state.Db, "")
+	stats, err := state.GetCachedStats("")
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating stats: " + err.Error()})
 		return
 	}
-
-	// Send OK
 	ctx.JSON(http.StatusOK, stats)
 }
 
 // GET /admin/stats/:track - GetAdminStats returns stats about the system
 func GetAdminTrackStats(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
-
-	// Get the track from the URL
 	track := ctx.Param("track")
-
-	// Aggregate the stats
-	stats, err := database.AggregateStats(state.Db, track)
+	stats, err := state.GetCachedStats(track)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error aggregating stats: " + err.Error()})
 		return
 	}
-
-	// Send OK
 	ctx.JSON(http.StatusOK, stats)
 }
 
@@ -227,6 +217,12 @@ func SetOptions(ctx *gin.Context) {
 		return
 	}
 
+	// Refresh the in-memory options cache so subsequent requests see the new values.
+	if err := state.ReloadOptions(ctx); err != nil {
+		// Non-fatal: log it but don't fail the request — DB write already succeeded.
+		state.Logger.AdminLogf("Warning: failed to refresh options cache: %s", err.Error())
+	}
+
 	// Send OK
 	state.Logger.AdminLogf("Updated options: %s", util.StructToStringWithoutNils(options))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
@@ -303,18 +299,8 @@ func GetFlags(ctx *gin.Context) {
 
 // GET /admin/options - returns all options
 func GetOptions(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
-
-	// Get the options
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, options)
+	ctx.JSON(http.StatusOK, state.GetCachedOptions())
 }
 
 // POST /admin/export/judges - ExportJudges exports all judges to a CSV
@@ -404,18 +390,8 @@ func ExportRankings(ctx *gin.Context) {
 
 // GET /admin/timer - GetJudgingTimer returns the judging timer
 func GetJudgingTimer(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
-
-	// Get the options
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"judging_timer": options.JudgingTimer})
+	ctx.JSON(http.StatusOK, gin.H{"judging_timer": state.GetCachedOptions().JudgingTimer})
 }
 
 // POST /admin/groups/num - SetNumGroups sets the number of groups
@@ -443,6 +419,9 @@ func SetNumGroups(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving num groups to options: " + err.Error()})
 		return
 	}
+
+	// Refresh options cache.
+	state.ReloadOptions(ctx)
 
 	// Send OK
 	state.Logger.AdminLogf("Set num groups to %d", req.NumGroups)
@@ -474,6 +453,9 @@ func SetGroupSizes(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error saving group sizes to options: " + err.Error()})
 		return
 	}
+
+	// Refresh options cache.
+	state.ReloadOptions(ctx)
 
 	// Send OK
 	state.Logger.AdminLogf("Set group sizes to %s", util.StructToStringWithoutNils(req))
@@ -541,6 +523,9 @@ func GenerateQRCode(ctx *gin.Context) {
 		return
 	}
 
+	// Refresh options cache so CheckQRCode immediately sees the new code.
+	state.ReloadOptions(ctx)
+
 	// Send OK
 	state.Logger.AdminLogf("Generated QR code")
 	ctx.JSON(http.StatusOK, gin.H{"qr_code": token})
@@ -568,6 +553,9 @@ func GenerateTrackQRCode(ctx *gin.Context) {
 		return
 	}
 
+	// Refresh options cache so CheckTrackQRCode immediately sees the new code.
+	state.ReloadOptions(ctx)
+
 	// Send OK
 	state.Logger.AdminLogf("Generated QR code for track %s", track)
 	ctx.JSON(http.StatusOK, gin.H{"qr_code": token})
@@ -575,37 +563,15 @@ func GenerateTrackQRCode(ctx *gin.Context) {
 
 // GET /admin/qr - GetQRCode returns the QR code
 func GetQRCode(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
-
-	// Get the QR code
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"qr_code": options.QRCode})
+	ctx.JSON(http.StatusOK, gin.H{"qr_code": state.GetCachedOptions().QRCode})
 }
 
 // GET /admin/qr/:track - GetTrackQRCode returns the QR code for a track
 func GetTrackQRCode(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
-
-	// Get the track from the URL
 	track := ctx.Param("track")
-
-	// Get the QR code
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Send OK
-	ctx.JSON(http.StatusOK, gin.H{"qr_code": options.TrackQRCodes[track]})
+	ctx.JSON(http.StatusOK, gin.H{"qr_code": state.GetCachedOptions().TrackQRCodes[track]})
 }
 
 type CheckQRRequest struct {
@@ -614,26 +580,15 @@ type CheckQRRequest struct {
 
 // POST /qr/check - CheckQRCode checks to see if the QR code is right
 func CheckQRCode(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
 
-	// Get the request object
 	var qrReq CheckQRRequest
-	err := ctx.BindJSON(&qrReq)
-	if err != nil {
+	if err := ctx.BindJSON(&qrReq); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
 
-	// Get the QR code
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Send OK if QR code is right
-	if options.QRCode == qrReq.Code {
+	if state.GetCachedOptions().QRCode == qrReq.Code {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
@@ -642,29 +597,16 @@ func CheckQRCode(ctx *gin.Context) {
 
 // POST /admin/qr/:track - CheckTrackQRCode checks to see if the track QR code is right
 func CheckTrackQRCode(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
 
-	// Get the request object
 	var qrReq CheckQRRequest
-	err := ctx.BindJSON(&qrReq)
-	if err != nil {
+	if err := ctx.BindJSON(&qrReq); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error reading request body: " + err.Error()})
 		return
 	}
 
-	// Get the track from the URL
 	track := ctx.Param("track")
-
-	// Get the QR code
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Send OK if QR code is right
-	if options.TrackQRCodes[track] == qrReq.Code {
+	if state.GetCachedOptions().TrackQRCodes[track] == qrReq.Code {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
@@ -702,6 +644,9 @@ func SetDeliberation(ctx *gin.Context) {
 		state.Clock.Mutex.Unlock()
 	}
 
+	// Refresh options cache so judges immediately see the deliberation state change.
+	state.ReloadOptions(ctx)
+
 	// Send OK
 	hap := "Started"
 	if !req.Start {
@@ -713,20 +658,11 @@ func SetDeliberation(ctx *gin.Context) {
 
 // GET /group-info - GetGroupInfo returns the names of the groups and if groups are enabled
 func GetGroupInfo(ctx *gin.Context) {
-	// Get the state from the context
 	state := GetState(ctx)
-
-	// Get the options
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-		return
-	}
-
-	// Send OK
+	opts := state.GetCachedOptions()
 	ctx.JSON(http.StatusOK, gin.H{
-		"names":   options.GroupNames,
-		"enabled": options.MultiGroup,
+		"names":   opts.GroupNames,
+		"enabled": opts.MultiGroup,
 	})
 }
 
@@ -758,6 +694,9 @@ func SetBlockReqs(ctx *gin.Context) {
 
 	// Update the limiter
 	state.Limiter.Block = *req.BlockReqs
+
+	// Refresh options cache.
+	state.ReloadOptions(ctx)
 
 	// Send OK
 	state.Logger.AdminLogf("Updated block requests to %t", *req.BlockReqs)
@@ -793,6 +732,9 @@ func SetMaxReqs(ctx *gin.Context) {
 	// Update the limiter
 	state.Limiter.MaxReqPerMin = int(*req.MaxReqPerMin)
 
+	// Refresh options cache.
+	state.ReloadOptions(ctx)
+
 	// Send OK
 	state.Logger.AdminLogf("Updated max requests to %d", *req.MaxReqPerMin)
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
@@ -803,16 +745,12 @@ func SetTracks(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
-	// Get the options
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not get settings: " + err.Error()})
-		return
-	}
+	// Use cached options (no DB read required).
+	options := state.GetCachedOptions()
 
 	// Get the request
 	var req models.OptionalOptions
-	err = ctx.BindJSON(&req)
+	err := ctx.BindJSON(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
 		return
@@ -848,6 +786,9 @@ func SetTracks(ctx *gin.Context) {
 		return
 	}
 
+	// Refresh options cache.
+	state.ReloadOptions(ctx)
+
 	// Send OK
 	state.Logger.AdminLogf("Updated tracks to %s", util.StructToStringWithoutNils(req))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
@@ -858,16 +799,12 @@ func SetTrackViews(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
 
-	// Get the options
-	options, err := database.GetOptions(state.Db, ctx)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not get settings: " + err.Error()})
-		return
-	}
+	// Use cached options (no DB read required).
+	options := state.GetCachedOptions()
 
 	// Get the request
 	var req models.OptionalOptions
-	err = ctx.BindJSON(&req)
+	err := ctx.BindJSON(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error parsing request: " + err.Error()})
 		return
@@ -892,7 +829,138 @@ func SetTrackViews(ctx *gin.Context) {
 		return
 	}
 
+	// Refresh options cache.
+	state.ReloadOptions(ctx)
+
 	// Send OK
 	state.Logger.AdminLogf("Updated track views to %s", util.StructToStringWithoutNils(req))
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
+}
+
+// DashboardResponse bundles all data needed by the admin panel into a single response.
+type DashboardResponse struct {
+	Stats    interface{} `json:"stats"`
+	Clock    gin.H       `json:"clock"`
+	Projects interface{} `json:"projects"`
+	Judges   interface{} `json:"judges"`
+	Options  interface{} `json:"options"`
+	Flags    interface{} `json:"flags"`
+}
+
+// GET /admin/dashboard - returns all admin panel data in one response.
+//
+// This replaces the six separate polling calls the admin frontend previously
+// made every 15 seconds (stats, clock, projects, judges, options, flags).
+// DB-bound queries run concurrently; clock and options are served from memory.
+func GetDashboard(ctx *gin.Context) {
+	state := GetState(ctx)
+
+	track := ctx.Query("track")
+
+	// Clock and options come from in-process memory — zero DB cost.
+	state.Clock.Mutex.Lock()
+	clockData := gin.H{"running": state.Clock.State.Running, "time": state.Clock.State.GetDuration()}
+	state.Clock.Mutex.Unlock()
+	opts := state.GetCachedOptions()
+
+	// Run the four DB-bound queries concurrently.
+	type result struct {
+		stats    interface{}
+		projects interface{}
+		judges   interface{}
+		flags    interface{}
+		err      error
+	}
+	ch := make(chan result, 1)
+
+	go func() {
+		var r result
+		var wg sync.WaitGroup
+		var mu sync.Mutex
+
+		wg.Add(4)
+
+		go func() {
+			defer wg.Done()
+			stats, err := state.GetCachedStats(track)
+			mu.Lock()
+			if err != nil && r.err == nil {
+				r.err = err
+			}
+			r.stats = stats
+			mu.Unlock()
+		}()
+
+		go func() {
+			defer wg.Done()
+			projects, err := database.FindAllProjects(state.Db, context.Background())
+			if err != nil {
+				mu.Lock()
+				if r.err == nil {
+					r.err = err
+				}
+				mu.Unlock()
+				return
+			}
+			scores, err := state.GetCachedScores(context.Background())
+			if err != nil {
+				mu.Lock()
+				if r.err == nil {
+					r.err = err
+				}
+				mu.Unlock()
+				return
+			}
+			for i, p := range projects {
+				if pScore, ok := scores[p.Id]; ok {
+					projects[i].Score = pScore.Score
+					projects[i].Stars = pScore.Stars
+					projects[i].TrackStars = pScore.TrackStars
+				}
+			}
+			mu.Lock()
+			r.projects = projects
+			mu.Unlock()
+		}()
+
+		go func() {
+			defer wg.Done()
+			judges, err := database.FindAllJudges(state.Db, context.Background())
+			mu.Lock()
+			if err != nil && r.err == nil {
+				r.err = err
+			}
+			r.judges = judges
+			mu.Unlock()
+		}()
+
+		go func() {
+			defer wg.Done()
+			flags, err := database.FindAllFlags(state.Db)
+			mu.Lock()
+			if err != nil && r.err == nil {
+				r.err = err
+			}
+			r.flags = flags
+			mu.Unlock()
+		}()
+
+		wg.Wait()
+		ch <- r
+	}()
+
+	r := <-ch
+	if r.err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error fetching dashboard data: " + r.err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, DashboardResponse{
+		Stats:    r.stats,
+		Clock:    clockData,
+		Projects: r.projects,
+		Judges:   r.judges,
+		Options:  opts,
+		Flags:    r.flags,
+	})
 }

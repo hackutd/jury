@@ -13,6 +13,7 @@ interface AdminStore {
     fetchJudgeStats: () => Promise<void>;
     projectStats: ProjectStats;
     fetchProjectStats: () => Promise<void>;
+    fetchDashboard: () => Promise<void>;
 }
 
 const useAdminStore = create<AdminStore>()((set) => ({
@@ -84,6 +85,25 @@ const useAdminStore = create<AdminStore>()((set) => ({
             return;
         }
         set({ projectStats: statsRes.data as ProjectStats });
+    },
+
+    // fetchDashboard replaces the 6 separate polling calls the admin page
+    // previously made every 15 seconds.  One HTTP request, one DB round-trip
+    // set, all stores updated atomically.
+    fetchDashboard: async () => {
+        const selectedTrack = useOptionsStore.getState().selectedTrack;
+        const trackParam = selectedTrack !== '' ? `?track=${encodeURIComponent(selectedTrack)}` : '';
+        const res = await getRequest<DashboardResponse>(`/admin/dashboard${trackParam}`, 'admin');
+        if (res.status !== 200) {
+            errorAlert(res);
+            return;
+        }
+        const data = res.data as DashboardResponse;
+
+        set({ stats: data.stats, projects: data.projects, judges: data.judges });
+        useClockStore.setState({ clock: data.clock });
+        useOptionsStore.setState({ options: data.options });
+        useFlagsStore.setState({ flags: data.flags });
     },
 }));
 

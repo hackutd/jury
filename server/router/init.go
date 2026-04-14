@@ -37,8 +37,16 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	// Get the limiter from the database
 	limiter := getLimiterFromDb(db)
 
+	// Load options once at startup into the in-memory cache so that all
+	// subsequent reads (especially inside judge transactions) are served
+	// from memory without hitting MongoDB.
+	initialOpts, err := database.GetOptions(db, context.Background())
+	if err != nil {
+		log.Fatalf("error loading options into cache: %s\n", err.Error())
+	}
+
 	// Add shared variables to router
-	state := NewState(db, clock, comps, logger, limiter)
+	state := NewState(db, clock, comps, logger, limiter, initialOpts)
 	router.Use(useVar("state", state))
 
 	// CORS
@@ -96,6 +104,9 @@ func NewRouter(db *mongo.Database, logger *logging.Logger) *gin.Engine {
 	adminRouter.GET("/project/list", ListProjects)
 	adminRouter.DELETE("/project/:id", DeleteProject)
 	adminRouter.PUT("/project/:id", EditProject)
+
+	// Admin panel - single dashboard endpoint (replaces 6 separate polling calls)
+	adminRouter.GET("/admin/dashboard", GetDashboard)
 
 	// Admin panel - stats/data
 	adminRouter.GET("/admin/stats", GetAdminStats)

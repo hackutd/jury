@@ -202,3 +202,12 @@ interface GroupInfo {
     names: string[];
     enabled: boolean;
 }
+
+interface DashboardResponse {
+    stats: Stats;
+    clock: ClockState;
+    projects: Project[];
+    judges: Judge[];
+    options: Options;
+    flags: Flag[];
+}

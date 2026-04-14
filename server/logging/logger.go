@@ -3,13 +3,11 @@ package logging
 import (
 	"context"
 	"fmt"
-	"server/database"
 	"server/models"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,7 +15,6 @@ import (
 type Logger struct {
 	Mutex  sync.Mutex
 	Memory []string
-	DbRef  *mongo.Database
 }
 
 type LogType int
@@ -28,16 +25,14 @@ const (
 	Judge
 )
 
-const DbLogLimit = 10000
-
 func NewLogger(db *mongo.Database) (*Logger, error) {
-	// Get all logs from the db
+	// Load historical log entries from the database so the admin log
+	// view still shows entries from before the current server session.
 	dbLogs, err := GetAllDbLogs(db)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create a new logger and add all logs from the database
 	memory := []string{}
 	for _, log := range dbLogs {
 		memory = append(memory, log.Entries...)
@@ -46,19 +41,16 @@ func NewLogger(db *mongo.Database) (*Logger, error) {
 	return &Logger{
 		Mutex:  sync.Mutex{},
 		Memory: memory,
-		DbRef:  db,
 	}, nil
 }
 
 // GetAllDbLogs retrieves all logs from the database.
 func GetAllDbLogs(db *mongo.Database) ([]*models.Log, error) {
-	// Get all logs from the database, sorted in ascending order of time
-	cursor, err := db.Collection("logs").Find(context.Background(), gin.H{}, options.Find().SetSort(gin.H{"time": 1}))
+	cursor, err := db.Collection("logs").Find(context.Background(), map[string]interface{}{}, options.Find().SetSort(map[string]interface{}{"time": 1}))
 	if err != nil {
 		return nil, err
 	}
 
-	// Iterate through the cursor and decode each log
 	logs := []*models.Log{}
 	for cursor.Next(context.Background()) {
 		var log models.Log
@@ -66,70 +58,25 @@ func GetAllDbLogs(db *mongo.Database) ([]*models.Log, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		logs = append(logs, &log)
-	}
-
-	// If no logs, create one
-	if len(logs) == 0 {
-		_, err = db.Collection("logs").InsertOne(context.Background(), models.NewLog())
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return logs, nil
 }
 
-func (l *Logger) writeToDb(item string) error {
-	return database.WithTransaction(l.DbRef, func(sc mongo.SessionContext) error {
-		// Insert the log into the database
-		res := l.DbRef.Collection("logs").FindOneAndUpdate(
-			sc,
-			gin.H{},
-			gin.H{"$push": gin.H{"entries": item}, "$inc": gin.H{"count": 1}},
-			options.FindOneAndUpdate().SetSort(gin.H{"time": -1}),
-		)
-
-		// Check for errors
-		if res.Err() != nil {
-			return res.Err()
-		}
-
-		// Get the log from the result
-		var log models.Log
-		err := res.Decode(&log)
-		if err != nil {
-			return err
-		}
-
-		// If the log is too long, create a new log in the db
-		if log.Count > DbLogLimit {
-			_, err = l.DbRef.Collection("logs").InsertOne(sc, models.NewLog())
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-}
-
-// Logf logs a message to the log file.
+// Logf logs a message to the in-memory log.
 // The time is prepended to the message and a newline is appended.
+// Note: entries are no longer written to MongoDB on every call — doing so
+// required a serialised majority-write transaction per API request and was
+// the primary source of lock contention under concurrent judge load.
 func (l *Logger) Logf(t LogType, message string, args ...interface{}) error {
 	l.Mutex.Lock()
 	defer l.Mutex.Unlock()
 
-	// Form output string
 	userInput := fmt.Sprintf(message, args...)
 	output := fmt.Sprintf("[%s] %s | %s", time.Now().Format(time.RFC3339), typeToString(t), userInput)
 
-	// Write to memory
 	l.Memory = append(l.Memory, output)
-
-	// Write to database
-	l.writeToDb(output)
 
 	return nil
 }
@@ -140,7 +87,6 @@ func (l *Logger) SystemLogf(message string, args ...interface{}) error {
 }
 
 // JudgeLogf logs a message with the Judge LogType.
-// This will include a judge and project (if defined) in the log message.
 func (l *Logger) JudgeLogf(judge *models.Judge, message string, args ...interface{}) error {
 	judgeDisplay := ""
 	if judge != nil {
