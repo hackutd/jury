@@ -109,7 +109,7 @@ const JudgeRow = ({ judge, idx }: JudgeRowProps) => {
                     <ActionsDropdown
                         open={popup}
                         setOpen={setPopup}
-                        actions={['Scores', 'Edit', judge.active ? 'Hide' : 'Unhide', 'Move Group', 'Login', 'Delete']}
+                        actions={['Scores', 'Edit', judge.active ? 'Hide' : 'Unhide', 'Move Group', 'Login as Judge', 'Delete']}
                         actionFunctions={[
                             setRanksPopup.bind(null, true),
                             setEditPopup.bind(null, true),
