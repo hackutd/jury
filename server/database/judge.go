@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"server/models"
 	"server/util"
 	"strconv"
@@ -178,7 +179,11 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 		},
 	)
 	if err != nil {
-		return errors.New("error updating judge: " + err.Error())
+		// Use %w so the underlying mongo.CommandError (and its
+		// TransientTransactionError label) survives wrapping; otherwise
+		// session.WithTransaction's errors.As walk fails to find the
+		// label and skips its WriteConflict auto-retry.
+		return fmt.Errorf("error updating judge: %w", err)
 	}
 
 	if judge.Track != "" {
@@ -191,7 +196,7 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 		)
 	}
 	if err != nil {
-		return errors.New("error updating project: " + err.Error())
+		return fmt.Errorf("error updating project: %w", err)
 	}
 
 	return nil
