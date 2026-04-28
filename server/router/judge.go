@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -392,56 +393,90 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
-	// If the judge already has a next project, return that project
-	if judge.Current != nil {
-		ctx.JSON(http.StatusOK, gin.H{"project_id": judge.Current.Hex()})
-		return
-	}
+	// Outputs from the transaction. Populated under either of two
+	// outcomes: the judge had a current project (returned as-is), or a
+	// new project was picked and assigned. pickedProjectName is set only
+	// in the new-pick case so we can log it once after the txn commits.
+	var pickedProjectId, pickedProjectName string
 
-	// Otherwise, get the next project for the judge
+	// All judge-state reads/writes happen inside a single transaction.
+	// IMPORTANT: do NOT call ctx.JSON inside the callback. Mongo's
+	// session.WithTransaction retries the callback on
+	// TransientTransactionError (which includes WriteConflict); writing
+	// the response on a doomed first attempt would race the retry.
 	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get options
+		// Reset outputs in case the callback is retried.
+		pickedProjectId = ""
+		pickedProjectName = ""
+
 		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
-			return errors.New("error getting options: " + err.Error())
+			return fmt.Errorf("error getting options: %w", err)
 		}
 
-		// If the clock is paused, return an empty object
-		// This is to ensure that no projects are gotten if the clock is paused
+		// Re-read the judge inside the transaction so concurrent
+		// requests from the same judge see committed state. Without
+		// this, two simultaneous /judge/next requests both see
+		// judge.Current == nil from the stale middleware snapshot and
+		// each pick a different project, leaving one project with the
+		// judge in its seen list while the judge's current points at
+		// the other.
+		freshJudge, err := database.FindJudge(state.Db, sc, judge.Id)
+		if err != nil {
+			return fmt.Errorf("error finding judge in database: %w", err)
+		}
+		if freshJudge == nil {
+			return errors.New("judge not found in database")
+		}
+
+		// Already assigned (either before this request started or by a
+		// concurrent request that committed first) — surface it.
+		if freshJudge.Current != nil {
+			pickedProjectId = freshJudge.Current.Hex()
+			return nil
+		}
+
+		// Read the clock state under its mutex, then unlock immediately
+		// so the early return path can't deadlock the clock. We only gate
+		// new assignments here; an already-assigned current project should
+		// still be returned even if judging gets paused afterward.
 		state.Clock.Mutex.Lock()
-		if !state.Clock.State.Running || options.Deliberation {
-			return nil
-		}
+		running := state.Clock.State.Running
 		state.Clock.Mutex.Unlock()
-
-		project, err := judging.PickNextProject(state.Db, sc, judge, state.Comps)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
+		if !running || options.Deliberation {
 			return nil
 		}
 
-		// If there is no next project, return an empty object
+		project, err := judging.PickNextProject(state.Db, sc, freshJudge, state.Comps)
+		if err != nil {
+			return fmt.Errorf("error picking next project: %w", err)
+		}
 		if project == nil {
-			ctx.JSON(http.StatusOK, gin.H{})
 			return nil
 		}
 
-		// Update judge and project
-		err = database.UpdateAfterPicked(state.Db, sc, project, judge)
+		err = database.UpdateAfterPicked(state.Db, sc, project, freshJudge)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating next project in database: " + err.Error()})
-			return nil
+			return fmt.Errorf("error updating next project in database: %w", err)
 		}
 
-		// Send OK and project ID
-		state.Logger.JudgeLogf(judge, "Picked new project %s (%s)", project.Name, project.Id.Hex())
-		ctx.JSON(http.StatusOK, gin.H{"project_id": project.Id.Hex()})
+		pickedProjectId = project.Id.Hex()
+		pickedProjectName = project.Name
 		return nil
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	if pickedProjectId == "" {
+		ctx.JSON(http.StatusOK, gin.H{})
+		return
+	}
+	if pickedProjectName != "" {
+		state.Logger.JudgeLogf(judge, "Picked new project %s (%s)", pickedProjectName, pickedProjectId)
+	}
+	ctx.JSON(http.StatusOK, gin.H{"project_id": pickedProjectId})
 }
 
 // GET /judge/projects - Endpoint to get a list of projects that a judge has seen
