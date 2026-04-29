@@ -41,7 +41,11 @@ func FindJudge(db *mongo.Database, ctx context.Context, id primitive.ObjectID) (
 
 // FindJudgeByToken finds a judge by their token.
 // Returns judge as nil if no judge was found.
+// Rejects empty tokens to prevent matching pre-login judges (Token defaults to "" in NewJudge).
 func FindJudgeByToken(db *mongo.Database, token string) (*models.Judge, error) {
+	if token == "" {
+		return nil, nil
+	}
 	var judge models.Judge
 	err := db.Collection("judges").FindOne(context.Background(), gin.H{"token": token}).Decode(&judge)
 	if err == mongo.ErrNoDocuments {
