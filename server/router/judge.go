@@ -1052,17 +1052,14 @@ func AddJudgeFromQR(ctx *gin.Context) {
 			return err
 		}
 
-		// Make sure the code is correct
-		if qrReq.Track == "" {
-			if qrReq.Code != options.QRCode {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
-				return err
-			}
-		} else {
-			if qrReq.Code != options.TrackQRCodes[qrReq.Track] {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
-				return err
-			}
+		// Make sure the code is correct and reject empty code
+		expectedCode := options.QRCode
+		if qrReq.Track != "" {
+			expectedCode = options.TrackQRCodes[qrReq.Track]
+		}
+		if qrReq.Code == "" || expectedCode == "" || qrReq.Code != expectedCode {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
+			return err
 		}
 
 		// Check if the judge already exists
