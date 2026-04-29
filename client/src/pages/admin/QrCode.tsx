@@ -27,7 +27,7 @@ const QrCode = () => {
 
                 cd = res.data?.qr_code as string;
             } else {
-                const res = await getRequest<Code>(`/admin/qr/${tr}`, 'admin');
+                const res = await getRequest<Code>(`/admin/qr/${encodeURIComponent(tr)}`, 'admin');
                 if (res.status !== 200) {
                     errorAlert(res);
                     return;
@@ -62,7 +62,7 @@ const QrCode = () => {
             }
             cd = res.data?.qr_code as string;
         } else {
-            const res = await postRequest<Code>(`/admin/qr/${track}`, 'admin', {});
+            const res = await postRequest<Code>(`/admin/qr/${encodeURIComponent(track)}`, 'admin', {});
             if (res.status !== 200) {
                 errorAlert(res);
                 return;
@@ -78,7 +78,7 @@ const QrCode = () => {
         // Create QR code
         const origin = window.location.origin.toString();
         const track = searchParams.get('track') ?? '';
-        const url = `${origin}/add-self?code=${code}&track=${track.replace(/\s/g, '%20')}`;
+        const url = `${origin}/add-self?code=${code}&track=${encodeURIComponent(track)}`;
 
         const qrCode = qr(url);
 

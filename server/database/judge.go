@@ -181,19 +181,15 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 		return errors.New("error updating judge: " + err.Error())
 	}
 
-	incData := gin.H{}
 	if judge.Track != "" {
-		incData["track_seen."+judge.Track] = 1
+		err = IncrementTrackSeen(db, ctx, seenProject.ProjectId, judge.Track)
 	} else {
-		incData["seen"] = 1
+		_, err = db.Collection("projects").UpdateOne(
+			ctx,
+			gin.H{"_id": seenProject.ProjectId},
+			gin.H{"$inc": gin.H{"seen": 1}, "$set": gin.H{"last_activity": util.Now()}},
+		)
 	}
-
-	// Update the project's seen count
-	_, err = db.Collection("projects").UpdateOne(
-		ctx,
-		gin.H{"_id": seenProject.ProjectId},
-		gin.H{"$inc": incData, "$set": gin.H{"last_activity": util.Now()}},
-	)
 	if err != nil {
 		return errors.New("error updating project: " + err.Error())
 	}
@@ -450,6 +446,24 @@ func DeleteSeenProject(db *mongo.Database, ctx context.Context, projectId *primi
 		ctx,
 		gin.H{"seen_projects.project_id": projectId},
 		gin.H{"$pull": gin.H{"seen_projects": gin.H{"project_id": projectId}, "rankings": projectId}, "$inc": gin.H{"seen": -1}},
+	)
+	return err
+}
+
+// IncrementTrackSeen increments the track_seen count for a project in a specific track
+func IncrementTrackSeen(db *mongo.Database, ctx context.Context, projectId primitive.ObjectID, track string) error {
+	project, err := FindProject(db, ctx, &projectId)
+	if err != nil {
+		return errors.New("error finding project: " + err.Error())
+	}
+	if project.TrackSeen == nil {
+		project.TrackSeen = make(map[string]int64)
+	}
+	project.TrackSeen[track] += 1
+	_, err = db.Collection("projects").UpdateOne(
+		ctx,
+		gin.H{"_id": projectId},
+		gin.H{"$set": gin.H{"track_seen": project.TrackSeen, "last_activity": util.Now()}},
 	)
 	return err
 }
