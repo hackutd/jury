@@ -632,8 +632,8 @@ func CheckQRCode(ctx *gin.Context) {
 		return
 	}
 
-	// Send OK if QR code is right
-	if options.QRCode == qrReq.Code {
+	// Send OK or reject empty values
+	if qrReq.Code != "" && options.QRCode != "" && options.QRCode == qrReq.Code {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
@@ -663,8 +663,9 @@ func CheckTrackQRCode(ctx *gin.Context) {
 		return
 	}
 
-	// Send OK if QR code is right
-	if options.TrackQRCodes[track] == qrReq.Code {
+	// Send OK or reject empty values
+	expected := options.TrackQRCodes[track]
+	if qrReq.Code != "" && expected != "" && expected == qrReq.Code {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
