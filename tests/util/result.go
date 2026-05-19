@@ -1,4 +1,4 @@
-package src
+package util
 
 type Result struct {
 	Success bool

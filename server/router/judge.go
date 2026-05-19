@@ -1025,7 +1025,7 @@ type AddJudgeFromQRRequest struct {
 	Track string `json:"track"`
 }
 
-// POST /judge/qr - Add a judge from a QR code
+// POST /judge/qr/add - Add a judge from a QR code
 func AddJudgeFromQR(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
@@ -1111,6 +1111,12 @@ func AddJudgeFromQR(ctx *gin.Context) {
 		return nil
 	})
 	if err != nil {
+		return
+	}
+
+	// Guard against early transaction exit leaving judge nil
+	if judge == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "unexpected error creating judge"})
 		return
 	}
 

@@ -139,7 +139,7 @@ func PauseClock(ctx *gin.Context) {
 
 	// Send OK
 	state.Logger.AdminLogf("Paused clock")
-	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State})
+	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State, "ok": 1})
 }
 
 // POST /admin/clock/unpause - UnpauseClock unpauses the clock
@@ -163,7 +163,7 @@ func UnpauseClock(ctx *gin.Context) {
 
 	// Send OK
 	state.Logger.AdminLogf("Unpaused clock")
-	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State})
+	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State, "ok": 1})
 }
 
 // POST /admin/clock/reset - ResetClock resets the clock
