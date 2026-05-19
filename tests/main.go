@@ -3,32 +3,32 @@ package main
 import (
 	"context"
 	"os"
-	"tests/src"
 	"tests/tests"
+	"tests/util"
 )
 
 func main() {
 	// Initialize the logger (make sure to change the .gitignore if this filename ever changes)
-	logger := src.NewLogger("test-log.txt")
+	logger := util.NewLogger("test-log.txt")
 
 	// Log start message with date and time
-	logger.LogLn(src.Info, "\n===============\nTESTING STARTED\n===============")
-	logger.Log(src.Info, "Date/time: %s\n", src.GetDateTime())
+	logger.LogLn(util.Info, "\n===============\nTESTING STARTED\n===============")
+	logger.Log(util.Info, "Date/time: %s\n", util.GetDateTime())
 
 	// Initialize the database connection
-	db := src.InitDb(logger)
+	db := util.InitDb(logger)
 
 	// Close the database connection
 	defer db.Client().Disconnect(context.Background())
 
 	// Wait for backend to load
-	err := src.WaitForBackend(logger)
+	err := util.WaitForBackend(logger)
 	if err != nil {
 		os.Exit(1)
 	}
 
 	// Create a context with the database and logger
-	context := &src.Context{
+	context := &util.Context{
 		Db:     db,
 		Logger: logger,
 	}
