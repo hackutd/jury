@@ -28,7 +28,7 @@ printf "$logs"
 # If no failed lines, exit with success
 failed=$(echo "$logs" | grep "failed")
 if [[ -z "$failed" ]]; then
-    echo "Success :)"
+    echo "\n\nSuccess :)"
     exit 0
 fi
 
