@@ -23,6 +23,7 @@ done
 # Get logs and get rid of containers
 logs=$(docker logs jury-testing)
 docker compose -f docker-compose.test.yml down
+printf "$logs"
 
 # If no failed lines, exit with success
 failed=$(echo "$logs" | grep "failed")
@@ -32,6 +33,5 @@ if [[ -z "$failed" ]]; then
 fi
 
 # Otherwise, exit with failure
-printf "$logs"
 printf "\n\n###################################\n##### THERE ARE TEST FAILURES #####\n###################################\n"
 exit 1
