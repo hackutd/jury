@@ -359,6 +359,7 @@ func QRValidFlowStillWorks(context *util.Context) util.Result {
 		"email": "qr_judge@example.com",
 		"notes": "",
 		"code":  qrCode,
+		"no_send": true,
 	}, util.DefaultAuth())
 	if !util.IsOk(addRes) {
 		return util.NewResult(false, "POST /qr/add with valid code should succeed: "+addRes)

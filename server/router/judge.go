@@ -1019,10 +1019,11 @@ func MoveSelectedJudges(ctx *gin.Context) {
 }
 
 type AddJudgeFromQRRequest struct {
-	Code  string `json:"code"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Track string `json:"track"`
+	Code   string `json:"code"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Track  string `json:"track"`
+	NoSend *bool  `json:"no_send"`
 }
 
 // POST /judge/qr/add - Add a judge from a QR code
@@ -1095,10 +1096,12 @@ func AddJudgeFromQR(ctx *gin.Context) {
 		}
 
 		// Send email to judge
-		err = funcs.SendJudgeEmail(judge, hostname)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
-			return err
+			if qrReq.NoSend == nil || !*qrReq.NoSend {
+			err = funcs.SendJudgeEmail(judge, hostname)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
+				return err
+			}
 		}
 
 		// Insert the judge into the database
