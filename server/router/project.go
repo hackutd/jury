@@ -2,7 +2,6 @@ package router
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -352,8 +351,6 @@ func DeleteProject(ctx *gin.Context) {
 	// Get the id from the request
 	id := ctx.Param("id")
 
-	fmt.Println("hello1")
-
 	// Convert judge ID string to ObjectID
 	projectObjectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -370,16 +367,12 @@ func DeleteProject(ctx *gin.Context) {
 			return err
 		}
 
-		fmt.Println("hello2")
-
 		// Delete all instances of this project from judges' seen projects array and rankings
 		err = database.DeleteSeenProject(state.Db, sc, &projectObjectId)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error deleting instances of project from judges' seen project: " + err.Error()})
 			return err
 		}
-
-		fmt.Println("hello3")
 
 		// Delete all flags for this project
 		err = database.DeleteFlagsCascade(state.Db, sc, &projectObjectId, nil)
@@ -388,15 +381,11 @@ func DeleteProject(ctx *gin.Context) {
 			return err
 		}
 
-		fmt.Println("hello4")
-
 		return nil
 	})
 	if err != nil {
 		return
 	}
-
-	fmt.Println("hello3.5")
 
 	// Update all judge rankings
 	err = judging.InitAggregateRankings(state.Db)
@@ -404,8 +393,6 @@ func DeleteProject(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error re-calculating aggregate rankings for all judges: " + err.Error()})
 		return
 	}
-
-	fmt.Println("hello5")
 
 	// Send OK
 	state.Logger.AdminLogf("Deleted project %s", id)
@@ -803,6 +790,10 @@ func MoveProject(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
+
+	// Send OK
+	state.Logger.AdminLogf("Moved project %s to table %d", id.Hex(), moveReq.Location)
+	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
 // POST /project/move - Move selected projects to a different group

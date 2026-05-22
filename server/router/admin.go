@@ -139,7 +139,7 @@ func PauseClock(ctx *gin.Context) {
 
 	// Send OK
 	state.Logger.AdminLogf("Paused clock")
-	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State})
+	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State, "ok": 1})
 }
 
 // POST /admin/clock/unpause - UnpauseClock unpauses the clock
@@ -163,7 +163,7 @@ func UnpauseClock(ctx *gin.Context) {
 
 	// Send OK
 	state.Logger.AdminLogf("Unpaused clock")
-	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State})
+	ctx.JSON(http.StatusOK, gin.H{"clock": state.Clock.State, "ok": 1})
 }
 
 // POST /admin/clock/reset - ResetClock resets the clock
@@ -632,8 +632,8 @@ func CheckQRCode(ctx *gin.Context) {
 		return
 	}
 
-	// Send OK if QR code is right
-	if options.QRCode == qrReq.Code {
+	// Send OK or reject empty values
+	if qrReq.Code != "" && options.QRCode != "" && options.QRCode == qrReq.Code {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})
@@ -663,8 +663,9 @@ func CheckTrackQRCode(ctx *gin.Context) {
 		return
 	}
 
-	// Send OK if QR code is right
-	if options.TrackQRCodes[track] == qrReq.Code {
+	// Send OK or reject empty values
+	expected := options.TrackQRCodes[track]
+	if qrReq.Code != "" && expected != "" && expected == qrReq.Code {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{"ok": 0})

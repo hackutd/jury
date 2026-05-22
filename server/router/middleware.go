@@ -27,6 +27,10 @@ func AuthenticateJudge() gin.HandlerFunc {
 
 		// Extract the token
 		token := authHeader[7:]
+		if token == "" {
+			no("Invalid Authorization header, empty token", ctx)
+			return
+		}
 
 		// Make sure the token is valid (check for judge in database)
 		state := GetState(ctx)

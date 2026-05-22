@@ -1084,13 +1084,14 @@ func MoveSelectedJudges(ctx *gin.Context) {
 }
 
 type AddJudgeFromQRRequest struct {
-	Code  string `json:"code"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Track string `json:"track"`
+	Code   string `json:"code"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	Track  string `json:"track"`
+	NoSend *bool  `json:"no_send"`
 }
 
-// POST /judge/qr - Add a judge from a QR code
+// POST /judge/qr/add - Add a judge from a QR code
 func AddJudgeFromQR(ctx *gin.Context) {
 	// Get the state from the context
 	state := GetState(ctx)
@@ -1117,17 +1118,14 @@ func AddJudgeFromQR(ctx *gin.Context) {
 			return err
 		}
 
-		// Make sure the code is correct
-		if qrReq.Track == "" {
-			if qrReq.Code != options.QRCode {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
-				return err
-			}
-		} else {
-			if qrReq.Code != options.TrackQRCodes[qrReq.Track] {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
-				return err
-			}
+		// Make sure the code is correct and reject empty code
+		expectedCode := options.QRCode
+		if qrReq.Track != "" {
+			expectedCode = options.TrackQRCodes[qrReq.Track]
+		}
+		if qrReq.Code == "" || expectedCode == "" || qrReq.Code != expectedCode {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid QR code"})
+			return err
 		}
 
 		// Check if the judge already exists
@@ -1163,10 +1161,12 @@ func AddJudgeFromQR(ctx *gin.Context) {
 		}
 
 		// Send email to judge
-		err = funcs.SendJudgeEmail(judge, hostname)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
-			return err
+			if qrReq.NoSend == nil || !*qrReq.NoSend {
+			err = funcs.SendJudgeEmail(judge, hostname)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error sending judge email: " + err.Error()})
+				return err
+			}
 		}
 
 		// Insert the judge into the database
@@ -1179,6 +1179,12 @@ func AddJudgeFromQR(ctx *gin.Context) {
 		return nil
 	})
 	if err != nil {
+		return
+	}
+
+	// Guard against early transaction exit leaving judge nil
+	if judge == nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "unexpected error creating judge"})
 		return
 	}
 
