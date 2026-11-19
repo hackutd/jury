@@ -99,7 +99,7 @@ const router = createBrowserRouter([
                   <br />
                   <br />
 
-                  Click <a href = "/judge/login" className=" text-primaryDark underline" >here</a> to log in manually
+                  If you didn't receive an email, click <a href = "/judge/login" className=" text-primaryDark underline" >here</a> to log in with an organizer's help 
               </Info>
         ),
     },
