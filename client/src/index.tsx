@@ -92,10 +92,15 @@ const router = createBrowserRouter([
     {
         path: '/add-self/done',
         element: (
-            <Info>
-                Thanks for adding yourself to the system! You should recieve an email soon with your
-                judging login info. You can safely close this tab.
-            </Info>
+              <Info>
+                  Thanks for adding yourself to the system! You should recieve an email soon with your
+                  judging login info. You can safely close this tab.
+
+                  <br />
+                  <br />
+
+                  <span className="text-sm text-lighter">If you didn't receive an email, click <a href = "/judge/login" className=" text-primaryDark underline" >here</a> to log in with an organizer's help.</span>
+              </Info>
         ),
     },
 ]);
