@@ -393,17 +393,10 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
-	// Outputs from the transaction. Populated under either of two
-	// outcomes: the judge had a current project (returned as-is), or a
-	// new project was picked and assigned. pickedProjectName is set only
-	// in the new-pick case so we can log it once after the txn commits.
 	var pickedProjectId, pickedProjectName string
 
 	// All judge-state reads/writes happen inside a single transaction.
-	// IMPORTANT: do NOT call ctx.JSON inside the callback. Mongo's
-	// session.WithTransaction retries the callback on
-	// TransientTransactionError (which includes WriteConflict); writing
-	// the response on a doomed first attempt would race the retry.
+	// IMPORTANT: do NOT call ctx.JSON inside the callback.
 	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
 		// Reset outputs in case the callback is retried.
 		pickedProjectId = ""
@@ -415,12 +408,7 @@ func GetNextJudgeProject(ctx *gin.Context) {
 		}
 
 		// Re-read the judge inside the transaction so concurrent
-		// requests from the same judge see committed state. Without
-		// this, two simultaneous /judge/next requests both see
-		// judge.Current == nil from the stale middleware snapshot and
-		// each pick a different project, leaving one project with the
-		// judge in its seen list while the judge's current points at
-		// the other.
+		// requests from the same judge see committed state
 		freshJudge, err := database.FindJudge(state.Db, sc, judge.Id)
 		if err != nil {
 			return fmt.Errorf("error finding judge in database: %w", err)
@@ -429,17 +417,12 @@ func GetNextJudgeProject(ctx *gin.Context) {
 			return errors.New("judge not found in database")
 		}
 
-		// Already assigned (either before this request started or by a
-		// concurrent request that committed first) — surface it.
+		// If the project is already set (by a diff request)
 		if freshJudge.Current != nil {
 			pickedProjectId = freshJudge.Current.Hex()
 			return nil
 		}
 
-		// Read the clock state under its mutex, then unlock immediately
-		// so the early return path can't deadlock the clock. We only gate
-		// new assignments here; an already-assigned current project should
-		// still be returned even if judging gets paused afterward.
 		state.Clock.Mutex.Lock()
 		running := state.Clock.State.Running
 		state.Clock.Mutex.Unlock()
@@ -728,11 +711,7 @@ func JudgeFinish(ctx *gin.Context) {
 	// after the transaction.
 	deliberationActive := false
 
-	// IMPORTANT: do NOT call ctx.JSON inside the callback. Mongo's
-	// session.WithTransaction retries the callback on
-	// TransientTransactionError (which includes WriteConflict). If we
-	// wrote the response on a doomed first attempt, a successful retry
-	// would still leave the client looking at the 500.
+	// IMPORTANT: do NOT call ctx.JSON inside the callback
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
 		// Reset outputs in case the callback is retried.
 		finishedProjId = ""
@@ -748,11 +727,7 @@ func JudgeFinish(ctx *gin.Context) {
 		}
 
 		// Re-read the judge inside the transaction so concurrent
-		// finish requests see committed state. Without this, two
-		// simultaneous POST /judge/finish requests both read
-		// judge.Current from the stale middleware snapshot and both
-		// push the same project to seen_projects, producing
-		// duplicates.
+		// requests from the same judge see committed state
 		freshJudge, err := database.FindJudge(state.Db, sc, judge.Id)
 		if err != nil {
 			return fmt.Errorf("error finding judge in database: %w", err)
@@ -760,8 +735,9 @@ func JudgeFinish(ctx *gin.Context) {
 		if freshJudge == nil {
 			return errors.New("judge not found in database")
 		}
+
+		// Already processed by a concurrent request, treat as success
 		if freshJudge.Current == nil {
-			// Already processed by a concurrent request — treat as success.
 			return nil
 		}
 		finishedProjId = freshJudge.Current.Hex()

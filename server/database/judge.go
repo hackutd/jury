@@ -183,10 +183,6 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 		},
 	)
 	if err != nil {
-		// Use %w so the underlying mongo.CommandError (and its
-		// TransientTransactionError label) survives wrapping; otherwise
-		// session.WithTransaction's errors.As walk fails to find the
-		// label and skips its WriteConflict auto-retry.
 		return fmt.Errorf("error updating judge: %w", err)
 	}
 
