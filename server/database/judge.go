@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"server/models"
 	"server/util"
 	"strconv"
@@ -182,7 +183,7 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 		},
 	)
 	if err != nil {
-		return errors.New("error updating judge: " + err.Error())
+		return fmt.Errorf("error updating judge: %w", err)
 	}
 
 	if judge.Track != "" {
@@ -195,7 +196,7 @@ func UpdateAfterSeen(db *mongo.Database, ctx context.Context, judge *models.Judg
 		)
 	}
 	if err != nil {
-		return errors.New("error updating project: " + err.Error())
+		return fmt.Errorf("error updating project: %w", err)
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package router
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"server/database"
 	"server/funcs"
@@ -392,56 +393,73 @@ func GetNextJudgeProject(ctx *gin.Context) {
 	// Get the judge from the context
 	judge := ctx.MustGet("judge").(*models.Judge)
 
-	// If the judge already has a next project, return that project
-	if judge.Current != nil {
-		ctx.JSON(http.StatusOK, gin.H{"project_id": judge.Current.Hex()})
-		return
-	}
+	var pickedProjectId, pickedProjectName string
 
-	// Otherwise, get the next project for the judge
+	// All judge-state reads/writes happen inside a single transaction.
+	// IMPORTANT: do NOT call ctx.JSON inside the callback.
 	err := database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get options
+		// Reset outputs in case the callback is retried.
+		pickedProjectId = ""
+		pickedProjectName = ""
+
 		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
-			return errors.New("error getting options: " + err.Error())
+			return fmt.Errorf("error getting options: %w", err)
 		}
 
-		// If the clock is paused, return an empty object
-		// This is to ensure that no projects are gotten if the clock is paused
+		// Re-read the judge inside the transaction so concurrent
+		// requests from the same judge see committed state
+		freshJudge, err := database.FindJudge(state.Db, sc, judge.Id)
+		if err != nil {
+			return fmt.Errorf("error finding judge in database: %w", err)
+		}
+		if freshJudge == nil {
+			return errors.New("judge not found in database")
+		}
+
+		// If the project is already set (by a diff request)
+		if freshJudge.Current != nil {
+			pickedProjectId = freshJudge.Current.Hex()
+			return nil
+		}
+
 		state.Clock.Mutex.Lock()
-		if !state.Clock.State.Running || options.Deliberation {
-			return nil
-		}
+		running := state.Clock.State.Running
 		state.Clock.Mutex.Unlock()
-
-		project, err := judging.PickNextProject(state.Db, sc, judge, state.Comps)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error picking next project: " + err.Error()})
+		if !running || options.Deliberation {
 			return nil
 		}
 
-		// If there is no next project, return an empty object
+		project, err := judging.PickNextProject(state.Db, sc, freshJudge, state.Comps)
+		if err != nil {
+			return fmt.Errorf("error picking next project: %w", err)
+		}
 		if project == nil {
-			ctx.JSON(http.StatusOK, gin.H{})
 			return nil
 		}
 
-		// Update judge and project
-		err = database.UpdateAfterPicked(state.Db, sc, project, judge)
+		err = database.UpdateAfterPicked(state.Db, sc, project, freshJudge)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error updating next project in database: " + err.Error()})
-			return nil
+			return fmt.Errorf("error updating next project in database: %w", err)
 		}
 
-		// Send OK and project ID
-		state.Logger.JudgeLogf(judge, "Picked new project %s (%s)", project.Name, project.Id.Hex())
-		ctx.JSON(http.StatusOK, gin.H{"project_id": project.Id.Hex()})
+		pickedProjectId = project.Id.Hex()
+		pickedProjectName = project.Name
 		return nil
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	if pickedProjectId == "" {
+		ctx.JSON(http.StatusOK, gin.H{})
+		return
+	}
+	if pickedProjectName != "" {
+		state.Logger.JudgeLogf(judge, "Picked new project %s (%s)", pickedProjectName, pickedProjectId)
+	}
+	ctx.JSON(http.StatusOK, gin.H{"project_id": pickedProjectId})
 }
 
 // GET /judge/projects - Endpoint to get a list of projects that a judge has seen
@@ -684,65 +702,88 @@ func JudgeFinish(ctx *gin.Context) {
 		return
 	}
 
-	// Run remaining actions in a transaction
+	// finishedProjId is set inside the txn once we know which project
+	// the judge had assigned; empty means the request was a no-op
+	// (already finished by a concurrent request).
+	var finishedProjId string
+	// deliberationActive lets us distinguish a 400 (operator-disabled
+	// scoring) from a 500 (database failure) when we surface the error
+	// after the transaction.
+	deliberationActive := false
+
+	// IMPORTANT: do NOT call ctx.JSON inside the callback
 	err = database.WithTransaction(state.Db, func(sc mongo.SessionContext) error {
-		// Get the options and return error if deliberations
-		options, err := database.GetOptions(state.Db, ctx)
+		// Reset outputs in case the callback is retried.
+		finishedProjId = ""
+		deliberationActive = false
+
+		options, err := database.GetOptions(state.Db, sc)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error getting options: " + err.Error()})
-			return err
+			return fmt.Errorf("error getting options: %w", err)
 		}
 		if options.Deliberation {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "cannot score due to deliberation mode being enabled"})
-			return err
+			deliberationActive = true
+			return errors.New("cannot score due to deliberation mode being enabled")
 		}
 
-		// Get the project from the database
-		project, err := database.FindProject(state.Db, sc, judge.Current)
+		// Re-read the judge inside the transaction so concurrent
+		// requests from the same judge see committed state
+		freshJudge, err := database.FindJudge(state.Db, sc, judge.Id)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error finding project in database: " + err.Error()})
-			return err
+			return fmt.Errorf("error finding judge in database: %w", err)
+		}
+		if freshJudge == nil {
+			return errors.New("judge not found in database")
 		}
 
-		// Create the judged project object
+		// Already processed by a concurrent request, treat as success
+		if freshJudge.Current == nil {
+			return nil
+		}
+		finishedProjId = freshJudge.Current.Hex()
+
+		project, err := database.FindProject(state.Db, sc, freshJudge.Current)
+		if err != nil {
+			return fmt.Errorf("error finding project in database: %w", err)
+		}
+
 		judgedProject := models.JudgeProjectFromProject(project, scoreReq.Notes, scoreReq.Starred)
 
-		// If groups are enabled and auto switch, move the judge to the next group conditionally
 		if options.MultiGroup && options.SwitchingMode == "auto" {
-			err = judging.MoveJudgeGroup(state.Db, sc, judge, options)
+			err = judging.MoveJudgeGroup(state.Db, sc, freshJudge, options)
 			if err != nil {
-				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error moving judge group: " + err.Error()})
-				return err
+				return fmt.Errorf("error moving judge group: %w", err)
 			}
 		}
 
-		// Update the judge and project
-		err = database.UpdateAfterSeen(state.Db, sc, judge, judgedProject)
+		err = database.UpdateAfterSeen(state.Db, sc, freshJudge, judgedProject)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error storing scores in database: " + err.Error()})
 			return err
 		}
 
-		// Reset list of skipped projects due to busy status
-		err = database.ResetBusyProjectListForJudge(state.Db, sc, judge)
+		err = database.ResetBusyProjectListForJudge(state.Db, sc, freshJudge)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "error resetting busy project list in database: " + err.Error()})
-			return err
+			return fmt.Errorf("error resetting busy project list in database: %w", err)
 		}
 
 		return nil
 	})
 	if err != nil {
+		if deliberationActive {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 
-	// Send OK
 	starred := ""
 	if scoreReq.Starred {
 		starred = " and starred project"
 	}
-	projId := judge.Current.Hex()
-	state.Logger.JudgeLogf(judge, "Finished judging project %s%s", projId, starred)
+	if finishedProjId != "" {
+		state.Logger.JudgeLogf(judge, "Finished judging project %s%s", finishedProjId, starred)
+	}
 	ctx.JSON(http.StatusOK, gin.H{"ok": 1})
 }
 
